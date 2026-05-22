@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Hanken Grotesk", ui-sans-serif, system-ui;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular;
+
+  --color-background: #0b1326;
+  --color-surface: #0b1326;
+  --color-surface-dim: #0b1326;
+  --color-surface-bright: #31394d;
+  --color-surface-container-lowest: #060e20;
+  --color-surface-container-low: #131b2e;
+  --color-surface-container: #171f33;
+  --color-surface-container-high: #222a3d;
+  --color-surface-container-highest: #2d3449;
+  
+  --color-on-surface: #dae2fd;
+  --color-on-surface-variant: #d2c5ac;
+  
+  --color-primary: #ffedc6;
+  --color-on-primary: #3d2e00;
+  --color-primary-container: #ffcc29;
+  --color-on-primary-container: #705700;
+  --color-primary-fixed: #ffdf90;
+  --color-primary-fixed-dim: #f2c019;
+  --color-on-primary-fixed: #241a00;
+  
+  --color-secondary: #7bd0ff;
+  --color-on-secondary: #00354a;
+  --color-secondary-container: #00a6e0;
+  --color-on-secondary-container: #00374d;
+  
+  --color-tertiary: #c7f8ff;
+  --color-on-tertiary: #00363c;
+  --color-tertiary-container: #00e8fd;
+  --color-on-tertiary-container: #00646e;
+  
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-sans antialiased overflow-x-hidden;
+  }
+  
+  /* Hide scrollbar by default for minimal look */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-container-highest rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-bright;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface-container-high/50 backdrop-blur-md border border-white/5 shadow-lg;
+  }
+  
+  .glass-card {
+    @apply bg-[rgba(30,41,59,0.5)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.05)] transition-all duration-300;
+  }
+  
+  .glass-card:hover {
+    @apply border-[rgba(255,204,41,0.3)] bg-[rgba(30,41,59,0.7)];
+  }
+
+  .glow-primary {
+    @apply shadow-[0_0_20px_rgba(255,204,41,0.15)];
+  }
+
+  .progress-ring-circle {
+    transition: stroke-dashoffset 0.85s ease-in-out;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+}
