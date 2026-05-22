@@ -16,8 +16,13 @@ export function Layout({ children, currentScreen, onNavigate }: LayoutProps) {
       <Sidebar isThin={isThin} currentScreen={currentScreen} onNavigate={onNavigate} />
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isThin ? 'pl-20' : 'pl-64'}`}>
         <Topnav isThin={isThin} currentScreen={currentScreen} onNavigate={onNavigate} />
-        <main className="flex-1 mt-16 p-6 md:p-8">
-          {children}
+        <main className="flex-1 mt-16 p-6 md:p-8 flex flex-col">
+          <div className="flex-1">
+            {children}
+          </div>
+          <footer className="mt-8 text-center text-[#94a3b8] font-mono text-sm py-4 border-t border-white/10">
+            ©Fabián L. Cely – VAFI – Universidad Pedagógica y Tecnológica de Colombia
+          </footer>
         </main>
       </div>
     </div>

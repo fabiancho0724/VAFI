@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Download, Filter, Wallet, Component, Network, Layers, LayoutList, Settings, TrendingUp, CheckCircle, Clock, Upload, AlertTriangle, PieChart as PieChartIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { fetchAndParseCSV, groupAndSum, getNumericColumn, getCategoryColumn } from '../lib/csvParser';
-import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart, Line, AreaChart, Area, LabelList } from 'recharts';
 
 export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
@@ -27,6 +27,8 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
   const [expandedPieGroup, setExpandedPieGroup] = useState<string | null>(null); // New state for interactive pie
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined); // New state for pie hover
   const [recursoFiltro, setRecursoFiltro] = useState<string>('Todos'); // 'Todos' | 'Recursos UPTC' | 'Recursos del Balance'
+  const [filtroReferencia, setFiltroReferencia] = useState<string>('Todas');
+  const [filtroOperacionesLimit, setFiltroOperacionesLimit] = useState<string>('Top 5');
 
   // Keep track of loaded files for manual uploads
   const [manualData, setManualData] = useState<{ingresos: any[], gastos: any[], nomina: any[]}>({
@@ -186,11 +188,21 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
                return { name: rec, compromiso: rComp, pago: rPago };
            }).sort((a, b) => b.pago - a.pago);
 
+           const catCol3 = firstRowKeys[3]; // Operacion
+           const operacionesKeys = Array.from(new Set(rows.map(r => r[catCol3]))).filter(Boolean);
+           const operacionesItems = operacionesKeys.map(op => {
+               const opRows = rows.filter(r => r[catCol3] === op);
+               const oComp = opRows.reduce((acc, r) => acc + (parseFloat(r[compCol]) || 0), 0) / 1e6;
+               const oPago = opRows.reduce((acc, r) => acc + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
+               return { name: op, compromiso: oComp, pago: oPago };
+           }).sort((a, b) => b.pago - a.pago);
+
            return { 
                name: ref, 
                compromiso: tComp, 
                pago: tPago, 
-               recursos: recursosItems 
+               recursos: recursosItems,
+               operaciones: operacionesItems
            };
         }).sort((a,b) => b.pago - a.pago);
         setGastosReferenciasGroups(parsedGastoReferenciasGroups);
@@ -217,6 +229,40 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
     setManualData(newData);
     processData(newData.ingresos, newData.gastos, newData.nomina);
   };
+
+  const { opReferences, operacionesData, totalOpCompromiso, totalOpPago } = useMemo(() => {
+    const refs = gastosReferenciasGroups.map(g => g.name).filter(Boolean).sort();
+    
+    let opMap: Record<string, { name: string, compromiso: number, pago: number }> = {};
+    let tComp = 0;
+    let tPago = 0;
+    
+    gastosReferenciasGroups.forEach(g => {
+      if (filtroReferencia !== 'Todas' && g.name !== filtroReferencia) return;
+      if (!g.operaciones) return;
+      g.operaciones.forEach((op: any) => {
+        if (!opMap[op.name]) opMap[op.name] = { name: op.name, compromiso: 0, pago: 0 };
+        opMap[op.name].compromiso += op.compromiso;
+        opMap[op.name].pago += op.pago;
+        tComp += op.compromiso;
+        tPago += op.pago;
+      });
+    });
+
+    let data = Object.values(opMap).sort((a, b) => b.compromiso - a.compromiso);
+    
+    // Add execution percentage calculated field for labels
+    data = data.map(item => ({
+       ...item,
+       ejecucionPct: item.compromiso > 0 ? Math.round((item.pago / item.compromiso) * 100) : 0
+    }));
+
+    if (filtroOperacionesLimit === 'Top 5') {
+       data = data.slice(0, 5);
+    } // si es 'Todas', no hace slice
+
+    return { opReferences: refs, operacionesData: data, totalOpCompromiso: tComp, totalOpPago: tPago };
+  }, [gastosReferenciasGroups, filtroReferencia, filtroOperacionesLimit]);
 
   if (dataStage === 'loading') {
     return (
@@ -840,299 +886,233 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
          )})}
       </div>
 
-      {/* Breakdown and Insights - Exact Image Implementations */}
+      {/* Interactive Chart - Gastos x Referencia y Operación */}
+      <div className="glass-card rounded-[24px] p-8 mb-10 border border-white/5 shadow-2xl relative overflow-hidden">
+         {/* Top Gradient Border */}
+         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-container via-secondary to-[#4ade80]"></div>
+         
+         {/* Ambient Background Glow */}
+         <div className="absolute top-0 right-0 w-96 h-96 bg-[#ffcc29]/5 blur-[120px] rounded-full pointer-events-none"></div>
+         
+         <div className="flex flex-col lg:flex-row justify-between items-start mb-8 gap-6 z-10 relative">
+            <div className="flex-1">
+               <h3 className="text-2xl font-display font-medium text-white flex items-center gap-3">
+                  <CheckCircle className="text-[#4ade80] w-6 h-6" />
+                  Ejecución de Operaciones
+               </h3>
+               <p className="text-xs text-on-surface-variant mt-2 mb-6 max-w-2xl leading-relaxed">
+                  Monitoreo de compromisos y pagos efectivos agrupados por referencia.
+                  Analiza el nivel de ejecución presupuestal de las operaciones principales.
+               </p>
+
+               <div className="flex flex-wrap items-center gap-4">
+                  <div className="bg-[#1e293b]/70 border border-white/10 rounded-xl p-3 px-6 flex flex-col min-w-[180px]">
+                     <span className="text-[10px] uppercase font-mono tracking-widest text-[#94a3b8] mb-1">Total Compromiso</span>
+                     <span className="text-2xl font-mono font-bold text-white">${totalOpCompromiso.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                  </div>
+                  <div className="bg-[#ffcc29]/10 border border-[#ffcc29]/30 rounded-xl p-3 px-6 flex flex-col min-w-[180px]">
+                     <span className="text-[10px] uppercase font-mono tracking-widest text-[#ffcc29] mb-1">Pago Efectivo</span>
+                     <span className="text-2xl font-display font-bold text-[#ffcc29]">${totalOpPago.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                  </div>
+               </div>
+            </div>
+            
+            <div className="flex flex-col gap-3 w-full lg:w-auto">
+               <div className="flex items-center gap-2 bg-[#0f172a]/80 border border-white/10 rounded-lg px-4 py-2.5 w-full">
+                  <LayoutList className="w-4 h-4 text-secondary shrink-0" />
+                  <select 
+                     value={filtroOperacionesLimit} 
+                     onChange={(e) => setFiltroOperacionesLimit(e.target.value)}
+                     className="bg-transparent text-white text-xs font-medium focus:outline-none cursor-pointer w-full"
+                  >
+                     <option value="Top 5" className="bg-black">Top 5 Operaciones (Mayor Compromiso)</option>
+                     <option value="Todas" className="bg-black">Visualizar Todas</option>
+                  </select>
+               </div>
+               <div className="flex items-center gap-2 bg-[#0f172a]/80 border border-white/10 rounded-lg px-4 py-2.5 w-full">
+                  <Filter className="w-4 h-4 text-secondary shrink-0" />
+                  <select 
+                     value={filtroReferencia} 
+                     onChange={(e) => setFiltroReferencia(e.target.value)}
+                     className="bg-transparent text-white text-xs font-medium focus:outline-none cursor-pointer w-full truncate max-w-[250px]"
+                  >
+                     <option value="Todas" className="bg-black">Todas las Referencias</option>
+                     {opReferences.map(ref => <option key={ref} value={ref} className="bg-black">{ref}</option>)}
+                  </select>
+               </div>
+            </div>
+         </div>
+
+         <div className="w-full h-[500px]">
+            {operacionesData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                 <ComposedChart data={operacionesData} margin={{top: 30, right: 20, left: 20, bottom: 80}}>
+                   <defs>
+                      <linearGradient id="barGrad-0" x1="0" y1="0" x2="1" y2="0"><stop offset="50%" stopColor="#f97316"/><stop offset="50%" stopColor="#c2410c"/></linearGradient>
+                      <linearGradient id="barGrad-1" x1="0" y1="0" x2="1" y2="0"><stop offset="50%" stopColor="#4ade80"/><stop offset="50%" stopColor="#16a34a"/></linearGradient>
+                      <linearGradient id="barGrad-2" x1="0" y1="0" x2="1" y2="0"><stop offset="50%" stopColor="#f43f5e"/><stop offset="50%" stopColor="#be123c"/></linearGradient>
+                      <linearGradient id="barGrad-3" x1="0" y1="0" x2="1" y2="0"><stop offset="50%" stopColor="#22d3ee"/><stop offset="50%" stopColor="#0e7490"/></linearGradient>
+                      <linearGradient id="barGrad-4" x1="0" y1="0" x2="1" y2="0"><stop offset="50%" stopColor="#c084fc"/><stop offset="50%" stopColor="#7e22ce"/></linearGradient>
+                   </defs>
+                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                   
+                   <XAxis 
+                      dataKey="name" 
+                      stroke="#94a3b8" 
+                      tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 500}} 
+                      axisLine={false} 
+                      tickLine={false} 
+                      interval={0} 
+                      angle={-30} 
+                      textAnchor="end"
+                      height={90}
+                      tickFormatter={(val) => val.length > 30 ? val.substring(0, 30) + '...' : val} 
+                   />
+                   
+                   <YAxis yAxisId="left" stroke="none" tick={{fill: '#64748b', fontSize: 10}} tickFormatter={(val) => `$${val.toLocaleString('es-CO')}`} />
+                   <YAxis yAxisId="right" orientation="right" stroke="none" hide domain={[0, 'dataMax + 20']} />
+                   
+                   <Tooltip 
+                      cursor={{fill: 'rgba(255,255,255,0.03)'}}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                           const item = payload[0].payload;
+                           return (
+                             <div className="bg-[#0f172a] border border-white/10 rounded-xl p-4 shadow-2xl max-w-[280px]">
+                               <p className="font-bold text-white text-[13px] mb-3 leading-tight whitespace-normal">{label}</p>
+                               <div className="space-y-2">
+                                 <div className="flex justify-between items-center text-sm gap-4">
+                                   <span className="text-[#94a3b8] font-mono uppercase tracking-wider text-[10px]">Compromiso:</span>
+                                   <span className="font-bold text-[#e2e8f0]">${item.compromiso.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill.</span>
+                                 </div>
+                                 <div className="flex justify-between items-center text-sm gap-4">
+                                   <span className="text-[#94a3b8] font-mono uppercase tracking-wider text-[10px]">Pago Efectivo:</span>
+                                   <span className="font-bold text-[#ffcc29]">${item.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill.</span>
+                                 </div>
+                                 <div className="flex justify-between items-center text-sm mt-3 pt-3 border-t border-white/10 gap-4">
+                                   <span className="text-[#94a3b8] font-mono uppercase tracking-wider text-[10px]">Ejecución:</span>
+                                   <span className="font-bold text-[#22d3ee]">{item.ejecucionPct}%</span>
+                                 </div>
+                               </div>
+                             </div>
+                           );
+                        }
+                        return null;
+                      }}
+                   />
+                   
+                   <Legend wrapperStyle={{fontSize: "12px", opacity: 0.8}} verticalAlign="top" height={40} />
+                   
+                   {/* Background Bar for Compromiso */}
+                   <Bar yAxisId="left" dataKey="compromiso" name="Compromiso Total" fill="#1e293b" radius={[0, 0, 0, 0]} barSize={55} stroke="#334155" strokeWidth={1} />
+                   
+                   {/* Foreground Bar for Pago Efectivo with Folded Gradients */}
+                   <Bar yAxisId="left" dataKey="pago" name="Pago Efectivo" barSize={55} radius={[0, 0, 0, 0]}>
+                      {operacionesData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={`url(#barGrad-${index % 5})`} />
+                      ))}
+                      <LabelList 
+                         dataKey="ejecucionPct" 
+                         position="top" 
+                         offset={15}
+                         formatter={(val: number) => `${val}%`}
+                         style={{ fill: '#fff', fontSize: '13px', fontWeight: 'bold', fontFamily: 'monospace', fontStyle: 'italic', textShadow: '0px 2px 4px rgba(0,0,0,0.8)' }} 
+                      />
+                   </Bar>
+                   
+                   {/* Trend Line representing Execution Level */}
+                   <Line 
+                      yAxisId="right" 
+                      type="monotone" 
+                      dataKey="ejecucionPct" 
+                      name="Ejecución (%)" 
+                      stroke="#22d3ee" 
+                      strokeWidth={3} 
+                      dot={{r: 5, fill: '#0f172a', stroke: '#22d3ee', strokeWidth: 2}} 
+                      activeDot={{r: 8, fill: '#fff'}}
+                      isAnimationActive={true}
+                   />
+                 </ComposedChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center border-t border-white/5">
+                 <p className="text-white/40 text-sm font-mono tracking-widest uppercase flex items-center gap-2">
+                   <AlertTriangle size={16} /> No hay operaciones en esta referencia.
+                 </p>
+              </div>
+            )}
+         </div>
+         
+         <div className="mt-4 flex flex-wrap gap-4 items-center justify-center border-t border-white/5 pt-4">
+           {operacionesData.slice(0, 5).map((entry, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-[10px] text-white/60">
+                 <div className="w-3 h-3" style={{ background: `linear-gradient(to right, ${['#f97316, #c2410c', '#4ade80, #16a34a', '#f43f5e, #be123c', '#22d3ee, #0e7490', '#c084fc, #7e22ce'][idx % 5]})` }}></div>
+                 <span className="truncate max-w-[120px]" title={entry.name}>
+                   {entry.name.replace('LIQUIDACION DE', 'LIQ.').replace('CONSTITUCIÓN', 'CONST.')}
+                 </span>
+              </div>
+           ))}
+         </div>
+      </div>
+
+      {/* Gastos Personal */}
       <div className="flex flex-col gap-8 mb-8">
-        {/* Gastos Totales Dynamic Equivalent */}
-        <div className="glass-card rounded-[32px] p-8 border border-white/5 shadow-2xl">
-          <div className="text-center mb-10 border-b border-white/10 pb-6">
-            <h3 className="text-3xl font-display font-bold text-white mb-2">Gastos con corte de <span className="underline decoration-primary-container">Abril</span></h3>
-            <p className="text-on-surface-variant font-mono">Clasificación por tipo de gasto (Millones)</p>
-          </div>
+         <div className="glass-card rounded-[32px] p-8 md:p-12 border border-white/5 relative overflow-hidden shadow-2xl">
+            {/* Top Gradient Border */}
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-container via-secondary to-[#4ade80]"></div>
+            
+            {/* Ambient Background Glow */}
+            <div className="absolute top-0 left-0 w-96 h-96 bg-[#ffcc29]/5 blur-[120px] rounded-full pointer-events-none"></div>
 
-          <div className="space-y-6 max-w-4xl mx-auto">
-             {(gastosTiposGroups.length > 0 ? gastosTiposGroups.slice(0, 5) : [
-               { name: 'Gastos de Personal', compromiso: 83500.0, pago: 82530.2, recursos: [] },
-               { name: 'Gastos de Funcionamiento', compromiso: 25000.0, pago: 23261.9, recursos: [] },
-               { name: 'Gastos de Inversión', compromiso: 3500.0, pago: 2986.9, recursos: [] },
-               { name: 'Transferencias Corrientes', compromiso: 1000.0, pago: 851.4, recursos: [] },
-               { name: 'Tasas y Multas', compromiso: 600.0, pago: 595.1, recursos: [] },
-             ]).map((item, i) => {
-                const maxValue = gastosTiposGroups.length > 0 ? Math.max(...gastosTiposGroups.map(g => g.compromiso)) : 83500.0;
-                const colors = ['#ffcc29', '#7bd0ff', '#d0bcff', '#ff5b5b', '#4ade80'];
-                const color = colors[i % colors.length];
-                const isExpanded = expandedGastoGroup === item.name;
+            <div className="text-center border-b border-white/10 pb-6 mb-12 z-10 relative">
+               <h3 className="text-3xl font-display font-medium text-white mb-2">Gastos de Personal</h3>
+               <p className="text-on-surface-variant font-mono">Valores en millones</p>
+            </div>
 
-                return (
-                  <div key={i} className="flex flex-col gap-4 bg-white/5 rounded-2xl p-4 transition-all">
-                    <div 
-                      className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6 cursor-pointer group"
-                      onClick={() => setExpandedGastoGroup(isExpanded ? null : item.name)}
-                    >
-                       <div className="md:w-64 flex flex-col justify-center text-right shrink-0">
-                         <div className="font-bold text-sm md:text-base font-sans text-white truncate group-hover:text-primary-container transition-colors" title={item.name}>{String(item.name || '')}</div>
-                         <div className="text-[10px] text-on-surface-variant flex flex-col sm:flex-row justify-end sm:gap-2 mt-1">
-                            <span>Comp: ${item.compromiso.toLocaleString('es-CO', {maximumFractionDigits: 1})}</span>
-                            <span className="hidden sm:inline">•</span>
-                            <span>Pago: ${item.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})}</span>
-                         </div>
-                       </div>
-                       
-                       <div className="flex-1 flex flex-col justify-center gap-1.5 border-l border-white/10 pl-4 py-1">
-                          {/* Compromiso Bar */}
-                          <div className="flex items-center h-4 relative">
-                             <div className="h-full border border-white/20 rounded-r-md flex items-center pr-2" style={{ width: `${Math.max(1, (item.compromiso / maxValue) * 100)}%`, backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                             </div>
-                             <span className="ml-2 text-xs text-on-surface-variant whitespace-nowrap">Compromiso</span>
+            <div className="space-y-6 max-w-4xl mx-auto z-10 relative">
+               {[
+                 { name: 'PLANTA', valueMill: 23680.0 },
+                 { name: 'OCASIONAL', valueMill: 21773.8 },
+                 { name: 'ADMINISTRATIVO', valueMill: 16126.1 },
+                 { name: 'CATEDRA POSGRADO', valueMill: 2933.0 },
+                 { name: 'CATEDRA', valueMill: 2159.0 },
+                 { name: 'SUPERNUMERARIO', valueMill: 359.7 },
+               ].map((item, i) => {
+                  const valMill = item.valueMill;
+                  const maxValue = 24000.0;
+                  return (
+                    <div key={i} className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
+                       <span className="md:w-56 text-left md:text-right text-xs md:text-sm font-bold text-white uppercase shrink-0 tracking-widest">
+                         {item.name}
+                       </span>
+                       <div className="flex-1 w-full flex items-center h-10 md:h-12 md:border-l border-white/10 md:pl-2 group">
+                          <div className="h-full bg-gradient-to-r from-[#cc9a00] to-[#ffcc29] flex items-center relative transition-all duration-500 ease-out group-hover:brightness-125 shadow-[0_0_15px_rgba(255,204,41,0.2)]" style={{ width: `${Math.max(1, (valMill / maxValue) * 100)}%`, minWidth: '4px' }}>
+                             <span className="absolute left-full ml-4 font-bold text-white text-sm md:text-base whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                               ${valMill.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill.
+                             </span>
                           </div>
-                          {/* Pago Bar */}
-                          <div className="flex items-center h-4 relative">
-                             <div className="h-full rounded-r-md flex items-center pr-4 shadow-[2px_0_10px_rgba(0,0,0,0.5)]" style={{ width: `${Math.max(1, (item.pago / maxValue) * 100)}%`, backgroundColor: color }}>
-                             </div>
-                             <span className="ml-2 text-xs font-bold text-white whitespace-nowrap">${item.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill</span>
-                          </div>
-                       </div>
-                       
-                       <div className="text-on-surface-variant flex items-center justify-center shrink-0 w-8">
-                         {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                        </div>
                     </div>
-                    
-                    {/* Expanded Charts Area */}
-                    {isExpanded && item.recursos && item.recursos.length > 0 && (() => {
-                      const RESOURCE_COLORS_PALETTE = ['#ffcc29', '#7bd0ff', '#d0bcff', '#ff5b5b', '#4ade80', '#fbbf24', '#34d399', '#f87171', '#818cf8', '#c084fc'];
-                      const allRecursos = [...item.recursos].sort((a: any, b: any) => b.pago - a.pago).slice(0, 10);
-                      
-                      const chartDataCompromiso = [...allRecursos].sort((a: any, b: any) => a.compromiso - b.compromiso);
-                      const chartDataPago = [...allRecursos].sort((a: any, b: any) => a.pago - b.pago);
+                  )
+               })}
+            </div>
 
-                      return (
-                      <div className="mt-4 pt-4 border-t border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
-                        <div className="flex flex-wrap gap-2 justify-center mb-6">
-                          {allRecursos.map((rec, rIdx) => (
-                            <div key={rIdx} className="flex items-center gap-1.5 text-[10px] text-white bg-white/5 px-2 py-1 rounded-md">
-                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: RESOURCE_COLORS_PALETTE[rIdx % 10] }}></span>
-                              {String(rec.name || '').substring(0, 25)}
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                          {/* Chart 1: Compromiso */}
-                          <div className="h-64 flex flex-col">
-                             <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest text-center mb-4">Recursos por Compromiso</h4>
-                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartDataCompromiso} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-                                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                                  <XAxis type="number" tick={{fill: '#888', fontSize: 10}} tickFormatter={(v) => `$${v}`} />
-                                  <YAxis dataKey="name" type="category" width={100} tick={{fill: '#ccc', fontSize: 9}} tickFormatter={(v) => String(v || '').substring(0, 15) + '...'} />
-                                  <Tooltip 
-                                    cursor={{fill: 'rgba(255,255,255,0.05)'}} 
-                                    contentStyle={{backgroundColor: '#1e1e1e', borderColor: '#333', borderRadius: '8px', color: '#fff'}}
-                                    formatter={(value: number) => [`$${value.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill`, 'Compromiso']}
-                                  />
-                                  <Bar dataKey="compromiso" radius={[0, 4, 4, 0]}>
-                                    {chartDataCompromiso.map((entry, index) => {
-                                      const colorIdx = allRecursos.findIndex(r => r.name === entry.name);
-                                      return <Cell key={`cell-${index}`} fill={RESOURCE_COLORS_PALETTE[colorIdx % 10] || 'rgba(255,255,255,0.2)'} />;
-                                    })}
-                                  </Bar>
-                                </BarChart>
-                             </ResponsiveContainer>
-                          </div>
-                          {/* Chart 2: Pago */}
-                          <div className="h-64 flex flex-col">
-                             <h4 className="text-xs font-mono text-secondary uppercase tracking-widest text-center mb-4">Recursos por Pago Efectivo</h4>
-                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartDataPago} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-                                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                                  <XAxis type="number" tick={{fill: '#888', fontSize: 10}} tickFormatter={(v) => `$${v}`} />
-                                  <YAxis dataKey="name" type="category" width={100} tick={{fill: '#ccc', fontSize: 9}} tickFormatter={(v) => String(v || '').substring(0, 15) + '...'} />
-                                  <Tooltip 
-                                    cursor={{fill: 'rgba(255,255,255,0.05)'}} 
-                                    contentStyle={{backgroundColor: '#1e1e1e', borderColor: '#333', borderRadius: '8px', color: '#fff'}}
-                                    formatter={(value: number) => [`$${value.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill`, 'Pago Efectivo']}
-                                  />
-                                  <Bar dataKey="pago" radius={[0, 4, 4, 0]}>
-                                    {chartDataPago.map((entry, index) => {
-                                      const colorIdx = allRecursos.findIndex(r => r.name === entry.name);
-                                      return <Cell key={`cell-${index}`} fill={RESOURCE_COLORS_PALETTE[colorIdx % 10] || color} />;
-                                    })}
-                                  </Bar>
-                                </BarChart>
-                             </ResponsiveContainer>
-                          </div>
-                        </div>
-                      </div>
-                      );
-                    })()}
-                  </div>
-                )
-             })}
-          </div>
-
-          <div className="flex flex-col items-center justify-center mt-16 pt-8 border-t border-white/10">
-             <h4 className="text-sm font-mono text-on-surface-variant uppercase tracking-widest mb-6">Totales Generales</h4>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
-                <div className="bg-white/5 backdrop-blur-sm rounded-[24px] p-6 border border-white/10 text-center flex flex-col justify-center">
-                   <p className="text-3xl font-bold font-display text-white mb-2">${gastosComprometido.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm text-on-surface-variant font-sans font-normal">mill</span></p>
-                   <p className="text-xs text-on-surface-variant uppercase tracking-widest font-bold">Total Compromiso</p>
-                </div>
-                <div className="bg-white/5 backdrop-blur-sm rounded-[24px] p-6 border border-white/10 border-b-4 border-b-secondary text-center flex flex-col justify-center">
-                   <p className="text-3xl font-bold font-display text-white mb-2">${gastosPagado.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm text-on-surface-variant font-sans font-normal">mill</span></p>
-                   <p className="text-xs text-secondary uppercase tracking-widest font-bold">Total Pago Efectivo</p>
-                </div>
-             </div>
-          </div>
-        </div>
-
-        {/* Breakdown row: Personal & Funcionamiento */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-           {/* Gastos de Personal Dynamic Equivalent */}
-           <div className="glass-card rounded-[32px] p-8 border border-white/5">
-              <h3 className="text-xl font-display font-bold text-white mb-8 text-center border-b border-white/10 pb-4">Gastos de Personal</h3>
-              <div className="space-y-4">
-                 {(nominaGroups.length > 0 ? nominaGroups.slice(0, 6) : [
-                   { name: 'PLANTA', value: 23680000000 },
-                   { name: 'OCASIONAL', value: 21773800000 },
-                   { name: 'ADMINISTRATIVO', value: 16126100000 },
-                   { name: 'CÁTEDRA POSGRADO', value: 2933000000 },
-                   { name: 'CÁTEDRA', value: 2159000000 },
-                   { name: 'SUPERNUMERARIO', value: 359700000 },
-                 ]).map((item, i) => {
-                    const valMill = item.value / 1e6;
-                    const maxValue = nominaGroups.length > 0 ? Math.max(...nominaGroups.map(g => g.value / 1e6)) : 23680.0;
-                    return (
-                      <div key={i} className="flex items-center gap-4">
-                         <span className="w-32 text-right text-[10px] font-bold text-on-surface-variant uppercase shrink-0 truncate" title={item.name}>{String(item.name || '')}</span>
-                         <div className="flex-1 flex items-center h-10 border-l border-white/10 pl-1 group">
-                            <div className="h-full bg-[#ffcc29] flex items-center relative transition-all group-hover:brightness-110" style={{ width: `${Math.max(1.5, (valMill / maxValue) * 100)}%` }}>
-                               <span className="absolute left-full ml-3 font-bold text-white text-sm whitespace-nowrap">
-                                 ${valMill.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill.
-                               </span>
-                            </div>
-                         </div>
-                      </div>
-                    )
-                 })}
-              </div>
-           </div>
-
-           {/* Análisis de Ejecución (Moved here) */}
-           <div className="glass-card rounded-[32px] p-8 border border-white/5 flex flex-col justify-center bg-[url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop')] bg-cover bg-center relative overflow-hidden group min-h-[350px]">
-             <div className="absolute inset-0 bg-black/80 group-hover:bg-black/70 transition-colors"></div>
-             <div className="relative z-10">
-                <h3 className="text-3xl font-display font-medium text-white mb-2">Análisis de<br/>Ejecución</h3>
-                <p className="text-sm text-gray-300 font-mono mb-8 max-w-xs">Informes detallados y consolidados de órdenes de compra, O.P.S y arrendamientos.</p>
-                <button className="bg-[#ffcc29] text-black font-bold uppercase tracking-widest text-xs px-6 py-3 rounded-full hover:bg-white transition-colors">Generar Reporte Completo</button>
-             </div>
-           </div>
-        </div>
-
-        {/* Gastos por Referencia - Full Width */}
-        <div className="mt-8 glass-card rounded-[32px] p-8 md:p-12 border border-white/10 glow-primary bg-[#1a1a1a]">
-           <h3 className="text-3xl font-display font-medium text-white mb-2 text-center uppercase tracking-wider">Gastos por Referencia</h3>
-           <p className="text-sm font-mono text-on-surface-variant text-center mb-12 mt-4">Compromiso y Pago Efectivo agrupado por referencia. Haz clic en un segmento para ver recursos asociados.</p>
-           
-           {(() => {
-              const refData = gastosReferenciasGroups.length > 0 ? gastosReferenciasGroups.slice(0, 15) : [
-                 { name: 'SERVICIOS PROFESIONALES', compromiso: 15400, pago: 12000, recursos: [] },
-                 { name: 'MANTENIMIENTO', compromiso: 8400, pago: 7200, recursos: [] }
-              ];
-              
-              if (refData.length === 0) return <div className="h-64 flex items-center justify-center text-on-surface-variant">No hay datos de referencia disponibles.</div>;
-
-              return (
-                 <div className="flex flex-col gap-6">
-                    {refData.map((ref, idx) => {
-                       const isExpanded = expandedGastoGroup === ref.name;
-                       const pctCompromiso = ref.compromiso > 0 ? (ref.pago / ref.compromiso) * 100 : 0;
-                       
-                       return (
-                         <div key={idx} className="bg-white/5 rounded-[24px] p-6 md:p-8 border border-white/10 transition-all duration-300 hover:bg-white/10">
-                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-6 cursor-pointer" onClick={() => setExpandedGastoGroup(isExpanded ? null : ref.name)}>
-                               <div className="flex-1">
-                                  <div className="flex items-center gap-3 mb-2">
-                                     <h4 className="text-xl font-bold text-white font-display">{ref.name}</h4>
-                                     <span className="text-[10px] bg-white/10 text-white px-2 py-0.5 rounded uppercase font-bold">{ref.recursos ? ref.recursos.length : 0} recursos</span>
-                                  </div>
-                               </div>
-                               <div className="flex items-center gap-6 md:gap-12">
-                                  <div className="text-right">
-                                     <span className="text-[10px] text-on-surface-variant uppercase tracking-widest block mb-1">Compromiso</span>
-                                     <span className="text-xl font-mono text-white">${ref.compromiso.toLocaleString('es-CO', {maximumFractionDigits:1})} <span className="text-xs">mill</span></span>
-                                  </div>
-                                  <div className="text-right">
-                                     <span className="text-[10px] text-on-surface-variant uppercase tracking-widest block mb-1">Pago Efectivo</span>
-                                     <span className="text-xl font-mono text-[#ffcc29]">${ref.pago.toLocaleString('es-CO', {maximumFractionDigits:1})} <span className="text-xs">mill</span></span>
-                                  </div>
-                                  <div className="w-20 text-right">
-                                     <span className="text-xs text-on-surface-variant uppercase tracking-widest block mb-1">Ejecución</span>
-                                     <span className="text-xl font-bold text-[#4ade80]">{pctCompromiso.toFixed(0)}%</span>
-                                  </div>
-                                  <div className="text-on-surface-variant bg-white/5 p-3 rounded-full hover:bg-white/10 transition">
-                                     {isExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-                                  </div>
-                               </div>
-                            </div>
-
-                            {isExpanded && ref.recursos && ref.recursos.length > 0 && (
-                               <div className="mt-8 pt-8 border-t border-white/10 grid grid-cols-1 lg:grid-cols-2 gap-12 animate-in slide-in-from-top-4 fade-in duration-300">
-                                  <div className="h-[300px]">
-                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={ref.recursos} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-                                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                                           <XAxis type="number" tick={{fill: '#888', fontSize: 10}} tickFormatter={(v) => `$${v}`} />
-                                           <YAxis dataKey="name" type="category" width={140} tick={{fill: '#ccc', fontSize: 10}} tickFormatter={(v: any) => String(v || '').substring(0, 22) + '...'} />
-                                           <Tooltip 
-                                             cursor={{fill: 'rgba(255,255,255,0.05)'}} 
-                                             contentStyle={{backgroundColor: '#1e1b21', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px'}}
-                                             formatter={(value: number, name: string) => [`$${value.toLocaleString('es-CO', {maximumFractionDigits:1})} mill`, name === 'compromiso' ? 'Compromiso' : 'Pago Efectivo']}
-                                           />
-                                           <Legend wrapperStyle={{fontSize: '12px', paddingTop: '10px'}} />
-                                           <Bar dataKey="compromiso" name="Compromiso" fill="rgba(255,204,41,0.3)" radius={[0, 4, 4, 0]} />
-                                           <Bar dataKey="pago" name="Pago Efectivo" fill="#ffcc29" radius={[0, 4, 4, 0]} />
-                                        </BarChart>
-                                     </ResponsiveContainer>
-                                  </div>
-                                  <div className="flex flex-col justify-center">
-                                     <h5 className="text-sm font-mono text-on-surface-variant uppercase tracking-widest mb-6">Desglose de Recursos</h5>
-                                     <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-4">
-                                        {ref.recursos.map((rec: any, rIdx: number) => {
-                                           const recPct = rec.compromiso > 0 ? (rec.pago / rec.compromiso) * 100 : 0;
-                                           return (
-                                           <div key={rIdx} className="bg-black/40 p-4 rounded-xl border border-white/5">
-                                              <p className="text-base text-white font-medium mb-3 truncate" title={rec.name}>{String(rec.name || '')}</p>
-                                              <div className="grid grid-cols-3 gap-4 text-sm font-mono items-center">
-                                                 <div className="flex flex-col">
-                                                    <span className="text-[10px] text-on-surface-variant uppercase">Compromiso</span>
-                                                    <span className="text-white">${rec.compromiso.toLocaleString('es-CO', {maximumFractionDigits:1})}</span>
-                                                 </div>
-                                                 <div className="flex flex-col">
-                                                    <span className="text-[10px] text-on-surface-variant uppercase">Pago</span>
-                                                    <span className="text-[#ffcc29]">${rec.pago.toLocaleString('es-CO', {maximumFractionDigits:1})}</span>
-                                                 </div>
-                                                 <div className="flex flex-col text-right">
-                                                    <span className="text-[10px] text-on-surface-variant uppercase">Eje.</span>
-                                                    <span className="text-[#4ade80]">{recPct.toFixed(1)}%</span>
-                                                 </div>
-                                              </div>
-                                              {/* Mini progress bar */}
-                                              <div className="w-full h-1.5 bg-white/5 rounded-full mt-3 overflow-hidden">
-                                                 <div className="h-full bg-[#ffcc29] rounded-full" style={{width: `${Math.min(100, recPct)}%`}}></div>
-                                              </div>
-                                           </div>
-                                        )})}
-                                     </div>
-                                  </div>
-                               </div>
-                            )}
-                         </div>
-                       );
-                    })}
-                 </div>
-              );
-           })()}
-        </div>
+            {/* Totales Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 pt-10 border-t border-white/10 z-10 relative max-w-5xl mx-auto">
+               <div className="bg-white/5 backdrop-blur-md rounded-[24px] p-6 border border-white/10 text-center hover:bg-white/10 transition-colors duration-300">
+                  <p className="text-3xl font-display font-bold text-white mb-2">${(313365.6).toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm font-sans font-normal text-on-surface-variant">mill.</span></p>
+                  <p className="text-xs text-on-surface-variant font-mono uppercase tracking-widest italic">Apropiacion</p>
+               </div>
+               <div className="bg-white/5 backdrop-blur-md rounded-[24px] p-6 border border-white/10 text-center hover:bg-white/10 transition-colors duration-300">
+                  <p className="text-3xl font-display font-bold text-white mb-2">${(82530.2).toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm font-sans font-normal text-on-surface-variant">mill.</span></p>
+                  <p className="text-xs text-on-surface-variant font-mono uppercase tracking-widest italic">Compromiso</p>
+               </div>
+               <div className="bg-white/5 backdrop-blur-md rounded-[24px] p-6 border border-white/10 text-center border-b-4 border-b-primary-container hover:bg-white/10 transition-colors duration-300">
+                  <p className="text-3xl font-display font-bold text-white mb-2">${(82530.2).toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm font-sans font-normal text-on-surface-variant">mill.</span></p>
+                  <p className="text-xs text-on-surface-variant font-mono uppercase tracking-widest italic text-primary-container">Total Pago</p>
+               </div>
+            </div>
+         </div>
       </div>
     </div>
   );
