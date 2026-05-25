@@ -443,13 +443,13 @@ export function HistoricalScreen({ onNavigate }: HistoricalScreenProps) {
                   {picYears.map(year => {
                      const totalByYr = picSummary.find(s => s.name === year)?.totalPIC || 0;
                      return (
-                        <div key={year} className="bg-white/5 border border-white/10 rounded-2xl p-6 transition hover:bg-white/10">
-                           <div className="flex justify-between items-center mb-2">
-                              <span className="text-xl font-bold text-white font-display">{year}</span>
-                              <TrendingUp size={24} className="text-[#7bd0ff] opacity-50" />
+                        <div key={year} className="bg-white/5 border border-white/10 rounded-2xl p-4 transition hover:bg-white/10">
+                           <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm font-bold text-white font-display">{year}</span>
+                              <TrendingUp size={16} className="text-[#7bd0ff] opacity-50" />
                            </div>
-                           <p className="text-sm font-mono text-on-surface-variant uppercase tracking-widest mb-1">Total PIC</p>
-                           <p className="text-2xl font-mono text-white">${(totalByYr / 1e6).toLocaleString('es-CO', {maximumFractionDigits:1})} <span className="text-xs text-on-surface-variant">Mill.</span></p>
+                           <p className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest mb-1">Total PIC</p>
+                           <p className="text-base font-mono text-white">${(totalByYr / 1e6).toLocaleString('es-CO', {maximumFractionDigits:1})} <span className="text-[10px] text-on-surface-variant">Mill.</span></p>
                         </div>
                      )
                   })}

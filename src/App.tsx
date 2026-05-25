@@ -10,14 +10,20 @@ import { RepositoryScreen } from './screens/RepositoryScreen';
 import { ExportReportScreen } from './screens/ExportReportScreen';
 import { NominaScreen } from './screens/NominaScreen';
 import { PosgradosScreen } from './screens/PosgradosScreen';
+import { CoverScreen } from './screens/CoverScreen';
+import { AssistantScreen } from './screens/AssistantScreen';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState('dashboard');
+  const [currentScreen, setCurrentScreen] = useState('cover');
   
   const handleNavigate = (screen: string) => {
     setCurrentScreen(screen);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  if (currentScreen === 'cover') {
+    return <CoverScreen onNavigate={handleNavigate} />;
+  }
 
   return (
     <Layout currentScreen={currentScreen} onNavigate={handleNavigate}>
@@ -31,6 +37,7 @@ export default function App() {
       {currentScreen === 'reports' && <ExportReportScreen onNavigate={handleNavigate} />}
       {currentScreen === 'nomina' && <NominaScreen onNavigate={handleNavigate} />}
       {currentScreen === 'posgrados' && <PosgradosScreen onNavigate={handleNavigate} />}
+      {currentScreen === 'assistant' && <AssistantScreen />}
     </Layout>
   );
 }

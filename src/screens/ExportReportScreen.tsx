@@ -148,21 +148,57 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
         </div>
 
         <div className="space-y-10 font-serif leading-relaxed">
-           <section>
-             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-               <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full text-xs print:custom-print-bg">1</span>
-               Análisis de Ingresos y Recaudo
+           <section className="mb-8">
+             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+               Resumen Ejecutivo
              </h2>
              <p className="text-gray-800 text-justify mb-4">
-               Durante el periodo evaluado (con corte a Abril 2026), el recaudo institucional ascendió a la suma de <strong>${ingresosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones de pesos</strong>. Este valor se compone en su mayoría por las transferencias directas y los recursos propios generados a través de las operaciones ordinarias de la universidad.
+               El presente informe tiene como propósito analizar el comportamiento financiero de la Universidad Pedagógica y Tecnológica de Colombia (UPTC) con corte al <strong>30 de abril de 2026</strong>. Se examina la incorporación y apropiación de los rubros de gasto conforme a lo establecido en los catálogos presupuestales No. 14 y 15.
+             </p>
+           </section>
+
+           <section className="mb-8">
+             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+               Metodología de Análisis
+             </h2>
+             <p className="text-gray-800 text-justify mb-4">
+               Una vez consolidados los registros de ingresos y gastos de UPTC, se procede a su clasificación y organización conforme a las categorías definidas en el Catálogo Presupuestal vigente. Este proceso permite estructurar la información financiera de manera homogénea y facilitar su análisis.
+             </p>
+             <p className="text-gray-800 text-justify mb-4">
+               Los ingresos se asignan a los conceptos correspondientes según el tipo de recurso, mientras que los gastos se agrupan en los rubros de Gastos de Personal, Gastos de Funcionamiento e Inversión. Posteriormente, se realiza un análisis de cada componente, teniendo en cuenta la unidad ejecutora y el recurso fuente de financiación asociado, lo cual permite una adecuada interpretación del comportamiento financiero institucional.
+             </p>
+             <p className="text-gray-800 text-justify mb-4">
+               La información financiera se clasifica bajo la estructura del Catálogo Presupuestal, considerando los siguientes criterios:
+             </p>
+             <ul className="list-disc pl-5 space-y-2 text-gray-800 text-justify">
+                <li><strong>Ingresos:</strong> Identificados bajo 18 tipos de recursos, excluyendo para este consolidado los correspondientes a Regalías (R15, SSF) y UNISALUD (R50).</li>
+                <li><strong>Gastos:</strong> Agrupados en Gastos de Personal, Gastos de Funcionamiento e Inversión.</li>
+                <li><strong>Procesamiento de la información:</strong> Los datos son extraídos del sistema GOOBI, lo que garantiza la trazabilidad entre el aforo inicial y el recaudo efectivo, así como la consistencia de los registros presupuestales y financieros.</li>
+             </ul>
+           </section>
+
+           <section>
+             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+               Análisis de Ingresos
+             </h2>
+             <p className="text-gray-800 text-justify mb-4">
+               A continuación, se presenta el análisis comparativo entre el aforo y el recaudo, clasificado por tipo de recurso, con corte al <strong>30 de abril</strong>.
+             </p>
+             <p className="text-gray-800 text-justify mb-4">
+               El recaudo total de la Universidad Pedagógica y Tecnológica de Colombia asciende a <strong>${ingresosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong>, lo que representa una ejecución del <strong>37,8 %</strong> frente al presupuesto aforado de <strong>$526.515,1 millones</strong>.
+             </p>
+             <p className="text-gray-800 text-justify mb-4">
+               Del total recaudado, <strong>$25.958,7 millones</strong> corresponden a recursos del balance, el <strong>13%</strong> del ingreso.
              </p>
              
              <div className="flex flex-col sm:flex-row gap-6 mt-6 items-center">
                 <div className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded text-sm text-gray-700 w-full">
                    <ul className="list-disc pl-5 space-y-2">
-                     {ingresosData.map((ing, idx) => (
-                       <li key={idx}><strong>{ing.name}:</strong> ${ing.recaudo.toLocaleString('es-CO', {maximumFractionDigits: 1})} M</li>
-                     ))}
+                     <li><strong>Aportes de la Nación:</strong> $125.518,3 M (72,4% del total de ingresos)</li>
+                     <li><strong>Matrículas Pregrado y Otras Rentas:</strong> $9.200,1 M</li>
+                     <li><strong>Posgrados, Convenios y Extensión:</strong> $36.931,0 M</li>
+                     <li><strong>Estampilla Pro UPTC:</strong> $1.605,1 M</li>
+                     <li><strong>Recursos del balance:</strong> $25.958,7 M</li>
                    </ul>
                 </div>
                 <div className="w-full sm:w-64 h-48">
@@ -181,12 +217,14 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
            </section>
 
            <section>
-             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-               <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full text-xs print:custom-print-bg">2</span>
-               Ejecución de Gastos e Inversión
+             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+               Análisis de Gasto
              </h2>
              <p className="text-gray-800 text-justify mb-4">
-               Los gastos totales acumulados para este mismo correlacionan una ejecución de pagos efectivos por valor de <strong>${gastosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong>. La estructura del gasto prioriza la carga prestacional y el funcionamiento misional de la universidad.
+               Con corte al <strong>30 de abril</strong> y conforme a lo establecido en el Catálogo Presupuestal No. 14, que define la estructura del gasto, se incluyen los gastos de personal (2.1.1), los gastos de funcionamiento (2.1.2) y los gastos de inversión (2.3), entre otros conceptos.
+             </p>
+             <p className="text-gray-800 text-justify mb-4">
+               El pago efectivo alcanza un valor total de <strong>${gastosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong> frente a una apropiación total de <strong>$526.515,1 millones</strong>. Se observa que la mayor participación corresponde a los gastos de personal, con <strong>$82.530,2 millones</strong>. Es importante mencionar de igual manera que a la fecha de corte de este informe el compromiso de los gastos de la universidad corresponde a <strong>$199.818,9 millones</strong>.
              </p>
              
              <div className="h-64 mt-6">
@@ -207,12 +245,11 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
            </section>
 
            <section>
-             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-               <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full text-xs print:custom-print-bg">3</span>
-               Gastos de Personal (Nómina)
+             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+               Gastos de Personal (2.1.1)
              </h2>
              <p className="text-gray-800 text-justify mb-4">
-               La carga de la nómina se detalla a continuación de manera general por tipo de vinculación.
+               Los gastos clasificados en el presupuesto como 2.1.1 Gastos de Personal registran un pago total de <strong>$82.530,2 millones</strong>, equivalente al <strong>22,3 %</strong> de la ejecución. El mayor volumen de pagos corresponde al personal docente de planta, alcanzando un valor de <strong>$23.680,0 millones</strong>; en segundo lugar, se encuentra el personal docente ocasional, con pagos por <strong>$21.773,8 millones</strong>.
              </p>
              <div className="flex flex-wrap gap-4">
                {nominaData.slice(0, 4).map((nom, idx) => (
@@ -224,42 +261,24 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
              </div>
            </section>
 
-           <section>
-             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-               <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full text-xs print:custom-print-bg">4</span>
-               Relación Ingresos vs Gastos
+           <section className="mb-8">
+             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+               Gastos de Funcionamiento e Inversión
              </h2>
-             <p className="text-gray-800 text-justify">
-               Al contrastar un nivel de recaudos de ${ingresosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones frente a las salidas consolidadas pagadas de ${gastosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones, se percibe un margen de <strong>${margenTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong> al cierre actual, necesario para apalancar compromisos en curso proyectados en trimestres posteriores.
+             <p className="text-gray-800 text-justify mb-4">
+               <strong>Gastos de Funcionamiento (2.1.2):</strong> Los pagos efectivos a la fecha de corte ascienden a un total de <strong>$23.261,9 millones</strong>. La mayor participación se concentra en el rubro de contratos, con un valor de <strong>$9.174,6 millones</strong>. El compromiso de estos gastos asciende a <strong>$102.120,1 millones</strong>.
              </p>
-           </section>
-
-           <section>
-             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-               <span className="bg-black text-white w-6 h-6 inline-flex items-center justify-center rounded-full text-xs print:custom-print-bg">5</span>
-               Conclusiones y Recomendaciones
-             </h2>
-             <p className="text-gray-800 text-justify mb-2">
-               Se concluye que el comportamiento de la Universidad presenta un panorama presupuestal sostenible. 
+             <p className="text-gray-800 text-justify mb-4">
+               <strong>Gastos de Inversión (2.3):</strong> El componente de inversión presenta un pago efectivo de <strong>$2.986,9 millones</strong>, equivalente a una ejecución del <strong>16,9%</strong>. A la fecha de corte, los gastos de inversión registran un compromiso de <strong>$13.717,4 millones</strong>.
              </p>
-             <ul className="list-disc pl-5 space-y-2 text-gray-800 text-justify text-sm">
-                <li>Fortalecer las estrategias para el recaudo acelerado de la cartera vigente.</li>
-                <li>Hacer seguimiento quincenal a la ejecución de cuentas de inversión.</li>
-                <li>Evaluar rigurosamente las proyecciones de gasto frente al marco del aforo aprobado.</li>
-             </ul>
            </section>
 
            {/* Signatures */}
-           <div className="pt-20 pb-10 flex justify-between px-10">
-              <div className="text-center w-48">
+           <div className="pt-20 pb-10 flex flex-col items-center">
+              <div className="text-center w-64">
                  <div className="border-t border-black pt-2 w-full"></div>
-                 <p className="font-bold font-sans text-sm">Dirección Financiera</p>
-                 <p className="text-xs font-sans text-gray-500">Revisó</p>
-              </div>
-              <div className="text-center w-48">
-                 <div className="border-t border-black pt-2 w-full"></div>
-                 <p className="font-bold font-sans text-sm">Rectoría UPTC</p>
-                 <p className="text-xs font-sans text-gray-500">Aprobó</p>
+                 <p className="font-bold font-sans text-sm mt-2">LUIS ÁNGEL LARA GONZÁLEZ</p>
+                 <p className="text-xs font-sans text-gray-500">Vicerrector Administrativo y Financiero</p>
               </div>
            </div>
         </div>

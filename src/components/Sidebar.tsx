@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { cn } from '../lib/utils';
 import {
   LayoutDashboard,
@@ -8,16 +9,19 @@ import {
   Settings,
   FolderOpen,
   Users,
-  GraduationCap
+  GraduationCap,
+  Bot
 } from 'lucide-react';
 
 interface SidebarProps {
-  isThin: boolean;
   currentScreen: string;
   onNavigate: (s: string) => void;
 }
 
-export function Sidebar({ isThin, currentScreen, onNavigate }: SidebarProps) {
+export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isThin = !isHovered;
+
   const getNavClasses = (screen: string) => {
     const isActive = currentScreen === screen;
     if (isThin) {
@@ -42,10 +46,11 @@ export function Sidebar({ isThin, currentScreen, onNavigate }: SidebarProps) {
          screen === 'historical' ? 'Histórico' :
          screen === 'nomina' ? 'Nómina' :
          screen === 'posgrados' ? 'Posgrados' :
-         screen === 'budget' ? 'Presupuesto' :
+         screen === 'budget' ? 'Alertas' :
          screen === 'predictive' ? 'Proyección' :
          screen === 'reports' ? 'Reportes' :
          screen === 'repository' ? 'Repositorio' :
+         screen === 'assistant' ? 'Asistente IA' :
          'Configuración'}
       </span>}
     </button>
@@ -53,18 +58,20 @@ export function Sidebar({ isThin, currentScreen, onNavigate }: SidebarProps) {
 
   return (
     <aside
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
         'fixed left-0 top-0 h-full flex flex-col z-40 bg-surface-container-low/50 backdrop-blur-xl border-r border-white/5 transition-all duration-300',
         isThin ? 'w-20 items-center py-4' : 'w-64 p-4'
       )}
     >
-      <div className={cn('mb-10', isThin ? 'mt-0' : 'mt-4 px-2 flex items-center gap-3')}>
+      <div className={cn('mb-10', isThin ? 'mt-0' : 'mt-4 px-2 flex items-center gap-3')} onClick={() => onNavigate('cover')}>
         {isThin ? (
-           <img src="https://www.uptc.edu.co/sitio/export/sites/default/portal/sitios/universidad/rectoria/comunicaciones/.content/doc/logos/uptc-blanco.png" alt="UPTC Logo" className="w-10 h-10 object-contain mx-auto" />
+           <img src="https://www.uptc.edu.co/sitio/export/sites/default/portal/sitios/universidad/rectoria/comunicaciones/.content/doc/logos/uptc-blanco.png" alt="UPTC Logo" className="w-10 h-10 object-contain mx-auto cursor-pointer hover:scale-110 transition-transform" />
         ) : (
           <>
-            <img src="https://www.uptc.edu.co/sitio/export/sites/default/portal/sitios/universidad/rectoria/comunicaciones/.content/doc/logos/uptc-blanco.png" alt="UPTC Logo" className="w-10 object-contain" />
-            <div>
+            <img src="https://www.uptc.edu.co/sitio/export/sites/default/portal/sitios/universidad/rectoria/comunicaciones/.content/doc/logos/uptc-blanco.png" alt="UPTC Logo" className="w-10 object-contain cursor-pointer hover:scale-110 transition-transform" />
+            <div className="cursor-pointer">
               <h1 className="font-headline-lg text-lg text-primary-container leading-none">UPTC</h1>
               <p className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant opacity-70">Admin Financiero</p>
             </div>
@@ -81,22 +88,8 @@ export function Sidebar({ isThin, currentScreen, onNavigate }: SidebarProps) {
         <IconWrapper icon={Wallet} screen="budget" />
         <IconWrapper icon={FileText} screen="reports" />
         <IconWrapper icon={FolderOpen} screen="repository" />
+        <IconWrapper icon={Bot} screen="assistant" />
       </nav>
-
-      <div className={cn('mt-auto', isThin ? 'mb-6 flex justify-center' : 'px-2 pb-4')}>
-        {isThin ? (
-          <button onClick={() => onNavigate('settings')} className={getNavClasses('settings')}>
-            <Settings size={24} />
-          </button>
-        ) : (
-          <>
-            <IconWrapper icon={Settings} screen="settings" />
-            <button className="w-full mt-4 py-3 bg-primary-container text-on-primary-container rounded-xl font-bold flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all text-sm">
-                Nueva Solicitud
-            </button>
-          </>
-        )}
-      </div>
     </aside>
   );
 }

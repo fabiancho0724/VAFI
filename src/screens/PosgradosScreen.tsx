@@ -251,8 +251,12 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
             </div>
             <h3 className="text-xs font-semibold text-[#ffcc29] uppercase tracking-widest mb-1">Recaudo Total</h3>
             <div className="text-3xl font-display font-bold text-white mb-2">{formatCurrency(kpis.totalGeneral)}</div>
+            <div className="text-[10px] text-on-surface-variant uppercase tracking-widest bg-white/5 inline-flex items-center px-2 py-0.5 rounded-md mb-2">
+              <Users size={12} className="mr-1.5" />
+              {kpis.totalEstudiantes} ESTUDIANTES
+            </div>
             
-            <div className="space-y-2 mt-4">
+            <div className="space-y-2 mt-2">
                <div className="flex justify-between items-center bg-black/40 rounded px-2 py-1">
                   <span className="text-[10px] text-white/60">Matrícula Neta</span>
                   <span className="text-xs text-[#4ade80] font-bold">{formatCurrency(kpis.totalNeto)}</span>
@@ -270,34 +274,28 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
           {/* Top 3 Estudiantes Bar */}
           <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col">
-             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xs font-semibold text-white">Top 3 Estudiantes</h3>
-                <MoreHorizontal className="w-4 h-4 text-on-surface-variant" />
+             <div className="flex items-center gap-2 mb-6 bg-[#1e293b] p-2 rounded-lg">
+                <div className="w-2 h-2 rounded-full bg-[#ffcc29] animate-pulse"></div>
+                <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Top 3 Programas x Estudiantes</h3>
              </div>
-             <div className="flex-1 min-h-[150px]">
-               <ResponsiveContainer width="100%" height="100%">
-                 <BarChart data={top3ProgramasEstudiantes} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
-                   <XAxis type="number" hide />
-                   <YAxis dataKey="name" type="category" hide />
-                   <RechartsTooltip 
-                      cursor={{fill: 'rgba(255,255,255,0.05)'}} 
-                      contentStyle={{backgroundColor: '#000', border: 'none', borderRadius: '8px', fontSize: '12px'}}
-                   />
-                   <Bar dataKey="estudiantes" radius={[0, 4, 4, 0]} barSize={12}>
-                     {top3ProgramasEstudiantes.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
-                     ))}
-                   </Bar>
-                 </BarChart>
-               </ResponsiveContainer>
-             </div>
-             <div className="mt-2 space-y-2">
-                {top3ProgramasEstudiantes.map((p, i) => (
-                  <div key={i} className="flex items-center justify-between text-[10px]">
-                     <span className="text-white/70 truncate max-w-[150px]" title={p.name}>{p.name}</span>
-                     <span className="font-mono text-white font-bold" style={{color: BAR_COLORS[i % BAR_COLORS.length]}}>{p.estudiantes}</span>
-                  </div>
-                ))}
+             <div className="flex-1 flex flex-col justify-center gap-4">
+                {top3ProgramasEstudiantes.map((p, i) => {
+                  const maxEst = top3ProgramasEstudiantes[0]?.estudiantes || 1;
+                  const pct = Math.max(2, (p.estudiantes / maxEst) * 100);
+                  const color = BAR_COLORS[i % BAR_COLORS.length];
+                  return (
+                    <div key={i} className="flex flex-col gap-1.5 group">
+                       <div className="flex justify-between items-end text-[10px]">
+                          <span className="text-white/80 truncate max-w-[180px] font-medium group-hover:text-white transition-colors" title={p.name}>{p.name}</span>
+                          <span className="font-mono text-white font-bold text-[11px] px-1.5 py-0.5 rounded bg-white/5">{p.estudiantes}</span>
+                       </div>
+                       <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full shadow-[0_0_8px_rgba(255,255,255,0.1)] transition-all duration-500 group-hover:brightness-125" style={{ width: `${pct}%`, backgroundColor: color }}></div>
+                       </div>
+                    </div>
+                  );
+                })}
+                {top3ProgramasEstudiantes.length === 0 && <div className="text-center text-xs text-white/40">Sin datos</div>}
              </div>
           </div>
         </div>
@@ -467,58 +465,86 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       </div>
 
       {/* Bottom Grid for Demographics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-5 shadow-2xl flex items-center justify-between">
-           <div className="flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+        <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
+           <div className="flex-1 w-full">
              <h3 className="text-sm font-semibold text-white">Flexibilización VAFI</h3>
              <p className="text-[10px] text-on-surface-variant mt-1">Estudiantes con opciones de 2 cuotas vs 1 cuota.</p>
-             <div className="mt-4 space-y-2">
-               <div className="flex items-center gap-2 text-xs">
-                 <span className="w-3 h-3 rounded-full bg-[#ffcc29]"></span>
-                 <span className="text-white/80">2 Cuotas (Flex):</span>
-                 <span className="font-bold text-white">{kpis.estudiantesFlex}</span>
+             <div className="mt-6 space-y-3">
+               <div className="flex items-center justify-between text-xs">
+                 <div className="flex items-center gap-2">
+                   <span className="w-3 h-3 rounded-full bg-[#ffcc29]"></span>
+                   <span className="text-white/80">2 Cuotas (Flex)</span>
+                 </div>
+                 <div className="text-right">
+                   <span className="font-bold text-white mr-2">{kpis.estudiantesFlex}</span>
+                   <span className="font-mono text-[10px] text-[#ffcc29]">
+                     {kpis.totalEstudiantes > 0 ? ((kpis.estudiantesFlex / kpis.totalEstudiantes) * 100).toFixed(1) : 0}%
+                   </span>
+                 </div>
                </div>
-               <div className="flex items-center gap-2 text-xs">
-                 <span className="w-3 h-3 rounded-full bg-[#334155]"></span>
-                 <span className="text-white/80">1 Cuota (Única):</span>
-                 <span className="font-bold text-white">{kpis.totalEstudiantes - kpis.estudiantesFlex}</span>
+               <div className="flex items-center justify-between text-xs">
+                 <div className="flex items-center gap-2">
+                   <span className="w-3 h-3 rounded-full bg-[#334155]"></span>
+                   <span className="text-white/80">1 Cuota (Única)</span>
+                 </div>
+                 <div className="text-right">
+                   <span className="font-bold text-white mr-2">{kpis.totalEstudiantes - kpis.estudiantesFlex}</span>
+                   <span className="font-mono text-[10px] text-[#94a3b8]">
+                     {kpis.totalEstudiantes > 0 ? (((kpis.totalEstudiantes - kpis.estudiantesFlex) / kpis.totalEstudiantes) * 100).toFixed(1) : 0}%
+                   </span>
+                 </div>
                </div>
              </div>
            </div>
-           <div className="w-[120px] h-[120px]">
+           <div className="w-[140px] h-[140px] shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={flexibilizacionData} dataKey="value" cx="50%" cy="50%" innerRadius={35} outerRadius={50} stroke="none">
+                  <Pie data={flexibilizacionData} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={65} stroke="none">
                   </Pie>
-                  <RechartsTooltip formatter={(val: number) => [val, 'Estudiantes']} contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px'}} />
+                  <RechartsTooltip formatter={(val: number) => [val, 'Estudiantes']} contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '11px', borderRadius: '8px'}} />
                 </PieChart>
               </ResponsiveContainer>
            </div>
         </div>
 
-        <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-5 shadow-2xl flex items-center justify-between">
-           <div className="flex-1">
+        <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
+           <div className="flex-1 w-full">
              <h3 className="text-sm font-semibold text-white">Tipo de Inscripción</h3>
              <p className="text-[10px] text-on-surface-variant mt-1">Opción de Grado vs Inscripción Regular.</p>
-             <div className="mt-4 space-y-2">
-               <div className="flex items-center gap-2 text-xs">
-                 <span className="w-3 h-3 rounded-full bg-[#4ade80]"></span>
-                 <span className="text-white/80">Opción Grado:</span>
-                 <span className="font-bold text-white">{kpis.estudiantesOpGrado}</span>
+             <div className="mt-6 space-y-3">
+               <div className="flex items-center justify-between text-xs">
+                 <div className="flex items-center gap-2">
+                   <span className="w-3 h-3 rounded-full bg-[#4ade80]"></span>
+                   <span className="text-white/80">Opción Grado</span>
+                 </div>
+                 <div className="text-right">
+                   <span className="font-bold text-white mr-2">{kpis.estudiantesOpGrado}</span>
+                   <span className="font-mono text-[10px] text-[#4ade80]">
+                     {kpis.totalEstudiantes > 0 ? ((kpis.estudiantesOpGrado / kpis.totalEstudiantes) * 100).toFixed(1) : 0}%
+                   </span>
+                 </div>
                </div>
-               <div className="flex items-center gap-2 text-xs">
-                 <span className="w-3 h-3 rounded-full bg-[#334155]"></span>
-                 <span className="text-white/80">Regular:</span>
-                 <span className="font-bold text-white">{kpis.estudiantesRegulares}</span>
+               <div className="flex items-center justify-between text-xs">
+                 <div className="flex items-center gap-2">
+                   <span className="w-3 h-3 rounded-full bg-[#334155]"></span>
+                   <span className="text-white/80">Regular</span>
+                 </div>
+                 <div className="text-right">
+                   <span className="font-bold text-white mr-2">{kpis.estudiantesRegulares}</span>
+                   <span className="font-mono text-[10px] text-[#94a3b8]">
+                     {kpis.totalEstudiantes > 0 ? ((kpis.estudiantesRegulares / kpis.totalEstudiantes) * 100).toFixed(1) : 0}%
+                   </span>
+                 </div>
                </div>
              </div>
            </div>
-           <div className="w-[120px] h-[120px]">
+           <div className="w-[140px] h-[140px] shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={opcionGradoData} dataKey="value" cx="50%" cy="50%" innerRadius={35} outerRadius={50} stroke="none">
+                  <Pie data={opcionGradoData} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={65} stroke="none">
                   </Pie>
-                  <RechartsTooltip formatter={(val: number) => [val, 'Estudiantes']} contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px'}} />
+                  <RechartsTooltip formatter={(val: number) => [val, 'Estudiantes']} contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '11px', borderRadius: '8px'}} />
                 </PieChart>
               </ResponsiveContainer>
            </div>

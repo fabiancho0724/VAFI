@@ -26,18 +26,6 @@ export function Topnav({ isThin, currentScreen, onNavigate }: TopnavProps) {
           />
         </div>
       </div>
-      
-      <div className="flex items-center gap-4">
-        <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-primary-container/30 ml-2">
-            <img 
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop" 
-              alt="Profile" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-      </div>
     </header>
   );
 }
