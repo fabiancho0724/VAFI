@@ -3,34 +3,44 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Simulated Knowledge Base
-const knowledgeBase = {
-  ingresos: [
-    { concepto: "Recursos propios", valor: 1540000000, periodo: "2024-Q1" },
-    { concepto: "Transferencias Nacionales", valor: 8500000000, periodo: "2024-Q1" },
-    { concepto: "Convenios Especiales", valor: 320000000, periodo: "2024-Q1" }
-  ],
-  egresos_rubros: [
-    { rubro: "Nómina Docente", presupuesto: 5000000000, ejecutado: 4800000000, saldo: 200000000 },
-    { rubro: "Nómina Administrativa", presupuesto: 2000000000, ejecutado: 1950000000, saldo: 50000000 },
-    { rubro: "Mantenimiento Infraestructura", presupuesto: 800000000, ejecutado: 400000000, saldo: 400000000 },
-    { rubro: "Investigación", presupuesto: 1200000000, ejecutado: 900000000, saldo: 300000000 }
-  ],
-  datos_academicos: [
-    { programa: "Maestría en Educación", matriculados: 120, cohorte: "2024-I" },
-    { programa: "Especialización en Finanzas", matriculados: 85, cohorte: "2024-I" },
-    { programa: "Doctorado en Ingeniería", matriculados: 15, cohorte: "2024-I" }
-  ]
-};
+let realDataText = "";
 
-const SYSTEM_INSTRUCTION = `Eres "Centavito Asistente VAFI", un asistente virtual especializado en análisis financiero e institucional de la Universidad Pedagógica y Tecnológica de Colombia (UPTC), basado en una arquitectura RAG. Tu responsabilidad es responder consultas sobre los ingresos, egresos (rubros) y datos académicos/poblacionales del proyecto utilizando ÚNICAMENTE la información interna proporcionada en formato estructurado (json) en el prompt.
+async function fetchRealData() {
+  console.log("Fetching real CSV data for knowledge base...");
+  try {
+    const urls = [
+      { name: "Ingresos", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/25bab426e66c86cc3e877f13a848afe2fc93b019/Ingresos.csv" },
+      { name: "Gastos", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/8ea7abfbc3d504ea4280d246aa5e02dcc82b59f9/Gastos.csv" },
+      { name: "Nomina", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Nomina.csv" },
+      { name: "Estudiantes Posgrados", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/5fd78e804688cdca1509f82da5f766b232d62c98/Resumen%20Posgrados.csv" },
+      { name: "Ingresos Posgrados", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/5fd78e804688cdca1509f82da5f766b232d62c98/Resumen%20Posgrados%20ingresos.csv" }
+    ];
+
+    let combined = "";
+    for (const {name, url} of urls) {
+      const res = await fetch(url);
+      if (res.ok) {
+        const text = await res.text();
+        // Limit string to prevent out of memory or context if too huge (unlikely but safe)
+        combined += `--- INICIO REPORTE: ${name} ---\n${text.substring(0, 150000)}\n--- FIN REPORTE: ${name} ---\n\n`;
+      }
+    }
+    realDataText = combined;
+    console.log("Real CSV data loaded successfully.");
+  } catch (err) {
+    console.error("Error fetching CSV knowledge base:", err);
+  }
+}
+
+function getSystemInstruction() {
+  return `Eres "Centavito Asistente VAFI", un asistente virtual especializado en análisis financiero e institucional de la Universidad Pedagógica y Tecnológica de Colombia (UPTC), basado en una arquitectura RAG. Tu responsabilidad es responder consultas sobre los ingresos, egresos (rubros) y datos académicos/poblacionales del proyecto utilizando ÚNICAMENTE la información en formato de reportes (CSV) que proveemos.
 
 REGLAS DE ORO:
-1. NO ALUCINAR. Si el usuario pregunta por un dato (ingreso, rubro, o programa) que no existe explícitamente en el contexto proporcionado, debes responder ESTRICTAMENTE con: "Lo siento, ese dato específico no se encuentra registrado en la información actual del proyecto. Por favor, verifica el nombre del rubro o programa."
+1. NO ALUCINAR. Si el usuario pregunta por un dato que no existe explícitamente en el contexto proporcionado, debes responder ESTRICTAMENTE con: "Lo siento, ese dato específico no se encuentra registrado en la información actual del proyecto. Por favor, verifica tu consulta."
 2. Proporciona las respuestas de forma clara. Si te piden varios datos, utilizar listas y resaltar los valores numéricos usando **negritas**.
-3. Formatea el dinero de forma legible (ej. $1.540.000.000).
+3. Formatea el dinero de forma legible (ej. $1.540.000.000). Al leer datos del CSV ten cuenta que pueden venir con formato u otras estructuras, realiza las sumas y agrupaciones que sean necesarias para dar una respuesta correcta.
 4. CREACIÓN DE GRÁFICAS: Si el usuario pide visualizar la información gráficamente (o pide una gráfica de pastel o barras), DEBES incluir un bloque de código JSON con el lenguaje "json-chart" al final de tu respuesta. Usa las claves "name" y "value" obligatoriamente en tu arreglo "data".
-5. INTERPRETACIÓN ACTIVA Y OPCIONES: Reconoce los nombres de los recursos (Ingresos: Recursos propios, Transferencias Nacionales, Convenios Especiales. Egresos: Nómina Docente, Nómina Administrativa, Mantenimiento Infraestructura, Investigación). Si la consulta es ambigua, muy general, o le falta contexto, menciona los nombres de los recursos disponibles y dale opciones al usuario sobre qué puede consultar. Interpreta activamente el historial de conversación para entender a qué se refiere el usuario.
+5. INTERPRETACIÓN ACTIVA Y OPCIONES: Reconoce los nombres de los recursos disponibles en los CSV reportados (por ejemplo, mira la columna 'RUBRO', 'CONCEPTO', 'FACULTAD', etc.). Si la consulta es ambigua, menciona qué puedes analizar y dale opciones relevantes al usuario.
 Ejemplo de gráfica de barras:
 \`\`\`json-chart
 {
@@ -41,26 +51,18 @@ Ejemplo de gráfica de barras:
   ]
 }
 \`\`\`
-Ejemplo de gráfica circular (pastel):
-\`\`\`json-chart
-{
-  "type": "pie",
-  "data": [
-    { "name": "Maestría en Educación", "value": 120 },
-    { "name": "Especialización en Finanzas", "value": 85 }
-  ]
-}
-\`\`\`
 
-CONTEXTO DE DATOS ACTUAL:
-${JSON.stringify(knowledgeBase, null, 2)}
+CONTEXTO DE DATOS ACTUALES (en formato CSV):
+${realDataText.length > 50 ? realDataText : "Aún cargando los datos en memoria o error de conexión..."}
 `;
+}
 
 async function startServer() {
+  await fetchRealData();
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
 
   // API Route for chat
   app.post("/api/chat", async (req, res) => {
@@ -85,7 +87,7 @@ async function startServer() {
       const chat = ai.chats.create({
         model: "gemini-3.5-flash",
         config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
+          systemInstruction: getSystemInstruction(),
           temperature: 0.1, // low temperature for precise RAG responses
         }
       });

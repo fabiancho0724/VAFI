@@ -43,19 +43,47 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   const filterColumnName = useMemo(() => {
     if (rawYearlyData[2026] && rawYearlyData[2026].length > 0) {
-       return Object.keys(rawYearlyData[2026][0])[2]; // Columna 3 (C)
+       const keys = Object.keys(rawYearlyData[2026][0]);
+       const recursoKey = keys.find(k => k.toLowerCase().includes('recurso') || k.toLowerCase().includes('rubro') || k.toLowerCase().includes('concepto'));
+       if (recursoKey) return recursoKey;
+       
+       // Fallbacks if named something else, let's filter out code looking columns
+       for(const k of keys) {
+           const val = String(rawYearlyData[2026][0][k]);
+           if (val && !val.match(/^[0-9.]+$/) && typeof val === 'string') {
+               if (k.toLowerCase() !== 'mes' && k.toLowerCase() !== 'fecha') {
+                   return k;
+               }
+           }
+       }
+       return keys[2]; 
     }
     return 'Concepto';
   }, [rawYearlyData]);
 
-  // Extract unique resources from 2026 data using column 3 (C)
+  // Extract unique resources from 2026 data
   const availableRecursos = useMemo(() => {
     if (!rawYearlyData[2026] || rawYearlyData[2026].length === 0) return [];
-    const unique = new Set<string>();
+    
+    const keys = Object.keys(rawYearlyData[2026][0]);
+    const conceptoCol = keys.find(k => k.toLowerCase().includes('concepto')) || keys[4] || 'Concepto';
+
+    const map = new Map<string, string>();
     rawYearlyData[2026].forEach(r => {
-      if (r[filterColumnName]) unique.add(r[filterColumnName]);
+      const recValue = r[filterColumnName];
+      const conceptValue = r[conceptoCol];
+      if (recValue) {
+        if (!map.has(String(recValue))) {
+          // Si el concepto ya incluye el número o es muy largo
+          const label = conceptValue ? `${recValue} - ${conceptValue}` : String(recValue);
+          map.set(String(recValue), label);
+        }
+      }
     });
-    return Array.from(unique).sort();
+
+    return Array.from(map.entries())
+       .map(([value, label]) => ({ value, label }))
+       .sort((a, b) => a.value.localeCompare(b.value, undefined, { numeric: true }));
   }, [rawYearlyData, filterColumnName]);
 
   // Compute projection and totals
@@ -65,7 +93,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     const yearlyTotals: Record<number, number[]> = {};
     [2023, 2024, 2025, 2026].forEach(year => {
       const rows = rawYearlyData[year] || [];
-      const filteredRows = filterRecurso === 'Todos' ? rows : rows.filter(r => r[filterColumnName] === filterRecurso);
+      const filteredRows = filterRecurso === 'Todos' ? rows : rows.filter(r => String(r[filterColumnName]) === filterRecurso);
       
       const monthlySum = new Array(12).fill(0);
       if (filteredRows.length > 0) {
@@ -170,9 +198,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                value={filterRecurso}
                onChange={(e) => setFilterRecurso(e.target.value)}
             >
-               <option value="Todos">Todos ({filterColumnName})</option>
+               <option value="Todos" className="bg-[#0f172a] text-white">Todos los Recursos</option>
                {availableRecursos.map(r => (
-                  <option key={r} value={r}>{String(r).length > 25 ? String(r).substring(0, 25) + '...' : r}</option>
+                  <option key={String(r.value)} value={String(r.value)} className="bg-[#0f172a] text-white">
+                    {r.label.length > 60 ? r.label.substring(0, 60) + '...' : r.label}
+                  </option>
                ))}
             </select>
           </div>
@@ -184,9 +214,9 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                value={filterMes}
                onChange={(e) => setFilterMes(e.target.value)}
             >
-               <option value="Todos">Todos los Meses</option>
+               <option value="Todos" className="bg-[#0f172a] text-white">Todos los Meses</option>
                {MONTHS_STR.map(m => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m} value={m} className="bg-[#0f172a] text-white">{m}</option>
                ))}
             </select>
           </div>
