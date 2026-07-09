@@ -170,7 +170,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         
         await Promise.all(years.map(async (year) => {
           try {
-            const rows = await fetchAndParseCSV(`https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Ingreso%20Mensual%20${year}.csv`);
+            const rows = await fetchAndParseCSV(`https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%20${year}.csv`);
             if (rows && rows.length > 0) {
               loadedData[year] = rows;
             }

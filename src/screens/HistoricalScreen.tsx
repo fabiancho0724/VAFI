@@ -6,13 +6,13 @@ import { fetchAndParseCSV } from '../lib/csvParser';
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 const DATA_URLS: Record<string, string> = {
-  '2023': 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Ingreso%20Mensual%202023.csv',
-  '2024': 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Ingreso%20Mensual%202024.csv',
-  '2025': 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Ingreso%20Mensual%202025.csv',
-  '2026': 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Ingreso%20Mensual%202026.csv',
+  '2023': 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%202023.csv',
+  '2024': 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%202024.csv',
+  '2025': 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%202025.csv',
+  '2026': 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%202026.csv',
 };
 
-const URL_RESUMEN_PIC = 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Resumen%20PIC.csv';
+const URL_RESUMEN_PIC = 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Resumen%20PIC.csv';
 
 interface HistoricalScreenProps {
   onNavigate: (screen: string) => void;

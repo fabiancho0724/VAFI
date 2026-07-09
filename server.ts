@@ -10,11 +10,11 @@ async function fetchRealData() {
   console.log("Fetching real CSV data for knowledge base...");
   try {
     const files = [
-      { name: "Ingresos", filename: "Ingresos.csv", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/25bab426e66c86cc3e877f13a848afe2fc93b019/Ingresos.csv" },
-      { name: "Gastos", filename: "Gastos.csv", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/8ea7abfbc3d504ea4280d246aa5e02dcc82b59f9/Gastos.csv" },
-      { name: "Nomina", filename: "Nomina.csv", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Nomina.csv" },
-      { name: "Estudiantes Posgrados", filename: "Resumen Posgrados.csv", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/5fd78e804688cdca1509f82da5f766b232d62c98/Resumen%20Posgrados.csv" },
-      { name: "Ingresos Posgrados", filename: "Resumen Posgrados ingresos.csv", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/5fd78e804688cdca1509f82da5f766b232d62c98/Resumen%20Posgrados%20ingresos.csv" }
+      { name: "Ingresos", filename: "Ingresos.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingresos.csv" },
+      { name: "Gastos", filename: "Gastos.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Gastos.csv" },
+      { name: "Nomina", filename: "Nomina.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Nomina.csv" },
+      { name: "Estudiantes Posgrados", filename: "Resumen Posgrados.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Resumen%20Posgrados.csv" },
+      { name: "Ingresos Posgrados", filename: "Resumen Posgrados ingresos.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Resumen%20Posgrados%20ingresos.csv" }
     ];
 
     let combined = "";
@@ -89,7 +89,7 @@ async function startServer() {
     // Fallback to remote repository
     try {
       console.log(`Local file not found, falling back to GitHub for: ${safeFilename}`);
-      const githubUrl = `https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/${encodeURIComponent(safeFilename)}`;
+      const githubUrl = `https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/${encodeURIComponent(safeFilename)}`;
       const response = await fetch(githubUrl);
       if (response.ok) {
         const text = await response.text();

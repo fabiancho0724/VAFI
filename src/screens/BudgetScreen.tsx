@@ -10,8 +10,8 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
   useEffect(() => {
     async function loadData() {
       try {
-        const ing = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/25bab426e66c86cc3e877f13a848afe2fc93b019/Ingresos.csv');
-        const gas = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/8ea7abfbc3d504ea4280d246aa5e02dcc82b59f9/Gastos.csv');
+        const ing = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingresos.csv');
+        const gas = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Gastos.csv');
         
         processAlerts(ing, gas);
       } catch (err) {
