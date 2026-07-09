@@ -2,14 +2,7 @@ import Papa from 'papaparse';
 
 export async function fetchAndParseCSV(url: string): Promise<any[]> {
   try {
-    let targetUrl = url;
-    if (url.includes('raw.githubusercontent.com')) {
-      const parts = url.split('/');
-      const filename = parts[parts.length - 1]; // e.g. "Ingresos.csv" or "Gastos.csv"
-      targetUrl = `/api/data/${filename}`;
-    }
-    
-    const response = await fetch(targetUrl);
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
@@ -28,7 +21,6 @@ export async function fetchAndParseCSV(url: string): Promise<any[]> {
     throw error;
   }
 }
-
 
 export function parseLocalCSV(file: File): Promise<any[]> {
   return new Promise((resolve, reject) => {

@@ -67,10 +67,10 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
     >
       <div className={cn('mb-10', isThin ? 'mt-0' : 'mt-4 px-2 flex items-center gap-3')} onClick={() => onNavigate('cover')}>
         {isThin ? (
-           <img src="https://www.uptc.edu.co/sitio/export/sites/default/portal/sitios/universidad/rectoria/comunicaciones/.content/doc/logos/uptc-blanco.png" alt="UPTC Logo" className="w-10 h-10 object-contain mx-auto cursor-pointer hover:scale-110 transition-transform" />
+           <img src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png" alt="UPTC Logo" className="w-10 h-10 object-contain mx-auto cursor-pointer hover:scale-110 transition-transform" />
         ) : (
           <>
-            <img src="https://www.uptc.edu.co/sitio/export/sites/default/portal/sitios/universidad/rectoria/comunicaciones/.content/doc/logos/uptc-blanco.png" alt="UPTC Logo" className="w-10 object-contain cursor-pointer hover:scale-110 transition-transform" />
+            <img src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png" alt="UPTC Logo" className="w-10 object-contain cursor-pointer hover:scale-110 transition-transform" />
             <div className="cursor-pointer">
               <h1 className="font-headline-lg text-lg text-primary-container leading-none">UPTC</h1>
               <p className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant opacity-70">Admin Financiero</p>

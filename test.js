@@ -1,2 +1,2 @@
-const fs = require('fs');
-fetch('https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Ingreso%20Mensual%202026.csv').then(r=>r.text()).then(t=>console.log(t.split('\n')[0]))
+fetch('https://codepen.io/vadymhimself/pen/zYGvroM.css').then(r=>r.text()).then(t=>console.log("CSS:\n", t.substring(0, 1000)));
+fetch('https://codepen.io/vadymhimself/pen/zYGvroM.html').then(r=>r.text()).then(t=>console.log("HTML:\n", t));

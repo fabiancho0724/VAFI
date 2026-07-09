@@ -15,9 +15,9 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
   useEffect(() => {
     async function loadData() {
       try {
-        const ing = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/25bab426e66c86cc3e877f13a848afe2fc93b019/Ingresos.csv');
-        const gas = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/8ea7abfbc3d504ea4280d246aa5e02dcc82b59f9/Gastos.csv');
-        const nom = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Nomina.csv');
+        const ing = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingresos.csv');
+        const gas = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Gastos.csv');
+        const nom = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Nomina.csv');
         
         processData(ing, gas, nom);
       } catch (err) {
@@ -141,7 +141,7 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
              <p className="text-sm font-sans text-gray-600 font-bold tracking-widest uppercase">UPTC - Gestión Documental</p>
            </div>
            <img 
-             src="https://www.uptc.edu.co/sitio/export/sites/default/portal/sitios/universidad/rectoria/comunicaciones/.content/doc/logos/uptc-blanco.png" 
+             src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png" 
              alt="UPTC Logo" 
              className="w-20 object-contain invert"
            />
@@ -153,7 +153,7 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
                Resumen Ejecutivo
              </h2>
              <p className="text-gray-800 text-justify mb-4">
-               El presente informe tiene como propósito analizar el comportamiento financiero de la Universidad Pedagógica y Tecnológica de Colombia (UPTC) con corte al <strong>30 de abril de 2026</strong>. Se examina la incorporación y apropiación de los rubros de gasto conforme a lo establecido en los catálogos presupuestales No. 14 y 15.
+               El presente informe tiene como propósito analizar el comportamiento financiero de la Universidad Pedagógica y Tecnológica de Colombia (UPTC) con corte al <strong>30 de junio de 2026</strong>. Se examina la incorporación y apropiación de los rubros de gasto conforme a lo establecido en los catálogos presupuestales No. 14 y 15.
              </p>
            </section>
 
@@ -182,7 +182,7 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
                Análisis de Ingresos
              </h2>
              <p className="text-gray-800 text-justify mb-4">
-               A continuación, se presenta el análisis comparativo entre el aforo y el recaudo, clasificado por tipo de recurso, con corte al <strong>30 de abril</strong>.
+               A continuación, se presenta el análisis comparativo entre el aforo y el recaudo, clasificado por tipo de recurso, con corte al <strong>30 de junio</strong>.
              </p>
              <p className="text-gray-800 text-justify mb-4">
                El recaudo total de la Universidad Pedagógica y Tecnológica de Colombia asciende a <strong>${ingresosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong>, lo que representa una ejecución del <strong>37,8 %</strong> frente al presupuesto aforado de <strong>$526.515,1 millones</strong>.
@@ -221,7 +221,7 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
                Análisis de Gasto
              </h2>
              <p className="text-gray-800 text-justify mb-4">
-               Con corte al <strong>30 de abril</strong> y conforme a lo establecido en el Catálogo Presupuestal No. 14, que define la estructura del gasto, se incluyen los gastos de personal (2.1.1), los gastos de funcionamiento (2.1.2) y los gastos de inversión (2.3), entre otros conceptos.
+               Con corte al <strong>30 de junio</strong> y conforme a lo establecido en el Catálogo Presupuestal No. 14, que define la estructura del gasto, se incluyen los gastos de personal (2.1.1), los gastos de funcionamiento (2.1.2) y los gastos de inversión (2.3), entre otros conceptos.
              </p>
              <p className="text-gray-800 text-justify mb-4">
                El pago efectivo alcanza un valor total de <strong>${gastosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong> frente a una apropiación total de <strong>$526.515,1 millones</strong>. Se observa que la mayor participación corresponde a los gastos de personal, con <strong>$82.530,2 millones</strong>. Es importante mencionar de igual manera que a la fecha de corte de este informe el compromiso de los gastos de la universidad corresponde a <strong>$199.818,9 millones</strong>.

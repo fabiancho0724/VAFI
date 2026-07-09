@@ -21,6 +21,8 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
   const [expandedGastoGroup, setExpandedGastoGroup] = useState<string | null>(null);
   const [expandedGastoCardGroup, setExpandedGastoCardGroup] = useState<string | null>(null);
   const [nominaGroups, setNominaGroups] = useState<any[]>([]);
+  const [rawNomina, setRawNomina] = useState<any[]>([]);
+  const [nominaPeriodoFiltro, setNominaPeriodoFiltro] = useState<string[]>(['Todos']); 
   const [rawIngresos, setRawIngresos] = useState<any[]>([]);
   const [ingresosTiposGroups, setIngresosTiposGroups] = useState<any[]>([]);
   const [expandedIngresoGroup, setExpandedIngresoGroup] = useState<string | null>(null);
@@ -82,6 +84,25 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
       }
     }
   }, [rawIngresos, recursoFiltro]);
+
+  useEffect(() => {
+    if (rawNomina && rawNomina.length > 0) {
+      const keys = Object.keys(rawNomina[0]);
+      let colPeriod = keys[0]; // A
+      let colVinc = keys.length >= 8 ? keys[7] : (getCategoryColumn(rawNomina) || 'tipo_vinculacion'); // H
+      let colVal = keys.length >= 4 ? keys[3] : (getNumericColumn(rawNomina) || 'valor'); // D
+
+      let filteredData = rawNomina;
+      if (!nominaPeriodoFiltro.includes('Todos')) {
+        filteredData = rawNomina.filter(row => {
+            const val = String(row[colPeriod] || '');
+            return nominaPeriodoFiltro.some(f => val.toLowerCase().includes(f.toLowerCase()));
+        });
+      }
+
+      setNominaGroups(groupAndSum(filteredData, colVinc, colVal));
+    }
+  }, [rawNomina, nominaPeriodoFiltro]);
 
   useEffect(() => {
     async function loadData() {
@@ -210,10 +231,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
     }
     
     if (nominaData && nominaData.length > 0) {
-      const nomNumCol = getNumericColumn(nominaData) || 'valor';
-      const nomCatCol = getCategoryColumn(nominaData) || 'tipo_vinculacion';
-      nomSum = nominaData.reduce((acc, row) => acc + (parseFloat(row[nomNumCol]) || 0), 0);
-      setNominaGroups(groupAndSum(nominaData, nomCatCol, nomNumCol));
+      setRawNomina(nominaData);
     }
     
     if (ingSum > 0) setIngresosTotal(ingSum / 1e6); // Scale to millions
@@ -279,7 +297,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
           <p className="text-primary-container text-xs uppercase tracking-widest font-bold mb-1">UPTC - VAFI</p>
-          <h2 className="text-[32px] md:text-4xl font-bold font-display text-white">Consolidado Financiero - Corte 30 de Abril</h2>
+          <h2 className="text-[32px] md:text-4xl font-bold font-display text-white">Consolidado Financiero - Corte 30 de Junio</h2>
         </div>
         <div className="flex gap-3">
           <button 
@@ -1064,26 +1082,57 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
             {/* Ambient Background Glow */}
             <div className="absolute top-0 left-0 w-96 h-96 bg-[#ffcc29]/5 blur-[120px] rounded-full pointer-events-none"></div>
 
-            <div className="text-center border-b border-white/10 pb-6 mb-12 z-10 relative">
-               <h3 className="text-3xl font-display font-medium text-white mb-2">Gastos de Personal</h3>
-               <p className="text-on-surface-variant font-mono">Valores en millones</p>
+            <div className="flex flex-col md:flex-row justify-between items-center border-b border-white/10 pb-6 mb-12 z-10 relative">
+               <div className="text-left mb-6 md:mb-0">
+                  <h3 className="text-3xl font-display font-medium text-white mb-2">Gastos de Personal</h3>
+                  <p className="text-on-surface-variant font-mono">Valores en millones (Liquidación de Nómina)</p>
+               </div>
+               
+               <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-xs text-on-surface-variant font-mono uppercase tracking-widest mr-2">Período:</span>
+                  {['Todos', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'].map(mes => {
+                     const isActive = nominaPeriodoFiltro.includes(mes) || (mes !== 'Todos' && nominaPeriodoFiltro.includes('Todos'));
+                     return (
+                       <button
+                         key={mes}
+                         onClick={() => {
+                           if (mes === 'Todos') {
+                             setNominaPeriodoFiltro(['Todos']);
+                           } else {
+                             let newFiltro = nominaPeriodoFiltro.filter(m => m !== 'Todos');
+                             if (newFiltro.includes(mes)) {
+                               newFiltro = newFiltro.filter(m => m !== mes);
+                             } else {
+                               newFiltro.push(mes);
+                             }
+                             if (newFiltro.length === 0 || newFiltro.length === 6) {
+                               setNominaPeriodoFiltro(['Todos']);
+                             } else {
+                               setNominaPeriodoFiltro(newFiltro);
+                             }
+                           }
+                         }}
+                         className={`px-3 py-1.5 text-xs font-mono rounded-xl transition-all ${
+                           isActive 
+                             ? 'bg-primary-container text-black font-bold shadow-[0_0_10px_rgba(255,204,41,0.3)]' 
+                             : 'bg-white/5 text-on-surface-variant hover:bg-white/10 border border-white/5'
+                         }`}
+                       >
+                         {mes}
+                       </button>
+                     );
+                  })}
+               </div>
             </div>
 
             <div className="space-y-6 max-w-4xl mx-auto z-10 relative">
-               {[
-                 { name: 'PLANTA', valueMill: 23680.0 },
-                 { name: 'OCASIONAL', valueMill: 21773.8 },
-                 { name: 'ADMINISTRATIVO', valueMill: 16126.1 },
-                 { name: 'CATEDRA POSGRADO', valueMill: 2933.0 },
-                 { name: 'CATEDRA', valueMill: 2159.0 },
-                 { name: 'SUPERNUMERARIO', valueMill: 359.7 },
-               ].map((item, i) => {
-                  const valMill = item.valueMill;
-                  const maxValue = 24000.0;
+               {nominaGroups.length > 0 ? nominaGroups.map((item, i) => {
+                  const valMill = item.value / 1e6; // Convert to millions
+                  const maxValue = Math.max(...nominaGroups.map(g => g.value)) / 1e6 || 1;
                   return (
                     <div key={i} className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
-                       <span className="md:w-56 text-left md:text-right text-xs md:text-sm font-bold text-white uppercase shrink-0 tracking-widest">
-                         {item.name}
+                       <span className="md:w-56 text-left md:text-right text-xs md:text-sm font-bold text-white uppercase shrink-0 tracking-widest" title={item.name}>
+                         {item.name.replace('DOCENTES DE ', '').replace('PERSONAL ', '')}
                        </span>
                        <div className="flex-1 w-full flex items-center h-10 md:h-12 md:border-l border-white/10 md:pl-2 group">
                           <div className="h-full bg-gradient-to-r from-[#cc9a00] to-[#ffcc29] flex items-center relative transition-all duration-500 ease-out group-hover:brightness-125 shadow-[0_0_15px_rgba(255,204,41,0.2)]" style={{ width: `${Math.max(1, (valMill / maxValue) * 100)}%`, minWidth: '4px' }}>
@@ -1094,22 +1143,20 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
                        </div>
                     </div>
                   )
-               })}
+               }) : (
+                  <div className="text-center py-10 text-on-surface-variant font-mono">
+                    <p>No hay datos de nómina para los períodos seleccionados.</p>
+                  </div>
+               )}
             </div>
 
             {/* Totales Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 pt-10 border-t border-white/10 z-10 relative max-w-5xl mx-auto">
-               <div className="bg-white/5 backdrop-blur-md rounded-[24px] p-6 border border-white/10 text-center hover:bg-white/10 transition-colors duration-300">
-                  <p className="text-3xl font-display font-bold text-white mb-2">${(313365.6).toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm font-sans font-normal text-on-surface-variant">mill.</span></p>
-                  <p className="text-xs text-on-surface-variant font-mono uppercase tracking-widest italic">Apropiacion</p>
-               </div>
-               <div className="bg-white/5 backdrop-blur-md rounded-[24px] p-6 border border-white/10 text-center hover:bg-white/10 transition-colors duration-300">
-                  <p className="text-3xl font-display font-bold text-white mb-2">${(82530.2).toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm font-sans font-normal text-on-surface-variant">mill.</span></p>
-                  <p className="text-xs text-on-surface-variant font-mono uppercase tracking-widest italic">Compromiso</p>
-               </div>
-               <div className="bg-white/5 backdrop-blur-md rounded-[24px] p-6 border border-white/10 text-center border-b-4 border-b-primary-container hover:bg-white/10 transition-colors duration-300">
-                  <p className="text-3xl font-display font-bold text-white mb-2">${(82530.2).toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm font-sans font-normal text-on-surface-variant">mill.</span></p>
-                  <p className="text-xs text-on-surface-variant font-mono uppercase tracking-widest italic text-primary-container">Total Pago</p>
+               <div className="bg-white/5 backdrop-blur-md rounded-[24px] p-6 border border-white/10 text-center hover:bg-white/10 transition-colors duration-300 col-span-1 md:col-span-3 border-b-4 border-b-primary-container">
+                  <p className="text-3xl font-display font-bold text-white mb-2">
+                     ${(nominaGroups.reduce((acc, g) => acc + g.value, 0) / 1e6).toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm font-sans font-normal text-on-surface-variant">mill.</span>
+                  </p>
+                  <p className="text-xs text-on-surface-variant font-mono uppercase tracking-widest italic text-primary-container">Total Liquidación</p>
                </div>
             </div>
          </div>
