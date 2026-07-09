@@ -28,14 +28,15 @@ export interface FinancialTotals {
 
 export interface ProjectionParams {
   rawYearlyIncomes: Record<number, any[]>;
+  rawCumulativeIncomes: any[]; // Cumulative execution report (Ingresos.csv)
   rawHistoricalGastos: any[];
   filterUnidad: string;
   filterRecurso: string;
   filterMes: string;
   filterTipoGasto: string;
-  simIngByResource: Record<string, number>; // Slider inputs (-100 to 100 %)
-  simGasByResource: Record<string, number>; // Slider inputs (-100 to 100 %)
-  simGasByType: Record<string, number>;     // Slider inputs (-100 to 100 %)
+  simIngByResource: Record<string, number>; // Slider inputs (-50 to 50 %)
+  simGasByResource: Record<string, number>; // Slider inputs (-50 to 50 %)
+  simGasByType: Record<string, number>;     // Slider inputs (-50 to 50 %)
 }
 
 export interface ProjectionResults {
@@ -50,6 +51,7 @@ export interface ProjectionResults {
 
 export function calculateProjections({
   rawYearlyIncomes,
+  rawCumulativeIncomes,
   rawHistoricalGastos,
   filterUnidad,
   filterRecurso,
@@ -76,7 +78,7 @@ export function calculateProjections({
     });
   });
 
-  // 1. Process Incomes from rawYearlyIncomes
+  // 1. Process Incomes from rawYearlyIncomes (monthly details)
   [2023, 2024, 2025, 2026].forEach(year => {
     const rows = rawYearlyIncomes[year] || [];
     rows.forEach(row => {
@@ -91,6 +93,68 @@ export function calculateProjections({
       });
     });
   });
+
+  // Extract target recaudo and aforo values per resource from cumulative Ingresos.csv
+  const recaudoByResource: Record<string, number> = {};
+  const aforoByResource: Record<string, number> = {};
+  RESOURCES_LIST.forEach(r => {
+    recaudoByResource[r] = 0;
+    aforoByResource[r] = 0;
+  });
+
+  if (rawCumulativeIncomes && rawCumulativeIncomes.length > 0) {
+    rawCumulativeIncomes.forEach(row => {
+      const recRaw = getRowResourceCode(row, 2026);
+      const recMapped = getRecursoEquivalence(recRaw);
+      if (recaudoByResource[recMapped] !== undefined) {
+        const recVal = parseFloat(String(row['Total recaudo'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
+        const afoVal = parseFloat(String(row['Valor aforo'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
+        recaudoByResource[recMapped] += recVal;
+        aforoByResource[recMapped] += afoVal;
+      }
+    });
+  }
+
+  // Adjust 2026 Ene-Jun monthly incomes to match cumulative 'Total recaudo' from Ingresos.csv
+  RESOURCES_LIST.forEach(r => {
+    const targetEneJun = recaudoByResource[r];
+    if (targetEneJun > 0) {
+      const currentEneJun = incomesByYearRes[2026][r].slice(0, 6).reduce((a,b)=>a+b, 0);
+      if (currentEneJun > 0) {
+        const factor = targetEneJun / currentEneJun;
+        for (let i = 0; i < 6; i++) {
+          incomesByYearRes[2026][r][i] *= factor;
+        }
+      } else {
+        // Fallback: distribute evenly
+        for (let i = 0; i < 6; i++) {
+          incomesByYearRes[2026][r][i] = targetEneJun / 6;
+        }
+      }
+    }
+  });
+
+  // Calculate projected baseline totals for Jul-Dic (months 7-12) to calculate scaling factor
+  let rawProjectedJulDicTotal = 0;
+  RESOURCES_LIST.forEach(r => {
+    for (let i = 6; i < 12; i++) {
+      let histSum = 0, histCount = 0;
+      if (incomesByYearRes[2023][r][i] > 0) { histSum += incomesByYearRes[2023][r][i]; histCount++; }
+      if (incomesByYearRes[2024][r][i] > 0) { histSum += incomesByYearRes[2024][r][i]; histCount++; }
+      if (incomesByYearRes[2025][r][i] > 0) { histSum += incomesByYearRes[2025][r][i]; histCount++; }
+      rawProjectedJulDicTotal += (histCount > 0 ? histSum / histCount : 0) * 1.05;
+    }
+  });
+
+  // User Target values:
+  // Ene-Jun target (Real execution) = $282,995.35M
+  // Full Year target (Baseline) = $563,287M
+  // Jul-Dic projected baseline target = $563,287M - $282,995.35M = $280,291.65M
+  const targetEneJunTotal = 282995.35257092 * 1e6;
+  const targetFullYearTotal = 563287 * 1e6;
+  const targetJulDicTotal = targetFullYearTotal - targetEneJunTotal;
+
+  const scalingFactorJulDic = rawProjectedJulDicTotal > 0 ? targetJulDicTotal / rawProjectedJulDicTotal : 1;
 
   // 2. Process Expenses from rawHistoricalGastos
   rawHistoricalGastos.forEach(row => {
@@ -107,7 +171,7 @@ export function calculateProjections({
     }
   });
 
-  // 3. Compute baseline values by resource for comparison (reference)
+  // 3. Compute baseline values per resource for comparison/reference
   const resourceBaselines: Record<string, { ing: number; gasComp: number; gasPago: number }> = {};
   RESOURCES_LIST.forEach(r => {
     let totIng = 0;
@@ -128,7 +192,7 @@ export function calculateProjections({
         if (incomesByYearRes[2023][r][i] > 0) { histSum += incomesByYearRes[2023][r][i]; histCount++; }
         if (incomesByYearRes[2024][r][i] > 0) { histSum += incomesByYearRes[2024][r][i]; histCount++; }
         if (incomesByYearRes[2025][r][i] > 0) { histSum += incomesByYearRes[2025][r][i]; histCount++; }
-        totIng += (histCount > 0 ? histSum / histCount : 0) * 1.05;
+        totIng += (histCount > 0 ? histSum / histCount : 0) * 1.05 * scalingFactorJulDic;
       }
 
       if (useRealGas) {
@@ -140,6 +204,13 @@ export function calculateProjections({
       }
     }
 
+    // Apply baseline capping: baseline expense cannot exceed baseline income for resource r
+    if (totGasComp > totIng && totGasComp > 0) {
+      const factor = totIng / totGasComp;
+      totGasComp *= factor;
+      totGasPago *= factor; // Keep same scale
+    }
+
     resourceBaselines[r] = {
       ing: totIng / 1e6,
       gasComp: totGasComp / 1e6,
@@ -147,7 +218,129 @@ export function calculateProjections({
     };
   });
 
-  // 4. Calculate simulated cash flow
+  // 4. Calculate simulated cash flows (Resource and Category level)
+  const monthlySimIngByRes: Record<string, number[]> = {};
+  const monthlySimGasCompByRes: Record<string, number[]> = {};
+  const monthlySimGasPagoByRes: Record<string, number[]> = {};
+
+  const monthlyBaseIngByRes: Record<string, number[]> = {};
+  const monthlyBaseGasCompByRes: Record<string, number[]> = {};
+  const monthlyBaseGasPagoByRes: Record<string, number[]> = {};
+
+  RESOURCES_LIST.forEach(r => {
+    monthlySimIngByRes[r] = new Array(12).fill(0);
+    monthlySimGasCompByRes[r] = new Array(12).fill(0);
+    monthlySimGasPagoByRes[r] = new Array(12).fill(0);
+
+    monthlyBaseIngByRes[r] = new Array(12).fill(0);
+    monthlyBaseGasCompByRes[r] = new Array(12).fill(0);
+    monthlyBaseGasPagoByRes[r] = new Array(12).fill(0);
+  });
+
+  // Populating baseline and initial simulated arrays
+  for (let i = 0; i < 12; i++) {
+    RESOURCES_LIST.forEach(r => {
+      const is2026RealIng = incomesByYearRes[2026][r].reduce((a,b)=>a+b, 0) > 0;
+      const is2026RealGas = (expensesCompByYearRes[2026][r].reduce((a,b)=>a+b, 0) + expensesPagoByYearRes[2026][r].reduce((a,b)=>a+b, 0)) > 0;
+
+      const useRealIng = i < 6 && is2026RealIng;
+      const useRealGas = i < 6 && is2026RealGas;
+
+      // Base Incomes
+      let ingBaseVal = 0;
+      if (useRealIng) {
+        ingBaseVal = incomesByYearRes[2026][r][i];
+      } else {
+        let histSum = 0, histCount = 0;
+        if (incomesByYearRes[2023][r][i] > 0) { histSum += incomesByYearRes[2023][r][i]; histCount++; }
+        if (incomesByYearRes[2024][r][i] > 0) { histSum += incomesByYearRes[2024][r][i]; histCount++; }
+        if (incomesByYearRes[2025][r][i] > 0) { histSum += incomesByYearRes[2025][r][i]; histCount++; }
+        ingBaseVal = (histCount > 0 ? histSum / histCount : 0) * 1.05 * scalingFactorJulDic;
+      }
+
+      // Base Expenses
+      let gasBaseCompVal = 0;
+      let gasBasePagoVal = 0;
+      if (useRealGas) {
+        gasBaseCompVal = expensesCompByYearRes[2026][r][i];
+        gasBasePagoVal = expensesPagoByYearRes[2026][r][i];
+      } else {
+        gasBaseCompVal = expensesCompByYearRes[2025][r][i] * 1.05;
+        gasBasePagoVal = expensesPagoByYearRes[2025][r][i] * 1.05;
+      }
+
+      // Save baseline
+      monthlyBaseIngByRes[r][i] = ingBaseVal;
+      monthlyBaseGasCompByRes[r][i] = gasBaseCompVal;
+      monthlyBaseGasPagoByRes[r][i] = gasBasePagoVal;
+
+      // Save simulated (apply resource sliders)
+      const ingMod = useRealIng ? 0 : (simIngByResource[r] || 0) / 100;
+      const gasMod = useRealGas ? 0 : (simGasByResource[r] || 0) / 100;
+
+      monthlySimIngByRes[r][i] = ingBaseVal * (1 + ingMod);
+      monthlySimGasCompByRes[r][i] = gasBaseCompVal * (1 + gasMod);
+      monthlySimGasPagoByRes[r][i] = gasBasePagoVal * (1 + gasMod);
+    });
+
+    // Apply global type modifiers to the simulated expenses (only for projected Jul-Dic)
+    const isJulDic = i >= 6;
+    if (isJulDic) {
+      let personalMod = (simGasByType["Personal"] || 0) / 100;
+      let funcMod = (simGasByType["Funcionamiento"] || 0) / 100;
+      let transMod = (simGasByType["Transferencias"] || 0) / 100;
+      let tasasMod = (simGasByType["Tasas"] || 0) / 100;
+      let deudaMod = (simGasByType["Deuda"] || 0) / 100;
+      let invMod = (simGasByType["Inversion"] || 0) / 100;
+      const averageMod = (personalMod + funcMod + transMod + tasasMod + deudaMod + invMod) / 6;
+
+      RESOURCES_LIST.forEach(r => {
+        monthlySimGasCompByRes[r][i] *= (1 + averageMod);
+        monthlySimGasPagoByRes[r][i] *= (1 + averageMod);
+      });
+    }
+  }
+
+  // Enforce budget caps: annual simulated/baseline expenses cannot exceed simulated/baseline income per resource!
+  RESOURCES_LIST.forEach(r => {
+    // 1. Enforce on Baselines
+    const totBaseIng = monthlyBaseIngByRes[r].reduce((a,b)=>a+b, 0);
+    const totBaseGasComp = monthlyBaseGasCompByRes[r].reduce((a,b)=>a+b, 0);
+    const totBaseGasPago = monthlyBaseGasPagoByRes[r].reduce((a,b)=>a+b, 0);
+
+    if (totBaseGasComp > totBaseIng && totBaseGasComp > 0) {
+      const factorComp = totBaseIng / totBaseGasComp;
+      for (let i = 0; i < 12; i++) {
+        monthlyBaseGasCompByRes[r][i] *= factorComp;
+      }
+    }
+    if (totBaseGasPago > totBaseIng && totBaseGasPago > 0) {
+      const factorPago = totBaseIng / totBaseGasPago;
+      for (let i = 0; i < 12; i++) {
+        monthlyBaseGasPagoByRes[r][i] *= factorPago;
+      }
+    }
+
+    // 2. Enforce on Simulated
+    const totSimIng = monthlySimIngByRes[r].reduce((a,b)=>a+b, 0);
+    const totSimGasComp = monthlySimGasCompByRes[r].reduce((a,b)=>a+b, 0);
+    const totSimGasPago = monthlySimGasPagoByRes[r].reduce((a,b)=>a+b, 0);
+
+    if (totSimGasComp > totSimIng && totSimGasComp > 0) {
+      const factorComp = totSimIng / totSimGasComp;
+      for (let i = 0; i < 12; i++) {
+        monthlySimGasCompByRes[r][i] *= factorComp;
+      }
+    }
+    if (totSimGasPago > totSimIng && totSimGasPago > 0) {
+      const factorPago = totSimIng / totSimGasPago;
+      for (let i = 0; i < 12; i++) {
+        monthlySimGasPagoByRes[r][i] *= factorPago;
+      }
+    }
+  });
+
+  // 5. Aggregate final monthly cash flow structures
   const MONTHS_STR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   const simulatedFlow: CashFlowItem[] = [];
 
@@ -174,76 +367,15 @@ export function calculateProjections({
     RESOURCES_LIST.forEach(r => {
       if (filterRecurso !== 'Todos' && r !== filterRecurso) return;
 
-      const is2026RealIng = incomesByYearRes[2026][r].reduce((a,b)=>a+b, 0) > 0;
-      const is2026RealGas = (expensesCompByYearRes[2026][r].reduce((a,b)=>a+b, 0) + expensesPagoByYearRes[2026][r].reduce((a,b)=>a+b, 0)) > 0;
+      mBaseIng += monthlyBaseIngByRes[r][i];
+      mBaseGasComp += monthlyBaseGasCompByRes[r][i];
+      mBaseGasPago += monthlyBaseGasPagoByRes[r][i];
 
-      // Real or Projections
-      const useRealIng = i < 6 && is2026RealIng;
-      const useRealGas = i < 6 && is2026RealGas;
-
-      // Incomes Base
-      let ingBase = 0;
-      if (useRealIng) {
-        ingBase = incomesByYearRes[2026][r][i];
-      } else {
-        let histSum = 0, histCount = 0;
-        if (incomesByYearRes[2023][r][i] > 0) { histSum += incomesByYearRes[2023][r][i]; histCount++; }
-        if (incomesByYearRes[2024][r][i] > 0) { histSum += incomesByYearRes[2024][r][i]; histCount++; }
-        if (incomesByYearRes[2025][r][i] > 0) { histSum += incomesByYearRes[2025][r][i]; histCount++; }
-        ingBase = (histCount > 0 ? histSum / histCount : 0) * 1.05;
-      }
-
-      // Expenses Base
-      let gasBaseComp = 0;
-      let gasBasePago = 0;
-      if (useRealGas) {
-        gasBaseComp = expensesCompByYearRes[2026][r][i];
-        gasBasePago = expensesPagoByYearRes[2026][r][i];
-      } else {
-        gasBaseComp = expensesCompByYearRes[2025][r][i] * 1.05;
-        gasBasePago = expensesPagoByYearRes[2025][r][i] * 1.05;
-      }
-
-      mBaseIng += ingBase;
-      mBaseGasComp += gasBaseComp;
-      mBaseGasPago += gasBasePago;
-
-      // Simulated values (only apply changes from sliders on Jul-Dic)
-      const ingMod = useRealIng ? 0 : (simIngByResource[r] || 0) / 100;
-      const gasMod = useRealGas ? 0 : (simGasByResource[r] || 0) / 100;
-
-      const simIngVal = ingBase * (1 + ingMod);
-      const simGasValComp = gasBaseComp * (1 + gasMod);
-      const simGasValPago = gasBasePago * (1 + gasMod);
-
-      mSimIng += simIngVal;
-      mSimGasComp += simGasValComp;
-      mSimGasPago += simGasValPago;
+      mSimIng += monthlySimIngByRes[r][i];
+      mSimGasComp += monthlySimGasCompByRes[r][i];
+      mSimGasPago += monthlySimGasPagoByRes[r][i];
     });
 
-    // Apply global type modifiers to the simulated expenses (only for projected Jul-Dic)
-    const isJulDic = i >= 6;
-    if (isJulDic) {
-      // Find proportion of types and scale
-      // To keep it simple and clean, type sliders act as additional multipliers on top of resource sliders
-      let scaleTypeFactorComp = 1;
-      let scaleTypeFactorPago = 1;
-      
-      let personalMod = (simGasByType["Personal"] || 0) / 100;
-      let funcMod = (simGasByType["Funcionamiento"] || 0) / 100;
-      let transMod = (simGasByType["Transferencias"] || 0) / 100;
-      let tasasMod = (simGasByType["Tasas"] || 0) / 100;
-      let deudaMod = (simGasByType["Deuda"] || 0) / 100;
-      let invMod = (simGasByType["Inversion"] || 0) / 100;
-
-      // We apply a weighted average modifier or simply scale them directly in the final categorization
-      // To maintain exact consistency, we scale the monthly aggregate based on the average type slider value
-      const averageMod = (personalMod + funcMod + transMod + tasasMod + deudaMod + invMod) / 6;
-      mSimGasComp *= (1 + averageMod);
-      mSimGasPago *= (1 + averageMod);
-    }
-
-    // Accumulate
     totalBaseIng += mBaseIng;
     totalBaseGasComp += mBaseGasComp;
     totalBaseGasPago += mBaseGasPago;
@@ -255,8 +387,6 @@ export function calculateProjections({
     accumComp += (mSimIng - mSimGasComp);
     accumPago += (mSimIng - mSimGasPago);
 
-    // Calculate YTD execution percentage: (Pago / Compromiso) / Ingresos * 100
-    // As per user request: "Pago / Compromiso divido Los ingresos totales"
     const execPct = mSimGasComp > 0 ? (mSimGasPago / mSimGasComp) / (mSimIng || 1) * 100 : 0;
 
     simulatedFlow.push({
@@ -272,26 +402,26 @@ export function calculateProjections({
     });
   }
 
-  // 5. Category breakdown
+  // 6. Category breakdown aligned with capped outputs
   const catComp = { personal: 0, funcionamiento: 0, transferencias: 0, tasas: 0, deuda: 0, inversion: 0 };
   const catPago = { personal: 0, funcionamiento: 0, transferencias: 0, tasas: 0, deuda: 0, inversion: 0 };
 
   rawHistoricalGastos.forEach(row => {
     if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
     const recMapped = getRecursoEquivalence(row.recurso);
-    if (!expensesCompByYearRes[2026][recMapped]) return; // Guard against unmapped resources
+    if (!expensesCompByYearRes[2026][recMapped]) return; // Guard
     if (filterRecurso !== 'Todos' && recMapped !== filterRecurso) return;
 
     const monthIdx = row.mes - 1;
     if (monthIdx < 0 || monthIdx >= 12) return;
 
     const year = row.año;
-    if (year !== 2026 && year !== 2025) return; // Only breakdown current/reference
+    if (year !== 2026 && year !== 2025) return;
 
     const is2026RealGas = (expensesCompByYearRes[2026][recMapped].reduce((a,b)=>a+b, 0) + expensesPagoByYearRes[2026][recMapped].reduce((a,b)=>a+b, 0)) > 0;
     const useRealGas = monthIdx < 6 && is2026RealGas;
 
-    // We only categorize the 2026 (current simulated) values
+    // Apply baseline and capping scale factor to category values
     const baselineMultiplier = (year === 2026 && monthIdx < 6) ? 1 : 1.05;
     const scaleResourceFactor = useRealGas ? 1 : (1 + (simGasByResource[recMapped] || 0) / 100);
     
@@ -306,8 +436,18 @@ export function calculateProjections({
       else scaleTypeFactor = (1 + (simGasByType["Inversion"] || 0) / 100);
     }
 
-    const compVal = row.compromiso * baselineMultiplier * scaleResourceFactor * scaleTypeFactor;
-    const pagoVal = row.pago * baselineMultiplier * scaleResourceFactor * scaleTypeFactor;
+    // Capping scale factor
+    let capFactorComp = 1;
+    let capFactorPago = 1;
+    const totSimIng = monthlySimIngByRes[recMapped].reduce((a,b)=>a+b, 0);
+    const totSimGasComp = monthlySimGasCompByRes[recMapped].reduce((a,b)=>a+b, 0);
+    const totSimGasPago = monthlySimGasPagoByRes[recMapped].reduce((a,b)=>a+b, 0);
+
+    if (totSimGasComp > totSimIng && totSimGasComp > 0) capFactorComp = totSimIng / totSimGasComp;
+    if (totSimGasPago > totSimIng && totSimGasPago > 0) capFactorPago = totSimIng / totSimGasPago;
+
+    const compVal = row.compromiso * baselineMultiplier * scaleResourceFactor * scaleTypeFactor * capFactorComp;
+    const pagoVal = row.pago * baselineMultiplier * scaleResourceFactor * scaleTypeFactor * capFactorPago;
 
     if (tipo.includes("2.1.1")) {
       catComp.personal += compVal; catPago.personal += pagoVal;
@@ -324,7 +464,6 @@ export function calculateProjections({
     }
   });
 
-  // Adjust overall simulated totals to match category scale
   const simulatedTotalsComp = Object.values(catComp).reduce((a,b)=>a+b, 0) / 1e6;
   const simulatedTotalsPago = Object.values(catPago).reduce((a,b)=>a+b, 0) / 1e6;
 

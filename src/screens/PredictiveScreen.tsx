@@ -17,6 +17,7 @@ const COLORS = ['#ffcc29', '#4ade80', '#3b82f6', '#c084fc', '#f43f5e', '#7bd0ff'
 export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
   const [rawYearlyIncomes, setRawYearlyIncomes] = useState<Record<number, any[]>>({});
+  const [rawCumulativeIncomes, setRawCumulativeIncomes] = useState<any[]>([]);
   
   // Tabs
   const [activeTab, setActiveTab] = useState<'kpi' | 'flow' | 'equilibrium' | 'simulator' | 'expenses'>('kpi');
@@ -70,6 +71,16 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           }
         }));
         
+        // Fetch cumulative incomes (Ingresos.csv)
+        try {
+          const cumulativeIncomes = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingresos.csv');
+          if (cumulativeIncomes && cumulativeIncomes.length > 0) {
+            setRawCumulativeIncomes(cumulativeIncomes);
+          }
+        } catch (e) {
+          console.error("Error loading cumulative incomes:", e);
+        }
+
         setRawYearlyIncomes(loadedData);
         setTimeout(() => {
           setDataStage('ready');
@@ -128,6 +139,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const financialData = useMemo(() => {
     return calculateProjections({
       rawYearlyIncomes,
+      rawCumulativeIncomes,
       rawHistoricalGastos,
       filterUnidad,
       filterRecurso,
@@ -139,6 +151,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     });
   }, [
     rawYearlyIncomes,
+    rawCumulativeIncomes,
     filterUnidad,
     filterRecurso,
     filterMes,
