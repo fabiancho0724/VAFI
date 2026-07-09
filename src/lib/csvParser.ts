@@ -13,12 +13,24 @@ export async function fetchAndParseCSV(url: string): Promise<any[]> {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
     const text = await response.text();
+    const delimiter = text.includes(';') ? ';' : ',';
     return new Promise((resolve, reject) => {
       Papa.parse(text, {
         header: true,
+        delimiter: delimiter,
         dynamicTyping: true,
         skipEmptyLines: true,
-        complete: (results) => resolve(results.data),
+        complete: (results) => {
+          const cleaned = results.data.map((row: any) => {
+            const cleanRow: any = {};
+            for (const key of Object.keys(row)) {
+              const cleanKey = key.trim().replace(/\r$/, '');
+              cleanRow[cleanKey] = typeof row[key] === 'string' ? row[key].trim() : row[key];
+            }
+            return cleanRow;
+          });
+          resolve(cleaned);
+        },
         error: (error) => reject(error),
       });
     });
@@ -34,7 +46,17 @@ export function parseLocalCSV(file: File): Promise<any[]> {
       header: true,
       dynamicTyping: true,
       skipEmptyLines: true,
-      complete: (results) => resolve(results.data),
+      complete: (results) => {
+        const cleaned = results.data.map((row: any) => {
+          const cleanRow: any = {};
+          for (const key of Object.keys(row)) {
+            const cleanKey = key.trim().replace(/\r$/, '');
+            cleanRow[cleanKey] = typeof row[key] === 'string' ? row[key].trim() : row[key];
+          }
+          return cleanRow;
+        });
+        resolve(cleaned);
+      },
       error: (error) => reject(error),
     });
   });

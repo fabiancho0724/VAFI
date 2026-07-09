@@ -1,4 +1,4 @@
-import { RESOURCES_LIST, getRecursoEquivalence } from './resourceMapper';
+import { RESOURCES_LIST, getRecursoEquivalence, getRowResourceCode } from './resourceMapper';
 
 export interface CashFlowItem {
   name: string; // e.g. "Ene" or "T1"
@@ -147,7 +147,7 @@ export function calculateProjections(params: {
   [2023, 2024, 2025, 2026].forEach(year => {
     const rows = rawYearlyIncomes[year] || [];
     rows.forEach(row => {
-      const recRaw = String(row['Recurso'] || '').trim();
+      const recRaw = getRowResourceCode(row, year);
       const recMapped = getRecursoEquivalence(recRaw);
       if (!incomesByYearRes[year][recMapped]) return;
 

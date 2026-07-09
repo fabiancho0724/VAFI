@@ -56,4 +56,26 @@ export function getRecursoEquivalence(recursoStr: string): string {
   return clean;
 }
 
+export function getRowResourceCode(row: any, year: number): string {
+  if (year === 2026) {
+    const vigStr = String(row['Vigencia'] || '');
+    if (vigStr.toLowerCase().includes('administra') || vigStr.toLowerCase().includes('01') || vigStr.toLowerCase().includes('unidad')) {
+      return String(row['Codigo'] || '').trim();
+    }
+  }
+  
+  const possibleKeys = ['Recurso', 'Codigo', 'Código recurso', 'Codigo recurso', 'recurso'];
+  for (const key of possibleKeys) {
+    const val = String(row[key] || '').trim();
+    const match = val.match(/^(\d+(?:\.\d+)?)/);
+    if (match) {
+      const code = match[1];
+      if (code.length <= 5) {
+        return val;
+      }
+    }
+  }
+  return String(row['Recurso'] || '').trim();
+}
+
 export const MONTHS_STR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
