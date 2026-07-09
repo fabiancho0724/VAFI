@@ -32,7 +32,6 @@ import { fetchAndParseCSV } from '../lib/csvParser';
 import historicalGastosData from '../data/historicalGastos.json';
 
 const MONTHS_STR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-const COLORS = ['#ffcc29', '#7bd0ff', '#4ade80', '#c084fc', '#f43f5e', '#ff8b3d', '#10b981', '#f59e0b', '#3b82f6'];
 
 interface GastoRecord {
   año: number;
@@ -45,10 +44,8 @@ interface GastoRecord {
   pago: number;
 }
 
-// Cast JSON import
 const rawHistoricalGastos = historicalGastosData as GastoRecord[];
 
-// Mapped resource labels based on user requirements
 export const RESOURCES_LIST = [
   "10.0-Aportes Nacion - Funcionamiento",
   "10.1-Aportes Nación - PIC Convencional",
@@ -69,7 +66,6 @@ export const RESOURCES_LIST = [
   "40-Estampilla UPTC"
 ];
 
-// Helper to classify resource strings to clean equivalences
 export function getRecursoEquivalence(recursoStr: string): string {
   const clean = String(recursoStr || '').trim();
   const match = clean.match(/^(\d+(?:\.\d+)?)/);
@@ -93,7 +89,6 @@ export function getRecursoEquivalence(recursoStr: string): string {
   if (code === "35") return "35-Educacion continuada";
   if (code === "40") return "40-Estampilla UPTC";
   
-  // Text match fallback
   const lower = clean.toLowerCase();
   if (lower.includes("gratuidad")) return "10.5-Aportes Nación - Política de gratuidad";
   if (lower.includes("cooperativa")) return "13-Cooperativas";
@@ -109,10 +104,9 @@ export function getRecursoEquivalence(recursoStr: string): string {
   return clean;
 }
 
-// Custom SVG Speedometer Gauge Component
 function SpeedometerGauge({ value, title, subtitle }: { value: number; title: string; subtitle: string }) {
   const clampedValue = Math.min(Math.max(value, 0), 150);
-  const angle = (clampedValue / 150) * 180 - 180; // Map 0-150% to -180 to 0 degrees
+  const angle = (clampedValue / 150) * 180 - 180;
   
   return (
     <div className="glass-card rounded-[24px] p-6 border border-white/5 flex flex-col items-center justify-center text-center">
@@ -121,15 +115,10 @@ function SpeedometerGauge({ value, title, subtitle }: { value: number; title: st
       
       <div className="relative w-48 h-28 flex items-center justify-center overflow-hidden">
         <svg className="w-40 h-40 absolute top-0" viewBox="0 0 200 200">
-          {/* Background Arc */}
           <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="16" strokeLinecap="round" />
-          
-          {/* Color Arc Segments */}
-          <path d="M 20 100 A 80 80 0 0 1 84 48" fill="none" stroke="#f43f5e" strokeWidth="16" /> {/* Red: 0-60% */}
-          <path d="M 84 48 A 80 80 0 0 1 124 48" fill="none" stroke="#eab308" strokeWidth="16" />  {/* Yellow: 60-100% */}
-          <path d="M 124 48 A 80 80 0 0 1 180 100" fill="none" stroke="#4ade80" strokeWidth="16" strokeLinecap="round" /> {/* Green: 100-150% */}
-          
-          {/* Needle Indicator */}
+          <path d="M 20 100 A 80 80 0 0 1 84 48" fill="none" stroke="#f43f5e" strokeWidth="16" />
+          <path d="M 84 48 A 80 80 0 0 1 124 48" fill="none" stroke="#eab308" strokeWidth="16" />
+          <path d="M 124 48 A 80 80 0 0 1 180 100" fill="none" stroke="#4ade80" strokeWidth="16" strokeLinecap="round" />
           <g transform={`translate(100, 100) rotate(${angle})`}>
             <line x1="0" y1="0" x2="-65" y2="0" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" className="drop-shadow-lg" />
             <circle cx="0" cy="0" r="7" fill="#ffffff" />
@@ -153,20 +142,14 @@ function SpeedometerGauge({ value, title, subtitle }: { value: number; title: st
 export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [activeTab, setActiveTab] = useState<'kpi' | 'flow' | 'equilibrium' | 'simulator'>('kpi');
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
-  
-  // Toggle Dimension display (Compromiso vs Pago efectivo)
   const [viewDimension, setViewDimension] = useState<'compromiso' | 'pago'>('pago');
-  
-  // Data State
   const [rawYearlyIncomes, setRawYearlyIncomes] = useState<Record<number, any[]>>({});
   
-  // Filters
   const [filterUnidad, setFilterUnidad] = useState<string>('Todos');
   const [filterRecurso, setFilterRecurso] = useState<string>('Todos');
   const [filterMes, setFilterMes] = useState<string>('Todos');
   const [filterTipoGasto, setFilterTipoGasto] = useState<string>('Todos');
 
-  // Simulator State: adjustments by resource (percentage change from initial baseline)
   const [simIngByResource, setSimIngByResource] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
     RESOURCES_LIST.forEach(r => { init[r] = 0; });
@@ -179,7 +162,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     return init;
   });
 
-  // Load Incomes CSV Data
   useEffect(() => {
     async function loadData() {
       try {
@@ -218,10 +200,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     setSimGasByResource(freshGas);
   };
 
-  // Get unique options for filter dropdowns
   const filterOptions = useMemo(() => {
     const unidades = new Set<string>();
-    
     rawHistoricalGastos.forEach(row => {
       const dep = String(row.dependencia || '').trim();
       if (dep) unidades.add(dep);
@@ -242,7 +222,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     };
   }, []);
 
-  // Compute baseline and simulated metrics
   const financialData = useMemo(() => {
     if (Object.keys(rawYearlyIncomes).length === 0) {
       return {
@@ -261,99 +240,135 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       };
     }
 
-    // Initialize month tables by resource
-    const monthlyBaselineIng: Record<string, number[]> = {};
-    const monthlyBaselineGasComp: Record<string, number[]> = {};
-    const monthlyBaselineGasPago: Record<string, number[]> = {};
+    // Structures to hold values broken down by year, resource, and month index
+    const incomesByYearRes: Record<number, Record<string, number[]>> = {};
+    const expensesCompByYearRes: Record<number, Record<string, number[]>> = {};
+    const expensesPagoByYearRes: Record<number, Record<string, number[]>> = {};
 
-    RESOURCES_LIST.forEach(r => {
-      monthlyBaselineIng[r] = new Array(12).fill(0);
-      monthlyBaselineGasComp[r] = new Array(12).fill(0);
-      monthlyBaselineGasPago[r] = new Array(12).fill(0);
-    });
-
-    // 1. Process 2026 Incomes
-    const incomesRows = rawYearlyIncomes[2026] || [];
-    incomesRows.forEach(row => {
-      const recRaw = String(row['Recurso'] || '').trim();
-      const recMapped = getRecursoEquivalence(recRaw);
+    [2023, 2024, 2025, 2026].forEach(year => {
+      incomesByYearRes[year] = {};
+      expensesCompByYearRes[year] = {};
+      expensesPagoByYearRes[year] = {};
       
-      // If resource wasn't mapped into the 17 list, ignore or skip
-      if (!monthlyBaselineIng[recMapped]) return;
-
-      const monthKeys = Object.keys(row).filter(k => k.trim().toLowerCase().startsWith('valor ')).slice(0, 12);
-      monthKeys.forEach((key, i) => {
-        const val = parseFloat(String(row[key] || '0').replace(/[^0-9.-]+/g, '')) || 0;
-        monthlyBaselineIng[recMapped][i] += val;
+      RESOURCES_LIST.forEach(r => {
+        incomesByYearRes[year][r] = new Array(12).fill(0);
+        expensesCompByYearRes[year][r] = new Array(12).fill(0);
+        expensesPagoByYearRes[year][r] = new Array(12).fill(0);
       });
     });
 
-    // 2. Process Expenses
+    // Populate Incomes
+    [2023, 2024, 2025, 2026].forEach(year => {
+      const rows = rawYearlyIncomes[year] || [];
+      rows.forEach(row => {
+        const recRaw = String(row['Recurso'] || '').trim();
+        const recMapped = getRecursoEquivalence(recRaw);
+        if (!incomesByYearRes[year][recMapped]) return;
+
+        const monthKeys = Object.keys(row).filter(k => k.trim().toLowerCase().startsWith('valor ')).slice(0, 12);
+        monthKeys.forEach((key, i) => {
+          const val = parseFloat(String(row[key] || '0').replace(/[^0-9.-]+/g, '')) || 0;
+          incomesByYearRes[year][recMapped][i] += val;
+        });
+      });
+    });
+
+    // Populate Expenses
     rawHistoricalGastos.forEach(row => {
-      if (row.año !== 2026) return;
       if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
       if (filterTipoGasto !== 'Todos' && row.tipo !== filterTipoGasto) return;
 
-      const recMapped = getRecursoEquivalence(row.recurso);
-      if (!monthlyBaselineGasComp[recMapped]) return;
-
+      const year = row.año;
       const monthIdx = row.mes - 1;
-      if (monthIdx >= 0 && monthIdx < 12) {
-        monthlyBaselineGasComp[recMapped][monthIdx] += row.compromiso;
-        monthlyBaselineGasPago[recMapped][monthIdx] += row.pago;
+      const recMapped = getRecursoEquivalence(row.recurso);
+      
+      if (monthIdx >= 0 && monthIdx < 12 && expensesCompByYearRes[year] && expensesCompByYearRes[year][recMapped]) {
+        expensesCompByYearRes[year][recMapped][monthIdx] += row.compromiso;
+        expensesPagoByYearRes[year][recMapped][monthIdx] += row.pago;
       }
     });
 
-    // 3. Compute baseline summaries by resource
+    // Calculate baseline totals for the whole year by resource
     const resourceBaselines: Record<string, { ing: number; gasComp: number; gasPago: number }> = {};
     RESOURCES_LIST.forEach(r => {
+      let totIng = 0;
+      let totGasComp = 0;
+      let totGasPago = 0;
+
+      for (let i = 0; i < 12; i++) {
+        // Ene-Jun (2026 real)
+        const is2026RealIng = incomesByYearRes[2026][r].reduce((a,b)=>a+b, 0) > 0;
+        const is2026RealGas = (expensesCompByYearRes[2026][r].reduce((a,b)=>a+b, 0) + expensesPagoByYearRes[2026][r].reduce((a,b)=>a+b, 0)) > 0;
+
+        const useRealIng = i < 6 && is2026RealIng;
+        const useRealGas = i < 6 && is2026RealGas;
+
+        if (useRealIng) {
+          totIng += incomesByYearRes[2026][r][i];
+        } else {
+          let histSum = 0, histCount = 0;
+          if (incomesByYearRes[2023][r][i] > 0) { histSum += incomesByYearRes[2023][r][i]; histCount++; }
+          if (incomesByYearRes[2024][r][i] > 0) { histSum += incomesByYearRes[2024][r][i]; histCount++; }
+          if (incomesByYearRes[2025][r][i] > 0) { histSum += incomesByYearRes[2025][r][i]; histCount++; }
+          totIng += (histCount > 0 ? histSum / histCount : 0) * 1.05;
+        }
+
+        if (useRealGas) {
+          totGasComp += expensesCompByYearRes[2026][r][i];
+          totGasPago += expensesPagoByYearRes[2026][r][i];
+        } else {
+          totGasComp += expensesCompByYearRes[2025][r][i] * 1.05;
+          totGasPago += expensesPagoByYearRes[2025][r][i] * 1.05;
+        }
+      }
+
       resourceBaselines[r] = {
-        ing: monthlyBaselineIng[r].reduce((a,b) => a+b, 0) / 1e6,
-        gasComp: monthlyBaselineGasComp[r].reduce((a,b) => a+b, 0) / 1e6,
-        gasPago: monthlyBaselineGasPago[r].reduce((a,b) => a+b, 0) / 1e6
+        ing: totIng / 1e6,
+        gasComp: totGasComp / 1e6,
+        gasPago: totGasPago / 1e6
       };
     });
 
-    // 4. Group category totals (Compromiso vs Pago)
+    // Category breakdown totals (compromiso vs pago) over the entire simulated year
     let catComp = { personal: 0, funcionamiento: 0, transferencias: 0, tasas: 0, deuda: 0, inversion: 0 };
     let catPago = { personal: 0, funcionamiento: 0, transferencias: 0, tasas: 0, deuda: 0, inversion: 0 };
 
-    rawHistoricalGastos.forEach(row => {
-      if (row.año !== 2026) return;
-      if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
+    for (let i = 0; i < 12; i++) {
+      const isGasReal = i < 6; // Jan-Jun is real
+      const targetYear = isGasReal ? 2026 : 2025;
+
+      const monthlyRows = rawHistoricalGastos.filter(row => row.año === targetYear && row.mes === (i + 1));
       
-      const recMapped = getRecursoEquivalence(row.recurso);
-      if (filterRecurso !== 'Todos' && recMapped !== filterRecurso) return;
+      monthlyRows.forEach(row => {
+        if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
+        const recMapped = getRecursoEquivalence(row.recurso);
+        if (filterRecurso !== 'Todos' && recMapped !== filterRecurso) return;
 
-      const scaleFactorIng = 1 + (simIngByResource[recMapped] || 0) / 100;
-      const scaleFactorGas = 1 + (simGasByResource[recMapped] || 0) / 100;
+        // Apply simulator scale factor ONLY to projected months (Jul-Dic)
+        const scaleFactor = isGasReal ? 1 : (1 + (simGasByResource[recMapped] || 0) / 100);
+        const baselineMultiplier = isGasReal ? 1 : 1.05;
 
-      const compVal = row.compromiso * scaleFactorGas;
-      const pagoVal = row.pago * scaleFactorGas;
+        const compVal = row.compromiso * baselineMultiplier * scaleFactor;
+        const pagoVal = row.pago * baselineMultiplier * scaleFactor;
 
-      const tipo = row.tipo;
-      if (tipo.includes("2.1.1")) {
-        catComp.personal += compVal;
-        catPago.personal += pagoVal;
-      } else if (tipo.includes("2.1.2")) {
-        catComp.funcionamiento += compVal;
-        catPago.funcionamiento += pagoVal;
-      } else if (tipo.includes("2.1.3")) {
-        catComp.transferencias += compVal;
-        catPago.transferencias += pagoVal;
-      } else if (tipo.includes("2.1.8")) {
-        catComp.tasas += compVal;
-        catPago.tasas += pagoVal;
-      } else if (tipo.includes("2.2.2")) {
-        catComp.deuda += compVal;
-        catPago.deuda += pagoVal;
-      } else {
-        catComp.inversion += compVal;
-        catPago.inversion += pagoVal;
-      }
-    });
+        const tipo = row.tipo;
+        if (tipo.includes("2.1.1")) {
+          catComp.personal += compVal; catPago.personal += pagoVal;
+        } else if (tipo.includes("2.1.2")) {
+          catComp.funcionamiento += compVal; catPago.funcionamiento += pagoVal;
+        } else if (tipo.includes("2.1.3")) {
+          catComp.transferencias += compVal; catPago.transferencias += pagoVal;
+        } else if (tipo.includes("2.1.8")) {
+          catComp.tasas += compVal; catPago.tasas += pagoVal;
+        } else if (tipo.includes("2.2.2")) {
+          catComp.deuda += compVal; catPago.deuda += pagoVal;
+        } else {
+          catComp.inversion += compVal; catPago.inversion += pagoVal;
+        }
+      });
+    }
 
-    // 5. Generate month by month flow
+    // Build flow and totals
     const simulatedFlow = [];
     
     let baseIngAccum = 0;
@@ -373,6 +388,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     let totalSimGasPago = 0;
 
     for (let i = 0; i < 12; i++) {
+      const isReal = i < 6; // Jan-Jun is real
+
       let monthBaseIng = 0;
       let monthBaseGasComp = 0;
       let monthBaseGasPago = 0;
@@ -382,23 +399,42 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       let monthSimGasPago = 0;
 
       RESOURCES_LIST.forEach(r => {
-        // Apply resource filter
         if (filterRecurso !== 'Todos' && r !== filterRecurso) return;
 
-        const ingBase = monthlyBaselineIng[r][i];
-        const gasCompBase = monthlyBaselineGasComp[r][i];
-        const gasPagoBase = monthlyBaselineGasPago[r][i];
+        // A. Baseline values
+        let ingBase = 0;
+        let gasCompBase = 0;
+        let gasPagoBase = 0;
 
-        const scaleIng = 1 + (simIngByResource[r] || 0) / 100;
-        const scaleGas = 1 + (simGasByResource[r] || 0) / 100;
+        if (isReal) {
+          ingBase = incomesByYearRes[2026][r][i];
+          gasCompBase = expensesCompByYearRes[2026][r][i];
+          gasPagoBase = expensesPagoByYearRes[2026][r][i];
+        } else {
+          // Incomes: historical average * 1.05
+          let histSum = 0, histCount = 0;
+          if (incomesByYearRes[2023][r][i] > 0) { histSum += incomesByYearRes[2023][r][i]; histCount++; }
+          if (incomesByYearRes[2024][r][i] > 0) { histSum += incomesByYearRes[2024][r][i]; histCount++; }
+          if (incomesByYearRes[2025][r][i] > 0) { histSum += incomesByYearRes[2025][r][i]; histCount++; }
+          ingBase = (histCount > 0 ? histSum / histCount : 0) * 1.05;
+
+          // Expenses: 2025 * 1.05
+          gasCompBase = expensesCompByYearRes[2025][r][i] * 1.05;
+          gasPagoBase = expensesPagoByYearRes[2025][r][i] * 1.05;
+        }
+
+        // B. Simulated values: apply simulation factor ONLY if it is projected month
+        const simIng = isReal ? ingBase : ingBase * (1 + (simIngByResource[r] || 0) / 100);
+        const simGasComp = isReal ? gasCompBase : gasCompBase * (1 + (simGasByResource[r] || 0) / 100);
+        const simGasPago = isReal ? gasPagoBase : gasPagoBase * (1 + (simGasByResource[r] || 0) / 100);
 
         monthBaseIng += ingBase;
         monthBaseGasComp += gasCompBase;
         monthBaseGasPago += gasPagoBase;
 
-        monthSimIng += ingBase * scaleIng;
-        monthSimGasComp += gasCompBase * scaleGas;
-        monthSimGasPago += gasPagoBase * scaleGas;
+        monthSimIng += simIng;
+        monthSimGasComp += simGasComp;
+        monthSimGasPago += simGasPago;
       });
 
       totalBaseIng += monthBaseIng;
@@ -418,10 +454,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       simGasPagoAccum += monthSimGasPago;
 
       if (filterMes === 'Todos' || filterMes === MONTHS_STR[i]) {
-        // Calculate dynamic monthly execution %
-        // Execution % = (Pago / Compromiso) / Ingresos (or relative to Incomes)
-        // We will store both components in the flow to plot:
-        // executionLine = (Gasto / Ingreso) * 100
         const activeMonthlyGasto = viewDimension === 'pago' ? monthSimGasPago : monthSimGasComp;
         const executionPct = monthSimIng > 0 ? (activeMonthlyGasto / monthSimIng) * 100 : 0;
 
@@ -485,26 +517,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     viewDimension
   ]);
 
-  if (dataStage === 'loading') {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh]">
-        <div className="w-12 h-12 border-4 border-[#ffcc29] border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-on-surface-variant font-mono animate-pulse">Iniciando modelo de proyección financiera...</p>
-      </div>
-    );
-  }
-
   const isPago = viewDimension === 'pago';
   const currentGas = isPago ? financialData.totals.simGasPago : financialData.totals.simGasComp;
   const baseGas = isPago ? financialData.totals.baselineGasPago : financialData.totals.baselineGasComp;
   const currentNet = isPago ? financialData.totals.simNetPago : financialData.totals.simNetComp;
-  const baseNet = isPago ? financialData.totals.baselineNetPago : financialData.totals.baselineNetComp;
 
-  // KPIs calculations
   const breakEvenCoverage = currentGas > 0 ? (financialData.totals.simIng / currentGas) * 100 : 0;
   
-  // Execution calculations
-  // % de ejecución: (Pago / Compromiso) / Ingresos totales
   const totalComp = financialData.totals.simGasComp;
   const totalPago = financialData.totals.simGasPago;
   const totalIng = financialData.totals.simIng;
@@ -520,19 +539,18 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
         <div>
-          <p className="text-[#ffcc29] text-xs uppercase tracking-widest font-bold mb-1">MÓDULO FINANCIERO AVANZADO V4.0</p>
+          <p className="text-[#ffcc29] text-xs uppercase tracking-widest font-bold mb-1">MÓDULO FINANCIERO AVANZADO V4.1</p>
           <div className="flex items-center gap-4">
             <h2 className="text-3xl font-bold font-display text-white">Proyección Financiera (Ingresos y Gastos)</h2>
             <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
               <BrainCircuit size={14} className="text-[#ffcc29]" />
-              <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">Cálculo de Recursos Integrados</span>
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">Cálculo de Proyección Histórica</span>
             </div>
           </div>
         </div>
 
         {/* Global Toolbar Filters */}
         <div className="flex flex-wrap gap-3 items-center">
-          {/* Dimension Selector (Compromiso vs Pago) */}
           <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 shrink-0">
             <button 
               onClick={() => setViewDimension('compromiso')}
@@ -562,7 +580,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </select>
           </div>
 
-          {/* Tipo de Gasto Filter */}
           <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3 py-1.5 focus-within:border-[#ffcc29]/50 transition-colors">
             <Filter size={14} className="text-on-surface-variant mr-2" />
             <select 
@@ -577,7 +594,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </select>
           </div>
 
-          {/* Recurso Equivalent Filter */}
           <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3 py-1.5 focus-within:border-[#ffcc29]/50 transition-colors">
             <Filter size={14} className="text-on-surface-variant mr-2" />
             <select 
@@ -608,7 +624,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         </div>
       </div>
 
-      {/* Module Navigation Tabs */}
+      {/* Navigation Tabs */}
       <div className="flex border-b border-white/10 mb-8 bg-white/5 p-1 rounded-xl w-fit">
         <button 
           onClick={() => setActiveTab('kpi')}
@@ -648,7 +664,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             <div className="flex items-center gap-2">
               <ClipboardList className="text-[#ffcc29]" size={20} />
               <span>
-                <strong>Filtro Recurso:</strong> {filterRecurso} | <strong>Tipo de Gasto:</strong> {filterTipoGasto}
+                <strong>Nota:</strong> Los valores de <strong>Enero a Junio</strong> corresponden a los datos contables reales y no son modificados por el simulador. La proyección y simulación se aplica a <strong>Julio-Diciembre</strong>.
               </span>
             </div>
             <div className="px-3 py-1 rounded bg-[#ffcc29]/10 text-[#ffcc29] font-mono">
@@ -658,7 +674,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
           {/* Main KPI Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Incomes Card */}
             <div className="glass-card rounded-[24px] p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-[#4ade80]"></div>
               <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-2 flex justify-between">
@@ -674,7 +689,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </p>
             </div>
 
-            {/* Expenses Card */}
             <div className="glass-card rounded-[24px] p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-[#f43f5e]"></div>
               <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-2 flex justify-between">
@@ -690,7 +704,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </p>
             </div>
 
-            {/* Net Result Card */}
             <div className="glass-card rounded-[24px] p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-[#7bd0ff]"></div>
               <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-2">Resultado Neto</h4>
@@ -705,7 +718,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </span>
             </div>
 
-            {/* Execution % Card */}
             <div className="glass-card rounded-[24px] p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ffcc29]"></div>
               <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-2 flex justify-between">
@@ -722,34 +734,25 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
-          {/* Composed Chart of Incomes, Expenses & Execution Line */}
+          {/* Monthly Composed Chart */}
           <div className="grid grid-cols-1 gap-8">
             <div className="glass-card rounded-[32px] p-8 flex flex-col min-h-[450px]">
               <h3 className="text-lg font-display font-bold text-white mb-6 flex items-center gap-2">
                 <BarChartIcon size={20} className="text-[#ffcc29]" />
-                Flujo Mensual Recaudado e Indicador de Ejecución (Millones)
+                Flujo Mensual de Caja e Indicador de Ejecución (Ene-Jun Real / Jul-Dic Proy)
               </h3>
               <div className="flex-1 w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={financialData.simulatedFlow} margin={{ top: 20, right: -5, left: -25, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" tick={{fontSize: 10, fontFamily: 'monospace'}} />
-                    
-                    {/* Left Axis - Currency */}
                     <YAxis yAxisId="left" stroke="rgba(255,255,255,0.4)" tick={{fontSize: 10, fontFamily: 'monospace'}} tickFormatter={(v) => `$${v}`} />
-                    
-                    {/* Right Axis - Percentage */}
                     <YAxis yAxisId="right" orientation="right" stroke="#ffcc29" tick={{fontSize: 10, fontFamily: 'monospace'}} tickFormatter={(v) => `${v}%`} />
-                    
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      itemStyle={{ color: '#fff', fontSize: '12px' }}
-                    />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
                     <Legend wrapperStyle={{ fontSize: '11px', opacity: 0.8 }} />
                     
                     <Bar yAxisId="left" dataKey="ingresos" name="Ingresos" fill="#4ade80" radius={[4, 4, 0, 0]} maxBarSize={30} />
                     <Bar yAxisId="left" dataKey={isPago ? 'gastosPago' : 'gastosComp'} name={isPago ? 'Gastos (Pagos)' : 'Gastos (Compromisos)'} fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                    
                     <Line yAxisId="right" type="monotone" dataKey="ejecucion" name="Tasa Ejecución (%)" stroke="#ffcc29" strokeWidth={3} dot={{ r: 4, fill: '#ffcc29', strokeWidth: 0 }} />
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -757,7 +760,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
-          {/* Expenses Breakdown by Category type */}
+          {/* Expenses Breakdown */}
           <div className="glass-card rounded-[32px] p-8">
             <h3 className="text-base font-bold text-white mb-6">Desglose de Gastos por Tipo (Millones)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -787,7 +790,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             <div className="px-8 py-6 border-b border-white/5 bg-white/5 flex flex-wrap gap-4 justify-between items-center">
               <div>
                 <h3 className="text-lg font-bold text-white">Consolidado Mensual de Caja</h3>
-                <p className="text-xs text-on-surface-variant mt-1">Valores mensuales expresados en millones de pesos ($M). Ajustados según los filtros y simuladores.</p>
+                <p className="text-xs text-on-surface-variant mt-1">Enero-Junio: Histórico Real. Julio-Diciembre: Proyección Simulada. Valores en millones de pesos ($M).</p>
               </div>
               <div className="px-3 py-1 rounded bg-[#ffcc29]/10 text-[#ffcc29] text-xs font-mono">Tabla Comparativa</div>
             </div>
@@ -918,7 +921,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {/* TAB CONTENT: RESOURCE-BASED SIMULATOR */}
       {activeTab === 'simulator' && (
         <div className="space-y-8 animate-fade-in">
-          {/* Header Controls */}
           <div className="glass-card rounded-[24px] p-6 border border-[#ffcc29]/20 bg-[#0c1527] flex justify-between items-center">
             <div>
               <h3 className="font-bold text-white text-lg flex items-center gap-2">
@@ -926,7 +928,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 Simulación Financiera Detallada por Recurso UPTC
               </h3>
               <p className="text-xs text-on-surface-variant mt-1">
-                Ajusta las tasas de variación porcentual de ingresos y gastos para cada una de las 17 fuentes presupuestarias.
+                Ajusta las tasas de variación porcentual de ingresos y gastos para cada una de las 17 fuentes presupuestarias. **Afecta únicamente la proyección de Julio a Diciembre**.
               </p>
             </div>
             <button 
@@ -938,7 +940,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </button>
           </div>
 
-          {/* Simulator Grid containing all 17 resources */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {RESOURCES_LIST.map((resName) => {
               const baseline = financialData.resourceBaselines[resName] || { ing: 0, gasComp: 0, gasPago: 0 };
@@ -953,12 +954,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
               return (
                 <div key={resName} className="glass-card rounded-[24px] p-6 border border-white/5 flex flex-col justify-between space-y-4">
-                  {/* Title & Reference Info */}
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="text-sm font-bold text-white">{resName}</h4>
                       <p className="text-[10px] text-on-surface-variant uppercase font-mono tracking-wider mt-0.5">
-                        Línea de Referencia
+                        Línea de Proyección Anual (Base)
                       </p>
                     </div>
                     <span className="text-[10px] font-mono bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-white">
@@ -966,24 +966,21 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     </span>
                   </div>
 
-                  {/* Baselines Reference Row */}
                   <div className="grid grid-cols-2 gap-4 bg-white/5 p-3 rounded-xl text-center text-xs">
                     <div>
-                      <span className="text-on-surface-variant text-[10px] block">Ingreso Base</span>
+                      <span className="text-on-surface-variant text-[10px] block">Ingreso Proyectado Base</span>
                       <strong className="text-[#4ade80] font-mono">${baseline.ing.toFixed(1)}M</strong>
                     </div>
                     <div>
-                      <span className="text-on-surface-variant text-[10px] block">Gasto Base ({isPago ? 'Pago' : 'Comp'})</span>
+                      <span className="text-on-surface-variant text-[10px] block">Gasto Proyectado Base</span>
                       <strong className="text-[#f43f5e] font-mono">${currentGasBaseline.toFixed(1)}M</strong>
                     </div>
                   </div>
 
-                  {/* Slider Controls */}
                   <div className="space-y-4 pt-2">
-                    {/* Income Slider */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs">
-                        <span className="text-on-surface-variant">Simular Ingreso: {valIng > 0 ? '+' : ''}{valIng}%</span>
+                        <span className="text-on-surface-variant">Simular Proyección Ingreso: {valIng > 0 ? '+' : ''}{valIng}%</span>
                         <span className="font-bold text-[#4ade80] font-mono">${simIngValue.toFixed(1)}M</span>
                       </div>
                       <input 
@@ -1000,10 +997,9 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                       />
                     </div>
 
-                    {/* Expense Slider */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs">
-                        <span className="text-on-surface-variant">Simular Gasto: {valGas > 0 ? '+' : ''}{valGas}%</span>
+                        <span className="text-on-surface-variant">Simular Proyección Gasto: {valGas > 0 ? '+' : ''}{valGas}%</span>
                         <span className="font-bold text-[#f43f5e] font-mono">${simGasValue.toFixed(1)}M</span>
                       </div>
                       <input 
@@ -1021,9 +1017,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     </div>
                   </div>
 
-                  {/* Simulated Net outcome */}
                   <div className="pt-2 border-t border-white/5 flex justify-between items-center text-xs font-mono">
-                    <span className="text-on-surface-variant">Resultado Simulado:</span>
+                    <span className="text-on-surface-variant">Resultado Proyectado Simulado:</span>
                     <strong className={simNetValue >= 0 ? 'text-[#4ade80]' : 'text-[#f43f5e]'}>
                       ${simNetValue.toFixed(1)}M
                     </strong>
