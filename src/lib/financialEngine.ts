@@ -279,6 +279,7 @@ export function calculateProjections({
   rawHistoricalGastos.forEach(row => {
     if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
     const recMapped = getRecursoEquivalence(row.recurso);
+    if (!expensesCompByYearRes[2026][recMapped]) return; // Guard against unmapped resources
     if (filterRecurso !== 'Todos' && recMapped !== filterRecurso) return;
 
     const monthIdx = row.mes - 1;

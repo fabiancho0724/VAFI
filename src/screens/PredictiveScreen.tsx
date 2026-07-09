@@ -23,6 +23,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [flowGranularity, setFlowGranularity] = useState<'monthly' | 'quarterly' | 'semesterly' | 'annual'>('monthly');
 
   // Filters
+  const [viewDimension, setViewDimension] = useState<'compromiso' | 'pago'>('pago');
   const [filterUnidad, setFilterUnidad] = useState<string>('Todos');
   const [filterRecurso, setFilterRecurso] = useState<string>('Todos');
   const [filterMes, setFilterMes] = useState<string>('Todos');
@@ -584,7 +585,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={expensesBreakdown[viewDimension]}
+                      data={expensesBreakdown[viewDimension] || []}
                       cx="50%"
                       cy="50%"
                       innerRadius={65}
@@ -592,7 +593,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                       paddingAngle={3}
                       dataKey="value"
                     >
-                      {expensesBreakdown[viewDimension].map((entry, index) => (
+                      {(expensesBreakdown[viewDimension] || []).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -603,7 +604,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               
               {/* Legend */}
               <div className="grid grid-cols-2 gap-4 mt-6 text-xs w-full max-w-md font-mono">
-                {expensesBreakdown[viewDimension].map((entry, index) => (
+                {(expensesBreakdown[viewDimension] || []).map((entry, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
                     <span className="text-white/80 truncate" title={entry.name}>{entry.name.substring(0, 24)}...</span>
@@ -635,8 +636,9 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </div>
 
                 <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                  {expensesBreakdown[viewDimension].map((row, idx) => {
-                    const pct = (row.value / Object.values(expensesBreakdown[viewDimension]).reduce((a,b)=>a+b.value, 0)) * 100 || 0;
+                  {(expensesBreakdown[viewDimension] || []).map((row, idx) => {
+                    const totalVal = (expensesBreakdown[viewDimension] || []).reduce((acc: number, item: any) => acc + (item.value || 0), 0);
+                    const pct = totalVal > 0 ? (row.value / totalVal) * 100 : 0;
                     return (
                       <div key={idx} className="space-y-1">
                         <div className="flex justify-between text-xs font-mono">
