@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { ResponsiveContainer, LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
 import { Filter, TrendingUp, DollarSign, Calendar, TrendingDown, ArrowUpRight } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
+import { getRowResourceCode, getRecursoEquivalence, getResourceFullName } from '../lib/resourceMapper';
 
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 const DATA_URLS: Record<string, string> = {
-  '2023': 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Ingreso%20Mensual%202023.csv',
-  '2024': 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Ingreso%20Mensual%202024.csv',
-  '2025': 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/main/Ingreso%20Mensual%202025.csv',
+  '2023': 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%202023.csv',
+  '2024': 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%202024.csv',
+  '2025': 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%202025.csv',
   '2026': 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%202026.csv',
 };
 
@@ -77,13 +78,13 @@ export function HistoricalScreen({ onNavigate }: HistoricalScreenProps) {
       const monthKeys = keys.filter(k => k.trim().toLowerCase().startsWith('valor ')).slice(0, 12);
 
       rows.forEach(row => {
-        let resCode = String(row[recursoKey] || '').trim();
+        let resCode = getRowResourceCode(row, Number(year));
         let resConcept = String(row[conceptoKey] || '').trim();
         
         if (!resCode || resCode === 'undefined' || resCode === 'null') return;
         
         // El usuario solicitó explícitamente que el filtro sea esta columna ("10, 10.1, 10.2")
-        const filterName = resCode;
+        const filterName = getRecursoEquivalence(resCode);
         
         resourcesSet.add(filterName);
 
@@ -274,7 +275,7 @@ export function HistoricalScreen({ onNavigate }: HistoricalScreenProps) {
                           onChange={() => toggleResource(res)}
                           className="mt-1"
                         />
-                        <span className="text-sm text-white/90 leading-tight">{res}</span>
+                        <span className="text-sm text-white/90 leading-tight">{getResourceFullName(res)}</span>
                      </label>
                    ))}
                 </div>

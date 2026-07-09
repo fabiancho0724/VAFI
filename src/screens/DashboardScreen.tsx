@@ -190,8 +190,8 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
         const compCol = firstRowKeys[10]; // index 10 for col K
         const pagoCol = firstRowKeys[11]; // index 11 for col L
         const apropCol = firstRowKeys[10]; // fallback
-        const catCol9 = firstRowKeys[7];  // index 7 for col H
-        const catCol10 = firstRowKeys[8]; // index 8 for col I
+        const catCol9 = firstRowKeys[8];  // index 8 for col I ("Código recurso") -> Tipo de Gasto
+        const catCol10 = firstRowKeys[7]; // index 7 for col H ("Tipo de gasto")   -> Resource name
 
         const compSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(row[compCol]) || 0), 0);
         const pagoSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(row[pagoCol]) || 0), 0);
