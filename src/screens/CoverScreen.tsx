@@ -1,99 +1,112 @@
+import { useEffect, useRef } from 'react';
 import { 
-  LayoutDashboard, 
-  LineChart, 
-  Users, 
-  GraduationCap, 
-  BarChart3, 
-  Wallet, 
-  FileText, 
-  FolderOpen,
-  ArrowRight,
-  Bot
+  BarChart3, LineChart, Wallet, Users, FileText, 
+  Settings, FolderOpen, ArrowRight, GraduationCap, Bot
 } from 'lucide-react';
 
 const MODULES = [
-  { id: 'dashboard', icon: LayoutDashboard, title: 'Tablero', desc: 'Resumen financiero general e indicadores clave.' },
+  { id: 'dashboard', icon: BarChart3, title: 'Consolidado', desc: 'Resumen financiero, cumplimiento de aforos y ejecución.' },
   { id: 'historical', icon: LineChart, title: 'Histórico', desc: 'Evolución de ingresos y gastos en periodos anteriores.' },
   { id: 'nomina', icon: Users, title: 'Nómina', desc: 'Análisis de personal, salarios y prestaciones.' },
   { id: 'posgrados', icon: GraduationCap, title: 'Posgrados', desc: 'Matrículas, flexibilización y programas.' },
-  { id: 'predictive', icon: BarChart3, title: 'Proyección', desc: 'Flujo de caja, simulador financiero y equilibrio.' },
+  { id: 'predictive', icon: BarChart3, title: 'Proyección Financiera', desc: 'Simulador, flujo de caja y escenarios futuros.' },
   { id: 'budget', icon: Wallet, title: 'Alertas', desc: 'Control de ejecución presupuestal y anomalías.' },
   { id: 'reports', icon: FileText, title: 'Reportes', desc: 'Informes detallados listos para exportar.' },
   { id: 'repository', icon: FolderOpen, title: 'Repositorio', desc: 'Archivos y documentos financieros.' },
-  { id: 'assistant', icon: Bot, title: 'Asistente IA', desc: 'Asistente virtual RAG para consultas del proyecto.' },
+  { id: 'assistant', icon: Bot, title: 'Asistente IA', desc: 'Consultas financieras mediante lenguaje natural.' },
+  { id: 'settings', icon: Settings, title: 'Configuración', desc: 'Parametrización del sistema.' }
 ];
 
 export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   return (
-    <div className="min-h-screen bg-[#070c19] text-on-surface flex flex-col relative overflow-hidden" 
-         style={{ backgroundImage: 'radial-gradient(circle at 50% -20%, #16264c 0%, #070c19 75%)' }}>
+    <div className="min-h-screen bg-black flex flex-col relative overflow-hidden">
       
-      {/* Premium Decorative Glow Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary-container/8 blur-[130px]"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#7bd0ff]/5 blur-[120px]"></div>
-      <div className="absolute top-[30%] right-[10%] w-[20%] h-[20%] rounded-full bg-secondary-container/5 blur-[100px]"></div>
+      {/* Animated Gradient Background */}
+      <div 
+        className="absolute inset-0 z-0 opacity-80"
+        style={{
+          background: 'linear-gradient(-45deg, #0f172a, #1e293b, #000000, #334155)',
+          backgroundSize: '400% 400%',
+          animation: 'gradientBG 15s ease infinite',
+        }}
+      ></div>
 
-      <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-12 flex flex-col justify-between z-10">
+      {/* Noise Overlay */}
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none mix-blend-overlay opacity-30"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+        }}
+      ></div>
+
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary-container/20 blur-[150px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-secondary/10 blur-[150px] pointer-events-none z-0"></div>
+      
+      <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-12 flex flex-col z-10">
         
-        {/* Header Hero Section */}
-        <div className="flex flex-col items-center text-center space-y-6 mt-10 mb-16">
-          <div className="p-3 bg-white/5 rounded-3xl border border-white/10 shadow-2xl backdrop-blur-md mb-2">
-            <img 
-               src="https://www.uptc.edu.co/sitio/export/sites/default/portal/sitios/universidad/rectoria/comunicaciones/.content/doc/logos/uptc-blanco.png" 
-               alt="UPTC Logo" 
-               className="w-32 object-contain opacity-90 filter drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-            />
-          </div>
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-6xl font-display font-extrabold tracking-tight text-white leading-tight">
-              Consolidado y Proyección <span className="text-primary-container bg-gradient-to-r from-primary-container to-[#ffe385] bg-clip-text text-transparent">Financiera</span>
+        {/* Header */}
+        <div className="flex flex-col items-center text-center space-y-6 mt-8 mb-20 animate-fade-in-up">
+          <img 
+              src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png" 
+              alt="UPTC Logo" 
+              className="w-40 object-contain opacity-90 drop-shadow-2xl"
+          />
+          <div>
+            <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight text-white mb-4 drop-shadow-lg">
+              Consolidado y Proyección <span className="text-primary-container">Financiera</span>
             </h1>
-            <p className="text-base md:text-lg text-on-surface-variant max-w-2xl mx-auto font-light leading-relaxed">
-              Plataforma institucional de inteligencia de datos financieros para el análisis retrospectivo, 
-              seguimiento presupuestal y simulador del flujo de caja de la UPTC.
+            <p className="text-lg md:text-xl text-on-surface-variant max-w-3xl mx-auto font-light leading-relaxed drop-shadow-lg text-white/90">
+              Plataforma integral para el análisis, seguimiento predictivo y visualización 
+              de datos presupuestales de la Universidad Pedagógica y Tecnológica de Colombia.
             </p>
           </div>
           
           <button 
             onClick={() => onNavigate('dashboard')}
-            className="mt-6 px-8 py-3.5 bg-primary-container text-on-primary-container rounded-full font-bold text-base flex items-center justify-center gap-3 hover:scale-105 hover:bg-[#ffe385] hover:shadow-[0_0_30px_rgba(255,204,41,0.35)] transition-all duration-300 active:scale-95 cursor-pointer"
+            className="mt-6 px-10 py-4 bg-primary-container text-on-primary-container rounded-full font-bold text-lg flex items-center justify-center gap-3 hover:scale-105 hover:bg-[#e6b825] hover:shadow-[0_0_30px_rgba(255,204,41,0.4)] transition-all duration-300"
           >
-            Ingresar al Sistema
-            <ArrowRight size={18} />
+            Ingresar al Tablero
+            <ArrowRight size={20} />
           </button>
         </div>
 
         {/* Modules Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-           {MODULES.map((mod) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in-up animation-delay-300">
+           {MODULES.map((mod, idx) => (
              <div 
-               key={mod.id} 
+               key={mod.id}
                onClick={() => onNavigate(mod.id)}
-               className="group relative glass-card rounded-[24px] p-6 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.03] hover:border-[#ffcc29]/30 hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)]"
+               className="group relative backdrop-blur-md bg-white/5 border border-white/10 p-6 rounded-[24px] cursor-pointer overflow-hidden transition-all duration-300 hover:bg-white/10 hover:border-primary-container/50 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
              >
-                {/* Subtle top light bar */}
-                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#ffcc29]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute top-0 left-0 w-1 p-0 h-0 bg-primary-container transition-all duration-300 group-hover:h-full"></div>
                 
                 <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[#ffcc29] group-hover:scale-110 group-hover:bg-[#ffcc29] group-hover:text-black group-hover:border-transparent transition-all shadow-inner">
-                    <mod.icon size={22} />
+                  <div className="p-3 bg-primary-container/10 rounded-2xl text-primary-container group-hover:scale-110 group-hover:bg-primary-container group-hover:text-black transition-all">
+                    <mod.icon size={24} />
                   </div>
-                  <ArrowRight size={18} className="text-white/20 group-hover:text-[#ffcc29] -translate-x-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                  <ArrowRight size={20} className="text-white/20 group-hover:text-primary-container -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#ffcc29] transition-colors">{mod.title}</h3>
-                <p className="text-xs text-on-surface-variant font-light leading-relaxed group-hover:text-white/80 transition-colors">
+                
+                <h3 className="text-xl font-bold text-white mb-2">{mod.title}</h3>
+                <p className="text-sm text-on-surface-variant font-light group-hover:text-white/90 transition-colors">
                   {mod.desc}
                 </p>
              </div>
            ))}
         </div>
 
-        {/* Footer */}
-        <footer className="mt-16 text-center text-[#94a3b8]/50 font-mono text-xs py-4 border-t border-white/5 w-full">
+        <footer className="mt-20 text-center text-[#94a3b8] font-mono text-sm py-4 border-t border-white/10 w-full drop-shadow-md">
             ©Fabián L. Cely – VAFI – Universidad Pedagógica y Tecnológica de Colombia
         </footer>
       </div>
 
+      <style>{`
+        @keyframes gradientBG {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </div>
   );
 }

@@ -45,10 +45,10 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
     let allCompromisos: any[] = [];
     
     if (gasKeys.length >= 12) {
-      const recursoCol = gasKeys[7]; // "Tipo de gasto" actually contains resource code & name
-      const refCol = gasKeys[9];     // "Concepto" or "Referencia"
-      const compCol = gasKeys[10];   // "Valor compromiso"
-      const pagoCol = gasKeys[11];   // "Valor pago"
+      const recursoCol = gasKeys[5]; // Source of funding usually
+      const refCol = gasKeys[8]; // Reference
+      const compCol = gasKeys[10];
+      const pagoCol = gasKeys[11];
       
       gas.forEach(r => {
         let rec = r[recursoCol] || 'Desconocido';

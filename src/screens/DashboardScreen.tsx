@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Download, Filter, Wallet, Component, Network, Layers, LayoutList, Settings, TrendingUp, CheckCircle, Clock, Upload, AlertTriangle, PieChart as PieChartIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { fetchAndParseCSV, groupAndSum, getNumericColumn, getCategoryColumn } from '../lib/csvParser';
+import { RECURSOS_FINANCIEROS } from '../lib/constants';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart, Line, AreaChart, Area, LabelList } from 'recharts';
 
 export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
@@ -22,8 +23,10 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
   const [expandedGastoCardGroup, setExpandedGastoCardGroup] = useState<string | null>(null);
   const [nominaGroups, setNominaGroups] = useState<any[]>([]);
   const [rawNomina, setRawNomina] = useState<any[]>([]);
+  const [rawGastos, setRawGastos] = useState<any[]>([]);
   const [nominaPeriodoFiltro, setNominaPeriodoFiltro] = useState<string[]>(['Todos']); 
   const [rawIngresos, setRawIngresos] = useState<any[]>([]);
+  const [filtroGeneralRecurso, setFiltroGeneralRecurso] = useState<string>('Todos');
   const [ingresosTiposGroups, setIngresosTiposGroups] = useState<any[]>([]);
   const [expandedIngresoGroup, setExpandedIngresoGroup] = useState<string | null>(null);
   const [expandedPieGroup, setExpandedPieGroup] = useState<string | null>(null); // New state for interactive pie
@@ -136,43 +139,76 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (rawIngresos.length > 0 || rawGastos.length > 0) {
+       processData(rawIngresos, rawGastos, rawNomina);
+    }
+  }, [filtroGeneralRecurso]);
+
   const processData = (ingresosData: any[], gastosData: any[], nominaData: any[]) => {
     let ingSum = 0, gasSum = 0, nomSum = 0;
     
+    let filteredIngresos = ingresosData || [];
+    let filteredGastos = gastosData || [];
+
+    if (filtroGeneralRecurso !== 'Todos') {
+      const recKey = filtroGeneralRecurso.split('-')[0].trim();
+      filteredIngresos = filteredIngresos.filter(r => String(r.Recurso || r['Tipo de Ingreso'] || '').includes(recKey));
+      filteredGastos = filteredGastos.filter(r => String(r['Tipo de gasto'] || r['Código recurso'] || '').includes(recKey));
+    }
+
     if (ingresosData && ingresosData.length > 0) {
       setRawIngresos(ingresosData);
     }
     
     if (gastosData && gastosData.length > 0) {
-      const gasNumCol = getNumericColumn(gastosData) || 'valor';
-      const gasCatCol = getCategoryColumn(gastosData) || 'concepto';
-      gasSum = gastosData.reduce((acc, row) => acc + (parseFloat(row[gasNumCol]) || 0), 0);
-      setGastosGroups(groupAndSum(gastosData, gasCatCol, gasNumCol));
+      setRawGastos(gastosData);
+    }
 
-      const firstRowKeys = Object.keys(gastosData[0]);
+    if (filteredIngresos && filteredIngresos.length > 0) {
+      // The rest of the useEffects down below handle the groups for ingresos based on rawIngresos.
+      // But we need to update the total for aforo and recaudo based on filtered.
+      const aforoCol = Object.keys(filteredIngresos[0])[5] || 'Valor aforo';
+      const recaudoCol = Object.keys(filteredIngresos[0])[6] || 'Total recaudo';
+      
+      const aforoTotal = filteredIngresos.reduce((acc, r) => acc + (parseFloat(r[aforoCol]) || 0), 0);
+      const recaudoTotal = filteredIngresos.reduce((acc, r) => acc + (parseFloat(r[recaudoCol]) || 0), 0);
+      
+      setIngresosAforado(aforoTotal / 1e6);
+      setIngresosRecaudado(recaudoTotal / 1e6);
+      ingSum = recaudoTotal; // Use for the generic var
+    }
+    
+    if (filteredGastos && filteredGastos.length > 0) {
+      const gasNumCol = getNumericColumn(filteredGastos) || 'valor';
+      const gasCatCol = getCategoryColumn(filteredGastos) || 'concepto';
+      gasSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(row[gasNumCol]) || 0), 0);
+      setGastosGroups(groupAndSum(filteredGastos, gasCatCol, gasNumCol));
+
+      const firstRowKeys = Object.keys(filteredGastos[0]);
       if (firstRowKeys.length >= 12) {
         const compCol = firstRowKeys[10]; // index 10 for col K
         const pagoCol = firstRowKeys[11]; // index 11 for col L
         const apropCol = firstRowKeys[10]; // fallback
-        const catCol9 = firstRowKeys[8];  // index 8 for col I ("Código recurso") -> Tipo de Gasto
-        const catCol10 = firstRowKeys[7]; // index 7 for col H ("Tipo de gasto")   -> Resource name
+        const catCol9 = firstRowKeys[7];  // index 7 for col H
+        const catCol10 = firstRowKeys[8]; // index 8 for col I
 
-        const compSum = gastosData.reduce((acc, row) => acc + (parseFloat(row[compCol]) || 0), 0);
-        const pagoSum = gastosData.reduce((acc, row) => acc + (parseFloat(row[pagoCol]) || 0), 0);
+        const compSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(row[compCol]) || 0), 0);
+        const pagoSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(row[pagoCol]) || 0), 0);
         
         if (compSum > 0) setGastosComprometido(compSum / 1e6);
         if (pagoSum > 0) setGastosPagado(pagoSum / 1e6);
 
         // create custom group by col 10 (Recursos), summing pagoCol (Pagado)
-        setGastosRecursosGroups(groupAndSum(gastosData, catCol10, pagoCol).sort((a: any, b: any) => b.value - a.value));
+        setGastosRecursosGroups(groupAndSum(filteredGastos, catCol10, pagoCol).sort((a: any, b: any) => b.value - a.value));
         
         // custom grouping for categorisation from col 9
-        setGastosGroups(groupAndSum(gastosData, catCol9, pagoCol).sort((a: any, b: any) => b.value - a.value));
+        setGastosGroups(groupAndSum(filteredGastos, catCol9, pagoCol).sort((a: any, b: any) => b.value - a.value));
 
         // Group by Tipo de Gasto (Clasificacion)
-        const gTipos = Array.from(new Set(gastosData.map(r => r[catCol9]))).filter(Boolean);
+        const gTipos = Array.from(new Set(filteredGastos.map(r => r[catCol9]))).filter(Boolean);
         const parsedGastoTiposGroups = gTipos.map(tipo => {
-           const rows = gastosData.filter(r => r[catCol9] === tipo);
+           const rows = filteredGastos.filter(r => r[catCol9] === tipo);
            const tComp = rows.reduce((acc, r) => acc + (parseFloat(r[compCol]) || 0), 0) / 1e6;
            const tPago = rows.reduce((acc, r) => acc + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
            
@@ -195,9 +231,9 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
         // Group by Referencia (col 2)
         const catCol2 = firstRowKeys[2];
-        const gRef = Array.from(new Set(gastosData.map(r => r[catCol2]))).filter(Boolean);
+        const gRef = Array.from(new Set(filteredGastos.map(r => r[catCol2]))).filter(Boolean);
         const parsedGastoReferenciasGroups = gRef.map(ref => {
-           const rows = gastosData.filter(r => r[catCol2] === ref);
+           const rows = filteredGastos.filter(r => r[catCol2] === ref);
            const tComp = rows.reduce((acc, r) => acc + (parseFloat(r[compCol]) || 0), 0) / 1e6;
            const tPago = rows.reduce((acc, r) => acc + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
            
@@ -299,7 +335,22 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
           <p className="text-primary-container text-xs uppercase tracking-widest font-bold mb-1">UPTC - VAFI</p>
           <h2 className="text-[32px] md:text-4xl font-bold font-display text-white">Consolidado Financiero - Corte 30 de Junio</h2>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+          <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3 py-2 hover:bg-white/10 transition-colors">
+            <Filter size={16} className="text-on-surface-variant mr-2" />
+            <select 
+               className="bg-transparent text-sm text-white outline-none font-mono cursor-pointer"
+               value={filtroGeneralRecurso}
+               onChange={(e) => setFiltroGeneralRecurso(e.target.value)}
+            >
+               <option value="Todos" className="bg-[#0f172a]">Todos los Recursos</option>
+               {RECURSOS_FINANCIEROS.map(r => (
+                  <option key={r.codigo} value={r.codigo} className="bg-[#0f172a]">
+                    {r.nombre.length > 30 ? r.nombre.substring(0, 30) + '...' : r.nombre}
+                  </option>
+               ))}
+            </select>
+          </div>
           <button 
             onClick={() => onNavigate('reports')}
             className="bg-primary-container text-on-primary-container px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:brightness-110 shadow-[0_4px_15px_rgba(255,204,41,0.2)] transition-all active:scale-95"

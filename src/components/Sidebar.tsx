@@ -26,91 +26,70 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
     const isActive = currentScreen === screen;
     if (isThin) {
       return cn(
-        'w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer',
-        isActive 
-          ? 'bg-[#ffcc29] text-black shadow-[0_0_15px_rgba(255,204,41,0.25)] font-bold scale-105' 
-          : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+        'w-12 h-12 flex items-center justify-center rounded-xl transition-all',
+        isActive ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(255,204,41,0.3)]' : 'text-on-surface-variant hover:text-primary-container'
       );
     }
     return cn(
-      'flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 cursor-pointer w-full text-left',
+      'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
       isActive
-        ? 'bg-[#ffcc29] text-black font-extrabold shadow-[0_0_15px_rgba(255,204,41,0.25)] scale-[1.02]'
-        : 'text-on-surface-variant hover:text-white hover:bg-white/5 font-medium'
+        ? 'bg-primary-container text-on-primary-container font-bold shadow-[0_0_15px_rgba(255,204,41,0.3)]'
+        : 'text-on-surface-variant hover:text-primary-container hover:bg-white/5 font-medium'
     );
   };
 
-  const menuItems = [
-    { screen: 'dashboard', label: 'Tablero Principal', icon: LayoutDashboard },
-    { screen: 'historical', label: 'Historial', icon: LineChart },
-    { screen: 'nomina', label: 'Gestión Nómina', icon: Users },
-    { screen: 'posgrados', label: 'Posgrados', icon: GraduationCap },
-    { screen: 'predictive', label: 'Proyección Financiera', icon: BarChart3 },
-    { screen: 'budget', label: 'Alertas', icon: Wallet },
-    { screen: 'reports', label: 'Reportes', icon: FileText },
-    { screen: 'repository', label: 'Repositorio', icon: FolderOpen },
-    { screen: 'assistant', label: 'Asistente IA', icon: Bot },
-  ];
+  const IconWrapper = ({ icon: Icon, screen }: { icon: any, screen: string }) => (
+    <button onClick={() => onNavigate(screen)} className={getNavClasses(screen)}>
+      <Icon size={isThin ? 24 : 20} strokeWidth={currentScreen === screen ? 2.5 : 2} />
+      {!isThin && <span className="text-sm">
+        {screen === 'dashboard' ? 'Tablero' :
+         screen === 'historical' ? 'Histórico' :
+         screen === 'nomina' ? 'Nómina' :
+         screen === 'posgrados' ? 'Posgrados' :
+         screen === 'budget' ? 'Alertas' :
+         screen === 'predictive' ? 'Proyección Financiera' :
+         screen === 'reports' ? 'Reportes' :
+         screen === 'repository' ? 'Repositorio' :
+         screen === 'assistant' ? 'Asistente IA' :
+         'Configuración'}
+      </span>}
+    </button>
+  );
 
   return (
     <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'fixed left-0 top-0 h-full flex flex-col z-40 bg-[#0a0f1d]/90 backdrop-blur-2xl border-r border-white/5 transition-all duration-300 shadow-2xl',
-        isThin ? 'w-20 items-center py-6' : 'w-64 p-5'
+        'fixed left-0 top-0 h-full flex flex-col z-40 bg-surface-container-low/50 backdrop-blur-xl border-r border-white/5 transition-all duration-300',
+        isThin ? 'w-20 items-center py-4' : 'w-64 p-4'
       )}
     >
-      {/* Brand Header */}
-      <div 
-        className={cn('mb-8 cursor-pointer transition-all duration-300', isThin ? 'mt-0' : 'mt-2 px-2.5 flex items-center gap-3')} 
-        onClick={() => onNavigate('cover')}
-      >
+      <div className={cn('mb-10', isThin ? 'mt-0' : 'mt-4 px-2 flex items-center gap-3')} onClick={() => onNavigate('cover')}>
         {isThin ? (
-          <img 
-            src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png" 
-            alt="UPTC" 
-            className="w-10 h-10 object-contain mx-auto hover:scale-115 transition-transform" 
-          />
+           <img src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png" alt="UPTC Logo" className="w-10 h-10 object-contain mx-auto cursor-pointer hover:scale-110 transition-transform" />
         ) : (
           <>
-            <img 
-              src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png" 
-              alt="UPTC" 
-              className="w-9 object-contain hover:scale-110 transition-transform" 
-            />
-            <div>
-              <h1 className="font-display font-extrabold text-base text-white tracking-wide leading-none">UPTC VAFI</h1>
-              <p className="text-[9px] uppercase tracking-widest text-[#ffcc29] font-mono mt-0.5 font-bold">BI Enterprise</p>
+            <img src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png" alt="UPTC Logo" className="w-10 object-contain cursor-pointer hover:scale-110 transition-transform" />
+            <div className="cursor-pointer">
+              <h1 className="font-headline-lg text-lg text-primary-container leading-none">UPTC</h1>
+              <p className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant opacity-70">Admin Financiero</p>
             </div>
           </>
         )}
       </div>
 
-      {/* Navigation Items */}
-      <nav className={cn('flex flex-col w-full flex-1', isThin ? 'gap-6 items-center' : 'gap-1.5')}>
-        {menuItems.map((item) => (
-          <button 
-            key={item.screen} 
-            onClick={() => onNavigate(item.screen)} 
-            className={getNavClasses(item.screen)}
-          >
-            <item.icon size={isThin ? 22 : 18} strokeWidth={currentScreen === item.screen ? 2.5 : 2} className="shrink-0" />
-            {!isThin && <span className="text-xs tracking-wide">{item.label}</span>}
-          </button>
-        ))}
+      <nav className={cn('flex flex-col', isThin ? 'gap-8 flex-1' : 'gap-1 px-2 flex-1')}>
+        <IconWrapper icon={LayoutDashboard} screen="dashboard" />
+        <IconWrapper icon={LineChart} screen="historical" />
+        <IconWrapper icon={Users} screen="nomina" />
+        <IconWrapper icon={GraduationCap} screen="posgrados" />
+        <IconWrapper icon={BarChart3} screen="predictive" />
+        <IconWrapper icon={Wallet} screen="budget" />
+        <IconWrapper icon={FileText} screen="reports" />
+        <IconWrapper icon={FolderOpen} screen="repository" />
+        <IconWrapper icon={Bot} screen="assistant" />
       </nav>
-
-      {/* Footer / Setting button at the bottom */}
-      <div className="w-full border-t border-white/5 pt-4 flex flex-col gap-2 items-center">
-        <button 
-          onClick={() => onNavigate('settings')} 
-          className={getNavClasses('settings')}
-        >
-          <Settings size={isThin ? 22 : 18} strokeWidth={currentScreen === 'settings' ? 2.5 : 2} className="shrink-0" />
-          {!isThin && <span className="text-xs tracking-wide">Configuración</span>}
-        </button>
-      </div>
     </aside>
   );
 }

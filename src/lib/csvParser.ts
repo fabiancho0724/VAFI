@@ -2,35 +2,17 @@ import Papa from 'papaparse';
 
 export async function fetchAndParseCSV(url: string): Promise<any[]> {
   try {
-    let targetUrl = url;
-    if (url.includes('raw.githubusercontent.com') || url.includes('github.com')) {
-      const parts = url.split('/');
-      const filename = decodeURIComponent(parts[parts.length - 1]); // e.g. "Ingreso Mensual 2026.csv"
-      targetUrl = `/api/data/${encodeURIComponent(filename)}`;
-    }
-    const response = await fetch(targetUrl);
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
     const text = await response.text();
-    const delimiter = text.includes(';') ? ';' : ',';
     return new Promise((resolve, reject) => {
       Papa.parse(text, {
         header: true,
-        delimiter: delimiter,
         dynamicTyping: true,
         skipEmptyLines: true,
-        complete: (results) => {
-          const cleaned = results.data.map((row: any) => {
-            const cleanRow: any = {};
-            for (const key of Object.keys(row)) {
-              const cleanKey = key.replace(/\r$/, '');
-              cleanRow[cleanKey] = typeof row[key] === 'string' ? row[key].trim() : row[key];
-            }
-            return cleanRow;
-          });
-          resolve(cleaned);
-        },
+        complete: (results) => resolve(results.data),
         error: (error) => reject(error),
       });
     });
@@ -46,17 +28,7 @@ export function parseLocalCSV(file: File): Promise<any[]> {
       header: true,
       dynamicTyping: true,
       skipEmptyLines: true,
-      complete: (results) => {
-        const cleaned = results.data.map((row: any) => {
-          const cleanRow: any = {};
-          for (const key of Object.keys(row)) {
-            const cleanKey = key.replace(/\r$/, '');
-            cleanRow[cleanKey] = typeof row[key] === 'string' ? row[key].trim() : row[key];
-          }
-          return cleanRow;
-        });
-        resolve(cleaned);
-      },
+      complete: (results) => resolve(results.data),
       error: (error) => reject(error),
     });
   });
