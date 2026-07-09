@@ -62,7 +62,8 @@ async function startServer() {
   // API Route for serving local CSVs or falling back to GitHub
   app.get("/api/data/:filename", async (req, res) => {
     const filename = req.params.filename;
-    const safeFilename = path.basename(filename);
+    const decodedFilename = decodeURIComponent(filename);
+    const safeFilename = path.basename(decodedFilename);
     const localPath = path.join(process.cwd(), "..", "Bases de Datos", safeFilename);
     
     if (fs.existsSync(localPath)) {

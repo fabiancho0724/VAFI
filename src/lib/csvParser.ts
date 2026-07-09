@@ -5,8 +5,8 @@ export async function fetchAndParseCSV(url: string): Promise<any[]> {
     let targetUrl = url;
     if (url.includes('raw.githubusercontent.com') || url.includes('github.com')) {
       const parts = url.split('/');
-      const filename = parts[parts.length - 1]; // e.g. "Ingresos.csv" or "Gastos.csv"
-      targetUrl = `/api/data/${filename}`;
+      const filename = decodeURIComponent(parts[parts.length - 1]); // e.g. "Ingreso Mensual 2026.csv"
+      targetUrl = `/api/data/${encodeURIComponent(filename)}`;
     }
     const response = await fetch(targetUrl);
     if (!response.ok) {
@@ -24,7 +24,7 @@ export async function fetchAndParseCSV(url: string): Promise<any[]> {
           const cleaned = results.data.map((row: any) => {
             const cleanRow: any = {};
             for (const key of Object.keys(row)) {
-              const cleanKey = key.trim().replace(/\r$/, '');
+              const cleanKey = key.replace(/\r$/, '');
               cleanRow[cleanKey] = typeof row[key] === 'string' ? row[key].trim() : row[key];
             }
             return cleanRow;
@@ -50,7 +50,7 @@ export function parseLocalCSV(file: File): Promise<any[]> {
         const cleaned = results.data.map((row: any) => {
           const cleanRow: any = {};
           for (const key of Object.keys(row)) {
-            const cleanKey = key.trim().replace(/\r$/, '');
+            const cleanKey = key.replace(/\r$/, '');
             cleanRow[cleanKey] = typeof row[key] === 'string' ? row[key].trim() : row[key];
           }
           return cleanRow;
