@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -8,21 +9,30 @@ let realDataText = "";
 async function fetchRealData() {
   console.log("Fetching real CSV data for knowledge base...");
   try {
-    const urls = [
-      { name: "Ingresos", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingresos.csv" },
-      { name: "Gastos", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Gastos.csv" },
-      { name: "Nomina", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Nomina.csv" },
-      { name: "Estudiantes Posgrados", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/5fd78e804688cdca1509f82da5f766b232d62c98/Resumen%20Posgrados.csv" },
-      { name: "Ingresos Posgrados", url: "https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/5fd78e804688cdca1509f82da5f766b232d62c98/Resumen%20Posgrados%20ingresos.csv" }
+    const files = [
+      { name: "Ingresos", filename: "Ingresos.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingresos.csv" },
+      { name: "Gastos", filename: "Gastos.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Gastos.csv" },
+      { name: "Nomina", filename: "Nomina.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Nomina.csv" },
+      { name: "Estudiantes Posgrados", filename: "Resumen Posgrados.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Resumen%20Posgrados.csv" },
+      { name: "Ingresos Posgrados", filename: "Resumen Posgrados ingresos.csv", url: "https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Resumen%20Posgrados%20ingresos.csv" }
     ];
 
     let combined = "";
-    for (const {name, url} of urls) {
-      const res = await fetch(url);
-      if (res.ok) {
-        const text = await res.text();
-        // Limit string to prevent out of memory or context if too huge (unlikely but safe)
-        combined += `--- INICIO REPORTE: ${name} ---\n${text.substring(0, 150000)}\n--- FIN REPORTE: ${name} ---\n\n`;
+    for (const file of files) {
+      let text = "";
+      const localPath = path.join(process.cwd(), "..", "Bases de Datos", file.filename);
+      if (fs.existsSync(localPath)) {
+        console.log(`Loading local file for RAG: ${file.filename}`);
+        text = fs.readFileSync(localPath, "utf8");
+      } else {
+        console.log(`Fetching remote file for RAG: ${file.filename}`);
+        const res = await fetch(file.url);
+        if (res.ok) {
+          text = await res.text();
+        }
+      }
+      if (text) {
+        combined += `--- INICIO REPORTE: ${file.name} ---\n${text.substring(0, 150000)}\n--- FIN REPORTE: ${file.name} ---\n\n`;
       }
     }
     realDataText = combined;
@@ -38,22 +48,7 @@ function getSystemInstruction() {
 REGLAS DE ORO:
 1. NO ALUCINAR. Si el usuario pregunta por un dato que no existe explícitamente en el contexto proporcionado, debes responder ESTRICTAMENTE con: "Lo siento, ese dato específico no se encuentra registrado en la información actual del proyecto. Por favor, verifica tu consulta."
 2. Proporciona las respuestas de forma clara. Si te piden varios datos, utilizar listas y resaltar los valores numéricos usando **negritas**.
-3. Formatea el dinero de forma legible (ej. $1.540.000.000). Al leer datos del CSV ten cuenta que pueden venir con formato u otras estructuras, realiza las sumas y agrupaciones que sean necesarias para dar una respuesta correcta.
-4. CREACIÓN DE GRÁFICAS: Si el usuario pide visualizar la información gráficamente (o pide una gráfica de pastel o barras), DEBES incluir un bloque de código JSON con el lenguaje "json-chart" al final de tu respuesta. Usa las claves "name" y "value" obligatoriamente en tu arreglo "data".
-5. INTERPRETACIÓN ACTIVA Y OPCIONES: Reconoce los nombres de los recursos disponibles en los CSV reportados (por ejemplo, mira la columna 'RUBRO', 'CONCEPTO', 'FACULTAD', etc.). Si la consulta es ambigua, menciona qué puedes analizar y dale opciones relevantes al usuario.
-Ejemplo de gráfica de barras:
-\`\`\`json-chart
-{
-  "type": "bar",
-  "data": [
-    { "name": "Nómina Docente", "value": 4800000000 },
-    { "name": "Nómina Administrativa", "value": 1950000000 }
-  ]
-}
-\`\`\`
-
-CONTEXTO DE DATOS ACTUALES (en formato CSV):
-${realDataText.length > 50 ? realDataText : "Aún cargando los datos en memoria o error de conexión..."}
+El contexto de datos está adjunto en las instrucciones del sistema y las preguntas del usuario.
 `;
 }
 
@@ -64,6 +59,34 @@ async function startServer() {
 
   app.use(express.json({ limit: '10mb' }));
 
+  // API Route for serving local CSVs or falling back to GitHub
+  app.get("/api/data/:filename", async (req, res) => {
+    const filename = req.params.filename;
+    const safeFilename = path.basename(filename);
+    const localPath = path.join(process.cwd(), "..", "Bases de Datos", safeFilename);
+    
+    if (fs.existsSync(localPath)) {
+      console.log(`Serving local CSV file: ${safeFilename}`);
+      return res.sendFile(localPath);
+    }
+    
+    // Fallback to remote repository
+    try {
+      console.log(`Local file not found, falling back to GitHub for: ${safeFilename}`);
+      const githubUrl = `https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/${encodeURIComponent(safeFilename)}`;
+      const response = await fetch(githubUrl);
+      if (response.ok) {
+        const text = await response.text();
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        return res.send(text);
+      }
+    } catch (err) {
+      console.error(`Error fetching fallback for ${safeFilename}:`, err);
+    }
+    
+    res.status(404).send("File not found");
+  });
+
   // API Route for chat
   app.post("/api/chat", async (req, res) => {
     try {
@@ -73,7 +96,6 @@ async function startServer() {
         return res.status(400).json({ error: "No prompt provided" });
       }
 
-      // Initialize Gemini. Make sure to set User-Agent for Google AI Studio
       const ai = new GoogleGenAI({
         apiKey: process.env.GEMINI_API_KEY,
         httpOptions: {
@@ -83,26 +105,27 @@ async function startServer() {
         }
       });
 
-      // Construct messages from history + systemic instruction
+      const model = "gemini-2.5-flash";
+      const systemInstruction = getSystemInstruction();
+
       const chat = ai.chats.create({
-        model: "gemini-3.5-flash",
+        model,
         config: {
-          systemInstruction: getSystemInstruction(),
-          temperature: 0.1, // low temperature for precise RAG responses
+          systemInstruction,
+          temperature: 0.1
         }
       });
 
-      // Load history into the chat context if necessary (to maintain conversation flow)
-      // Since ai.chats.create doesn't take history in constructor the same way as old API, we can either
-      // pass history when creating or reconstruct. For simple UI, we will just send the full history text.
-      // A better way is:
-      let fullPrompt = "";
+      let fullPrompt = `CONTEXTO DE DATOS ACTUALES (en formato CSV):
+${realDataText.length > 50 ? realDataText : "Aún cargando los datos en memoria o error de conexión..."}
+\n\n`;
+
       if (history && history.length > 0) {
-        fullPrompt += "Historial de conversación:\\n";
+        fullPrompt += "Historial de conversación:\n";
         for (const msg of history) {
-          fullPrompt += `${msg.role === 'user' ? 'Usuario' : 'Asistente'}: ${msg.content}\\n`;
+          fullPrompt += `${msg.role === 'user' ? 'Usuario' : 'Asistente'}: ${msg.content}\n`;
         }
-        fullPrompt += "\\nConsulta actual del usuario: ";
+        fullPrompt += "\nConsulta actual del usuario: ";
       }
       fullPrompt += prompt;
 
@@ -125,7 +148,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
+    app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
