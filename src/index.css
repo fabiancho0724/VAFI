@@ -65,19 +65,23 @@
 
 @layer components {
   .glass-panel {
-    @apply bg-surface-container-high/50 backdrop-blur-md border border-white/5 shadow-lg;
+    @apply bg-surface-container-high/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)];
   }
   
   .glass-card {
-    @apply bg-[rgba(30,41,59,0.5)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.05)] transition-all duration-300;
+    @apply bg-surface-container-low/40 backdrop-blur-xl border border-white/5 transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.35)];
   }
   
   .glass-card:hover {
-    @apply border-[rgba(255,204,41,0.3)] bg-[rgba(30,41,59,0.7)];
+    @apply border-primary-container/20 bg-surface-container-low/60 shadow-[0_8px_32px_rgba(255,204,41,0.08)];
   }
 
   .glow-primary {
-    @apply shadow-[0_0_20px_rgba(255,204,41,0.15)];
+    @apply shadow-[0_0_25px_rgba(255,204,41,0.15)];
+  }
+  
+  .glow-secondary {
+    @apply shadow-[0_0_25px_rgba(123,208,255,0.15)];
   }
 
   .progress-ring-circle {
@@ -85,4 +89,49 @@
     transform: rotate(-90deg);
     transform-origin: 50% 50%;
   }
+
+  /* Premium Custom Range Input (Slider) Styling */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.08);
+    height: 6px;
+    border-radius: 9999px;
+    outline: none;
+    transition: background 0.2s;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--color-primary-container);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 204, 41, 0.5);
+    transition: transform 0.1s, background-color 0.1s;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: #ffe385;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-primary-container);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 204, 41, 0.5);
+    transition: transform 0.1s, background-color 0.1s;
+  }
+  
+  input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    background: #ffe385;
+  }
 }
+
