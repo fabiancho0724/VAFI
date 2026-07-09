@@ -7,14 +7,11 @@ import {
   TrendingUp, 
   TrendingDown, 
   Activity, 
-  PieChart as PieChartIcon, 
   Wallet, 
   RotateCcw, 
-  DollarSign, 
   CheckCircle2, 
   AlertTriangle,
   Info,
-  Calendar,
   Layers,
   ChevronRight,
   ClipboardList
@@ -22,25 +19,20 @@ import {
 import { 
   BarChart, 
   Bar, 
-  AreaChart, 
-  Area, 
-  PieChart, 
-  Pie, 
-  Cell, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
   Legend,
-  LineChart,
-  Line
+  Line,
+  ComposedChart
 } from 'recharts';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import historicalGastosData from '../data/historicalGastos.json';
 
 const MONTHS_STR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-const COLORS = ['#ffcc29', '#7bd0ff', '#4ade80', '#c084fc', '#f43f5e', '#ff8b3d'];
+const COLORS = ['#ffcc29', '#7bd0ff', '#4ade80', '#c084fc', '#f43f5e', '#ff8b3d', '#10b981', '#f59e0b', '#3b82f6'];
 
 interface GastoRecord {
   año: number;
@@ -56,21 +48,65 @@ interface GastoRecord {
 // Cast JSON import
 const rawHistoricalGastos = historicalGastosData as GastoRecord[];
 
-// Helper to classify resource code types
-export function getResourceLabel(recursoStr: string): string {
-  const cleanStr = recursoStr.trim();
-  // Extract number prefix if present, e.g. "10.0 - Aportes" -> "10.0"
-  const match = cleanStr.match(/^(\d+(?:\.\d+)?)/);
-  const code = match ? match[1] : cleanStr;
+// Mapped resource labels based on user requirements
+export const RESOURCES_LIST = [
+  "10.0-Aportes Nacion - Funcionamiento",
+  "10.1-Aportes Nación - PIC Convencional",
+  "10.2-Aportes Nación - PIC Territorial",
+  "10.5-Aportes Nación - Política de gratuidad",
+  "12-Estampillas Otras Universidades",
+  "13-Cooperativas",
+  "14-Matriculas FSE",
+  "16.0-Aportes inversion",
+  "17-Devolucion descuento electoral",
+  "20-Propios",
+  "21-Devolucion IVA",
+  "31-Posgrados",
+  "32-Extension",
+  "33-Convenios con derechos",
+  "34-Convenios sin derechos",
+  "35-Educacion continuada",
+  "40-Estampilla UPTC"
+];
+
+// Helper to classify resource strings to clean equivalences
+export function getRecursoEquivalence(recursoStr: string): string {
+  const clean = String(recursoStr || '').trim();
+  const match = clean.match(/^(\d+(?:\.\d+)?)/);
+  const code = match ? match[1] : clean;
   
-  if (code.startsWith('1')) {
-    return 'Recursos Nación';
-  } else if (code.startsWith('2')) {
-    return 'Recursos Propios';
-  } else if (code.startsWith('3')) {
-    return 'Convenios y Posgrados';
-  }
-  return 'Otros Recursos';
+  if (code === "10" || code === "10.0") return "10.0-Aportes Nacion - Funcionamiento";
+  if (code === "10.1") return "10.1-Aportes Nación - PIC Convencional";
+  if (code === "10.2") return "10.2-Aportes Nación - PIC Territorial";
+  if (code === "10.5") return "10.5-Aportes Nación - Política de gratuidad";
+  if (code === "12") return "12-Estampillas Otras Universidades";
+  if (code === "13") return "13-Cooperativas";
+  if (code === "14") return "14-Matriculas FSE";
+  if (code === "16" || code === "16.0") return "16.0-Aportes inversion";
+  if (code === "17") return "17-Devolucion descuento electoral";
+  if (code === "20") return "20-Propios";
+  if (code === "21") return "21-Devolucion IVA";
+  if (code === "31") return "31-Posgrados";
+  if (code === "32") return "32-Extension";
+  if (code === "33") return "33-Convenios con derechos";
+  if (code === "34") return "34-Convenios sin derechos";
+  if (code === "35") return "35-Educacion continuada";
+  if (code === "40") return "40-Estampilla UPTC";
+  
+  // Text match fallback
+  const lower = clean.toLowerCase();
+  if (lower.includes("gratuidad")) return "10.5-Aportes Nación - Política de gratuidad";
+  if (lower.includes("cooperativa")) return "13-Cooperativas";
+  if (lower.includes("fse") || lower.includes("fondo de solidaridad")) return "14-Matriculas FSE";
+  if (lower.includes("descuento electoral")) return "17-Devolucion descuento electoral";
+  if (lower.includes("iva")) return "21-Devolucion IVA";
+  if (lower.includes("posgrado")) return "31-Posgrados";
+  if (lower.includes("extension") || lower.includes("extensión")) return "32-Extension";
+  if (lower.includes("estampilla uptc") || lower.includes("estampilla u.p.t.c.")) return "40-Estampilla UPTC";
+  if (lower.includes("aportes nacion") || lower.includes("aportes nación")) return "10.0-Aportes Nacion - Funcionamiento";
+  if (lower.includes("propios")) return "20-Propios";
+  
+  return clean;
 }
 
 // Custom SVG Speedometer Gauge Component
@@ -124,24 +160,24 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   // Data State
   const [rawYearlyIncomes, setRawYearlyIncomes] = useState<Record<number, any[]>>({});
   
-  // General Filters
+  // Filters
   const [filterUnidad, setFilterUnidad] = useState<string>('Todos');
   const [filterRecurso, setFilterRecurso] = useState<string>('Todos');
   const [filterMes, setFilterMes] = useState<string>('Todos');
+  const [filterTipoGasto, setFilterTipoGasto] = useState<string>('Todos');
 
-  // Simulator Sliders State
-  // 1. Incomes Variables
-  const [simMatricula, setSimMatricula] = useState<number>(1350000); // Base Matrícula COP
-  const [simEstudiantes, setSimEstudiantes] = useState<number>(18700); // Students pregrado
-  const [simIncrementoIngresos, setSimIncrementoIngresos] = useState<number>(5); // Other Incomes growth rate %
-  const [simNuevosIngresos, setSimNuevosIngresos] = useState<number>(0); // Flat millions of COP added
+  // Simulator State: adjustments by resource (percentage change from initial baseline)
+  const [simIngByResource, setSimIngByResource] = useState<Record<string, number>>(() => {
+    const init: Record<string, number> = {};
+    RESOURCES_LIST.forEach(r => { init[r] = 0; });
+    return init;
+  });
 
-  // 2. Expenses Variables
-  const [simTalentoHumano, setSimTalentoHumano] = useState<number>(0); // Personnel change %
-  const [simFuncionamiento, setSimFuncionamiento] = useState<number>(0); // Functioning change %
-  const [simInversion, setSimInversion] = useState<number>(0); // Investment change %
-  const [simContratacion, setSimContratacion] = useState<number>(0); // OPS/Contracts change %
-  const [simOtrosGastos, setSimOtrosGastos] = useState<number>(0); // Other expenses change %
+  const [simGasByResource, setSimGasByResource] = useState<Record<string, number>>(() => {
+    const init: Record<string, number> = {};
+    RESOURCES_LIST.forEach(r => { init[r] = 0; });
+    return init;
+  });
 
   // Load Incomes CSV Data
   useEffect(() => {
@@ -171,51 +207,42 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     loadData();
   }, []);
 
-  // Reset all simulator sliders to default baseline values
   const handleResetSimulator = () => {
-    setSimMatricula(1350000);
-    setSimEstudiantes(18700);
-    setSimIncrementoIngresos(5);
-    setSimNuevosIngresos(0);
-    setSimTalentoHumano(0);
-    setSimFuncionamiento(0);
-    setSimInversion(0);
-    setSimContratacion(0);
-    setSimOtrosGastos(0);
+    const freshIng: Record<string, number> = {};
+    const freshGas: Record<string, number> = {};
+    RESOURCES_LIST.forEach(r => {
+      freshIng[r] = 0;
+      freshGas[r] = 0;
+    });
+    setSimIngByResource(freshIng);
+    setSimGasByResource(freshGas);
   };
 
-  // Get unique options for filters
+  // Get unique options for filter dropdowns
   const filterOptions = useMemo(() => {
     const unidades = new Set<string>();
-    const recursos = new Set<string>();
     
-    // Incomes recursos
-    if (rawYearlyIncomes[2026]) {
-      rawYearlyIncomes[2026].forEach(row => {
-        const rec = String(row['Recurso'] || '').trim();
-        if (rec) recursos.add(rec);
-      });
-    }
-
-    // Expenses dependencias
     rawHistoricalGastos.forEach(row => {
       const dep = String(row.dependencia || '').trim();
-      const rec = String(row.recurso || '').trim();
       if (dep) unidades.add(dep);
-      
-      const codeMatch = rec.match(/^(\d+(?:\.\d+)?)/);
-      if (codeMatch) {
-        recursos.add(codeMatch[1]);
-      }
     });
 
     return {
       unidades: ['Todos', ...Array.from(unidades).sort()],
-      recursos: ['Todos', ...Array.from(recursos).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}))]
+      recursos: ['Todos', ...RESOURCES_LIST],
+      tiposGastos: [
+        'Todos',
+        '2.1.1 Gastos de Personal',
+        '2.1.2 Gastos de Funcionamiento',
+        '2.1.3 Transferencias Corrientes',
+        '2.1.8 Tasas y Multas',
+        '2.2.2 Servicios de la Deuda',
+        '2.3 Gastos de Inversión'
+      ]
     };
-  }, [rawYearlyIncomes]);
+  }, []);
 
-  // Compute baseline and simulated data
+  // Compute baseline and simulated metrics
   const financialData = useMemo(() => {
     if (Object.keys(rawYearlyIncomes).length === 0) {
       return {
@@ -229,429 +256,233 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           simGasComp: 0, simGasPago: 0,
           simNetComp: 0, simNetPago: 0
         },
-        categoriesBaseline: [],
-        categoriesSimulated: [],
-        resourcesBaseline: [],
-        resourcesSimulated: [],
-        historicalYearsSummary: []
+        resourceBaselines: {},
+        categoryBreakdown: { compromiso: [], pago: [] }
       };
     }
 
-    const incomesByYear: Record<number, number[]> = {};
-    const expensesCompByYear: Record<number, number[]> = {};
-    const expensesPagoByYear: Record<number, number[]> = {};
+    // Initialize month tables by resource
+    const monthlyBaselineIng: Record<string, number[]> = {};
+    const monthlyBaselineGasComp: Record<string, number[]> = {};
+    const monthlyBaselineGasPago: Record<string, number[]> = {};
 
-    [2023, 2024, 2025, 2026].forEach(year => {
-      incomesByYear[year] = new Array(12).fill(0);
-      expensesCompByYear[year] = new Array(12).fill(0);
-      expensesPagoByYear[year] = new Array(12).fill(0);
+    RESOURCES_LIST.forEach(r => {
+      monthlyBaselineIng[r] = new Array(12).fill(0);
+      monthlyBaselineGasComp[r] = new Array(12).fill(0);
+      monthlyBaselineGasPago[r] = new Array(12).fill(0);
+    });
+
+    // 1. Process 2026 Incomes
+    const incomesRows = rawYearlyIncomes[2026] || [];
+    incomesRows.forEach(row => {
+      const recRaw = String(row['Recurso'] || '').trim();
+      const recMapped = getRecursoEquivalence(recRaw);
       
-      // Process Incomes
-      const rows = rawYearlyIncomes[year] || [];
-      rows.forEach(row => {
-        const rec = String(row['Recurso'] || '').trim();
-        if (filterRecurso !== 'Todos' && rec !== filterRecurso) return;
+      // If resource wasn't mapped into the 17 list, ignore or skip
+      if (!monthlyBaselineIng[recMapped]) return;
 
-        const monthKeys = Object.keys(row).filter(k => k.trim().toLowerCase().startsWith('valor ')).slice(0, 12);
-        monthKeys.forEach((key, i) => {
-          const val = parseFloat(String(row[key] || '0').replace(/[^0-9.-]+/g, '')) || 0;
-          incomesByYear[year][i] += val;
-        });
+      const monthKeys = Object.keys(row).filter(k => k.trim().toLowerCase().startsWith('valor ')).slice(0, 12);
+      monthKeys.forEach((key, i) => {
+        const val = parseFloat(String(row[key] || '0').replace(/[^0-9.-]+/g, '')) || 0;
+        monthlyBaselineIng[recMapped][i] += val;
       });
     });
 
-    // Process Expenses (Gastos) from consolidated JSON
+    // 2. Process Expenses
     rawHistoricalGastos.forEach(row => {
+      if (row.año !== 2026) return;
       if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
-      
-      // Filter by Recurso code
-      if (filterRecurso !== 'Todos') {
-        const rec = String(row.recurso || '').trim();
-        const codeMatch = rec.match(/^(\d+(?:\.\d+)?)/);
-        if (!codeMatch || codeMatch[1] !== filterRecurso) return;
-      }
+      if (filterTipoGasto !== 'Todos' && row.tipo !== filterTipoGasto) return;
 
-      const year = row.año;
+      const recMapped = getRecursoEquivalence(row.recurso);
+      if (!monthlyBaselineGasComp[recMapped]) return;
+
       const monthIdx = row.mes - 1;
-      if (monthIdx >= 0 && monthIdx < 12 && expensesCompByYear[year]) {
-        expensesCompByYear[year][monthIdx] += row.compromiso;
-        expensesPagoByYear[year][monthIdx] += row.pago;
+      if (monthIdx >= 0 && monthIdx < 12) {
+        monthlyBaselineGasComp[recMapped][monthIdx] += row.compromiso;
+        monthlyBaselineGasPago[recMapped][monthIdx] += row.pago;
       }
     });
 
-    // 2. COMPUTE FLOW (BASELINE VS SIMULATED)
-    const baselineFlow = [];
-    const simulatedFlow = [];
+    // 3. Compute baseline summaries by resource
+    const resourceBaselines: Record<string, { ing: number; gasComp: number; gasPago: number }> = {};
+    RESOURCES_LIST.forEach(r => {
+      resourceBaselines[r] = {
+        ing: monthlyBaselineIng[r].reduce((a,b) => a+b, 0) / 1e6,
+        gasComp: monthlyBaselineGasComp[r].reduce((a,b) => a+b, 0) / 1e6,
+        gasPago: monthlyBaselineGasPago[r].reduce((a,b) => a+b, 0) / 1e6
+      };
+    });
 
+    // 4. Group category totals (Compromiso vs Pago)
+    let catComp = { personal: 0, funcionamiento: 0, transferencias: 0, tasas: 0, deuda: 0, inversion: 0 };
+    let catPago = { personal: 0, funcionamiento: 0, transferencias: 0, tasas: 0, deuda: 0, inversion: 0 };
+
+    rawHistoricalGastos.forEach(row => {
+      if (row.año !== 2026) return;
+      if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
+      
+      const recMapped = getRecursoEquivalence(row.recurso);
+      if (filterRecurso !== 'Todos' && recMapped !== filterRecurso) return;
+
+      const scaleFactorIng = 1 + (simIngByResource[recMapped] || 0) / 100;
+      const scaleFactorGas = 1 + (simGasByResource[recMapped] || 0) / 100;
+
+      const compVal = row.compromiso * scaleFactorGas;
+      const pagoVal = row.pago * scaleFactorGas;
+
+      const tipo = row.tipo;
+      if (tipo.includes("2.1.1")) {
+        catComp.personal += compVal;
+        catPago.personal += pagoVal;
+      } else if (tipo.includes("2.1.2")) {
+        catComp.funcionamiento += compVal;
+        catPago.funcionamiento += pagoVal;
+      } else if (tipo.includes("2.1.3")) {
+        catComp.transferencias += compVal;
+        catPago.transferencias += pagoVal;
+      } else if (tipo.includes("2.1.8")) {
+        catComp.tasas += compVal;
+        catPago.tasas += pagoVal;
+      } else if (tipo.includes("2.2.2")) {
+        catComp.deuda += compVal;
+        catPago.deuda += pagoVal;
+      } else {
+        catComp.inversion += compVal;
+        catPago.inversion += pagoVal;
+      }
+    });
+
+    // 5. Generate month by month flow
+    const simulatedFlow = [];
+    
     let baseIngAccum = 0;
     let baseGasCompAccum = 0;
     let baseGasPagoAccum = 0;
-    
+
     let simIngAccum = 0;
     let simGasCompAccum = 0;
     let simGasPagoAccum = 0;
 
-    let totBaseIng = 0;
-    let totBaseGasComp = 0;
-    let totBaseGasPago = 0;
-    
-    let totSimIng = 0;
-    let totSimGasComp = 0;
-    let totSimGasPago = 0;
+    let totalBaseIng = 0;
+    let totalBaseGasComp = 0;
+    let totalBaseGasPago = 0;
 
-    // Tracker for category charts
-    let catBaseComp = { personal: 0, funcionamiento: 0, inversion: 0, otros: 0 };
-    let catBasePago = { personal: 0, funcionamiento: 0, inversion: 0, otros: 0 };
-    let catSimComp = { personal: 0, funcionamiento: 0, inversion: 0, otros: 0 };
-    let catSimPago = { personal: 0, funcionamiento: 0, inversion: 0, otros: 0 };
-
-    // Tracker for Resource Breakdown
-    let resBaseIng = { nacion: 0, propios: 0, convenios: 0, otros: 0 };
-    let resSimIng = { nacion: 0, propios: 0, convenios: 0, otros: 0 };
-    let resBaseGasComp = { nacion: 0, propios: 0, convenios: 0, otros: 0 };
-    let resBaseGasPago = { nacion: 0, propios: 0, convenios: 0, otros: 0 };
-    let resSimGasComp = { nacion: 0, propios: 0, convenios: 0, otros: 0 };
-    let resSimGasPago = { nacion: 0, propios: 0, convenios: 0, otros: 0 };
-
-    // Group revenues by resource type to get baseline shares
-    if (rawYearlyIncomes[2026]) {
-      rawYearlyIncomes[2026].forEach(row => {
-        const rec = String(row['Recurso'] || '').trim();
-        const label = getResourceLabel(rec);
-        const monthKeys = Object.keys(row).filter(k => k.trim().toLowerCase().startsWith('valor ')).slice(0, 12);
-        
-        monthKeys.forEach((key) => {
-          const val = parseFloat(String(row[key] || '0').replace(/[^0-9.-]+/g, '')) || 0;
-          if (label === 'Recursos Nación') resBaseIng.nacion += val;
-          else if (label === 'Recursos Propios') resBaseIng.propios += val;
-          else if (label === 'Convenios y Posgrados') resBaseIng.convenios += val;
-          else resBaseIng.otros += val;
-        });
-      });
-    }
+    let totalSimIng = 0;
+    let totalSimGasComp = 0;
+    let totalSimGasPago = 0;
 
     for (let i = 0; i < 12; i++) {
-      // A. INCOMES
-      let real2026Ing = incomesByYear[2026][i];
-      let isIngReal = real2026Ing > 0;
-      
-      let histSum = 0;
-      let histCount = 0;
-      if (incomesByYear[2023][i] > 0) { histSum += incomesByYear[2023][i]; histCount++; }
-      if (incomesByYear[2024][i] > 0) { histSum += incomesByYear[2024][i]; histCount++; }
-      if (incomesByYear[2025][i] > 0) { histSum += incomesByYear[2025][i]; histCount++; }
-      const averageHistIng = histCount > 0 ? histSum / histCount : 0;
-      
-      let baseIng = isIngReal ? real2026Ing : averageHistIng * 1.05;
-      let simIng = baseIng;
+      let monthBaseIng = 0;
+      let monthBaseGasComp = 0;
+      let monthBaseGasPago = 0;
 
-      if (!isIngReal) {
-        simIng = averageHistIng * (1 + simIncrementoIngresos / 100);
-        simIng += (simNuevosIngresos * 1e6) / 8;
-      }
+      let monthSimIng = 0;
+      let monthSimGasComp = 0;
+      let monthSimGasPago = 0;
 
-      // Enrollment simulation impact
-      const baselineMatriculaAnnual = 18700 * 1350000;
-      const simulatedMatriculaAnnual = simEstudiantes * simMatricula;
-      const matriculaDiffMonthly = (simulatedMatriculaAnnual - baselineMatriculaAnnual) / 12;
-      simIng += matriculaDiffMonthly;
+      RESOURCES_LIST.forEach(r => {
+        // Apply resource filter
+        if (filterRecurso !== 'Todos' && r !== filterRecurso) return;
 
-      // Add to simulated resource share
-      const nacionPct = resBaseIng.nacion / (resBaseIng.nacion + resBaseIng.propios + resBaseIng.convenios + resBaseIng.otros || 1);
-      const conveniosPct = resBaseIng.convenios / (resBaseIng.nacion + resBaseIng.propios + resBaseIng.convenios + resBaseIng.otros || 1);
-      
-      resSimIng.nacion += simIng * nacionPct;
-      resSimIng.convenios += simIng * conveniosPct;
-      resSimIng.propios += simIng * (1 - nacionPct - conveniosPct);
+        const ingBase = monthlyBaselineIng[r][i];
+        const gasCompBase = monthlyBaselineGasComp[r][i];
+        const gasPagoBase = monthlyBaselineGasPago[r][i];
 
-      // B. EXPENSES
-      let real2026GasComp = expensesCompByYear[2026][i];
-      let real2026GasPago = expensesPagoByYear[2026][i];
-      let isGasReal = real2026GasComp > 0 || real2026GasPago > 0;
-      
-      let baseGasComp = isGasReal ? real2026GasComp : (expensesCompByYear[2025][i] || 0) * 1.05;
-      let baseGasPago = isGasReal ? real2026GasPago : (expensesPagoByYear[2025][i] || 0) * 1.05;
+        const scaleIng = 1 + (simIngByResource[r] || 0) / 100;
+        const scaleGas = 1 + (simGasByResource[r] || 0) / 100;
 
-      let monthlyRows = rawHistoricalGastos.filter(r => r.año === (isGasReal ? 2026 : 2025) && r.mes === (i+1));
-      
-      let pBaseComp = 0, pBasePago = 0;
-      let fBaseComp = 0, fBasePago = 0;
-      let iBaseComp = 0, iBasePago = 0;
-      let oBaseComp = 0, oBasePago = 0;
+        monthBaseIng += ingBase;
+        monthBaseGasComp += gasCompBase;
+        monthBaseGasPago += gasPagoBase;
 
-      // Track by Resource
-      let resMonthlyBaseComp = { nacion: 0, propios: 0, convenios: 0, otros: 0 };
-      let resMonthlyBasePago = { nacion: 0, propios: 0, convenios: 0, otros: 0 };
-
-      monthlyRows.forEach(r => {
-        if (filterUnidad !== 'Todos' && r.dependencia !== filterUnidad) return;
-        if (filterRecurso !== 'Todos') {
-          const codeMatch = r.recurso.match(/^(\d+(?:\.\d+)?)/);
-          if (!codeMatch || codeMatch[1] !== filterRecurso) return;
-        }
-
-        const comp = r.compromiso;
-        const pago = r.pago;
-        const typeLabel = r.tipo;
-
-        // Categorize by Type (tipo)
-        if (typeLabel.includes('Gastos de Personal') || typeLabel.includes('Personal')) {
-          pBaseComp += comp;
-          pBasePago += pago;
-        } else if (typeLabel.includes('Gastos de Funcionamiento') || typeLabel.includes('Funcionamiento')) {
-          fBaseComp += comp;
-          fBasePago += pago;
-        } else if (typeLabel.includes('Gastos de Inversión') || typeLabel.includes('Inversión') || typeLabel.includes('Inversion')) {
-          iBaseComp += comp;
-          iBasePago += pago;
-        } else {
-          oBaseComp += comp;
-          oBasePago += pago;
-        }
-
-        // Categorize by Resource (recurso)
-        const resType = getResourceLabel(r.recurso);
-        if (resType === 'Recursos Nación') {
-          resMonthlyBaseComp.nacion += comp;
-          resMonthlyBasePago.nacion += pago;
-        } else if (resType === 'Recursos Propios') {
-          resMonthlyBaseComp.propios += comp;
-          resMonthlyBasePago.propios += pago;
-        } else if (resType === 'Convenios y Posgrados') {
-          resMonthlyBaseComp.convenios += comp;
-          resMonthlyBasePago.convenios += pago;
-        } else {
-          resMonthlyBaseComp.otros += comp;
-          resMonthlyBasePago.otros += pago;
-        }
+        monthSimIng += ingBase * scaleIng;
+        monthSimGasComp += gasCompBase * scaleGas;
+        monthSimGasPago += gasPagoBase * scaleGas;
       });
 
-      // Scaling factor
-      const sumBaseComp = pBaseComp + fBaseComp + iBaseComp + oBaseComp;
-      const scaleComp = sumBaseComp > 0 ? baseGasComp / sumBaseComp : 1;
-      
-      const sumBasePago = pBasePago + fBasePago + iBasePago + oBasePago;
-      const scalePago = sumBasePago > 0 ? baseGasPago / sumBasePago : 1;
+      totalBaseIng += monthBaseIng;
+      totalBaseGasComp += monthBaseGasComp;
+      totalBaseGasPago += monthBaseGasPago;
 
-      pBaseComp *= scaleComp; fBaseComp *= scaleComp; iBaseComp *= scaleComp; oBaseComp *= scaleComp;
-      pBasePago *= scalePago; fBasePago *= scalePago; iBasePago *= scalePago; oBasePago *= scalePago;
+      totalSimIng += monthSimIng;
+      totalSimGasComp += monthSimGasComp;
+      totalSimGasPago += monthSimGasPago;
 
-      // Apply scale to resources
-      resMonthlyBaseComp.nacion *= scaleComp; resMonthlyBaseComp.propios *= scaleComp; resMonthlyBaseComp.convenios *= scaleComp; resMonthlyBaseComp.otros *= scaleComp;
-      resMonthlyBasePago.nacion *= scalePago; resMonthlyBasePago.propios *= scalePago; resMonthlyBasePago.convenios *= scalePago; resMonthlyBasePago.otros *= scalePago;
+      baseIngAccum += monthBaseIng;
+      baseGasCompAccum += monthBaseGasComp;
+      baseGasPagoAccum += monthBaseGasPago;
 
-      // Apply simulator to simulated variables (compromiso and pago)
-      let pSimComp = pBaseComp, pSimPago = pBasePago;
-      let fSimComp = fBaseComp, fSimPago = fBasePago;
-      let iSimComp = iBaseComp, iSimPago = iBasePago;
-      let oSimComp = oBaseComp, oSimPago = oBasePago;
-
-      let resMonthlySimComp = { ...resMonthlyBaseComp };
-      let resMonthlySimPago = { ...resMonthlyBasePago };
-
-      if (!isGasReal) {
-        const pScale = (1 + simTalentoHumano / 100);
-        const fScale = (1 + simFuncionamiento / 100) * (1 + simContratacion / 100);
-        const iScale = (1 + simInversion / 100);
-        const oScale = (1 + simOtrosGastos / 100);
-
-        pSimComp *= pScale; pSimPago *= pScale;
-        fSimComp *= fScale; fSimPago *= fScale;
-        iSimComp *= iScale; iSimPago *= iScale;
-        oSimComp *= oScale; oSimPago *= oScale;
-
-        // Apply same scale to resources
-        const globalScale = (pScale + fScale + iScale + oScale) / 4;
-        resMonthlySimComp.nacion *= globalScale; resMonthlySimComp.propios *= globalScale; resMonthlySimComp.convenios *= globalScale; resMonthlySimComp.otros *= globalScale;
-        resMonthlySimPago.nacion *= globalScale; resMonthlySimPago.propios *= globalScale; resMonthlySimPago.convenios *= globalScale; resMonthlySimPago.otros *= globalScale;
-      }
-
-      let simGasComp = pSimComp + fSimComp + iSimComp + oSimComp;
-      let simGasPago = pSimPago + fSimPago + iSimPago + oSimPago;
-
-      totBaseIng += baseIng;
-      totBaseGasComp += baseGasComp;
-      totBaseGasPago += baseGasPago;
-
-      totSimIng += simIng;
-      totSimGasComp += simGasComp;
-      totSimGasPago += simGasPago;
-
-      baseIngAccum += baseIng;
-      baseGasCompAccum += baseGasComp;
-      baseGasPagoAccum += baseGasPago;
-
-      simIngAccum += simIng;
-      simGasCompAccum += simGasComp;
-      simGasPagoAccum += simGasPago;
-
-      // Save category YTDs
-      catBaseComp.personal += pBaseComp; catBasePago.personal += pBasePago;
-      catBaseComp.funcionamiento += fBaseComp; catBasePago.funcionamiento += fBasePago;
-      catBaseComp.inversion += iBaseComp; catBasePago.inversion += iBasePago;
-      catBaseComp.otros += oBaseComp; catBasePago.otros += oBasePago;
-
-      catSimComp.personal += pSimComp; catSimPago.personal += pSimPago;
-      catSimComp.funcionamiento += fSimComp; catSimPago.funcionamiento += fSimPago;
-      catSimComp.inversion += iSimComp; catSimPago.inversion += iSimPago;
-      catSimComp.otros += oSimComp; catSimPago.otros += oSimPago;
-
-      // Save Resource YTDs
-      resBaseGasComp.nacion += resMonthlyBaseComp.nacion; resBaseGasPago.nacion += resMonthlyBasePago.nacion;
-      resBaseGasComp.propios += resMonthlyBaseComp.propios; resBaseGasPago.propios += resMonthlyBasePago.propios;
-      resBaseGasComp.convenios += resMonthlyBaseComp.convenios; resBaseGasPago.convenios += resMonthlyBasePago.convenios;
-      resBaseGasComp.otros += resMonthlyBaseComp.otros; resBaseGasPago.otros += resMonthlyBasePago.otros;
-
-      resSimGasComp.nacion += resMonthlySimComp.nacion; resSimGasPago.nacion += resMonthlySimPago.nacion;
-      resSimGasComp.propios += resMonthlySimComp.propios; resSimGasPago.propios += resMonthlySimPago.propios;
-      resSimGasComp.convenios += resMonthlySimComp.convenios; resSimGasPago.convenios += resMonthlySimPago.convenios;
-      resSimGasComp.otros += resMonthlySimComp.otros; resSimGasPago.otros += resMonthlySimPago.otros;
+      simIngAccum += monthSimIng;
+      simGasCompAccum += monthSimGasComp;
+      simGasPagoAccum += monthSimGasPago;
 
       if (filterMes === 'Todos' || filterMes === MONTHS_STR[i]) {
-        baselineFlow.push({
-          name: MONTHS_STR[i],
-          ingresos: parseFloat((baseIng / 1e6).toFixed(1)),
-          gastosComp: parseFloat((baseGasComp / 1e6).toFixed(1)),
-          gastosPago: parseFloat((baseGasPago / 1e6).toFixed(1)),
-          netoComp: parseFloat(((baseIng - baseGasComp) / 1e6).toFixed(1)),
-          netoPago: parseFloat(((baseIng - baseGasPago) / 1e6).toFixed(1)),
-          acumuladoComp: parseFloat(((baseIngAccum - baseGasCompAccum) / 1e6).toFixed(1)),
-          acumuladoPago: parseFloat(((baseIngAccum - baseGasPagoAccum) / 1e6).toFixed(1)),
-          isProjected: !isIngReal
-        });
+        // Calculate dynamic monthly execution %
+        // Execution % = (Pago / Compromiso) / Ingresos (or relative to Incomes)
+        // We will store both components in the flow to plot:
+        // executionLine = (Gasto / Ingreso) * 100
+        const activeMonthlyGasto = viewDimension === 'pago' ? monthSimGasPago : monthSimGasComp;
+        const executionPct = monthSimIng > 0 ? (activeMonthlyGasto / monthSimIng) * 100 : 0;
 
         simulatedFlow.push({
           name: MONTHS_STR[i],
-          ingresos: parseFloat((simIng / 1e6).toFixed(1)),
-          gastosComp: parseFloat((simGasComp / 1e6).toFixed(1)),
-          gastosPago: parseFloat((simGasPago / 1e6).toFixed(1)),
-          netoComp: parseFloat(((simIng - simGasComp) / 1e6).toFixed(1)),
-          netoPago: parseFloat(((simIng - simGasPago) / 1e6).toFixed(1)),
+          ingresos: parseFloat((monthSimIng / 1e6).toFixed(1)),
+          gastosComp: parseFloat((monthSimGasComp / 1e6).toFixed(1)),
+          gastosPago: parseFloat((monthSimGasPago / 1e6).toFixed(1)),
+          netoComp: parseFloat(((monthSimIng - monthSimGasComp) / 1e6).toFixed(1)),
+          netoPago: parseFloat(((monthSimIng - monthSimGasPago) / 1e6).toFixed(1)),
           acumuladoComp: parseFloat(((simIngAccum - simGasCompAccum) / 1e6).toFixed(1)),
           acumuladoPago: parseFloat(((simIngAccum - simGasPagoAccum) / 1e6).toFixed(1)),
-          isProjected: !isIngReal
+          ejecucion: parseFloat(executionPct.toFixed(1))
         });
       }
     }
 
-    // Historical summary
-    const historicalYearsSummary = [2023, 2024, 2025].map(year => {
-      const ing = incomesByYear[year].reduce((a,b) => a+b, 0);
-      const gasComp = expensesCompByYear[year].reduce((a,b) => a+b, 0);
-      const gasPago = expensesPagoByYear[year].reduce((a,b) => a+b, 0);
-      return {
-        name: String(year),
-        ingresos: parseFloat((ing / 1e6).toFixed(1)),
-        gastosComp: parseFloat((gasComp / 1e6).toFixed(1)),
-        gastosPago: parseFloat((gasPago / 1e6).toFixed(1)),
-        netoComp: parseFloat(((ing - gasComp) / 1e6).toFixed(1)),
-        netoPago: parseFloat(((ing - gasPago) / 1e6).toFixed(1))
-      };
-    });
-
-    historicalYearsSummary.push({
-      name: '2026 (Base)',
-      ingresos: parseFloat((totBaseIng / 1e6).toFixed(1)),
-      gastosComp: parseFloat((totBaseGasComp / 1e6).toFixed(1)),
-      gastosPago: parseFloat((totBaseGasPago / 1e6).toFixed(1)),
-      netoComp: parseFloat(((totBaseIng - totBaseGasComp) / 1e6).toFixed(1)),
-      netoPago: parseFloat(((totBaseIng - totBaseGasPago) / 1e6).toFixed(1))
-    });
-
     return {
-      baselineFlow,
       simulatedFlow,
       totals: {
-        baselineIng: totBaseIng / 1e6,
-        baselineGasComp: totBaseGasComp / 1e6,
-        baselineGasPago: totBaseGasPago / 1e6,
-        baselineNetComp: (totBaseIng - totBaseGasComp) / 1e6,
-        baselineNetPago: (totBaseIng - totBaseGasPago) / 1e6,
-        
-        simIng: totSimIng / 1e6,
-        simGasComp: totSimGasComp / 1e6,
-        simGasPago: totSimGasPago / 1e6,
-        simNetComp: (totSimIng - totSimGasComp) / 1e6,
-        simNetPago: (totSimIng - totSimGasPago) / 1e6
+        baselineIng: totalBaseIng / 1e6,
+        baselineGasComp: totalBaseGasComp / 1e6,
+        baselineGasPago: totalBaseGasPago / 1e6,
+        baselineNetComp: (totalBaseIng - totalBaseGasComp) / 1e6,
+        baselineNetPago: (totalBaseIng - totalBaseGasPago) / 1e6,
+
+        simIng: totalSimIng / 1e6,
+        simGasComp: totalSimGasComp / 1e6,
+        simGasPago: totalSimGasPago / 1e6,
+        simNetComp: (totalSimIng - totalSimGasComp) / 1e6,
+        simNetPago: (totalSimIng - totalSimGasPago) / 1e6
       },
-      categoriesBaseline: {
+      resourceBaselines,
+      categoryBreakdown: {
         compromiso: [
-          { name: 'Talento Humano', value: parseFloat((catBaseComp.personal / 1e6).toFixed(1)) },
-          { name: 'Funcionamiento', value: parseFloat((catBaseComp.funcionamiento / 1e6).toFixed(1)) },
-          { name: 'Inversión', value: parseFloat((catBaseComp.inversion / 1e6).toFixed(1)) },
-          { name: 'Otros Egresos', value: parseFloat((catBaseComp.otros / 1e6).toFixed(1)) }
+          { name: 'Gastos de Personal (2.1.1)', value: parseFloat((catComp.personal / 1e6).toFixed(1)) },
+          { name: 'Gastos de Funcionamiento (2.1.2)', value: parseFloat((catComp.funcionamiento / 1e6).toFixed(1)) },
+          { name: 'Transferencias Corrientes (2.1.3)', value: parseFloat((catComp.transferencias / 1e6).toFixed(1)) },
+          { name: 'Tasas y Multas (2.1.8)', value: parseFloat((catComp.tasas / 1e6).toFixed(1)) },
+          { name: 'Servicios de la Deuda (2.2.2)', value: parseFloat((catComp.deuda / 1e6).toFixed(1)) },
+          { name: 'Gastos de Inversión (2.3)', value: parseFloat((catComp.inversion / 1e6).toFixed(1)) }
         ],
         pago: [
-          { name: 'Talento Humano', value: parseFloat((catBasePago.personal / 1e6).toFixed(1)) },
-          { name: 'Funcionamiento', value: parseFloat((catBasePago.funcionamiento / 1e6).toFixed(1)) },
-          { name: 'Inversión', value: parseFloat((catBasePago.inversion / 1e6).toFixed(1)) },
-          { name: 'Otros Egresos', value: parseFloat((catBasePago.otros / 1e6).toFixed(1)) }
+          { name: 'Gastos de Personal (2.1.1)', value: parseFloat((catPago.personal / 1e6).toFixed(1)) },
+          { name: 'Gastos de Funcionamiento (2.1.2)', value: parseFloat((catPago.funcionamiento / 1e6).toFixed(1)) },
+          { name: 'Transferencias Corrientes (2.1.3)', value: parseFloat((catPago.transferencias / 1e6).toFixed(1)) },
+          { name: 'Tasas y Multas (2.1.8)', value: parseFloat((catPago.tasas / 1e6).toFixed(1)) },
+          { name: 'Servicios de la Deuda (2.2.2)', value: parseFloat((catPago.deuda / 1e6).toFixed(1)) },
+          { name: 'Gastos de Inversión (2.3)', value: parseFloat((catPago.inversion / 1e6).toFixed(1)) }
         ]
-      },
-      categoriesSimulated: {
-        compromiso: [
-          { name: 'Talento Humano', value: parseFloat((catSimComp.personal / 1e6).toFixed(1)) },
-          { name: 'Funcionamiento', value: parseFloat((catSimComp.funcionamiento / 1e6).toFixed(1)) },
-          { name: 'Inversión', value: parseFloat((catSimComp.inversion / 1e6).toFixed(1)) },
-          { name: 'Otros Egresos', value: parseFloat((catSimComp.otros / 1e6).toFixed(1)) }
-        ],
-        pago: [
-          { name: 'Talento Humano', value: parseFloat((catSimPago.personal / 1e6).toFixed(1)) },
-          { name: 'Funcionamiento', value: parseFloat((catSimPago.funcionamiento / 1e6).toFixed(1)) },
-          { name: 'Inversión', value: parseFloat((catSimPago.inversion / 1e6).toFixed(1)) },
-          { name: 'Otros Egresos', value: parseFloat((catSimPago.otros / 1e6).toFixed(1)) }
-        ]
-      },
-      resourcesBaseline: {
-        ingresos: [
-          { name: 'Recursos Nación', value: parseFloat((resBaseIng.nacion / 1e6).toFixed(1)) },
-          { name: 'Recursos Propios', value: parseFloat((resBaseIng.propios / 1e6).toFixed(1)) },
-          { name: 'Convenios y Posgrados', value: parseFloat((resBaseIng.convenios / 1e6).toFixed(1)) }
-        ],
-        gastosComp: [
-          { name: 'Recursos Nación', value: parseFloat((resBaseGasComp.nacion / 1e6).toFixed(1)) },
-          { name: 'Recursos Propios', value: parseFloat((resBaseGasComp.propios / 1e6).toFixed(1)) },
-          { name: 'Convenios y Posgrados', value: parseFloat((resBaseGasComp.convenios / 1e6).toFixed(1)) }
-        ],
-        gastosPago: [
-          { name: 'Recursos Nación', value: parseFloat((resBaseGasPago.nacion / 1e6).toFixed(1)) },
-          { name: 'Recursos Propios', value: parseFloat((resBaseGasPago.propios / 1e6).toFixed(1)) },
-          { name: 'Convenios y Posgrados', value: parseFloat((resBaseGasPago.convenios / 1e6).toFixed(1)) }
-        ]
-      },
-      resourcesSimulated: {
-        ingresos: [
-          { name: 'Recursos Nación', value: parseFloat((resSimIng.nacion / 1e6).toFixed(1)) },
-          { name: 'Recursos Propios', value: parseFloat((resSimIng.propios / 1e6).toFixed(1)) },
-          { name: 'Convenios y Posgrados', value: parseFloat((resSimIng.convenios / 1e6).toFixed(1)) }
-        ],
-        gastosComp: [
-          { name: 'Recursos Nación', value: parseFloat((resSimGasComp.nacion / 1e6).toFixed(1)) },
-          { name: 'Recursos Propios', value: parseFloat((resSimGasComp.propios / 1e6).toFixed(1)) },
-          { name: 'Convenios y Posgrados', value: parseFloat((resSimGasComp.convenios / 1e6).toFixed(1)) }
-        ],
-        gastosPago: [
-          { name: 'Recursos Nación', value: parseFloat((resSimGasPago.nacion / 1e6).toFixed(1)) },
-          { name: 'Recursos Propios', value: parseFloat((resSimGasPago.propios / 1e6).toFixed(1)) },
-          { name: 'Convenios y Posgrados', value: parseFloat((resSimGasPago.convenios / 1e6).toFixed(1)) }
-        ]
-      },
-      historicalYearsSummary
+      }
     };
   }, [
-    rawYearlyIncomes, 
-    filterUnidad, 
-    filterRecurso, 
+    rawYearlyIncomes,
+    filterUnidad,
+    filterRecurso,
     filterMes,
-    simMatricula, 
-    simEstudiantes, 
-    simIncrementoIngresos, 
-    simNuevosIngresos,
-    simTalentoHumano, 
-    simFuncionamiento, 
-    simInversion, 
-    simContratacion, 
-    simOtrosGastos
+    filterTipoGasto,
+    simIngByResource,
+    simGasByResource,
+    viewDimension
   ]);
 
   if (dataStage === 'loading') {
@@ -663,37 +494,43 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     );
   }
 
-  // Break-even and KPIs variables based on selected view dimension
   const isPago = viewDimension === 'pago';
   const currentGas = isPago ? financialData.totals.simGasPago : financialData.totals.simGasComp;
   const baseGas = isPago ? financialData.totals.baselineGasPago : financialData.totals.baselineGasComp;
   const currentNet = isPago ? financialData.totals.simNetPago : financialData.totals.simNetComp;
   const baseNet = isPago ? financialData.totals.baselineNetPago : financialData.totals.baselineNetComp;
 
+  // KPIs calculations
   const breakEvenCoverage = currentGas > 0 ? (financialData.totals.simIng / currentGas) * 100 : 0;
-
-  // Year over year variance
-  const prevYearNet = isPago 
-    ? (financialData.historicalYearsSummary.find(y => y.name === '2025')?.netoPago || 0)
-    : (financialData.historicalYearsSummary.find(y => y.name === '2025')?.netoComp || 0);
-  const varianceYoY = prevYearNet !== 0 ? ((currentNet - prevYearNet) / Math.abs(prevYearNet)) * 100 : 0;
+  
+  // Execution calculations
+  // % de ejecución: (Pago / Compromiso) / Ingresos totales
+  const totalComp = financialData.totals.simGasComp;
+  const totalPago = financialData.totals.simGasPago;
+  const totalIng = financialData.totals.simIng;
+  
+  const executionRatio = totalComp > 0 ? (totalPago / totalComp) : 0;
+  const executionPercent = totalIng > 0 ? (executionRatio / totalIng) * 100 : 0;
+  
+  const rawExecutionRatio = totalComp > 0 ? (totalPago / totalComp) * 100 : 0;
+  const expenseToIncomeRatio = totalIng > 0 ? (currentGas / totalIng) * 100 : 0;
 
   return (
     <div className="flex flex-col mb-20 max-w-7xl mx-auto w-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
         <div>
-          <p className="text-[#ffcc29] text-xs uppercase tracking-widest font-bold mb-1">MÓDULO FINANCIERO AVANZADO V3.0</p>
+          <p className="text-[#ffcc29] text-xs uppercase tracking-widest font-bold mb-1">MÓDULO FINANCIERO AVANZADO V4.0</p>
           <div className="flex items-center gap-4">
             <h2 className="text-3xl font-bold font-display text-white">Proyección Financiera (Ingresos y Gastos)</h2>
             <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
               <BrainCircuit size={14} className="text-[#ffcc29]" />
-              <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">Cálculo en Tiempo Real</span>
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">Cálculo de Recursos Integrados</span>
             </div>
           </div>
         </div>
 
-        {/* Global Toolbar Filters & Dimension Selector */}
+        {/* Global Toolbar Filters */}
         <div className="flex flex-wrap gap-3 items-center">
           {/* Dimension Selector (Compromiso vs Pago) */}
           <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 shrink-0">
@@ -725,16 +562,32 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </select>
           </div>
 
+          {/* Tipo de Gasto Filter */}
           <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3 py-1.5 focus-within:border-[#ffcc29]/50 transition-colors">
             <Filter size={14} className="text-on-surface-variant mr-2" />
             <select 
-              className="bg-transparent text-xs text-white outline-none w-32"
+              className="bg-transparent text-xs text-white outline-none w-36 truncate"
+              value={filterTipoGasto}
+              onChange={(e) => setFilterTipoGasto(e.target.value)}
+            >
+              <option value="Todos" className="bg-[#0f172a] text-white">Todos los Gastos</option>
+              {filterOptions.tiposGastos.filter(t => t !== 'Todos').map(t => (
+                <option key={t} value={t} className="bg-[#0f172a] text-white">{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Recurso Equivalent Filter */}
+          <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3 py-1.5 focus-within:border-[#ffcc29]/50 transition-colors">
+            <Filter size={14} className="text-on-surface-variant mr-2" />
+            <select 
+              className="bg-transparent text-xs text-white outline-none w-44 truncate"
               value={filterRecurso}
               onChange={(e) => setFilterRecurso(e.target.value)}
             >
               <option value="Todos" className="bg-[#0f172a] text-white">Todos los Recursos</option>
               {filterOptions.recursos.filter(r => r !== 'Todos').map(r => (
-                <option key={r} value={r} className="bg-[#0f172a] text-white">Recurso {r}</option>
+                <option key={r} value={r} className="bg-[#0f172a] text-white">{r}</option>
               ))}
             </select>
           </div>
@@ -790,21 +643,22 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {/* TAB CONTENT: EXECUTIVE DASHBOARD */}
       {activeTab === 'kpi' && (
         <div className="space-y-8 animate-fade-in">
-          {/* Dimension Alert Banner */}
-          <div className="glass-card rounded-[18px] px-6 py-4 border border-white/5 flex items-center gap-4 bg-white/5">
-            <ClipboardList className="text-[#ffcc29]" size={24} />
-            <div>
-              <span className="text-xs text-on-surface-variant uppercase font-mono tracking-wider font-bold">Dimensión de Análisis Activa:</span>
-              <p className="text-sm font-bold text-white">
-                {isPago 
-                  ? 'Pagos Efectivos (Caja real de la Universidad)' 
-                  : 'Compromisos Presupuestales (Reservas y contratos asignados)'}
-              </p>
+          {/* Active Settings Banner */}
+          <div className="glass-card rounded-[18px] px-6 py-4 border border-white/5 flex flex-wrap gap-6 items-center justify-between bg-white/5 text-xs text-on-surface-variant">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="text-[#ffcc29]" size={20} />
+              <span>
+                <strong>Filtro Recurso:</strong> {filterRecurso} | <strong>Tipo de Gasto:</strong> {filterTipoGasto}
+              </span>
+            </div>
+            <div className="px-3 py-1 rounded bg-[#ffcc29]/10 text-[#ffcc29] font-mono">
+              Vista: {isPago ? 'Pagos Efectivos' : 'Compromisos'}
             </div>
           </div>
 
           {/* Main KPI Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Incomes Card */}
             <div className="glass-card rounded-[24px] p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-[#4ade80]"></div>
               <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-2 flex justify-between">
@@ -816,10 +670,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 <span className="text-[10px] font-mono text-on-surface-variant">mill.</span>
               </div>
               <p className="text-[10px] text-on-surface-variant mt-2">
-                Límite base: ${financialData.totals.baselineIng.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill.
+                Inicial: ${financialData.totals.baselineIng.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill.
               </p>
             </div>
 
+            {/* Expenses Card */}
             <div className="glass-card rounded-[24px] p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-[#f43f5e]"></div>
               <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-2 flex justify-between">
@@ -831,10 +686,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 <span className="text-[10px] font-mono text-on-surface-variant">mill.</span>
               </div>
               <p className="text-[10px] text-on-surface-variant mt-2">
-                Límite base: ${baseGas.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill.
+                Inicial: ${baseGas.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill.
               </p>
             </div>
 
+            {/* Net Result Card */}
             <div className="glass-card rounded-[24px] p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-[#7bd0ff]"></div>
               <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-2">Resultado Neto</h4>
@@ -845,80 +701,80 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 <span className="text-[10px] font-mono text-on-surface-variant">mill.</span>
               </div>
               <span className={`inline-flex items-center gap-1 text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full ${currentNet >= 0 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-[#f43f5e]/10 text-[#f43f5e]'}`}>
-                {currentNet >= 0 ? <CheckCircle2 size={10} /> : <AlertTriangle size={10} />}
                 {currentNet >= 0 ? 'Superávit' : 'Déficit'}
               </span>
             </div>
 
+            {/* Execution % Card */}
             <div className="glass-card rounded-[24px] p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ffcc29]"></div>
-              <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-2">Desempeño YoY</h4>
+              <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-2 flex justify-between">
+                % de Ejecución
+                <span className="text-[#ffcc29] font-sans text-[10px] font-bold">Pago/Comp / Ingresos</span>
+              </h4>
               <div className="flex items-baseline gap-2">
-                <span className={`text-3xl font-display font-bold ${varianceYoY >= 0 ? 'text-[#4ade80]' : 'text-[#f43f5e]'}`}>
-                  {varianceYoY >= 0 ? '+' : ''}{varianceYoY.toFixed(1)}%
-                </span>
+                <span className="text-3xl font-display font-bold text-white">{executionPercent.toFixed(2)}%</span>
               </div>
-              <p className="text-[10px] text-on-surface-variant mt-2">
-                vs 2025 (${prevYearNet.toLocaleString('es-CO', {maximumFractionDigits: 0})}M)
-              </p>
+              <div className="text-[9px] text-on-surface-variant mt-2 font-mono flex flex-col gap-0.5">
+                <span>Pago vs Compromiso: <strong>{rawExecutionRatio.toFixed(1)}%</strong></span>
+                <span>Gastos vs Ingresos: <strong>{expenseToIncomeRatio.toFixed(1)}%</strong></span>
+              </div>
             </div>
           </div>
 
-          {/* Core Analytics Panels */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Cash Flow Comparison Chart */}
-            <div className="glass-card rounded-[32px] p-8 flex flex-col min-h-[400px]">
+          {/* Composed Chart of Incomes, Expenses & Execution Line */}
+          <div className="grid grid-cols-1 gap-8">
+            <div className="glass-card rounded-[32px] p-8 flex flex-col min-h-[450px]">
               <h3 className="text-lg font-display font-bold text-white mb-6 flex items-center gap-2">
                 <BarChartIcon size={20} className="text-[#ffcc29]" />
-                Ingreso vs Gasto Mensual ({isPago ? 'Pagos' : 'Compromisos'}) (Millones)
+                Flujo Mensual Recaudado e Indicador de Ejecución (Millones)
               </h3>
               <div className="flex-1 w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={financialData.simulatedFlow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <ComposedChart data={financialData.simulatedFlow} margin={{ top: 20, right: -5, left: -25, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" tick={{fontSize: 10, fontFamily: 'monospace'}} />
-                    <YAxis stroke="rgba(255,255,255,0.4)" tick={{fontSize: 10, fontFamily: 'monospace'}} tickFormatter={(v) => `$${v}`} />
+                    
+                    {/* Left Axis - Currency */}
+                    <YAxis yAxisId="left" stroke="rgba(255,255,255,0.4)" tick={{fontSize: 10, fontFamily: 'monospace'}} tickFormatter={(v) => `$${v}`} />
+                    
+                    {/* Right Axis - Percentage */}
+                    <YAxis yAxisId="right" orientation="right" stroke="#ffcc29" tick={{fontSize: 10, fontFamily: 'monospace'}} tickFormatter={(v) => `${v}%`} />
+                    
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
                       itemStyle={{ color: '#fff', fontSize: '12px' }}
                     />
                     <Legend wrapperStyle={{ fontSize: '11px', opacity: 0.8 }} />
-                    <Bar dataKey="ingresos" name="Ingresos" fill="#4ade80" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey={isPago ? 'gastosPago' : 'gastosComp'} name={isPago ? 'Gastos (Pagos)' : 'Gastos (Compromisos)'} fill="#f43f5e" radius={[4, 4, 0, 0]} />
-                  </BarChart>
+                    
+                    <Bar yAxisId="left" dataKey="ingresos" name="Ingresos" fill="#4ade80" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                    <Bar yAxisId="left" dataKey={isPago ? 'gastosPago' : 'gastosComp'} name={isPago ? 'Gastos (Pagos)' : 'Gastos (Compromisos)'} fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                    
+                    <Line yAxisId="right" type="monotone" dataKey="ejecucion" name="Tasa Ejecución (%)" stroke="#ffcc29" strokeWidth={3} dot={{ r: 4, fill: '#ffcc29', strokeWidth: 0 }} />
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             </div>
+          </div>
 
-            {/* Historical Trend comparison chart */}
-            <div className="glass-card rounded-[32px] p-8 flex flex-col min-h-[400px]">
-              <h3 className="text-lg font-display font-bold text-white mb-6 flex items-center gap-2">
-                <TrendingUp size={20} className="text-[#7bd0ff]" />
-                Histórico Multianual y Proyección Neto (Millones)
-              </h3>
-              <div className="flex-1 w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={financialData.historicalYearsSummary} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#7bd0ff" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#7bd0ff" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" tick={{fontSize: 10, fontFamily: 'monospace'}} />
-                    <YAxis stroke="rgba(255,255,255,0.4)" tick={{fontSize: 10, fontFamily: 'monospace'}} tickFormatter={(v) => `$${v}`} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      itemStyle={{ color: '#fff', fontSize: '12px' }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: '11px', opacity: 0.8 }} />
-                    <Area type="monotone" dataKey={isPago ? 'netoPago' : 'netoComp'} name="Resultado Neto" stroke="#7bd0ff" strokeWidth={3} fillOpacity={1} fill="url(#colorNet)" />
-                    <Line type="monotone" dataKey="ingresos" name="Ingresos" stroke="#4ade80" strokeDasharray="5 5" dot={false} />
-                    <Line type="monotone" dataKey={isPago ? 'gastosPago' : 'gastosComp'} name={isPago ? 'Gastos (Pago)' : 'Gastos (Compromiso)'} stroke="#f43f5e" strokeDasharray="5 5" dot={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+          {/* Expenses Breakdown by Category type */}
+          <div className="glass-card rounded-[32px] p-8">
+            <h3 className="text-base font-bold text-white mb-6">Desglose de Gastos por Tipo (Millones)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(isPago ? financialData.categoryBreakdown.pago : financialData.categoryBreakdown.compromiso).map((cat, idx) => (
+                <div key={idx} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono text-on-surface-variant uppercase block mb-1">Gasto Contable</span>
+                    <span className="text-xs font-bold text-white truncate max-w-[200px] block">{cat.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-white font-mono">${cat.value.toLocaleString('es-CO')}M</span>
+                    <span className="text-[9px] text-on-surface-variant block mt-0.5">
+                      {totalComp > 0 ? ((cat.value / (isPago ? totalPago : totalComp)) * 100).toFixed(1) : 0}% del total
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -927,12 +783,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {/* TAB CONTENT: CASH FLOW DETAILS */}
       {activeTab === 'flow' && (
         <div className="space-y-8 animate-fade-in">
-          {/* Cash Flow Table */}
           <div className="glass-card rounded-[32px] overflow-hidden border border-white/5">
-            <div className="px-8 py-6 border-b border-white/5 bg-white/5 flex justify-between items-center">
+            <div className="px-8 py-6 border-b border-white/5 bg-white/5 flex flex-wrap gap-4 justify-between items-center">
               <div>
-                <h3 className="text-lg font-bold text-white">Consolidado Mensual de Compromisos y Pagos</h3>
-                <p className="text-xs text-on-surface-variant mt-1">Corte financiero 2026 en millones de COP. Se contrastan los compromisos adquiridos con los desembolsos reales.</p>
+                <h3 className="text-lg font-bold text-white">Consolidado Mensual de Caja</h3>
+                <p className="text-xs text-on-surface-variant mt-1">Valores mensuales expresados en millones de pesos ($M). Ajustados según los filtros y simuladores.</p>
               </div>
               <div className="px-3 py-1 rounded bg-[#ffcc29]/10 text-[#ffcc29] text-xs font-mono">Tabla Comparativa</div>
             </div>
@@ -949,33 +804,27 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     <th className="px-4 py-4 text-right">Neto Pago (M)</th>
                     <th className="px-4 py-4 text-right">Acumulado Comp (M)</th>
                     <th className="px-4 py-4 text-right">Acumulado Pago (M)</th>
-                    <th className="px-4 py-4 text-center">Tipo</th>
+                    <th className="px-4 py-4 text-right">Tasa Ejecución (%)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-xs">
-                  {financialData.simulatedFlow.map((row, idx) => {
-                    return (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="px-4 py-4 font-bold text-white">{row.name}</td>
-                        <td className="px-4 py-4 text-right text-[#4ade80] font-mono">${row.ingresos.toLocaleString('es-CO')}</td>
-                        <td className="px-4 py-4 text-right text-orange-400 font-mono">${row.gastosComp.toLocaleString('es-CO')}</td>
-                        <td className="px-4 py-4 text-right text-[#f43f5e] font-mono">${row.gastosPago.toLocaleString('es-CO')}</td>
-                        <td className={`px-4 py-4 text-right font-mono font-bold ${row.netoComp >= 0 ? 'text-[#4ade80]' : 'text-orange-400'}`}>
-                          ${row.netoComp.toLocaleString('es-CO')}
-                        </td>
-                        <td className={`px-4 py-4 text-right font-mono font-bold ${row.netoPago >= 0 ? 'text-[#4ade80]' : 'text-[#f43f5e]'}`}>
-                          ${row.netoPago.toLocaleString('es-CO')}
-                        </td>
-                        <td className="px-4 py-4 text-right text-orange-200 font-mono">${row.acumuladoComp.toLocaleString('es-CO')}</td>
-                        <td className="px-4 py-4 text-right text-white font-mono">${row.acumuladoPago.toLocaleString('es-CO')}</td>
-                        <td className="px-4 py-4 text-center">
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-mono uppercase tracking-wider ${row.isProjected ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'}`}>
-                            {row.isProjected ? 'Proy' : 'Real'}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {financialData.simulatedFlow.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-white/5 transition-colors">
+                      <td className="px-4 py-4 font-bold text-white">{row.name}</td>
+                      <td className="px-4 py-4 text-right text-[#4ade80] font-mono">${row.ingresos.toLocaleString('es-CO')}</td>
+                      <td className="px-4 py-4 text-right text-orange-400 font-mono">${row.gastosComp.toLocaleString('es-CO')}</td>
+                      <td className="px-4 py-4 text-right text-[#f43f5e] font-mono">${row.gastosPago.toLocaleString('es-CO')}</td>
+                      <td className={`px-4 py-4 text-right font-mono font-bold ${row.netoComp >= 0 ? 'text-[#4ade80]' : 'text-orange-400'}`}>
+                        ${row.netoComp.toLocaleString('es-CO')}
+                      </td>
+                      <td className={`px-4 py-4 text-right font-mono font-bold ${row.netoPago >= 0 ? 'text-[#4ade80]' : 'text-[#f43f5e]'}`}>
+                        ${row.netoPago.toLocaleString('es-CO')}
+                      </td>
+                      <td className="px-4 py-4 text-right text-orange-200 font-mono">${row.acumuladoComp.toLocaleString('es-CO')}</td>
+                      <td className="px-4 py-4 text-right text-white font-mono">${row.acumuladoPago.toLocaleString('es-CO')}</td>
+                      <td className="px-4 py-4 text-right text-[#ffcc29] font-mono font-bold">{row.ejecucion}%</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -1015,7 +864,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               <div className={`mt-6 p-4 rounded-xl text-xs flex gap-2 items-center ${currentNet >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
                 {currentNet >= 0 ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
                 <div>
-                  <span className="font-bold">{currentNet >= 0 ? 'Superávit Financiero' : 'Déficit Financiero'}</span>
+                  <span className="font-bold">{currentNet >= 0 ? 'Superávit' : 'Déficit'}</span>
                   <p className="text-[10px] opacity-80 mt-0.5">
                     {currentNet >= 0 
                       ? 'Los ingresos superan los gastos simulados.' 
@@ -1030,7 +879,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 <h4 className="text-sm font-bold text-white mb-1">Ejecución del Presupuesto</h4>
                 <p className="text-[10px] text-on-surface-variant uppercase font-mono tracking-widest mb-4">Utilización Relativa</p>
                 <div className="mt-4 space-y-4">
-                  {/* Progress Indicators */}
                   <div>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-on-surface-variant">Gastos vs Aforado</span>
@@ -1064,357 +912,125 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </div>
             </div>
           </div>
-
-          {/* Gasto Composition and Comparison */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Composition Pie Chart */}
-            <div className="glass-card rounded-[32px] p-8 flex flex-col min-h-[350px]">
-              <h3 className="text-base font-bold text-white mb-6">Composición del Gasto Simulado ({isPago ? 'Pago' : 'Compromiso'})</h3>
-              <div className="flex-1 flex flex-col sm:flex-row items-center gap-6 justify-center">
-                <div className="w-48 h-48 relative shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie 
-                        data={isPago ? financialData.categoriesSimulated.pago : financialData.categoriesSimulated.compromiso} 
-                        dataKey="value" 
-                        cx="50%" 
-                        cy="50%" 
-                        innerRadius={50} 
-                        outerRadius={70} 
-                        paddingAngle={4}
-                        stroke="none"
-                      >
-                        {(isPago ? financialData.categoriesSimulated.pago : financialData.categoriesSimulated.compromiso).map((entry, idx) => (
-                          <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v: number) => `$${v.toLocaleString('es-CO')}M`} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="space-y-2 w-full">
-                  {(isPago ? financialData.categoriesSimulated.pago : financialData.categoriesSimulated.compromiso).map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center bg-white/5 p-2 rounded-lg text-xs">
-                      <span className="flex items-center gap-2 text-on-surface-variant">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: COLORS[idx % COLORS.length]}}></span>
-                        {item.name}
-                      </span>
-                      <span className="font-bold text-white">${item.value.toLocaleString('es-CO')}M</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Simulated vs baseline comparative bar chart */}
-            <div className="glass-card rounded-[32px] p-8 flex flex-col min-h-[350px]">
-              <h3 className="text-base font-bold text-white mb-6">Simulación vs Escenario Base (Millones)</h3>
-              <div className="flex-1 w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={[
-                    { name: 'Ingresos', Base: financialData.totals.baselineIng, Simulado: financialData.totals.simIng },
-                    { name: 'Gastos', Base: baseGas, Simulado: currentGas },
-                    { name: 'Resultado Neto', Base: baseNet, Simulado: currentNet }
-                  ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" tick={{fontSize: 10}} />
-                    <YAxis stroke="rgba(255,255,255,0.4)" tick={{fontSize: 10}} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      itemStyle={{ color: '#fff', fontSize: '12px' }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: '11px' }} />
-                    <Bar dataKey="Base" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Simulado" fill="#ffcc29" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
-      {/* TAB CONTENT: FINANCIAL SIMULATOR */}
+      {/* TAB CONTENT: RESOURCE-BASED SIMULATOR */}
       {activeTab === 'simulator' && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-fade-in">
-          {/* Left Panel: Sliders */}
-          <div className="xl:col-span-1 space-y-6">
-            {/* Header Simulator Controls */}
-            <div className="glass-card rounded-[24px] p-6 border border-[#ffcc29]/20 bg-surface-container-low/40">
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-2">
-                  <Settings className="text-[#ffcc29]" size={20} />
-                  <h3 className="font-bold text-white text-base">Parámetros</h3>
-                </div>
-                <button 
-                  onClick={handleResetSimulator}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors flex items-center gap-1.5 text-xs font-semibold"
-                  title="Restablecer valores"
-                >
-                  <RotateCcw size={14} />
-                  Reiniciar
-                </button>
-              </div>
-
-              {/* SECTION: REVENUES */}
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-xs font-mono text-[#ffcc29] uppercase tracking-widest mb-4 pb-1 border-b border-white/10">Variables de Ingresos</h4>
-                  
-                  {/* Tarifa Matrícula */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Valor Matrícula (COP)</span>
-                      <span className="font-bold text-white">${simMatricula.toLocaleString('es-CO')}</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="800000" 
-                      max="2500000" 
-                      step="50000"
-                      value={simMatricula} 
-                      onChange={(e) => setSimMatricula(parseInt(e.target.value))}
-                      className="w-full accent-[#ffcc29]"
-                    />
-                  </div>
-
-                  {/* Cantidad Alumnos */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Estudiantes Matrículas</span>
-                      <span className="font-bold text-white">{simEstudiantes.toLocaleString('es-CO')} alumnos</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="14000" 
-                      max="22000" 
-                      step="100"
-                      value={simEstudiantes} 
-                      onChange={(e) => setSimEstudiantes(parseInt(e.target.value))}
-                      className="w-full accent-[#ffcc29]"
-                    />
-                  </div>
-
-                  {/* Crecimiento Otros Ingresos */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Crecimiento otros Ingresos (%)</span>
-                      <span className="font-bold text-[#ffcc29]">{simIncrementoIngresos}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="-10" 
-                      max="30" 
-                      step="1"
-                      value={simIncrementoIngresos} 
-                      onChange={(e) => setSimIncrementoIngresos(parseFloat(e.target.value))}
-                      className="w-full accent-[#ffcc29]"
-                    />
-                  </div>
-
-                  {/* Nuevas Fuentes */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Nuevos Ingresos (M)</span>
-                      <span className="font-bold text-white">${simNuevosIngresos}M</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="0" 
-                      max="15000" 
-                      step="500"
-                      value={simNuevosIngresos} 
-                      onChange={(e) => setSimNuevosIngresos(parseInt(e.target.value))}
-                      className="w-full accent-[#ffcc29]"
-                    />
-                  </div>
-                </div>
-
-                {/* SECTION: EXPENSES */}
-                <div className="space-y-6 pt-4 border-t border-white/5">
-                  <h4 className="text-xs font-mono text-[#7bd0ff] uppercase tracking-widest mb-4 pb-1 border-b border-white/10">Variables de Gastos</h4>
-                  
-                  {/* Talento Humano */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Talento Humano / Personal (%)</span>
-                      <span className="font-bold text-[#7bd0ff]">{simTalentoHumano}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="-20" 
-                      max="30" 
-                      step="1"
-                      value={simTalentoHumano} 
-                      onChange={(e) => setSimTalentoHumano(parseFloat(e.target.value))}
-                      className="w-full accent-[#7bd0ff]"
-                    />
-                  </div>
-
-                  {/* Funcionamiento */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Gastos Funcionamiento (%)</span>
-                      <span className="font-bold text-[#7bd0ff]">{simFuncionamiento}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="-20" 
-                      max="30" 
-                      step="1"
-                      value={simFuncionamiento} 
-                      onChange={(e) => setSimFuncionamiento(parseFloat(e.target.value))}
-                      className="w-full accent-[#7bd0ff]"
-                    />
-                  </div>
-
-                  {/* Inversión */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Inversión y Proyectos (%)</span>
-                      <span className="font-bold text-[#7bd0ff]">{simInversion}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="-30" 
-                      max="50" 
-                      step="1"
-                      value={simInversion} 
-                      onChange={(e) => setSimInversion(parseFloat(e.target.value))}
-                      className="w-full accent-[#7bd0ff]"
-                    />
-                  </div>
-
-                  {/* Contratación OPS */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Contratación Servicios OPS (%)</span>
-                      <span className="font-bold text-[#7bd0ff]">{simContratacion}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="-30" 
-                      max="40" 
-                      step="1"
-                      value={simContratacion} 
-                      onChange={(e) => setSimContratacion(parseFloat(e.target.value))}
-                      className="w-full accent-[#7bd0ff]"
-                    />
-                  </div>
-
-                  {/* Otros Gastos */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Otros Gastos y Tasas (%)</span>
-                      <span className="font-bold text-[#7bd0ff]">{simOtrosGastos}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="-20" 
-                      max="30" 
-                      step="1"
-                      value={simOtrosGastos} 
-                      onChange={(e) => setSimOtrosGastos(parseFloat(e.target.value))}
-                      className="w-full accent-[#7bd0ff]"
-                    />
-                  </div>
-                </div>
-              </div>
+        <div className="space-y-8 animate-fade-in">
+          {/* Header Controls */}
+          <div className="glass-card rounded-[24px] p-6 border border-[#ffcc29]/20 bg-[#0c1527] flex justify-between items-center">
+            <div>
+              <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                <Settings className="text-[#ffcc29]" size={20} />
+                Simulación Financiera Detallada por Recurso UPTC
+              </h3>
+              <p className="text-xs text-on-surface-variant mt-1">
+                Ajusta las tasas de variación porcentual de ingresos y gastos para cada una de las 17 fuentes presupuestarias.
+              </p>
             </div>
+            <button 
+              onClick={handleResetSimulator}
+              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+            >
+              <RotateCcw size={14} />
+              Reiniciar Simulador
+            </button>
           </div>
 
-          {/* Right Panels: Real-time Reactors */}
-          <div className="xl:col-span-2 space-y-6">
-            {/* mini KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="glass-card rounded-2xl p-5 border border-white/5">
-                <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest block mb-1">Ingresos (Sim)</span>
-                <span className="text-2xl font-bold font-display text-[#4ade80]">${financialData.totals.simIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                <span className={`text-[10px] font-mono block mt-1 ${financialData.totals.simIng >= financialData.totals.baselineIng ? 'text-[#4ade80]' : 'text-[#f43f5e]'}`}>
-                  {financialData.totals.simIng >= financialData.totals.baselineIng ? '▲' : '▼'}
-                  {Math.abs(financialData.totals.simIng - financialData.totals.baselineIng).toLocaleString('es-CO', {maximumFractionDigits:1})}M vs base
-                </span>
-              </div>
+          {/* Simulator Grid containing all 17 resources */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {RESOURCES_LIST.map((resName) => {
+              const baseline = financialData.resourceBaselines[resName] || { ing: 0, gasComp: 0, gasPago: 0 };
+              const currentGasBaseline = isPago ? baseline.gasPago : baseline.gasComp;
 
-              <div className="glass-card rounded-2xl p-5 border border-white/5">
-                <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest block mb-1">Gastos (Sim)</span>
-                <span className="text-2xl font-bold font-display text-[#f43f5e]">${currentGas.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                <span className={`text-[10px] font-mono block mt-1 ${currentGas <= baseGas ? 'text-[#4ade80]' : 'text-[#f43f5e]'}`}>
-                  {currentGas > baseGas ? '▲' : '▼'}
-                  {Math.abs(currentGas - baseGas).toLocaleString('es-CO', {maximumFractionDigits:1})}M vs base
-                </span>
-              </div>
+              const valIng = simIngByResource[resName] || 0;
+              const valGas = simGasByResource[resName] || 0;
 
-              <div className="glass-card rounded-2xl p-5 border border-white/5">
-                <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest block mb-1">Resultado (Sim)</span>
-                <span className={`text-2xl font-bold font-display ${currentNet >= 0 ? 'text-[#4ade80]' : 'text-[#f43f5e]'}`}>${currentNet.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                <span className={`text-[10px] font-mono block mt-1 ${currentNet >= baseNet ? 'text-[#4ade80]' : 'text-[#f43f5e]'}`}>
-                  {currentNet >= baseNet ? '▲' : '▼'}
-                  {Math.abs(currentNet - baseNet).toLocaleString('es-CO', {maximumFractionDigits:1})}M vs base
-                </span>
-              </div>
-            </div>
+              const simIngValue = baseline.ing * (1 + valIng / 100);
+              const simGasValue = currentGasBaseline * (1 + valGas / 100);
+              const simNetValue = simIngValue - simGasValue;
 
-            {/* Resource Breakdown Card */}
-            <div className="glass-card rounded-[24px] p-6 border border-white/5">
-              <h4 className="text-xs font-mono text-[#ffcc29] uppercase tracking-widest mb-4">Desglose de Ingresos y Gastos por Tipo de Recurso (Simulado)</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {financialData.resourcesSimulated.ingresos.map((res, idx) => {
-                  const simulatedExpenseVal = isPago 
-                    ? (financialData.resourcesSimulated.gastosPago.find(g => g.name === res.name)?.value || 0)
-                    : (financialData.resourcesSimulated.gastosComp.find(g => g.name === res.name)?.value || 0);
-                  const netVal = res.value - simulatedExpenseVal;
-                  
-                  return (
-                    <div key={idx} className="bg-white/5 p-4 rounded-xl border border-white/5 flex flex-col justify-between">
-                      <span className="text-xs font-bold text-white block mb-2">{res.name}</span>
-                      <div className="space-y-1 text-[11px] font-mono">
-                        <div className="flex justify-between">
-                          <span className="text-on-surface-variant">Ingreso:</span>
-                          <span className="text-[#4ade80]">${res.value.toLocaleString('es-CO')}M</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-on-surface-variant">Egreso:</span>
-                          <span className="text-[#f43f5e]">${simulatedExpenseVal.toLocaleString('es-CO')}M</span>
-                        </div>
-                        <div className="flex justify-between pt-1 border-t border-white/10 font-bold">
-                          <span>Neto:</span>
-                          <span className={netVal >= 0 ? 'text-[#4ade80]' : 'text-[#f43f5e]'}>${netVal.toLocaleString('es-CO')}M</span>
-                        </div>
-                      </div>
+              return (
+                <div key={resName} className="glass-card rounded-[24px] p-6 border border-white/5 flex flex-col justify-between space-y-4">
+                  {/* Title & Reference Info */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="text-sm font-bold text-white">{resName}</h4>
+                      <p className="text-[10px] text-on-surface-variant uppercase font-mono tracking-wider mt-0.5">
+                        Línea de Referencia
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                    <span className="text-[10px] font-mono bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-white">
+                      Neto: ${(baseline.ing - currentGasBaseline).toFixed(1)}M
+                    </span>
+                  </div>
 
-            {/* Simulated Live Flow Chart */}
-            <div className="glass-card rounded-[32px] p-6 border border-white/5 flex flex-col min-h-[300px]">
-              <h3 className="text-sm font-bold text-white mb-4">Simulación Reactiva del Flujo Mensual (Ingreso vs Gasto)</h3>
-              <div className="flex-1 w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={financialData.simulatedFlow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorIngSim" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4ade80" stopOpacity={0.15}/>
-                        <stop offset="95%" stopColor="#4ade80" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="colorGasSim" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.15}/>
-                        <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" tick={{fontSize: 9}} />
-                    <YAxis stroke="rgba(255,255,255,0.4)" tick={{fontSize: 9}} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                    <Legend wrapperStyle={{ fontSize: '10px' }} />
-                    <Area type="monotone" dataKey="ingresos" name="Ingreso Simulado" stroke="#4ade80" fillOpacity={1} fill="url(#colorIngSim)" strokeWidth={2} />
-                    <Area type="monotone" dataKey={isPago ? 'gastosPago' : 'gastosComp'} name={isPago ? 'Gasto (Pago Simulado)' : 'Gasto (Compromiso Simulado)'} stroke="#f43f5e" fillOpacity={1} fill="url(#colorGasSim)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+                  {/* Baselines Reference Row */}
+                  <div className="grid grid-cols-2 gap-4 bg-white/5 p-3 rounded-xl text-center text-xs">
+                    <div>
+                      <span className="text-on-surface-variant text-[10px] block">Ingreso Base</span>
+                      <strong className="text-[#4ade80] font-mono">${baseline.ing.toFixed(1)}M</strong>
+                    </div>
+                    <div>
+                      <span className="text-on-surface-variant text-[10px] block">Gasto Base ({isPago ? 'Pago' : 'Comp'})</span>
+                      <strong className="text-[#f43f5e] font-mono">${currentGasBaseline.toFixed(1)}M</strong>
+                    </div>
+                  </div>
+
+                  {/* Slider Controls */}
+                  <div className="space-y-4 pt-2">
+                    {/* Income Slider */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-on-surface-variant">Simular Ingreso: {valIng > 0 ? '+' : ''}{valIng}%</span>
+                        <span className="font-bold text-[#4ade80] font-mono">${simIngValue.toFixed(1)}M</span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="-100" 
+                        max="100" 
+                        step="5"
+                        value={valIng} 
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setSimIngByResource(prev => ({ ...prev, [resName]: val }));
+                        }}
+                        className="w-full accent-[#4ade80]"
+                      />
+                    </div>
+
+                    {/* Expense Slider */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-on-surface-variant">Simular Gasto: {valGas > 0 ? '+' : ''}{valGas}%</span>
+                        <span className="font-bold text-[#f43f5e] font-mono">${simGasValue.toFixed(1)}M</span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="-100" 
+                        max="100" 
+                        step="5"
+                        value={valGas} 
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setSimGasByResource(prev => ({ ...prev, [resName]: val }));
+                        }}
+                        className="w-full accent-[#f43f5e]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Simulated Net outcome */}
+                  <div className="pt-2 border-t border-white/5 flex justify-between items-center text-xs font-mono">
+                    <span className="text-on-surface-variant">Resultado Simulado:</span>
+                    <strong className={simNetValue >= 0 ? 'text-[#4ade80]' : 'text-[#f43f5e]'}>
+                      ${simNetValue.toFixed(1)}M
+                    </strong>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
