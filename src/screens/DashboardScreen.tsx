@@ -327,6 +327,9 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
     );
   }
 
+  const recaudoPct = ingresosAforado > 0 ? (ingresosRecaudado / ingresosAforado) * 100 : 0;
+  const gastoPct = ingresosAforado > 0 ? (gastosComprometido / ingresosAforado) * 100 : 0;
+
   return (
     <div className="flex flex-col mb-20 max-w-7xl mx-auto">
       {/* Header */}
@@ -446,10 +449,10 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
           <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
             <svg className="w-full h-full">
               <circle cx="80" cy="80" r="70" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
-              <circle className="progress-ring-circle" cx="80" cy="80" r="70" fill="transparent" stroke="#ffcc29" strokeWidth="12" strokeDasharray="440" strokeDashoffset="288" />
+              <circle className="progress-ring-circle" cx="80" cy="80" r="70" fill="transparent" stroke="#ffcc29" strokeWidth="12" strokeDasharray="440" strokeDashoffset={440 - (440 * Math.min(100, recaudoPct)) / 100} />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-white">34.6%</span>
+              <span className="text-3xl font-bold text-white">{recaudoPct.toFixed(1)}%</span>
               <span className="text-xs text-on-surface-variant font-medium">Meta</span>
             </div>
           </div>
@@ -475,10 +478,10 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
           <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
             <svg className="w-full h-full">
               <circle cx="80" cy="80" r="70" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
-              <circle className="progress-ring-circle" cx="80" cy="80" r="70" fill="transparent" stroke="#7bd0ff" strokeWidth="12" strokeDasharray="440" strokeDashoffset="341" />
+              <circle className="progress-ring-circle" cx="80" cy="80" r="70" fill="transparent" stroke="#7bd0ff" strokeWidth="12" strokeDasharray="440" strokeDashoffset={440 - (440 * Math.min(100, gastoPct)) / 100} />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-white">22.5%</span>
+              <span className="text-3xl font-bold text-white">{gastoPct.toFixed(1)}%</span>
               <span className="text-xs text-on-surface-variant font-medium">Ejecutado</span>
             </div>
           </div>

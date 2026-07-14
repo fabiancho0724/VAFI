@@ -1440,7 +1440,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 {/* Histogram */}
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={sensitivityAnalysis.monteCarlo.bins}>
+                    <BarChart 
+                      data={sensitivityAnalysis.monteCarlo.bins}
+                      margin={{ top: 10, right: 10, left: 10, bottom: 40 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                       <XAxis 
                         dataKey="range" 
