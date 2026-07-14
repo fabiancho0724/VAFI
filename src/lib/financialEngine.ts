@@ -151,12 +151,12 @@ export function calculateProjections({
   });
 
   // User Target values:
-  // Ene-Jun target (Real execution) = $282,995.35M
-  // Full Year target (Baseline) = $563,287M
-  // Jul-Dic projected baseline target = $563,287M - $282,995.35M = $280,291.65M
+  // Ene-Jun target (Real execution) = $282,995.35M (includes $26.134M balance resources)
+  // Base for Jul-Dic projection = $256,861.30M (excluding balance resources)
+  // Full Year target (Baseline) = $282,995.35M + $256,861.30M = $539,856.65M
   const targetEneJunTotal = 282995.35257092 * 1e6;
-  const targetFullYearTotal = 563287 * 1e6;
-  const targetJulDicTotal = targetFullYearTotal - targetEneJunTotal;
+  const targetJulDicTotal = 256861.3 * 1e6;
+  const targetFullYearTotal = targetEneJunTotal + targetJulDicTotal;
 
   const scalingFactorJulDic = rawProjectedJulDicTotal > 0 ? targetJulDicTotal / rawProjectedJulDicTotal : 1;
 
