@@ -1646,13 +1646,20 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             {/* Charts row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left Chart: DSCR vs Variación */}
-              <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col h-[380px] bg-surface/50">
+              <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col h-[420px] bg-surface/50">
                 <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-4">Sensibilidad 1D · DSCR vs Variación</h4>
                 <div className="flex-1 w-full relative">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={sensitivityAnalysis.dscr1DData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
+                    <ComposedChart data={sensitivityAnalysis.dscr1DData} margin={{ top: 20, right: 25, left: -10, bottom: 40 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="vLabel" stroke="#94a3b8" className="text-[10px] font-mono" />
+                      <XAxis 
+                        dataKey="vLabel" 
+                        stroke="#94a3b8" 
+                        className="text-[9px] font-mono" 
+                        angle={-30} 
+                        textAnchor="end" 
+                        height={50} 
+                      />
                       <YAxis stroke="#94a3b8" className="text-[10px] font-mono" domain={[0, 'auto']} />
                       <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
                       <Legend wrapperStyle={{ fontSize: '11px' }} />
@@ -1664,7 +1671,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </div>
 
               {/* Right Chart: Driver impact on DSCR */}
-              <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col h-[380px] bg-surface/50">
+              <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col h-[420px] bg-surface/50">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-xs font-bold text-white uppercase tracking-widest">Tornado · Impacto de Drivers sobre el DSCR (±10%)</h4>
                   <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-bold font-mono rounded">
@@ -1673,10 +1680,17 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </div>
                 <div className="flex-1 w-full relative">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart layout="vertical" data={sensitivityAnalysis.dscrTornado} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <BarChart layout="vertical" data={sensitivityAnalysis.dscrTornado} margin={{ top: 10, right: 15, left: 10, bottom: 5 }} barSize={16}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={true} horizontal={false} />
-                      <XAxis type="number" stroke="#94a3b8" className="text-[10px] font-mono" domain={[0, 'auto']} />
-                      <YAxis type="category" dataKey="labelName" stroke="#94a3b8" className="text-[10px] font-mono" width={100} tickLine={false} />
+                      <XAxis type="number" stroke="#94a3b8" className="text-[9px] font-mono" domain={[0, 'auto']} />
+                      <YAxis 
+                        type="category" 
+                        dataKey="labelName" 
+                        stroke="#94a3b8" 
+                        className="text-[9px] font-mono" 
+                        width={170} 
+                        tickLine={false} 
+                      />
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }}
                         formatter={(value: any, name: any) => {
