@@ -37,6 +37,7 @@ export interface ProjectionParams {
   simIngByResource: Record<string, number>; // Slider inputs (-50 to 50 %)
   simGasByResource: Record<string, number>; // Slider inputs (-50 to 50 %)
   simGasByType: Record<string, number>;     // Slider inputs (-50 to 50 %)
+  expenseAdjustMode?: 'resource' | 'category';
 }
 
 export interface ProjectionResults {
@@ -63,7 +64,8 @@ export function calculateProjections({
   filterTipoGasto,
   simIngByResource,
   simGasByResource,
-  simGasByType
+  simGasByType,
+  expenseAdjustMode = 'resource'
 }: ProjectionParams): ProjectionResults {
   // Initialize structure
   const incomesByYearRes: Record<number, Record<string, number[]>> = {};
@@ -241,6 +243,47 @@ export function calculateProjections({
     monthlyBaseGasPagoByRes[r] = new Array(12).fill(0);
   });
 
+  // Calculate historical distribution weights per category for second semester Jul-Dic 2025
+  const resCategoryWeights: Record<string, Record<string, number>> = {};
+  const resGasJulDicBaseComp: Record<string, number> = {};
+  RESOURCES_LIST.forEach(r => {
+    resCategoryWeights[r] = { Personal: 0, Funcionamiento: 0, Transferencias: 0, Tasas: 0, Deuda: 0, Inversion: 0 };
+    resGasJulDicBaseComp[r] = 0;
+  });
+
+  rawHistoricalGastos.forEach(row => {
+    const year = row.año;
+    const monthIdx = row.mes - 1;
+    if (year === 2025 && monthIdx >= 6) {
+      const r = getRecursoEquivalence(row.recurso);
+      if (resCategoryWeights[r]) {
+        const tipo = String(row.tipo || '').toLowerCase();
+        let catKey = 'Inversion';
+        if (tipo.includes("2.1.1")) catKey = 'Personal';
+        else if (tipo.includes("2.1.2")) catKey = 'Funcionamiento';
+        else if (tipo.includes("2.1.3")) catKey = 'Transferencias';
+        else if (tipo.includes("2.1.8")) catKey = 'Tasas';
+        else if (tipo.includes("2.2.2")) catKey = 'Deuda';
+
+        resCategoryWeights[r][catKey] += row.compromiso;
+        resGasJulDicBaseComp[r] += row.compromiso;
+      }
+    }
+  });
+
+  RESOURCES_LIST.forEach(r => {
+    const total = resGasJulDicBaseComp[r];
+    if (total > 0) {
+      Object.keys(resCategoryWeights[r]).forEach(cat => {
+        resCategoryWeights[r][cat] /= total;
+      });
+    } else {
+      Object.keys(resCategoryWeights[r]).forEach(cat => {
+        resCategoryWeights[r][cat] = 1 / 6;
+      });
+    }
+  });
+
   // Populating baseline and initial simulated arrays
   for (let i = 0; i < 12; i++) {
     RESOURCES_LIST.forEach(r => {
@@ -280,27 +323,35 @@ export function calculateProjections({
 
       // Save simulated (apply resource sliders)
       const ingMod = useRealIng ? 0 : (simIngByResource[r] || 0) / 100;
-      const gasMod = useRealGas ? 0 : (simGasByResource[r] || 0) / 100;
+      const gasMod = (useRealGas || expenseAdjustMode === 'category') ? 0 : (simGasByResource[r] || 0) / 100;
 
       monthlySimIngByRes[r][i] = ingBaseVal * (1 + ingMod);
       monthlySimGasCompByRes[r][i] = gasBaseCompVal * (1 + gasMod);
       monthlySimGasPagoByRes[r][i] = gasBasePagoVal * (1 + gasMod);
     });
 
-    // Apply global type modifiers to the simulated expenses (only for projected Jul-Dic)
+    // Apply global or weighted type modifiers (only for projected Jul-Dic)
     const isJulDic = i >= 6;
-    if (isJulDic) {
-      let personalMod = (simGasByType["Personal"] || 0) / 100;
-      let funcMod = (simGasByType["Funcionamiento"] || 0) / 100;
-      let transMod = (simGasByType["Transferencias"] || 0) / 100;
-      let tasasMod = (simGasByType["Tasas"] || 0) / 100;
-      let deudaMod = (simGasByType["Deuda"] || 0) / 100;
-      let invMod = (simGasByType["Inversion"] || 0) / 100;
-      const averageMod = (personalMod + funcMod + transMod + tasasMod + deudaMod + invMod) / 6;
-
+    if (isJulDic && expenseAdjustMode === 'category') {
       RESOURCES_LIST.forEach(r => {
-        monthlySimGasCompByRes[r][i] *= (1 + averageMod);
-        monthlySimGasPagoByRes[r][i] *= (1 + averageMod);
+        const weights = resCategoryWeights[r];
+        const personalMod = (simGasByType["Personal"] || 0) / 100;
+        const funcMod = (simGasByType["Funcionamiento"] || 0) / 100;
+        const transMod = (simGasByType["Transferencias"] || 0) / 100;
+        const tasasMod = (simGasByType["Tasas"] || 0) / 100;
+        const deudaMod = (simGasByType["Deuda"] || 0) / 100;
+        const invMod = (simGasByType["Inversion"] || 0) / 100;
+
+        const mod = 
+          weights.Personal * personalMod +
+          weights.Funcionamiento * funcMod +
+          weights.Transferencias * transMod +
+          weights.Tasas * tasasMod +
+          weights.Deuda * deudaMod +
+          weights.Inversion * invMod;
+
+        monthlySimGasCompByRes[r][i] = monthlyBaseGasCompByRes[r][i] * (1 + mod);
+        monthlySimGasPagoByRes[r][i] = monthlyBaseGasPagoByRes[r][i] * (1 + mod);
       });
     }
   }
@@ -463,11 +514,11 @@ export function calculateProjections({
 
     // Apply baseline and capping scale factor to category values
     const baselineMultiplier = (year === 2026 && monthIdx < 6) ? 1 : 1.05;
-    const scaleResourceFactor = useRealGas ? 1 : (1 + (simGasByResource[recMapped] || 0) / 100);
+    const scaleResourceFactor = (useRealGas || expenseAdjustMode === 'category') ? 1 : (1 + (simGasByResource[recMapped] || 0) / 100);
     
     let scaleTypeFactor = 1;
     const tipo = String(row.tipo || '').toLowerCase();
-    if (monthIdx >= 6) {
+    if (monthIdx >= 6 && expenseAdjustMode === 'category') {
       if (tipo.includes("personal")) scaleTypeFactor = (1 + (simGasByType["Personal"] || 0) / 100);
       else if (tipo.includes("funcionamiento")) scaleTypeFactor = (1 + (simGasByType["Funcionamiento"] || 0) / 100);
       else if (tipo.includes("transferencia")) scaleTypeFactor = (1 + (simGasByType["Transferencias"] || 0) / 100);

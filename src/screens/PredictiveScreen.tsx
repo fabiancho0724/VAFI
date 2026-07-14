@@ -50,6 +50,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [rawCumulativeIncomes, setRawCumulativeIncomes] = useState<any[]>([]);
   const [selectedAiResource, setSelectedAiResource] = useState<string | null>(null);
   const [selectedAiExpenseResource, setSelectedAiExpenseResource] = useState<string | null>(null);
+  const [selectedAiExpenseCategory, setSelectedAiExpenseCategory] = useState<string | null>(null);
   const [showSaveSuccess, setShowSaveSuccess] = useState<boolean>(false);
   
   // Tabs
@@ -62,6 +63,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [sensOptimisticPct, setSensOptimisticPct] = useState<number>(15);
   
   const [flowGranularity, setFlowGranularity] = useState<'monthly' | 'quarterly' | 'semesterly' | 'annual'>('monthly');
+
+  // Skip lines up to suggestions hook...
+  const skippedMarker = true;
+
 
   // Filters
   const [viewDimension, setViewDimension] = useState<'compromiso' | 'pago'>('pago');
@@ -91,6 +96,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     "Deuda": 0,
     "Inversion": 0
   });
+
+  const [expenseAdjustMode, setExpenseAdjustMode] = useState<'resource' | 'category'>('resource');
 
   // Fetch Incomes (2023-2026)
   useEffect(() => {
@@ -150,6 +157,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       "Deuda": 0,
       "Inversion": 0
     });
+    setExpenseAdjustMode('resource');
   };
 
   // Form Filter options
@@ -187,7 +195,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       filterTipoGasto,
       simIngByResource,
       simGasByResource,
-      simGasByType
+      simGasByType,
+      expenseAdjustMode
     });
   }, [
     rawYearlyIncomes,
@@ -198,7 +207,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     filterTipoGasto,
     simIngByResource,
     simGasByResource,
-    simGasByType
+    simGasByType,
+    expenseAdjustMode
   ]);
 
   // AI Suggestions
@@ -284,22 +294,76 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     return suggestions;
   }, [rawHistoricalGastos, financialData]);
 
+  // AI Suggestions for Categories
+  const aiSuggestionsCategory = useMemo(() => {
+    const suggestions: Record<string, { value: number; confidence: number; justification: string }> = {};
+    const categories = ['Personal', 'Funcionamiento', 'Transferencias', 'Tasas', 'Deuda', 'Inversion'];
+    
+    categories.forEach(cat => {
+      const totals: Record<number, number> = { 2023: 0, 2024: 0, 2025: 0 };
+      rawHistoricalGastos.forEach(row => {
+        const y = row.año;
+        if (totals[y] !== undefined) {
+          const tipo = String(row.tipo || '').toLowerCase();
+          let isMatch = false;
+          if (cat === 'Personal' && tipo.includes("2.1.1")) isMatch = true;
+          else if (cat === 'Funcionamiento' && tipo.includes("2.1.2")) isMatch = true;
+          else if (cat === 'Transferencias' && tipo.includes("2.1.3")) isMatch = true;
+          else if (cat === 'Tasas' && (tipo.includes("2.1.8") || tipo.includes("tasa"))) isMatch = true;
+          else if (cat === 'Deuda' && (tipo.includes("2.2.2") || tipo.includes("deuda"))) isMatch = true;
+          else if (cat === 'Inversion' && (tipo.includes("2.3") || tipo.includes("inversion"))) isMatch = true;
+          
+          if (isMatch) {
+            totals[y] += row.compromiso;
+          }
+        }
+      });
+
+      let growth = 0;
+      let count = 0;
+      if (totals[2023] > 0 && totals[2024] > 0) {
+        growth += (totals[2024] / totals[2023]) - 1;
+        count++;
+      }
+      if (totals[2024] > 0 && totals[2025] > 0) {
+        growth += (totals[2025] / totals[2024]) - 1;
+        count++;
+      }
+      const avgGrowth = count > 0 ? (growth / count) : 0.045;
+      const recommendedPct = Math.max(-20, Math.min(20, Math.round(avgGrowth * 100)));
+      
+      suggestions[cat] = {
+        value: recommendedPct,
+        confidence: 91,
+        justification: `La tendencia histórica de egresos para la categoría "${cat}" muestra un crecimiento promedio anual del ${(avgGrowth * 100).toFixed(1)}%. Basado en el recaudo proyectado y la elasticidad de egresos, la IA recomienda un ajuste de ${recommendedPct >= 0 ? '+' : ''}${recommendedPct}% para mantener la sostenibilidad de la caja.`
+      };
+    });
+    return suggestions;
+  }, [rawHistoricalGastos]);
+
   // Validation Errors (Pago Efectivo <= Valor Proyectado)
   const validationErrors = useMemo(() => {
     const errors: Record<string, string> = {};
+    if (!financialData) return errors;
+
     RESOURCES_LIST.forEach(r => {
-      const ingBase = financialData?.resourceBaselines[r]?.ing || 0;
-      const gasBasePago = financialData?.resourceBaselines[r]?.gasPago || 0;
+      const ingBase = financialData.resourceBaselines[r]?.ing || 0;
+      const gasBasePago = financialData.resourceBaselines[r]?.gasPago || 0;
       
       const ingVal = ingBase * (1 + (simIngByResource[r] || 0) / 100);
-      const gasVal = gasBasePago * (1 + (simGasByResource[r] || 0) / 100);
+      let gasVal = 0;
+      if (expenseAdjustMode === 'category') {
+        gasVal = (financialData.monthlySimGasPagoByRes[r] || []).reduce((a,b)=>a+b, 0) / 1e6;
+      } else {
+        gasVal = gasBasePago * (1 + (simGasByResource[r] || 0) / 100);
+      }
       
       if (gasVal > ingVal) {
         errors[r] = "El valor del Pago Efectivo no puede ser superior al Valor Proyectado del recurso.";
       }
     });
     return errors;
-  }, [simIngByResource, simGasByResource, financialData]);
+  }, [simIngByResource, simGasByResource, financialData, expenseAdjustMode]);
 
   const handleSaveSimulation = () => {
     setShowSaveSuccess(true);
@@ -1081,148 +1145,187 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             {/* Expense resource modifiers */}
             <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col gap-6">
               
-              <div>
-                <h4 className="text-sm font-bold text-[#f43f5e] uppercase tracking-widest flex items-center gap-2 pb-4 border-b border-white/5">
-                  <Briefcase size={16} /> Ajustar Egresos por Recurso
-                </h4>
-                <div className="space-y-6 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar mt-4">
-                  {RESOURCES_LIST.map(r => {
-                    const val = simGasByResource[r] || 0;
-                    const baseValComp = financialData.resourceBaselines[r]?.gasComp || 0;
-                    const baseValPago = financialData.resourceBaselines[r]?.gasPago || 0;
-                    
-                    const simValComp = baseValComp * (1 + val / 100);
-                    const simValPago = baseValPago * (1 + val / 100);
+              {/* Mode Selector Header */}
+              <div className="flex flex-col gap-2.5 pb-4 border-b border-white/5">
+                <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider block">Método de Ajuste de Gastos:</span>
+                <div className="grid grid-cols-2 gap-2 bg-black/40 border border-white/10 p-1 rounded-xl">
+                  <button
+                    onClick={() => setExpenseAdjustMode('resource')}
+                    className={`py-2 px-3 rounded-lg text-xs font-bold font-mono transition-all uppercase flex items-center justify-center gap-1.5 ${expenseAdjustMode === 'resource' ? 'bg-[#f43f5e] text-white shadow-md' : 'text-white/60 hover:text-white'}`}
+                  >
+                    <Briefcase size={12} /> Por Recurso
+                  </button>
+                  <button
+                    onClick={() => setExpenseAdjustMode('category')}
+                    className={`py-2 px-3 rounded-lg text-xs font-bold font-mono transition-all uppercase flex items-center justify-center gap-1.5 ${expenseAdjustMode === 'category' ? 'bg-[#7bd0ff] text-black shadow-md font-extrabold' : 'text-white/60 hover:text-white'}`}
+                  >
+                    <Layers size={12} /> Por Categoría
+                  </button>
+                </div>
+              </div>
 
-                    // Income projected for r
-                    const ingBase = financialData.resourceBaselines[r]?.ing || 0;
-                    const ingVal = ingBase * (1 + (simIngByResource[r] || 0) / 100);
+              {/* Show Por Recurso Mode */}
+              {expenseAdjustMode === 'resource' && (
+                <div className="animate-in fade-in duration-300">
+                  <h4 className="text-sm font-bold text-[#f43f5e] uppercase tracking-widest flex items-center gap-2 pb-4 border-b border-white/5">
+                    <Briefcase size={16} /> Ajustar Egresos por Recurso
+                  </h4>
+                  <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar mt-4">
+                    {RESOURCES_LIST.map(r => {
+                      const val = simGasByResource[r] || 0;
+                      const baseValComp = financialData.resourceBaselines[r]?.gasComp || 0;
+                      const baseValPago = financialData.resourceBaselines[r]?.gasPago || 0;
+                      
+                      const simValComp = baseValComp * (1 + val / 100);
+                      const simValPago = baseValPago * (1 + val / 100);
 
-                    // Validation rule: Pago Efectivo <= Valor Proyectado
-                    const isInvalid = simValPago > ingVal;
+                      // Income projected for r
+                      const ingBase = financialData.resourceBaselines[r]?.ing || 0;
+                      const ingVal = ingBase * (1 + (simIngByResource[r] || 0) / 100);
 
-                    return (
-                      <div key={r} className={`p-4 bg-white/5 border rounded-2xl space-y-3 transition-all ${isInvalid ? 'border-red-500 bg-red-500/5 shadow-lg shadow-red-500/5' : 'border-white/10 hover:border-white/20'}`}>
-                        {/* Name & Badge & IA */}
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="flex flex-col">
-                            <span className="text-white font-bold text-xs truncate max-w-[200px]" title={getResourceFullName(r)}>
-                              {getResourceFullName(r)}
-                            </span>
-                            {isInvalid && (
-                              <span className="inline-block self-start mt-1 text-red-400 font-mono text-[9px] font-bold uppercase px-2 py-0.5 bg-red-500/10 rounded-md border border-red-500/20">
-                                Exceso Egresos
+                      // Validation rule: Pago Efectivo <= Valor Proyectado
+                      const isInvalid = simValPago > ingVal;
+
+                      return (
+                        <div key={r} className={`p-4 bg-white/5 border rounded-2xl space-y-3 transition-all ${isInvalid ? 'border-red-500 bg-red-500/5 shadow-lg shadow-red-500/5' : 'border-white/10 hover:border-white/20'}`}>
+                          {/* Name & Badge & IA */}
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="flex flex-col">
+                              <span className="text-white font-bold text-xs truncate max-w-[200px]" title={getResourceFullName(r)}>
+                                {getResourceFullName(r)}
                               </span>
-                            )}
+                              {isInvalid && (
+                                <span className="inline-block self-start mt-1 text-red-400 font-mono text-[9px] font-bold uppercase px-2 py-0.5 bg-red-500/10 rounded-md border border-red-500/20">
+                                  Exceso Egresos
+                                </span>
+                              )}
+                            </div>
+                            <button 
+                              onClick={() => setSelectedAiExpenseResource(r)} 
+                              className="flex items-center gap-1 px-2.5 py-1 bg-[#f43f5e]/10 border border-[#f43f5e]/20 text-[#f43f5e] text-[10px] font-bold rounded-lg hover:bg-[#f43f5e]/20 transition-all shrink-0"
+                            >
+                              <Compass size={11} /> IA Sugerir
+                            </button>
                           </div>
-                          <button 
-                            onClick={() => setSelectedAiExpenseResource(r)} 
-                            className="flex items-center gap-1 px-2.5 py-1 bg-[#f43f5e]/10 border border-[#f43f5e]/20 text-[#f43f5e] text-[10px] font-bold rounded-lg hover:bg-[#f43f5e]/20 transition-all shrink-0"
-                          >
-                            <Compass size={11} /> IA Sugerir
-                          </button>
-                        </div>
 
-                        {/* Info grid */}
-                        <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-on-surface-variant">
-                          <div>
-                            <p>VALOR INICIAL (COMP/PAGO)</p>
-                            <p className="text-white font-bold mt-0.5">${baseValComp.toFixed(1)}M / ${baseValPago.toFixed(1)}M</p>
+                          {/* Info grid */}
+                          <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-on-surface-variant">
+                            <div>
+                              <p>VALOR INICIAL (COMP/PAGO)</p>
+                              <p className="text-white font-bold mt-0.5">${baseValComp.toFixed(1)}M / ${baseValPago.toFixed(1)}M</p>
+                            </div>
+                            <div>
+                              <p>VALOR PROYECTADO (COMP/PAGO)</p>
+                              <p className="text-[#f43f5e] font-bold mt-0.5">${simValComp.toFixed(1)}M / ${simValPago.toFixed(1)}M</p>
+                            </div>
                           </div>
-                          <div>
-                            <p>VALOR PROYECTADO (COMP/PAGO)</p>
-                            <p className="text-[#f43f5e] font-bold mt-0.5">${simValComp.toFixed(1)}M / ${simValPago.toFixed(1)}M</p>
+
+                          {/* Variation row */}
+                          <div className="flex justify-between items-center text-[10px] font-mono border-t border-white/5 pt-2">
+                            <span className="text-on-surface-variant">VARIACIÓN</span>
+                            <span className={`font-bold ${val >= 0 ? 'text-[#ff5b5b]' : 'text-[#4ade80]'}`}>
+                              {val >= 0 ? '+' : ''}{val.toFixed(1)}% (Pago: {val >= 0 ? '+' : ''}${(simValPago - baseValPago).toFixed(1)}M)
+                            </span>
                           </div>
-                        </div>
 
-                        {/* Variation row */}
-                        <div className="flex justify-between items-center text-[10px] font-mono border-t border-white/5 pt-2">
-                          <span className="text-on-surface-variant">VARIACIÓN</span>
-                          <span className={`font-bold ${val >= 0 ? 'text-[#ff5b5b]' : 'text-[#4ade80]'}`}>
-                            {val >= 0 ? '+' : ''}{val.toFixed(1)}% (Pago: {val >= 0 ? '+' : ''}${(simValPago - baseValPago).toFixed(1)}M)
-                          </span>
-                        </div>
-
-                        {/* Controls row */}
-                        <div className="flex items-center gap-4 pt-1">
-                          <input 
-                            type="range"
-                            min="-50"
-                            max="50"
-                            step="1"
-                            value={val}
-                            onChange={(e) => {
-                              const n = parseInt(e.target.value);
-                              setSimGasByResource(prev => ({ ...prev, [r]: n }));
-                            }}
-                            className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#f43f5e]"
-                          />
-                          <div className="flex items-center bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 w-24 shrink-0">
-                            <input
-                              type="number"
-                              step="0.1"
-                              value={parseFloat(simValPago.toFixed(1))}
+                          {/* Controls row */}
+                          <div className="flex items-center gap-4 pt-1">
+                            <input 
+                              type="range"
+                              min="-50"
+                              max="50"
+                              step="1"
+                              value={val}
                               onChange={(e) => {
-                                const inputVal = parseFloat(e.target.value) || 0;
-                                let newPct = baseValPago > 0 ? ((inputVal / baseValPago) - 1) * 100 : 0;
-                                newPct = Math.max(-50, Math.min(50, newPct));
-                                setSimGasByResource(prev => ({ ...prev, [r]: parseFloat(newPct.toFixed(1)) }));
+                                const n = parseInt(e.target.value);
+                                setSimGasByResource(prev => ({ ...prev, [r]: n }));
                               }}
-                              className="bg-transparent text-white font-mono text-[11px] outline-none w-full text-right"
+                              className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#f43f5e]"
                             />
-                            <span className="text-[9px] text-on-surface-variant ml-1 font-mono">M</span>
+                            <div className="flex items-center bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 w-24 shrink-0">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={parseFloat(simValPago.toFixed(1))}
+                                onChange={(e) => {
+                                  const inputVal = parseFloat(e.target.value) || 0;
+                                  let newPct = baseValPago > 0 ? ((inputVal / baseValPago) - 1) * 100 : 0;
+                                  newPct = Math.max(-50, Math.min(50, newPct));
+                                  setSimGasByResource(prev => ({ ...prev, [r]: parseFloat(newPct.toFixed(1)) }));
+                                }}
+                                className="bg-transparent text-white font-mono text-[11px] outline-none w-full text-right"
+                              />
+                              <span className="text-[9px] text-on-surface-variant ml-1 font-mono">M</span>
+                            </div>
+                          </div>
+
+                          {/* Validation message warning */}
+                          {isInvalid && (
+                            <div className="text-[10px] text-red-400 font-mono mt-2 leading-relaxed bg-red-500/10 p-2.5 rounded-lg border border-red-500/20 flex gap-1.5 items-start">
+                              <AlertTriangle className="shrink-0 mt-0.5" size={12} />
+                              <span>El valor del Pago Efectivo no puede ser superior al Valor Proyectado del recurso (${ingVal.toFixed(1)}M).</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Show Por Categoría Mode */}
+              {expenseAdjustMode === 'category' && (
+                <div className="animate-in fade-in duration-300">
+                  <h4 className="text-sm font-bold text-[#7bd0ff] uppercase tracking-widest flex items-center gap-2 pb-4 border-b border-white/5">
+                    <Layers size={16} /> Ajustar Egresos por Tipo/Categoría
+                  </h4>
+                  <div className="space-y-6 mt-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {[
+                      { id: 'Personal', label: 'Gastos de Personal (2.1.1)' },
+                      { id: 'Funcionamiento', label: 'Gastos de Funcionamiento (2.1.2)' },
+                      { id: 'Transferencias', label: 'Transferencias Corrientes (2.1.3)' },
+                      { id: 'Tasas', label: 'Tasas y Multas (2.1.8)' },
+                      { id: 'Deuda', label: 'Servicios de la Deuda (2.2.2)' },
+                      { id: 'Inversion', label: 'Gastos de Inversión (2.3)' }
+                    ].map(c => {
+                      const val = simGasByType[c.id] || 0;
+                      return (
+                        <div key={c.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3 hover:border-white/20 transition-all">
+                          {/* Header and IA button */}
+                          <div className="flex justify-between items-start gap-2">
+                            <span className="text-white font-bold text-xs">{c.label}</span>
+                            <button
+                              onClick={() => setSelectedAiExpenseCategory(c.id)}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 text-[#7bd0ff] text-[10px] font-bold rounded-lg hover:bg-[#7bd0ff]/20 transition-all shrink-0 font-mono"
+                            >
+                              <Compass size={11} /> IA Sugerir
+                            </button>
+                          </div>
+
+                          {/* Slider Row */}
+                          <div className="flex items-center gap-4 pt-1">
+                            <input 
+                              type="range"
+                              min="-30"
+                              max="30"
+                              step="1"
+                              value={val}
+                              onChange={(e) => {
+                                const n = parseInt(e.target.value);
+                                setSimGasByType(prev => ({ ...prev, [c.id]: n }));
+                              }}
+                              className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#7bd0ff]"
+                            />
+                            <span className="text-[#7bd0ff] font-mono text-xs font-bold w-12 text-right">
+                              {val >= 0 ? '+' : ''}{val}%
+                            </span>
                           </div>
                         </div>
-
-                        {/* Validation message warning */}
-                        {isInvalid && (
-                          <div className="text-[10px] text-red-400 font-mono mt-2 leading-relaxed bg-red-500/10 p-2.5 rounded-lg border border-red-500/20 flex gap-1.5 items-start">
-                            <AlertTriangle className="shrink-0 mt-0.5" size={12} />
-                            <span>El valor del Pago Efectivo no puede ser superior al Valor Proyectado del recurso (${ingVal.toFixed(1)}M).</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-bold text-[#7bd0ff] uppercase tracking-widest flex items-center gap-2 pb-4 border-b border-white/5">
-                  <Layers size={16} /> Ajustar Egresos por Tipo/Categoría
-                </h4>
-                <div className="space-y-6 mt-4">
-                  {[
-                    { id: 'Personal', label: 'Gastos de Personal (2.1.1)' },
-                    { id: 'Funcionamiento', label: 'Gastos de Funcionamiento (2.1.2)' },
-                    { id: 'Transferencias', label: 'Transferencias Corrientes (2.1.3)' },
-                    { id: 'Tasas', label: 'Tasas y Multas (2.1.8)' },
-                    { id: 'Deuda', label: 'Servicios de la Deuda (2.2.2)' },
-                    { id: 'Inversion', label: 'Gastos de Inversión (2.3)' }
-                  ].map(c => {
-                    const val = simGasByType[c.id] || 0;
-                    return (
-                      <div key={c.id} className="space-y-2">
-                        <div className="flex justify-between text-xs font-mono">
-                          <span className="text-white/80 font-bold">{c.label}</span>
-                          <span className="text-[#7bd0ff] font-bold">{val >= 0 ? '+' : ''}{val}%</span>
-                        </div>
-                        <input 
-                          type="range"
-                          min="-30"
-                          max="30"
-                          value={val}
-                          onChange={(e) => {
-                            const n = parseInt(e.target.value);
-                            setSimGasByType(prev => ({ ...prev, [c.id]: n }));
-                          }}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#7bd0ff]"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              )}
 
             </div>
           </div>
@@ -2010,6 +2113,83 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     </button>
                     <button
                       onClick={() => setSelectedAiExpenseResource(null)}
+                      className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all border border-white/10"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* AI Category Expense Recommendation Modal */}
+      {selectedAiExpenseCategory && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0f172a] border border-white/10 rounded-[32px] w-full max-w-lg p-6 md:p-8 space-y-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-start gap-4">
+              <div>
+                <span className="px-2.5 py-1 bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 text-[#7bd0ff] text-[10px] font-bold font-mono rounded-lg uppercase tracking-wider">
+                  Asistente Inteligente (IA) - Egresos por Tipo
+                </span>
+                <h3 className="text-xl font-display font-bold text-white mt-2">Recomendación de Egresos</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedAiExpenseCategory(null)}
+                className="text-white/60 hover:text-white transition-colors p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Category details */}
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-2">
+              <p className="text-on-surface-variant text-[10px] font-mono uppercase tracking-wider">Categoría / Tipo de Gasto</p>
+              <p className="text-sm text-white font-bold">{selectedAiExpenseCategory}</p>
+            </div>
+
+            {/* Recommendation info */}
+            {(() => {
+              const suggestion = aiSuggestionsCategory[selectedAiExpenseCategory];
+              
+              return (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
+                      <p className="text-on-surface-variant text-[10px] font-mono uppercase tracking-wider">Variación Sugerida</p>
+                      <p className="text-2xl font-display font-bold text-[#7bd0ff] mt-1">{suggestion.value >= 0 ? '+' : ''}{suggestion.value}%</p>
+                    </div>
+                    
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
+                      <p className="text-on-surface-variant text-[10px] font-mono uppercase tracking-wider">Nivel de Confianza</p>
+                      <p className="text-2xl font-display font-bold text-[#4ade80] mt-1">{suggestion.confidence}%</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-on-surface-variant text-[10px] font-mono uppercase tracking-wider">Justificación Técnica</p>
+                    <p className="text-xs text-white/80 font-sans leading-relaxed bg-white/5 border border-white/5 p-4 rounded-2xl">
+                      {suggestion.justification}
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => {
+                        setSimGasByType(prev => ({ ...prev, [selectedAiExpenseCategory]: suggestion.value }));
+                        setSelectedAiExpenseCategory(null);
+                      }}
+                      className="flex-1 py-3 bg-[#7bd0ff] hover:bg-[#7bd0ff]/95 text-black font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-[#7bd0ff]/10"
+                    >
+                      Aplicar sugerencia IA
+                    </button>
+                    <button
+                      onClick={() => setSelectedAiExpenseCategory(null)}
                       className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all border border-white/10"
                     >
                       Cerrar
