@@ -341,6 +341,52 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     return suggestions;
   }, [rawHistoricalGastos]);
 
+  // Baseline and simulated values per category for the second semester
+  const categoryValues = useMemo(() => {
+    const values: Record<string, { baseComp: number; basePago: number; simComp: number; simPago: number }> = {};
+    const categories = ['Personal', 'Funcionamiento', 'Transferencias', 'Tasas', 'Deuda', 'Inversion'];
+    
+    categories.forEach(cat => {
+      let baseComp = 0;
+      let basePago = 0;
+
+      rawHistoricalGastos.forEach(row => {
+        if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
+        const r = getRecursoEquivalence(row.recurso);
+        if (filterRecurso !== 'Todos' && r !== filterRecurso) return;
+
+        const year = row.año;
+        const monthIdx = row.mes - 1;
+
+        if (year === 2025 && monthIdx >= 6) { // Jul-Dic 2025 is our baseline
+          const tipo = String(row.tipo || '').toLowerCase();
+          let isMatch = false;
+          if (cat === 'Personal' && tipo.includes("2.1.1")) isMatch = true;
+          else if (cat === 'Funcionamiento' && tipo.includes("2.1.2")) isMatch = true;
+          else if (cat === 'Transferencias' && tipo.includes("2.1.3")) isMatch = true;
+          else if (cat === 'Tasas' && (tipo.includes("2.1.8") || tipo.includes("tasa"))) isMatch = true;
+          else if (cat === 'Deuda' && (tipo.includes("2.2.2") || tipo.includes("deuda"))) isMatch = true;
+          else if (cat === 'Inversion' && (tipo.includes("2.3") || tipo.includes("inversion"))) isMatch = true;
+
+          if (isMatch) {
+            baseComp += row.compromiso * 1.05;
+            basePago += row.pago * 1.05;
+          }
+        }
+      });
+
+      const valPct = simGasByType[cat] || 0;
+      values[cat] = {
+        baseComp: baseComp / 1e6,
+        basePago: basePago / 1e6,
+        simComp: (baseComp * (1 + valPct / 100)) / 1e6,
+        simPago: (basePago * (1 + valPct / 100)) / 1e6
+      };
+    });
+
+    return values;
+  }, [rawHistoricalGastos, filterUnidad, filterRecurso, simGasByType]);
+
   // Validation Errors (Pago Efectivo <= Valor Proyectado)
   const validationErrors = useMemo(() => {
     const errors: Record<string, string> = {};
@@ -1289,6 +1335,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                       { id: 'Inversion', label: 'Gastos de Inversión (2.3)' }
                     ].map(c => {
                       const val = simGasByType[c.id] || 0;
+                      const vals = categoryValues[c.id] || { baseComp: 0, basePago: 0, simComp: 0, simPago: 0 };
+
                       return (
                         <div key={c.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3 hover:border-white/20 transition-all">
                           {/* Header and IA button */}
@@ -1302,7 +1350,27 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                             </button>
                           </div>
 
-                          {/* Slider Row */}
+                          {/* Info grid */}
+                          <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-on-surface-variant">
+                            <div>
+                              <p>VALOR INICIAL (COMP/PAGO)</p>
+                              <p className="text-white font-bold mt-0.5">${vals.baseComp.toFixed(1)}M / ${vals.basePago.toFixed(1)}M</p>
+                            </div>
+                            <div>
+                              <p>VALOR PROYECTADO (COMP/PAGO)</p>
+                              <p className="text-[#7bd0ff] font-bold mt-0.5">${vals.simComp.toFixed(1)}M / ${vals.simPago.toFixed(1)}M</p>
+                            </div>
+                          </div>
+
+                          {/* Variation row */}
+                          <div className="flex justify-between items-center text-[10px] font-mono border-t border-white/5 pt-2">
+                            <span className="text-on-surface-variant">VARIACIÓN</span>
+                            <span className={`font-bold ${val >= 0 ? 'text-[#ff5b5b]' : 'text-[#4ade80]'}`}>
+                              {val >= 0 ? '+' : ''}{val.toFixed(1)}% (Pago: {val >= 0 ? '+' : ''}${(vals.simPago - vals.basePago).toFixed(1)}M)
+                            </span>
+                          </div>
+
+                          {/* Slider & Input Row */}
                           <div className="flex items-center gap-4 pt-1">
                             <input 
                               type="range"
@@ -1316,9 +1384,21 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                               }}
                               className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#7bd0ff]"
                             />
-                            <span className="text-[#7bd0ff] font-mono text-xs font-bold w-12 text-right">
-                              {val >= 0 ? '+' : ''}{val}%
-                            </span>
+                            <div className="flex items-center bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 w-24 shrink-0">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={parseFloat(vals.simPago.toFixed(1))}
+                                onChange={(e) => {
+                                  const inputVal = parseFloat(e.target.value) || 0;
+                                  let newPct = vals.basePago > 0 ? ((inputVal / vals.basePago) - 1) * 100 : 0;
+                                  newPct = Math.max(-30, Math.min(30, newPct));
+                                  setSimGasByType(prev => ({ ...prev, [c.id]: parseFloat(newPct.toFixed(1)) }));
+                                }}
+                                className="bg-transparent text-white font-mono text-[11px] outline-none w-full text-right"
+                              />
+                              <span className="text-[9px] text-on-surface-variant ml-1 font-mono">M</span>
+                            </div>
                           </div>
                         </div>
                       );
