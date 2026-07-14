@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { 
   BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, 
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart, Line
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart, Line,
+  ReferenceLine
 } from 'recharts';
 import { 
   Filter, DollarSign, Activity, TrendingUp, Briefcase, RefreshCw, Layers, 
@@ -311,16 +312,21 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const sensitivityAnalysis = useMemo(() => {
     if (!financialData || !financialData.monthlySimIngByRes || !financialData.monthlySimGasPagoByRes) {
       return {
-        pessimistic: { npv: 0, irr: 0, flowSum: 0, flows: new Array(12).fill(0) },
-        base: { npv: 0, irr: 0, flowSum: 0, flows: new Array(12).fill(0) },
-        optimistic: { npv: 0, irr: 0, flowSum: 0, flows: new Array(12).fill(0) },
+        pessimistic: { npv: 0, irr: 0, flowSum: 0, ingTotal: 0, flows: new Array(12).fill(0) },
+        base: { npv: 0, irr: 0, flowSum: 0, ingTotal: 0, flows: new Array(12).fill(0) },
+        optimistic: { npv: 0, irr: 0, flowSum: 0, ingTotal: 0, flows: new Array(12).fill(0) },
         elasticityIng: 0,
-        elasticityGas: 0
+        elasticityGas: 0,
+        monteCarlo: { mean: 0, min: 0, max: 0, probPos: 0, low95: 0, high95: 0, bins: [] },
+        tornado: []
       };
     }
 
     const baseIngArray = financialData.monthlySimIngByRes[sensResource] || new Array(12).fill(0);
     const baseGasArray = financialData.monthlySimGasPagoByRes[sensResource] || new Array(12).fill(0);
+
+    // Annual income baseline sum
+    const baseIngTotal = baseIngArray.reduce((a, b) => a + b, 0);
 
     // 1. Base Scenario
     const baseFlows = baseIngArray.map((ing, i) => ing - baseGasArray[i]);
@@ -335,6 +341,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     const pesNPV = calculateNPV(pesFlows, sensDiscountRate);
     const pesIRR = calculateIRR(pesFlows);
     const pesFlowSum = pesFlows.reduce((a, b) => a + b, 0);
+    const pesIngTotal = baseIngTotal * pesIngFactor;
 
     // 3. Optimistic Scenario (Income increased by sensOptimisticPct, Expense decreased by sensOptimisticPct / 1.5)
     const optIngFactor = 1 + sensOptimisticPct / 100;
@@ -343,6 +350,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     const optNPV = calculateNPV(optFlows, sensDiscountRate);
     const optIRR = calculateIRR(optFlows);
     const optFlowSum = optFlows.reduce((a, b) => a + b, 0);
+    const optIngTotal = baseIngTotal * optIngFactor;
 
     // 4. Elasticity calculation
     // Income Elasticity of NPV: % change in NPV / 1% change in Income
@@ -355,12 +363,68 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     const exp1PctNPV = calculateNPV(exp1PctFlows, sensDiscountRate);
     const elasticityGas = baseNPV !== 0 ? ((exp1PctNPV - baseNPV) / baseNPV) * 100 : 0;
 
+    // 5. Monte Carlo Simulation (500 runs)
+    const mcNpvList: number[] = [];
+    for (let iter = 0; iter < 500; iter++) {
+      const randIng = 1 + (Math.random() - 0.5) * 2 * 0.20; // Uniform +- 20%
+      const randGas = 1 + (Math.random() - 0.5) * 2 * 0.15; // Uniform +- 15%
+      const randFlows = baseIngArray.map((ing, i) => (ing * randIng) - (baseGasArray[i] * randGas));
+      const randNPV = calculateNPV(randFlows, sensDiscountRate);
+      mcNpvList.push(randNPV);
+    }
+    mcNpvList.sort((a, b) => a - b);
+    const mcMean = mcNpvList.reduce((a, b) => a + b, 0) / 500;
+    const mcMin = mcNpvList[0];
+    const mcMax = mcNpvList[499];
+    const mcProbPos = (mcNpvList.filter(v => v > 0).length / 500) * 100;
+    const mcLow95 = mcNpvList[12];
+    const mcHigh95 = mcNpvList[487];
+
+    const binWidth = (mcMax - mcMin) / 10;
+    const mcBins = new Array(10).fill(0).map((_, idx) => {
+      const start = mcMin + idx * binWidth;
+      const end = start + binWidth;
+      const count = mcNpvList.filter(v => v >= start && v < end).length;
+      return {
+        range: `${start.toFixed(0)}M a ${end.toFixed(0)}M`,
+        Frecuencia: count
+      };
+    });
+
+    // 6. Tornado Chart Calculation (Impact of each resource on total NPV)
+    const totalBaseFlows = new Array(12).fill(0).map((_, i) => 
+      RESOURCES_LIST.reduce((sum, res) => 
+        sum + (financialData.monthlySimIngByRes[res]?.[i] || 0) - (financialData.monthlySimGasPagoByRes[res]?.[i] || 0)
+      , 0)
+    );
+    const baseTotalNPV = calculateNPV(totalBaseFlows, sensDiscountRate);
+
+    const tornadoData = RESOURCES_LIST.map(r => {
+      const highFlows = totalBaseFlows.map((flow, i) => flow + (financialData.monthlySimIngByRes[r]?.[i] || 0) * 0.10);
+      const highNPV = calculateNPV(highFlows, sensDiscountRate);
+      const diffHigh = highNPV - baseTotalNPV;
+
+      const lowFlows = totalBaseFlows.map((flow, i) => flow - (financialData.monthlySimIngByRes[r]?.[i] || 0) * 0.10);
+      const lowNPV = calculateNPV(lowFlows, sensDiscountRate);
+      const diffLow = lowNPV - baseTotalNPV;
+
+      return {
+        name: getResourceFullName(r).substring(0, 16) + '...',
+        fullName: getResourceFullName(r),
+        low: parseFloat(diffLow.toFixed(1)),
+        high: parseFloat(diffHigh.toFixed(1)),
+        width: Math.abs(diffHigh - diffLow)
+      };
+    }).sort((a, b) => b.width - a.width);
+
     return {
-      pessimistic: { npv: pesNPV, irr: pesIRR, flowSum: pesFlowSum, flows: pesFlows },
-      base: { npv: baseNPV, irr: baseIRR, flowSum: baseFlowSum, flows: baseFlows },
-      optimistic: { npv: optNPV, irr: optIRR, flowSum: optFlowSum, flows: optFlows },
+      pessimistic: { npv: pesNPV, irr: pesIRR, flowSum: pesFlowSum, ingTotal: pesIngTotal, flows: pesFlows },
+      base: { npv: baseNPV, irr: baseIRR, flowSum: baseFlowSum, ingTotal: baseIngTotal, flows: baseFlows },
+      optimistic: { npv: optNPV, irr: optIRR, flowSum: optFlowSum, ingTotal: optIngTotal, flows: optFlows },
       elasticityIng,
-      elasticityGas
+      elasticityGas,
+      monteCarlo: { mean: mcMean, min: mcMin, max: mcMax, probPos: mcProbPos, low95: mcLow95, high95: mcHigh95, bins: mcBins },
+      tornado: tornadoData
     };
   }, [sensResource, sensDiscountRate, sensPessimisticPct, sensOptimisticPct, financialData]);
 
@@ -1130,6 +1194,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 
                 <div className="space-y-4 mt-6">
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-xs text-on-surface-variant">Ingreso Proyectado Anual</span>
+                    <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.pessimistic.ingTotal.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-xs text-on-surface-variant">NPV / VAN</span>
                     <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.pessimistic.npv.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                   </div>
@@ -1154,6 +1222,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 
                 <div className="space-y-4 mt-6">
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-xs text-on-surface-variant">Ingreso Proyectado Anual</span>
+                    <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.base.ingTotal.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-xs text-on-surface-variant">NPV / VAN</span>
                     <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.base.npv.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                   </div>
@@ -1177,6 +1249,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado a +{sensOptimisticPct}% Ing / -{sensOptimisticPct / 1.5}% Egr</p>
                 
                 <div className="space-y-4 mt-6">
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-xs text-on-surface-variant">Ingreso Proyectado Anual</span>
+                    <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.optimistic.ingTotal.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-xs text-on-surface-variant">NPV / VAN</span>
                     <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.optimistic.npv.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
@@ -1255,6 +1331,106 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Monte Carlo & Tornado Chart Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+            
+            {/* Monte Carlo Simulation Dashboard */}
+            <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col justify-between bg-surface/50">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                    <Activity size={16} className="text-[#c084fc]" /> Simulación de Monte Carlo (500 Iteraciones)
+                  </h4>
+                  <span className="px-2.5 py-0.5 bg-[#c084fc]/10 border border-[#c084fc]/20 text-[#c084fc] text-[9px] font-bold font-mono rounded-md uppercase">
+                    Modelado Estocástico
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant leading-relaxed mb-6">
+                  Simulación de variabilidad aleatoria de ingresos (±20%) y egresos (±15%) para medir la probabilidad de éxito financiero.
+                </p>
+
+                {/* Monte Carlo Key Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-center">
+                    <p className="text-[9px] text-on-surface-variant font-mono uppercase">Prob. VAN &gt; 0</p>
+                    <p className="text-xl font-display font-bold text-[#4ade80] mt-1">
+                      {sensitivityAnalysis.monteCarlo.probPos.toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-center">
+                    <p className="text-[9px] text-on-surface-variant font-mono uppercase">VAN Medio</p>
+                    <p className="text-xl font-display font-bold text-[#ffcc29] mt-1">
+                      ${sensitivityAnalysis.monteCarlo.mean.toLocaleString('es-CO', {maximumFractionDigits:1})}M
+                    </p>
+                  </div>
+                  <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-center">
+                    <p className="text-[9px] text-on-surface-variant font-mono uppercase">Intervalo 95%</p>
+                    <p className="text-[10px] font-mono font-bold text-white mt-2 truncate" title={`[${sensitivityAnalysis.monteCarlo.low95.toFixed(0)}M, ${sensitivityAnalysis.monteCarlo.high95.toFixed(0)}M]`}>
+                      [${sensitivityAnalysis.monteCarlo.low95.toFixed(0)}M, ${sensitivityAnalysis.monteCarlo.high95.toFixed(0)}M]
+                    </p>
+                  </div>
+                </div>
+
+                {/* Histogram */}
+                <div className="h-44 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={sensitivityAnalysis.monteCarlo.bins}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis dataKey="range" stroke="#94a3b8" className="text-[8px] font-mono" interval={1} />
+                      <YAxis stroke="#94a3b8" className="text-[9px] font-mono" />
+                      <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
+                      <Bar dataKey="Frecuencia" fill="#c084fc" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* Tornado Chart */}
+            <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col justify-between bg-surface/50">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                    <Layers size={16} className="text-[#7bd0ff]" /> Diagrama de Tornado (Sensibilidad de Recursos)
+                  </h4>
+                  <span className="px-2.5 py-0.5 bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 text-[#7bd0ff] text-[9px] font-bold font-mono rounded-md uppercase">
+                    Impacto en VAN Global
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant leading-relaxed mb-6">
+                  Muestra la sensibilidad del VAN total del presupuesto universitario ante una variación de ±10% en cada recurso individual.
+                </p>
+
+                {/* Tornado Bar Chart */}
+                <div className="h-56 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      layout="vertical"
+                      data={sensitivityAnalysis.tornado}
+                      margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={true} horizontal={false} />
+                      <XAxis type="number" stroke="#94a3b8" className="text-[9px] font-mono" />
+                      <YAxis type="category" dataKey="name" stroke="#94a3b8" className="text-[9px] font-mono" width={100} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }}
+                        formatter={(value: any, name: any) => {
+                          const val = parseFloat(value);
+                          return [`${val >= 0 ? '+' : ''}${val}M`, name === 'low' ? 'Bajo (-10%)' : 'Alto (+10%)'];
+                        }}
+                      />
+                      <ReferenceLine x={0} stroke="#ffffff" strokeOpacity={0.2} strokeDasharray="3 3" />
+                      <Bar dataKey="low" fill="#f43f5e" radius={[4, 0, 0, 4]} stackId="stack" />
+                      <Bar dataKey="high" fill="#4ade80" radius={[0, 4, 4, 0]} stackId="stack" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-[9px] text-on-surface-variant mt-2 text-center font-mono">El ancho de barra representa la elasticidad del recurso. Barras más largas indican mayor impacto presupuestal.</p>
               </div>
             </div>
 
