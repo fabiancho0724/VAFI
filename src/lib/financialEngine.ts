@@ -488,10 +488,27 @@ export function calculateProjections({
     });
   }
 
-  // Enforce the business rule: total payments cannot be lower than total commitments by more than $20,000M
-  const maxDifference = 20000 * 1e6; // $20,000M in absolute pesos
-  if (totalSimGasComp - totalSimGasPago > maxDifference) {
-    const shortfall = (totalSimGasComp - totalSimGasPago) - maxDifference;
+  // Enforce business rules:
+  // 1. Total payments CANNOT exceed total incomes: totalSimGasPago <= totalSimIng
+  // 2. Total payments should not be lower than total commitments by more than $20,000M: totalSimGasPago >= totalSimGasComp - 20000 * 1e6
+  // Rule #1 is a hard limit.
+
+  let targetSimGasPago = totalSimGasPago;
+  const maxDifference = 20000 * 1e6; // $20,000M
+  
+  // Rule 2: try to make payments at least totalComp - 20,000M
+  if (totalSimGasComp - targetSimGasPago > maxDifference) {
+    targetSimGasPago = totalSimGasComp - maxDifference;
+  }
+  
+  // Rule 1: hard ceiling (payments can NEVER exceed total incomes)
+  if (targetSimGasPago > totalSimIng) {
+    targetSimGasPago = totalSimIng;
+  }
+
+  // Apply adjustment to the second semester
+  if (Math.abs(targetSimGasPago - totalSimGasPago) > 1e-3) {
+    const adjustmentVal = targetSimGasPago - totalSimGasPago;
     
     // Sum simulated payments for months 6 to 11 (second semester)
     let secondSemesterPagoSum = 0;
@@ -500,7 +517,7 @@ export function calculateProjections({
     }
     
     if (secondSemesterPagoSum > 0) {
-      const factor = (secondSemesterPagoSum + shortfall) / secondSemesterPagoSum;
+      const factor = (secondSemesterPagoSum + adjustmentVal) / secondSemesterPagoSum;
       for (let i = 6; i < 12; i++) {
         simulatedFlow[i].gastosPago = parseFloat((simulatedFlow[i].gastosPago * factor).toFixed(1));
         // Recompute net and execution
@@ -510,8 +527,8 @@ export function calculateProjections({
         simulatedFlow[i].netoPago = parseFloat((ing - pago).toFixed(1));
       }
       
-      // Update totalSimGasPago
-      totalSimGasPago += shortfall;
+      // Update totalSimGasPago to our adjusted target
+      totalSimGasPago = targetSimGasPago;
       
       // Re-calculate running accumulated values
       let runningAccumPago = 0;
