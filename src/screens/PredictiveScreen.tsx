@@ -678,6 +678,90 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
+          {/* New Row of KPI Cards */}
+          {(() => {
+            const pctEjec = financialData.totals.simIng > 0 ? (financialData.totals.simGasComp / financialData.totals.simIng) * 100 : 0;
+            const disponibleVal = financialData.totals.simIng - financialData.totals.simGasComp;
+            const cuentasPagarVal = financialData.totals.simGasComp - financialData.totals.simGasPago;
+
+            const pctColor = pctEjec > 100 
+              ? '#f43f5e' 
+              : pctEjec >= 90 
+                ? '#4ade80' 
+                : '#ffcc29';
+            const pctTextClass = pctEjec > 100 
+              ? 'text-red-400' 
+              : pctEjec >= 90 
+                ? 'text-[#4ade80]' 
+                : 'text-[#ffcc29]';
+
+            const dispColor = disponibleVal >= 0 ? '#4ade80' : '#f43f5e';
+            const dispTextClass = disponibleVal >= 0 ? 'text-[#4ade80]' : 'text-red-400';
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Porcentaje de ejecución */}
+                <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: pctColor }}></div>
+                  <div>
+                    <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Porcentaje de Ejecución</h4>
+                    <p className={`text-3xl font-display font-bold ${pctTextClass}`}>
+                      {pctEjec.toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-white/5">
+                    {/* Horizontal progress bar / accelerator */}
+                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, pctEjec)}%`, backgroundColor: pctColor }}></div>
+                    </div>
+                    <div className="flex justify-between items-center mt-2 text-[10px] font-mono text-on-surface-variant">
+                      <span>COMPROMISO / INGRESO</span>
+                      <span style={{ color: pctColor }} className="font-bold">
+                        {pctEjec > 100 ? 'Sobregiro' : pctEjec >= 90 ? 'Óptimo' : 'Bajo'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Valor disponible */}
+                <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: dispColor }}></div>
+                  <div>
+                    <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Valor Disponible</h4>
+                    <p className={`text-3xl font-display font-bold ${dispTextClass}`}>
+                      ${disponibleVal.toLocaleString('es-CO', {maximumFractionDigits:1})}M
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-white/5 flex flex-col justify-center">
+                    <div className="flex justify-between items-center text-[10px] font-mono text-on-surface-variant">
+                      <span>INGRESO - COMPROMISO</span>
+                      <span style={{ color: dispColor }} className="font-bold uppercase">
+                        {disponibleVal >= 0 ? 'Superávit' : 'Déficit'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cuentas por pagar */}
+                <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-[#7bd0ff]"></div>
+                  <div>
+                    <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Cuentas por Pagar</h4>
+                    <p className="text-3xl font-display font-bold text-[#7bd0ff]">
+                      ${cuentasPagarVal.toLocaleString('es-CO', {maximumFractionDigits:1})}M
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-white/5 flex flex-col justify-center">
+                    <div className="flex justify-between items-center text-[10px] font-mono text-on-surface-variant">
+                      <span>COMPROMISO - PAGO</span>
+                      <span className="text-[#7bd0ff] font-bold uppercase">Pendiente</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Chart Section */}
           <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 glow-primary">
             <h3 className="text-xl font-display font-medium text-white mb-6">Histórico Multianual y Proyección Neto (Millones)</h3>
