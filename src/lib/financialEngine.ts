@@ -486,6 +486,7 @@ export function calculateProjections({
       netoPago: parseFloat(((mSimIng - mSimGasPago) / 1e6).toFixed(1)),
       acumuladoComp: parseFloat((accumComp / 1e6).toFixed(1)),
       acumuladoPago: parseFloat((accumPago / 1e6).toFixed(1)),
+      ejecucion: parseFloat(execPct.toFixed(2))
     });
   }
 
