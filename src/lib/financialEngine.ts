@@ -43,6 +43,10 @@ export interface ProjectionResults {
   simulatedFlow: CashFlowItem[]; // Monthly simulated flow
   totals: FinancialTotals;
   resourceBaselines: Record<string, { ing: number; gasComp: number; gasPago: number }>;
+  monthlySimIngByRes: Record<string, number[]>;
+  monthlySimGasPagoByRes: Record<string, number[]>;
+  monthlyBaseIngByRes: Record<string, number[]>;
+  monthlyBaseGasPagoByRes: Record<string, number[]>;
   categoryBreakdown: {
     compromiso: { name: string; value: number }[];
     pago: { name: string; value: number }[];
@@ -483,6 +487,10 @@ export function calculateProjections({
       simNetPago: (totalSimIng / 1e6) - simulatedTotalsPago
     },
     resourceBaselines,
+    monthlySimIngByRes,
+    monthlySimGasPagoByRes,
+    monthlyBaseIngByRes,
+    monthlyBaseGasPagoByRes,
     categoryBreakdown: {
       compromiso: [
         { name: 'Gastos de Personal (2.1.1)', value: parseFloat((catComp.personal / 1e6).toFixed(1)) },

@@ -13,6 +13,34 @@ import { calculateProjections, aggregateFlow, CashFlowItem, ProjectionResults } 
 import { RESOURCES_LIST, getResourceFullName, getRecursoEquivalence, getRowResourceCode } from '../lib/resourceMapper';
 import rawHistoricalGastos from '../data/historicalGastos.json';
 
+// NPV Helper (monthly discount rate)
+function calculateNPV(flows: number[], discountRateAnnual: number) {
+  const r = (discountRateAnnual / 100) / 12; // monthly rate
+  return flows.reduce((acc, f, t) => acc + (f / Math.pow(1 + r, t + 1)), 0);
+}
+
+// IRR Helper (monthly IRR annualized)
+function calculateIRR(flows: number[]) {
+  let r0 = 0.01;
+  let r1 = 0.02;
+  const npv = (rate: number) => {
+    return flows.reduce((acc, f, t) => acc + (f / Math.pow(1 + rate, t + 1)), 0);
+  };
+  
+  for (let i = 0; i < 100; i++) {
+    const npv0 = npv(r0);
+    const npv1 = npv(r1);
+    if (Math.abs(npv1 - npv0) < 1e-8) break;
+    const rNext = r1 - npv1 * (r1 - r0) / (npv1 - npv0);
+    r0 = r1;
+    r1 = rNext;
+  }
+  
+  if (isNaN(r1) || !isFinite(r1) || Math.abs(r1) > 2) return 0;
+  // Convert monthly IRR to annual rate
+  return (Math.pow(1 + r1, 12) - 1) * 100;
+}
+
 const COLORS = ['#ffcc29', '#4ade80', '#3b82f6', '#c084fc', '#f43f5e', '#7bd0ff', '#fb7185', '#a78bfa'];
 
 export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
@@ -20,10 +48,18 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [rawYearlyIncomes, setRawYearlyIncomes] = useState<Record<number, any[]>>({});
   const [rawCumulativeIncomes, setRawCumulativeIncomes] = useState<any[]>([]);
   const [selectedAiResource, setSelectedAiResource] = useState<string | null>(null);
+  const [selectedAiExpenseResource, setSelectedAiExpenseResource] = useState<string | null>(null);
   const [showSaveSuccess, setShowSaveSuccess] = useState<boolean>(false);
   
   // Tabs
-  const [activeTab, setActiveTab] = useState<'kpi' | 'flow' | 'equilibrium' | 'simulator' | 'expenses'>('kpi');
+  const [activeTab, setActiveTab] = useState<'kpi' | 'flow' | 'equilibrium' | 'simulator' | 'expenses' | 'sensitivity'>('kpi');
+
+  // Sensitivity analysis settings
+  const [sensResource, setSensResource] = useState<string>(RESOURCES_LIST[0] || '10.0');
+  const [sensDiscountRate, setSensDiscountRate] = useState<number>(8);
+  const [sensPessimisticPct, setSensPessimisticPct] = useState<number>(-15);
+  const [sensOptimisticPct, setSensOptimisticPct] = useState<number>(15);
+  
   const [flowGranularity, setFlowGranularity] = useState<'monthly' | 'quarterly' | 'semesterly' | 'annual'>('monthly');
 
   // Filters
@@ -216,6 +252,37 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     return suggestions;
   }, [rawYearlyIncomes, financialData]);
 
+  // AI Suggestions for Expenses
+  const aiSuggestionsExpenses = useMemo(() => {
+    const suggestions: Record<string, { value: number; confidence: number; justification: string }> = {};
+    RESOURCES_LIST.forEach(r => {
+      const val2024 = rawHistoricalGastos
+        .filter(row => row.año === 2024 && getRecursoEquivalence(row.recurso) === r)
+        .reduce((sum, row) => sum + (row.pago || 0), 0) / 1e6;
+
+      const val2025 = rawHistoricalGastos
+        .filter(row => row.año === 2025 && getRecursoEquivalence(row.recurso) === r)
+        .reduce((sum, row) => sum + (row.pago || 0), 0) / 1e6;
+
+      let growth = val2024 > 0 ? (val2025 - val2024) / val2024 : 0.05;
+      if (growth === 0) growth = 0.045; // Default 4.5%
+
+      const baseVal = financialData ? (financialData.resourceBaselines[r]?.gasPago || 0) : 0;
+      const suggestedGrowth = Math.max(-0.25, Math.min(0.25, growth));
+      const suggestedValue = baseVal * (1 + suggestedGrowth);
+
+      let confidence = 92;
+      if (Math.abs(growth) > 0.15) confidence = 85;
+
+      suggestions[r] = {
+        value: parseFloat(suggestedValue.toFixed(1)),
+        confidence,
+        justification: `El análisis histórico de egresos muestra una tasa de variación de ${(growth * 100).toFixed(1)}% para este recurso. Para mantener la sostenibilidad contable y el equilibrio de caja frente a las proyecciones de recaudo, la IA recomienda ajustar el presupuesto de egresos en un ${(suggestedGrowth * 100).toFixed(1)}% respecto a la línea base.`
+      };
+    });
+    return suggestions;
+  }, [rawHistoricalGastos, financialData]);
+
   // Validation Errors (Pago Efectivo <= Valor Proyectado)
   const validationErrors = useMemo(() => {
     const errors: Record<string, string> = {};
@@ -239,6 +306,63 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       setShowSaveSuccess(false);
     }, 3000);
   };
+
+  // Sensitivity & Elasticity analysis
+  const sensitivityAnalysis = useMemo(() => {
+    if (!financialData || !financialData.monthlySimIngByRes || !financialData.monthlySimGasPagoByRes) {
+      return {
+        pessimistic: { npv: 0, irr: 0, flowSum: 0, flows: new Array(12).fill(0) },
+        base: { npv: 0, irr: 0, flowSum: 0, flows: new Array(12).fill(0) },
+        optimistic: { npv: 0, irr: 0, flowSum: 0, flows: new Array(12).fill(0) },
+        elasticityIng: 0,
+        elasticityGas: 0
+      };
+    }
+
+    const baseIngArray = financialData.monthlySimIngByRes[sensResource] || new Array(12).fill(0);
+    const baseGasArray = financialData.monthlySimGasPagoByRes[sensResource] || new Array(12).fill(0);
+
+    // 1. Base Scenario
+    const baseFlows = baseIngArray.map((ing, i) => ing - baseGasArray[i]);
+    const baseNPV = calculateNPV(baseFlows, sensDiscountRate);
+    const baseIRR = calculateIRR(baseFlows);
+    const baseFlowSum = baseFlows.reduce((a, b) => a + b, 0);
+
+    // 2. Pessimistic Scenario (Income decreased by sensPessimisticPct, Expense increased by |sensPessimisticPct| / 1.5)
+    const pesIngFactor = 1 + sensPessimisticPct / 100;
+    const pesGasFactor = 1 + Math.abs(sensPessimisticPct) / 1.5 / 100;
+    const pesFlows = baseIngArray.map((ing, i) => (ing * pesIngFactor) - (baseGasArray[i] * pesGasFactor));
+    const pesNPV = calculateNPV(pesFlows, sensDiscountRate);
+    const pesIRR = calculateIRR(pesFlows);
+    const pesFlowSum = pesFlows.reduce((a, b) => a + b, 0);
+
+    // 3. Optimistic Scenario (Income increased by sensOptimisticPct, Expense decreased by sensOptimisticPct / 1.5)
+    const optIngFactor = 1 + sensOptimisticPct / 100;
+    const optGasFactor = 1 - (sensOptimisticPct / 1.5) / 100;
+    const optFlows = baseIngArray.map((ing, i) => (ing * optIngFactor) - (baseGasArray[i] * optGasFactor));
+    const optNPV = calculateNPV(optFlows, sensDiscountRate);
+    const optIRR = calculateIRR(optFlows);
+    const optFlowSum = optFlows.reduce((a, b) => a + b, 0);
+
+    // 4. Elasticity calculation
+    // Income Elasticity of NPV: % change in NPV / 1% change in Income
+    const inc1PctFlows = baseIngArray.map((ing, i) => (ing * 1.01) - baseGasArray[i]);
+    const inc1PctNPV = calculateNPV(inc1PctFlows, sensDiscountRate);
+    const elasticityIng = baseNPV !== 0 ? ((inc1PctNPV - baseNPV) / baseNPV) * 100 : 0;
+
+    // Expense Elasticity of NPV: % change in NPV / 1% change in Expense
+    const exp1PctFlows = baseIngArray.map((ing, i) => ing - (baseGasArray[i] * 1.01));
+    const exp1PctNPV = calculateNPV(exp1PctFlows, sensDiscountRate);
+    const elasticityGas = baseNPV !== 0 ? ((exp1PctNPV - baseNPV) / baseNPV) * 100 : 0;
+
+    return {
+      pessimistic: { npv: pesNPV, irr: pesIRR, flowSum: pesFlowSum, flows: pesFlows },
+      base: { npv: baseNPV, irr: baseIRR, flowSum: baseFlowSum, flows: baseFlows },
+      optimistic: { npv: optNPV, irr: optIRR, flowSum: optFlowSum, flows: optFlows },
+      elasticityIng,
+      elasticityGas
+    };
+  }, [sensResource, sensDiscountRate, sensPessimisticPct, sensOptimisticPct, financialData]);
 
   // Aggregated temporal cash flow
   const aggregatedFlowData = useMemo(() => {
@@ -311,7 +435,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           { id: 'flow', label: 'Flujo de Caja', icon: Table },
           { id: 'equilibrium', label: 'Punto de Equilibrio', icon: Compass },
           { id: 'simulator', label: 'Simulador Escenarios', icon: RefreshCw },
-          { id: 'expenses', label: 'Análisis de Gastos', icon: PieChartIcon }
+          { id: 'expenses', label: 'Análisis de Gastos', icon: PieChartIcon },
+          { id: 'sensitivity', label: 'Sensibilidad y Elasticidad', icon: TrendingUp }
         ].map(t => (
           <button
             key={t.id}
@@ -700,16 +825,24 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
                     return (
                       <div key={r} className={`p-4 bg-white/5 border rounded-2xl space-y-3 transition-all ${isInvalid ? 'border-red-500 bg-red-500/5 shadow-lg shadow-red-500/5' : 'border-white/10 hover:border-white/20'}`}>
-                        {/* Name & Badge */}
+                        {/* Name & Badge & IA */}
                         <div className="flex justify-between items-start gap-2">
-                          <span className="text-white font-bold text-xs truncate max-w-[200px]" title={getResourceFullName(r)}>
-                            {getResourceFullName(r)}
-                          </span>
-                          {isInvalid && (
-                            <span className="flex items-center gap-1 text-red-400 font-mono text-[9px] font-bold uppercase shrink-0 px-2 py-0.5 bg-red-500/10 rounded-md border border-red-500/20">
-                              Exceso Egresos
+                          <div className="flex flex-col">
+                            <span className="text-white font-bold text-xs truncate max-w-[200px]" title={getResourceFullName(r)}>
+                              {getResourceFullName(r)}
                             </span>
-                          )}
+                            {isInvalid && (
+                              <span className="inline-block self-start mt-1 text-red-400 font-mono text-[9px] font-bold uppercase px-2 py-0.5 bg-red-500/10 rounded-md border border-red-500/20">
+                                Exceso Egresos
+                              </span>
+                            )}
+                          </div>
+                          <button 
+                            onClick={() => setSelectedAiExpenseResource(r)} 
+                            className="flex items-center gap-1 px-2.5 py-1 bg-[#f43f5e]/10 border border-[#f43f5e]/20 text-[#f43f5e] text-[10px] font-bold rounded-lg hover:bg-[#f43f5e]/20 transition-all shrink-0"
+                          >
+                            <Compass size={11} /> IA Sugerir
+                          </button>
                         </div>
 
                         {/* Info grid */}
@@ -901,6 +1034,235 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       </div>
     )}
 
+      {activeTab === 'sensitivity' && (
+        <div className="space-y-8 animate-in fade-in duration-300">
+          
+          {/* Controls Header */}
+          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-wrap justify-between items-center gap-6">
+            <div className="space-y-1">
+              <h3 className="text-xl font-display font-medium text-white">Análisis de Sensibilidad y Elasticidad</h3>
+              <p className="text-xs text-on-surface-variant">Estudio de impacto en el VAN (NPV) y la TIR (IRR) bajo variaciones del entorno financiero.</p>
+            </div>
+            
+            {/* Resource Selector */}
+            <div className="flex items-center bg-black/40 border border-white/10 rounded-xl px-4 py-2">
+              <span className="text-xs font-mono text-on-surface-variant mr-3 uppercase">Recurso:</span>
+              <select
+                value={sensResource}
+                onChange={(e) => setSensResource(e.target.value)}
+                className="bg-transparent text-xs text-white font-bold outline-none cursor-pointer"
+              >
+                {RESOURCES_LIST.map(r => (
+                  <option key={r} value={r} className="bg-[#0f172a]">{getResourceFullName(r)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Parameters Sliders */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Tasa de descuento slider */}
+            <div className="glass-card rounded-2xl p-6 border border-white/5 bg-white/5">
+              <div className="flex justify-between text-xs font-mono mb-3">
+                <span className="text-white/60">Tasa de Descuento (k)</span>
+                <span className="text-[#ffcc29] font-bold">{sensDiscountRate}% Anual</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="25"
+                step="1"
+                value={sensDiscountRate}
+                onChange={(e) => setSensDiscountRate(parseInt(e.target.value))}
+                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+              />
+              <p className="text-[10px] text-on-surface-variant mt-2 font-mono">Tasa de oportunidad requerida para calcular el VAN.</p>
+            </div>
+
+            {/* Pessimistic Pct slider */}
+            <div className="glass-card rounded-2xl p-6 border border-white/5 bg-white/5">
+              <div className="flex justify-between text-xs font-mono mb-3">
+                <span className="text-white/60">Variación Escenario Pesimista</span>
+                <span className="text-red-400 font-bold">{sensPessimisticPct}% Ingreso</span>
+              </div>
+              <input
+                type="range"
+                min="-40"
+                max="-5"
+                step="5"
+                value={sensPessimisticPct}
+                onChange={(e) => setSensPessimisticPct(parseInt(e.target.value))}
+                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-red-400"
+              />
+              <p className="text-[10px] text-on-surface-variant mt-2 font-mono">Simula la caída de ingresos y aumento proporcional de egresos.</p>
+            </div>
+
+            {/* Optimistic Pct slider */}
+            <div className="glass-card rounded-2xl p-6 border border-white/5 bg-white/5">
+              <div className="flex justify-between text-xs font-mono mb-3">
+                <span className="text-white/60">Variación Escenario Optimista</span>
+                <span className="text-[#4ade80] font-bold">+{sensOptimisticPct}% Ingreso</span>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="40"
+                step="5"
+                value={sensOptimisticPct}
+                onChange={(e) => setSensOptimisticPct(parseInt(e.target.value))}
+                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#4ade80]"
+              />
+              <p className="text-[10px] text-on-surface-variant mt-2 font-mono">Simula el incremento de ingresos y reducción proporcional de egresos.</p>
+            </div>
+
+          </div>
+
+          {/* Scenario Comparison Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Pessimistic Scenario Card */}
+            <div className="glass-card rounded-[28px] p-6 border border-red-500/20 bg-red-500/5 relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
+              <div>
+                <h4 className="text-sm font-bold text-red-400 font-display">Escenario Pesimista</h4>
+                <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado a {sensPessimisticPct}% Ing / +{Math.abs(sensPessimisticPct) / 1.5}% Egr</p>
+                
+                <div className="space-y-4 mt-6">
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-xs text-on-surface-variant">NPV / VAN</span>
+                    <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.pessimistic.npv.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-xs text-on-surface-variant">IRR / TIR</span>
+                    <span className="text-sm font-mono font-bold text-white">{sensitivityAnalysis.pessimistic.irr > 0 ? `${sensitivityAnalysis.pessimistic.irr.toFixed(1)}%` : 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-xs text-on-surface-variant">Flujo Neto (Dic 31)</span>
+                    <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.pessimistic.flowSum.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Base Scenario Card */}
+            <div className="glass-card rounded-[28px] p-6 border border-white/10 bg-white/5 relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute top-0 left-0 w-full h-1 bg-white/30"></div>
+              <div>
+                <h4 className="text-sm font-bold text-white font-display">Escenario Base</h4>
+                <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado a 0% variación (Proyección Actual)</p>
+                
+                <div className="space-y-4 mt-6">
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-xs text-on-surface-variant">NPV / VAN</span>
+                    <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.base.npv.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-xs text-on-surface-variant">IRR / TIR</span>
+                    <span className="text-sm font-mono font-bold text-white">{sensitivityAnalysis.base.irr > 0 ? `${sensitivityAnalysis.base.irr.toFixed(1)}%` : 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-xs text-on-surface-variant">Flujo Neto (Dic 31)</span>
+                    <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.base.flowSum.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Optimistic Scenario Card */}
+            <div className="glass-card rounded-[28px] p-6 border border-green-500/20 bg-green-500/5 relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
+              <div>
+                <h4 className="text-sm font-bold text-green-400 font-display">Escenario Optimista</h4>
+                <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado a +{sensOptimisticPct}% Ing / -{sensOptimisticPct / 1.5}% Egr</p>
+                
+                <div className="space-y-4 mt-6">
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-xs text-on-surface-variant">NPV / VAN</span>
+                    <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.optimistic.npv.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-xs text-on-surface-variant">IRR / TIR</span>
+                    <span className="text-sm font-mono font-bold text-white">{sensitivityAnalysis.optimistic.irr > 0 ? `${sensitivityAnalysis.optimistic.irr.toFixed(1)}%` : 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-xs text-on-surface-variant">Flujo Neto (Dic 31)</span>
+                    <span className="text-sm font-mono font-bold text-white">${sensitivityAnalysis.optimistic.flowSum.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Elasticity analysis & Line chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Chart */}
+            <div className="lg:col-span-2 glass-card rounded-[32px] p-6 border border-white/10 flex flex-col h-[350px]">
+              <h4 className="text-sm font-bold text-white uppercase tracking-widest mb-4">Evolución de Flujos por Escenario</h4>
+              <div className="flex-1 w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={new Array(12).fill(0).map((_, i) => ({
+                      name: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][i],
+                      Pesimista: parseFloat(sensitivityAnalysis.pessimistic.flows[i].toFixed(1)),
+                      Base: parseFloat(sensitivityAnalysis.base.flows[i].toFixed(1)),
+                      Optimista: parseFloat(sensitivityAnalysis.optimistic.flows[i].toFixed(1))
+                    }))}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="name" stroke="#94a3b8" className="text-[10px] font-mono" />
+                    <YAxis stroke="#94a3b8" className="text-[10px] font-mono" />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
+                    <Legend wrapperStyle={{ fontSize: '11px' }} />
+                    <Area type="monotone" dataKey="Optimista" stroke="#4ade80" fill="#4ade80" fillOpacity={0.05} />
+                    <Area type="monotone" dataKey="Base" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.05} />
+                    <Area type="monotone" dataKey="Pesimista" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.05} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Elasticity coefficient card */}
+            <div className="glass-card rounded-[32px] p-6 border border-white/10 flex flex-col justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span>Coeficientes de Elasticidad</span>
+                </h4>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Mide la sensibilidad del Valor Actual Neto (VAN) frente a cambios del 1% en los componentes de flujo.
+                </p>
+
+                <div className="space-y-4 mt-6">
+                  <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
+                    <p className="text-[10px] text-on-surface-variant font-mono uppercase">Elasticidad Ingreso-VAN</p>
+                    <p className="text-lg font-bold text-[#ffcc29] mt-1">
+                      {sensitivityAnalysis.elasticityIng >= 0 ? '+' : ''}{sensitivityAnalysis.elasticityIng.toFixed(2)}%
+                    </p>
+                    <p className="text-[10px] text-white/50 mt-1">
+                      Por cada 1% de incremento en el ingreso proyectado de este recurso, el VAN se modifica en un **{Math.abs(sensitivityAnalysis.elasticityIng).toFixed(2)}%**.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
+                    <p className="text-[10px] text-on-surface-variant font-mono uppercase">Elasticidad Egreso-VAN</p>
+                    <p className="text-lg font-bold text-[#f43f5e] mt-1">
+                      {sensitivityAnalysis.elasticityGas >= 0 ? '+' : ''}{sensitivityAnalysis.elasticityGas.toFixed(2)}%
+                    </p>
+                    <p className="text-[10px] text-white/50 mt-1">
+                      Por cada 1% de incremento en el egreso proyectado, el VAN se modifica en un **{Math.abs(sensitivityAnalysis.elasticityGas).toFixed(2)}%**.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
       {/* AI Recommendation Modal */}
       {selectedAiResource && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -968,6 +1330,85 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     </button>
                     <button
                       onClick={() => setSelectedAiResource(null)}
+                      className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all border border-white/10"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* AI Expense Recommendation Modal */}
+      {selectedAiExpenseResource && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0f172a] border border-white/10 rounded-[32px] w-full max-w-lg p-6 md:p-8 space-y-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-start gap-4">
+              <div>
+                <span className="px-2.5 py-1 bg-[#f43f5e]/10 border border-[#f43f5e]/20 text-[#f43f5e] text-[10px] font-bold font-mono rounded-lg uppercase tracking-wider">
+                  Asistente Inteligente (IA) - Egresos
+                </span>
+                <h3 className="text-xl font-display font-bold text-white mt-2">Recomendación de Egresos</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedAiExpenseResource(null)}
+                className="text-white/60 hover:text-white transition-colors p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Resource details */}
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-2">
+              <p className="text-on-surface-variant text-[10px] font-mono uppercase tracking-wider">Recurso Presupuestal</p>
+              <p className="text-sm text-white font-bold">{getResourceFullName(selectedAiExpenseResource)}</p>
+            </div>
+
+            {/* Recommendation info */}
+            {(() => {
+              const suggestion = aiSuggestionsExpenses[selectedAiExpenseResource];
+              const baseVal = financialData.resourceBaselines[selectedAiExpenseResource]?.gasPago || 0;
+              const sliderValue = baseVal > 0 ? Math.round(((suggestion.value / baseVal) - 1) * 100) : 0;
+              
+              return (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
+                      <p className="text-on-surface-variant text-[10px] font-mono uppercase tracking-wider">Sugerencia (Pago)</p>
+                      <p className="text-2xl font-display font-bold text-[#f43f5e] mt-1">${suggestion.value.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
+                    </div>
+                    
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
+                      <p className="text-on-surface-variant text-[10px] font-mono uppercase tracking-wider">Nivel de Confianza</p>
+                      <p className="text-2xl font-display font-bold text-[#4ade80] mt-1">{suggestion.confidence}%</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-on-surface-variant text-[10px] font-mono uppercase tracking-wider">Justificación Técnica</p>
+                    <p className="text-xs text-white/80 font-sans leading-relaxed bg-white/5 border border-white/5 p-4 rounded-2xl">
+                      {suggestion.justification}
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => {
+                        setSimGasByResource(prev => ({ ...prev, [selectedAiExpenseResource]: sliderValue }));
+                        setSelectedAiExpenseResource(null);
+                      }}
+                      className="flex-1 py-3 bg-[#f43f5e] hover:bg-[#f43f5e]/90 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-[#f43f5e]/10"
+                    >
+                      Aplicar sugerencia IA
+                    </button>
+                    <button
+                      onClick={() => setSelectedAiExpenseResource(null)}
                       className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all border border-white/10"
                     >
                       Cerrar
