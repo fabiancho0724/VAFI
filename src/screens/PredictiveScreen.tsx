@@ -7,7 +7,8 @@ import {
 import { 
   Filter, DollarSign, Activity, TrendingUp, Briefcase, RefreshCw, Layers, 
   Compass, ChevronRight, PieChart as PieChartIcon, Table, CheckSquare,
-  AlertTriangle, ShieldAlert, Gauge, TrendingDown, Target, ShieldCheck
+  AlertTriangle, ShieldAlert, Gauge, TrendingDown, Target, ShieldCheck,
+  ChevronUp, ChevronDown, Wallet
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateProjections, aggregateFlow, CashFlowItem, ProjectionResults } from '../lib/financialEngine';
@@ -52,6 +53,9 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [selectedAiExpenseResource, setSelectedAiExpenseResource] = useState<string | null>(null);
   const [selectedAiExpenseCategory, setSelectedAiExpenseCategory] = useState<string | null>(null);
   const [showSaveSuccess, setShowSaveSuccess] = useState<boolean>(false);
+  const [incomeAnalysisFilter, setIncomeAnalysisFilter] = useState<'Todos' | 'Recursos UPTC' | 'Recursos del Balance'>('Todos');
+  const [expandedIngresoGroup, setExpandedIngresoGroup] = useState<string | null>(null);
+  const [expandedGastoCardGroup, setExpandedGastoCardGroup] = useState<string | null>(null);
   
   // Tabs
   const [activeTab, setActiveTab] = useState<'kpi' | 'flow' | 'equilibrium' | 'simulator' | 'expenses' | 'sensitivity'>('kpi');
@@ -386,6 +390,173 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
     return values;
   }, [rawHistoricalGastos, filterUnidad, filterRecurso, simGasByType]);
+
+  // Aggregated Incomes Analysis Grouping based on simulated projections
+  const ingresosAnalisisGroups = useMemo(() => {
+    if (!financialData) return [];
+
+    const groupsDef = [
+      { id: 'nacion', name: 'Aportes de la Nación', sub: 'CLASIFICACIÓN DE INGRESO', color: 'from-[#ffcc29] to-[#ffcc29]/70', baseColor: '#ffcc29' },
+      { id: 'extension', name: 'Extensión y Posgrados', sub: 'CLASIFICACIÓN DE INGRESO', color: 'from-[#7bd0ff] to-[#7bd0ff]/70', baseColor: '#7bd0ff' },
+      { id: 'propios', name: 'Recursos Propios', sub: 'CLASIFICACIÓN DE INGRESO', color: 'from-secondary to-secondary/70', baseColor: '#d0bcff' },
+      { id: 'estampilla', name: 'Estampilla Pro UPTC', sub: 'CLASIFICACIÓN DE INGRESO', color: 'from-[#ff5b5b] to-[#ff5b5b]/70', baseColor: '#ff5b5b' }
+    ];
+
+    const INCOME_GROUP_MAP: Record<string, string> = {
+      "10": "Aportes de la Nación",
+      "10.1": "Aportes de la Nación",
+      "10.2": "Aportes de la Nación",
+      "12": "Aportes de la Nación",
+      "16": "Aportes de la Nación",
+      "17": "Aportes de la Nación",
+      "18": "Aportes de la Nación",
+      "31": "Extensión y Posgrados",
+      "32": "Extensión y Posgrados",
+      "33": "Extensión y Posgrados",
+      "34": "Extensión y Posgrados",
+      "35": "Extensión y Posgrados",
+      "40": "Estampilla Pro UPTC"
+    };
+
+    const RESOURCE_TYPE_MAP: Record<string, 'Recursos UPTC' | 'Recursos del Balance'> = {
+      "10": "Recursos UPTC",
+      "10.1": "Recursos del Balance",
+      "10.2": "Recursos del Balance",
+      "10.5": "Recursos UPTC",
+      "12": "Recursos del Balance",
+      "13": "Recursos del Balance",
+      "14": "Recursos del Balance",
+      "16": "Recursos del Balance",
+      "17": "Recursos UPTC",
+      "18": "Recursos UPTC",
+      "20": "Recursos UPTC",
+      "21": "Recursos del Balance",
+      "31": "Recursos UPTC",
+      "32": "Recursos UPTC",
+      "33": "Recursos UPTC",
+      "34": "Recursos del Balance",
+      "35": "Recursos UPTC",
+      "40": "Recursos del Balance"
+    };
+
+    const results = groupsDef.map(g => {
+      let totalAforo = 0;
+      let totalRecaudo = 0;
+      const recursosList: { name: string; aforo: number; recaudo: number }[] = [];
+
+      RESOURCES_LIST.forEach(r => {
+        // Map to group
+        const grpName = INCOME_GROUP_MAP[r] || 'Recursos Propios';
+        if (grpName !== g.name) return;
+
+        // Apply resource filter type
+        const resType = RESOURCE_TYPE_MAP[r] || 'Recursos UPTC';
+        if (incomeAnalysisFilter !== 'Todos' && resType !== incomeAnalysisFilter) return;
+
+        // Skip if filtered by resource
+        if (filterRecurso !== 'Todos' && r !== filterRecurso) return;
+
+        const baseVal = financialData.resourceBaselines[r]?.ing || 0;
+        const valPct = simIngByResource[r] || 0;
+        const simVal = baseVal * (1 + valPct / 100);
+
+        totalAforo += baseVal;
+        totalRecaudo += simVal;
+
+        recursosList.push({
+          name: `${r}-${getResourceFullName(r)}`,
+          aforo: baseVal,
+          recaudo: simVal
+        });
+      });
+
+      return {
+        id: g.id,
+        title: g.name,
+        sub: g.sub,
+        color: g.color,
+        baseColor: g.baseColor,
+        presupuesto: totalAforo,
+        recaudo: totalRecaudo,
+        pct: totalAforo > 0 ? ((totalRecaudo / totalAforo) * 100).toFixed(1) + '%' : '0%',
+        recursos: recursosList.sort((a, b) => b.recaudo - a.recaudo)
+      };
+    });
+
+    return results;
+  }, [financialData, filterRecurso, simIngByResource, incomeAnalysisFilter]);
+
+  // Aggregated Expenses Analysis Grouping based on simulated projections
+  const gastosAnalisisGroups = useMemo(() => {
+    if (!financialData) return [];
+    
+    const categoriesDef = [
+      { id: 'Personal', name: '2.1.1 Gastos de Personal', keyword: '2.1.1' },
+      { id: 'Funcionamiento', name: '2.1.2 Gastos de Funcionamiento', keyword: '2.1.2' },
+      { id: 'Transferencias', name: '2.1.3 Gastos de Transferencias', keyword: '2.1.3' },
+      { id: 'Tasas', name: '2.1.8 Tasas y Multas', keyword: '2.1.8' },
+      { id: 'Deuda', name: '2.2.2 Servicios de la Deuda', keyword: '2.2.2' },
+      { id: 'Inversion', name: '2.3 Gastos de Inversión', keyword: '2.3' }
+    ];
+
+    const results = categoriesDef.map(cat => {
+      const engineComp = financialData.categoryBreakdown.compromiso.find(item => item.name.includes(cat.keyword))?.value || 0;
+      const enginePago = financialData.categoryBreakdown.pago.find(item => item.name.includes(cat.keyword))?.value || 0;
+
+      const resourceBreakdown: Record<string, { compromiso: number; pago: number }> = {};
+      
+      rawHistoricalGastos.forEach(row => {
+        if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
+        const r = getRecursoEquivalence(row.recurso);
+        if (filterRecurso !== 'Todos' && r !== filterRecurso) return;
+
+        const tipo = String(row.tipo || '').toLowerCase();
+        if (!tipo.includes(cat.keyword)) return;
+
+        const year = row.año;
+        const monthIdx = row.mes - 1;
+
+        if (year === 2026 && monthIdx < 6) {
+          if (!resourceBreakdown[r]) resourceBreakdown[r] = { compromiso: 0, pago: 0 };
+          resourceBreakdown[r].compromiso += row.compromiso / 1e6;
+          resourceBreakdown[r].pago += row.pago / 1e6;
+        } else if (year === 2025 && monthIdx >= 6) {
+          if (!resourceBreakdown[r]) resourceBreakdown[r] = { compromiso: 0, pago: 0 };
+          
+          let scaleFactor = 1.05;
+          if (expenseAdjustMode === 'category') {
+            const valPct = simGasByType[cat.id] || 0;
+            scaleFactor *= (1 + valPct / 100);
+          } else {
+            const valPct = simGasByResource[r] || 0;
+            scaleFactor *= (1 + valPct / 100);
+          }
+          
+          resourceBreakdown[r].compromiso += (row.compromiso * scaleFactor) / 1e6;
+          resourceBreakdown[r].pago += (row.pago * scaleFactor) / 1e6;
+        }
+      });
+
+      const resourcesList = Object.keys(resourceBreakdown).map(r => {
+        const item = resourceBreakdown[r];
+        return {
+          name: `${r}-${getResourceFullName(r)}`,
+          compromiso: item.compromiso,
+          pago: item.pago
+        };
+      }).filter(item => item.compromiso > 0 || item.pago > 0)
+        .sort((a, b) => b.pago - a.pago);
+
+      return {
+        name: cat.name,
+        compromiso: engineComp,
+        pago: enginePago,
+        recursos: resourcesList
+      };
+    });
+
+    return results.filter(item => item.compromiso > 0 || item.pago > 0);
+  }, [financialData, rawHistoricalGastos, filterUnidad, filterRecurso, expenseAdjustMode, simGasByResource, simGasByType]);
 
   // Validation Errors (Pago Efectivo <= Valor Proyectado)
   const validationErrors = useMemo(() => {
@@ -896,6 +1067,236 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          {/* Análisis de Ingresos */}
+          <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h3 className="text-xl font-display text-white flex items-center gap-2 font-medium">
+              <Wallet className="text-[#ffcc29]" size={22} />
+              Análisis de Ingresos Proyectados
+            </h3>
+            <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
+              {(['Todos', 'Recursos UPTC', 'Recursos del Balance'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setIncomeAnalysisFilter(f)}
+                  className={`px-3 py-1 text-xs font-mono rounded-md transition-colors ${incomeAnalysisFilter === f ? 'bg-[#ffcc29] text-black font-bold' : 'text-on-surface-variant hover:text-white'}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {ingresosAnalisisGroups.map(rubro => {
+              const isExpanded = expandedIngresoGroup === rubro.id;
+              return (
+                <div key={rubro.id} className="glass-card rounded-[24px] p-6 flex flex-col relative overflow-hidden transition-all duration-300 border border-white/5 shadow-lg">
+                  {/* Visual Indicator */}
+                  <div className={`absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b ${rubro.color}`}></div>
+                  
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left side: Main Stats */}
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="text-xl font-display font-bold text-white">{rubro.title}</h4>
+                        </div>
+                        <p className="text-[10px] text-on-surface-variant font-mono tracking-widest uppercase mb-6">{rubro.sub}</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                           <span className="text-xs text-on-surface-variant block mb-1">Presupuestado Inicial</span>
+                           <span className="text-2xl font-bold font-mono text-white">${rubro.presupuesto.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                        </div>
+                        <div>
+                           <span className="text-xs text-on-surface-variant block mb-1">Recaudo Proyectado</span>
+                           <span className="text-3xl font-display font-bold text-[#ffcc29]">${rubro.recaudo.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right side: Chart & Details */}
+                    <div className="w-full md:w-56 flex flex-col items-center justify-center shrink-0 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
+                      <div className="relative w-28 h-28 flex items-center justify-center mb-4">
+                         <svg className="w-full h-full -rotate-90">
+                            <circle cx="56" cy="56" r="48" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                            <circle 
+                               className="progress-ring-circle transition-all duration-500" 
+                               cx="56" cy="56" r="48" 
+                               fill="transparent" 
+                               stroke="currentColor" 
+                               strokeWidth="12" 
+                               strokeDasharray="301" 
+                               strokeDashoffset={301 - (301 * Math.min(100, parseFloat(rubro.pct || '0')) / 100)} 
+                               style={{ color: rubro.baseColor }}
+                            />
+                         </svg>
+                         <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-xl font-bold text-white">{rubro.pct}</span>
+                         </div>
+                      </div>
+
+                      <div className="w-full space-y-2">
+                        {rubro.recursos.slice(0, 2).map((item, rIdx) => (
+                          <div key={rIdx} className="bg-white/5 px-3 py-2 rounded-lg flex justify-between items-center w-full">
+                             <span className="text-[10px] text-on-surface-variant uppercase truncate mr-2" title={item.name}>{item.name.split('-')[1] || item.name}</span>
+                             <span className="text-xs font-bold text-white whitespace-nowrap">${item.recaudo.toLocaleString('es-CO', {maximumFractionDigits: 1})}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Resources View */}
+                  {rubro.recursos && rubro.recursos.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-white/10 w-full">
+                      <button 
+                        onClick={() => setExpandedIngresoGroup(isExpanded ? null : rubro.id)}
+                        className="w-full flex items-center justify-center gap-2 text-xs font-mono text-on-surface-variant hover:text-white transition-colors bg-white/5 hover:bg-white/10 py-2 rounded-lg"
+                      >
+                        {isExpanded ? (
+                          <><ChevronUp size={16} /> Ocultar Recursos</>
+                        ) : (
+                          <><ChevronDown size={16} /> Ver Todos los Recursos ({rubro.recursos.length})</>
+                        )}
+                      </button>
+                      
+                      {isExpanded && (
+                        <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                          {rubro.recursos.map((item, rIdx) => (
+                            <div key={rIdx} className="bg-white/5 px-4 py-3 rounded-xl flex justify-between items-center w-full border border-white/5">
+                              <span className="text-xs text-white/80 font-bold uppercase truncate mr-2">{item.name}</span>
+                              <div className="flex gap-4 shrink-0 text-right">
+                                <div>
+                                  <span className="text-[9px] text-on-surface-variant block font-mono">AFORADO</span>
+                                  <span className="text-xs font-mono text-white/60">${item.aforo.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                                </div>
+                                <div>
+                                  <span className="text-[9px] text-on-surface-variant block font-mono">RECAUDO</span>
+                                  <span className="text-xs font-mono text-[#ffcc29] font-bold">${item.recaudo.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Análisis de Gastos */}
+          <div className="mt-12 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h3 className="text-xl font-display text-white flex items-center gap-2 font-medium">
+              <Wallet className="text-[#f43f5e]" size={22} />
+              Análisis de Gastos Proyectados
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {gastosAnalisisGroups.map((gasto, idx) => {
+              const isExpanded = expandedGastoCardGroup === gasto.name;
+              const pct = gasto.compromiso > 0 ? ((gasto.pago / gasto.compromiso) * 100).toFixed(1) + '%' : '0%';
+              const colorClass = idx % 4 === 0 ? 'from-secondary to-secondary/70' : idx % 4 === 1 ? 'from-[#ffcc29] to-[#ffcc29]/70' : idx % 4 === 2 ? 'from-[#7bd0ff] to-[#7bd0ff]/70' : 'from-[#ff5b5b] to-[#ff5b5b]/70';
+              const baseColor = idx % 4 === 0 ? '#d0bcff' : idx % 4 === 1 ? '#ffcc29' : idx % 4 === 2 ? '#7bd0ff' : '#ff5b5b';
+
+              return (
+                <div key={idx} className="glass-card rounded-[24px] p-6 flex flex-col relative overflow-hidden transition-all duration-300 border border-white/5 shadow-lg">
+                  <div className={`absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b ${colorClass}`}></div>
+                  
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xl font-display font-bold text-white mb-2">{gasto.name}</h4>
+                        <p className="text-[10px] text-on-surface-variant font-mono tracking-widest uppercase mb-6">Agrupación de Gasto</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                           <span className="text-xs text-on-surface-variant block mb-1">Total Compromiso</span>
+                           <span className="text-2xl font-bold font-mono text-white">${gasto.compromiso.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                        </div>
+                        <div>
+                           <span className="text-xs text-on-surface-variant block mb-1">Pago Efectivo</span>
+                           <span className="text-3xl font-display font-bold text-secondary">${gasto.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="w-full md:w-56 flex flex-col items-center justify-center shrink-0 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
+                      <div className="relative w-28 h-28 flex items-center justify-center mb-4">
+                         <svg className="w-full h-full -rotate-90">
+                            <circle cx="56" cy="56" r="48" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                            <circle 
+                               className="progress-ring-circle transition-all duration-500" 
+                               cx="56" cy="56" r="48" 
+                               fill="transparent" 
+                               stroke="currentColor" 
+                               strokeWidth="12" 
+                               strokeDasharray="301" 
+                               strokeDashoffset={301 - (301 * Math.min(100, parseFloat(pct || '0')) / 100)} 
+                               style={{ color: baseColor }}
+                            />
+                         </svg>
+                         <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-xl font-bold text-white">{pct}</span>
+                         </div>
+                      </div>
+
+                      <div className="w-full space-y-2">
+                        {gasto.recursos.slice(0, 2).map((item, rIdx) => (
+                          <div key={rIdx} className="bg-white/5 px-3 py-2 rounded-lg flex justify-between items-center w-full">
+                             <span className="text-[10px] text-on-surface-variant uppercase truncate mr-2" title={item.name}>{item.name.split('-')[1] || item.name}</span>
+                             <span className="text-xs font-bold text-white whitespace-nowrap">${item.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Resources View */}
+                  {gasto.recursos && gasto.recursos.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-white/10 w-full">
+                      <button 
+                        onClick={() => setExpandedGastoCardGroup(isExpanded ? null : gasto.name)}
+                        className="w-full flex items-center justify-center gap-2 text-xs font-mono text-on-surface-variant hover:text-white transition-colors bg-white/5 hover:bg-white/10 py-2 rounded-lg"
+                      >
+                        {isExpanded ? (
+                          <><ChevronUp size={16} /> Ocultar Recursos</>
+                        ) : (
+                          <><ChevronDown size={16} /> Ver Todos los Recursos ({gasto.recursos.length})</>
+                        )}
+                      </button>
+                      
+                      {isExpanded && (
+                        <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                          {gasto.recursos.map((item, rIdx) => (
+                            <div key={rIdx} className="bg-white/5 px-4 py-3 rounded-xl flex justify-between items-center w-full border border-white/5">
+                              <span className="text-xs text-white/80 font-bold uppercase truncate mr-2">{item.name}</span>
+                              <div className="flex gap-4 shrink-0 text-right">
+                                <div>
+                                  <span className="text-[9px] text-on-surface-variant block font-mono">COMPROMISO</span>
+                                  <span className="text-xs font-mono text-white/60">${item.compromiso.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                                </div>
+                                <div>
+                                  <span className="text-[9px] text-on-surface-variant block font-mono">PAGO</span>
+                                  <span className="text-xs font-mono text-secondary font-bold">${item.pago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

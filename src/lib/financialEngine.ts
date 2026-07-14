@@ -46,6 +46,7 @@ export interface ProjectionResults {
   resourceBaselines: Record<string, { ing: number; gasComp: number; gasPago: number }>;
   monthlySimIngByRes: Record<string, number[]>;
   monthlySimGasPagoByRes: Record<string, number[]>;
+  monthlySimGasCompByRes: Record<string, number[]>;
   monthlyBaseIngByRes: Record<string, number[]>;
   monthlyBaseGasPagoByRes: Record<string, number[]>;
   categoryBreakdown: {
@@ -640,6 +641,7 @@ export function calculateProjections({
     resourceBaselines,
     monthlySimIngByRes,
     monthlySimGasPagoByRes,
+    monthlySimGasCompByRes,
     monthlyBaseIngByRes,
     monthlyBaseGasPagoByRes,
     categoryBreakdown: {
