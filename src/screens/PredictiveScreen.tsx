@@ -322,8 +322,22 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       };
     }
 
-    const baseIngArray = financialData.monthlySimIngByRes[sensResource] || new Array(12).fill(0);
-    const baseGasArray = financialData.monthlySimGasPagoByRes[sensResource] || new Array(12).fill(0);
+    let baseIngArray = new Array(12).fill(0);
+    let baseGasArray = new Array(12).fill(0);
+
+    if (sensResource === 'Todos') {
+      RESOURCES_LIST.forEach(res => {
+        const ingRes = financialData.monthlySimIngByRes[res] || [];
+        const gasRes = financialData.monthlySimGasPagoByRes[res] || [];
+        for (let i = 0; i < 12; i++) {
+          baseIngArray[i] += (ingRes[i] || 0) / 1e6;
+          baseGasArray[i] += (gasRes[i] || 0) / 1e6;
+        }
+      });
+    } else {
+      baseIngArray = (financialData.monthlySimIngByRes[sensResource] || new Array(12).fill(0)).map(v => v / 1e6);
+      baseGasArray = (financialData.monthlySimGasPagoByRes[sensResource] || new Array(12).fill(0)).map(v => v / 1e6);
+    }
 
     // Annual income baseline sum
     const baseIngTotal = baseIngArray.reduce((a, b) => a + b, 0);
@@ -394,17 +408,17 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     // 6. Tornado Chart Calculation (Impact of each resource on total NPV)
     const totalBaseFlows = new Array(12).fill(0).map((_, i) => 
       RESOURCES_LIST.reduce((sum, res) => 
-        sum + (financialData.monthlySimIngByRes[res]?.[i] || 0) - (financialData.monthlySimGasPagoByRes[res]?.[i] || 0)
+        sum + (financialData.monthlySimIngByRes[res]?.[i] || 0) / 1e6 - (financialData.monthlySimGasPagoByRes[res]?.[i] || 0) / 1e6
       , 0)
     );
     const baseTotalNPV = calculateNPV(totalBaseFlows, sensDiscountRate);
 
     const tornadoData = RESOURCES_LIST.map(r => {
-      const highFlows = totalBaseFlows.map((flow, i) => flow + (financialData.monthlySimIngByRes[r]?.[i] || 0) * 0.10);
+      const highFlows = totalBaseFlows.map((flow, i) => flow + ((financialData.monthlySimIngByRes[r]?.[i] || 0) / 1e6) * 0.10);
       const highNPV = calculateNPV(highFlows, sensDiscountRate);
       const diffHigh = highNPV - baseTotalNPV;
 
-      const lowFlows = totalBaseFlows.map((flow, i) => flow - (financialData.monthlySimIngByRes[r]?.[i] || 0) * 0.10);
+      const lowFlows = totalBaseFlows.map((flow, i) => flow - ((financialData.monthlySimIngByRes[r]?.[i] || 0) / 1e6) * 0.10);
       const lowNPV = calculateNPV(lowFlows, sensDiscountRate);
       const diffLow = lowNPV - baseTotalNPV;
 
@@ -427,6 +441,26 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       tornado: tornadoData
     };
   }, [sensResource, sensDiscountRate, sensPessimisticPct, sensOptimisticPct, financialData]);
+
+  const semesterTotals = useMemo(() => {
+    if (!financialData || !financialData.simulatedFlow) {
+      return {
+        eneJunIng: 0, julDicIng: 0,
+        eneJunComp: 0, julDicComp: 0,
+        eneJunPago: 0, julDicPago: 0
+      };
+    }
+    const eneJun = financialData.simulatedFlow.slice(0, 6);
+    const julDic = financialData.simulatedFlow.slice(6, 12);
+    return {
+      eneJunIng: eneJun.reduce((sum, m) => sum + m.ingresos, 0),
+      julDicIng: julDic.reduce((sum, m) => sum + m.ingresos, 0),
+      eneJunComp: eneJun.reduce((sum, m) => sum + m.gastosComp, 0),
+      julDicComp: julDic.reduce((sum, m) => sum + m.gastosComp, 0),
+      eneJunPago: eneJun.reduce((sum, m) => sum + m.gastosPago, 0),
+      julDicPago: julDic.reduce((sum, m) => sum + m.gastosPago, 0)
+    };
+  }, [financialData]);
 
   // Aggregated temporal cash flow
   const aggregatedFlowData = useMemo(() => {
@@ -517,33 +551,60 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         <div className="space-y-8 animate-in fade-in duration-300">
           {/* Executive KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="glass-card rounded-[28px] p-8 border border-white/5 bg-surface/50 relative overflow-hidden">
+            {/* Income Card */}
+            <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 left-0 w-full h-1 bg-[#ffcc29]"></div>
-              <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-4">Ingresos Simulados (COP)</h4>
-              <p className="text-4xl font-display font-bold text-white">${financialData.totals.simIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
-              <div className="flex items-center gap-2 mt-4 text-xs text-on-surface-variant">
-                <span className="font-bold text-[#ffcc29]">Base: ${financialData.totals.baselineIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                <span>(Jul-Dic Simulado)</span>
+              <div>
+                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Ingresos Totales (Vigencia 2026)</h4>
+                <p className="text-3xl font-display font-bold text-white">${financialData.totals.simIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
+              </div>
+              <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
+                <div className="flex justify-between">
+                  <span>CORTE A JUN 30 (REAL)</span>
+                  <span className="text-white font-bold">${semesterTotals.eneJunIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>PROYECCIÓN JUL-DIC</span>
+                  <span className="text-[#ffcc29] font-bold">${semesterTotals.julDicIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-[28px] p-8 border border-white/5 bg-surface/50 relative overflow-hidden">
+            {/* Commitments Card */}
+            <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 left-0 w-full h-1 bg-[#f43f5e]"></div>
-              <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-4">Compromisos Totales</h4>
-              <p className="text-4xl font-display font-bold text-white">${financialData.totals.simGasComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
-              <div className="flex items-center gap-2 mt-4 text-xs text-on-surface-variant">
-                <span className="font-bold text-[#f43f5e]">Base: ${financialData.totals.baselineGasComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                <span>(Jul-Dic Simulado)</span>
+              <div>
+                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Compromisos Totales (Vigencia 2026)</h4>
+                <p className="text-3xl font-display font-bold text-white">${financialData.totals.simGasComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
+              </div>
+              <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
+                <div className="flex justify-between">
+                  <span>CORTE A JUN 30 (REAL)</span>
+                  <span className="text-white font-bold">${semesterTotals.eneJunComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>PROYECCIÓN JUL-DIC</span>
+                  <span className="text-[#f43f5e] font-bold">${semesterTotals.julDicComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-[28px] p-8 border border-white/5 bg-surface/50 relative overflow-hidden">
+            {/* Payments Card */}
+            <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 left-0 w-full h-1 bg-[#4ade80]"></div>
-              <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-4">Pagos Efectivos</h4>
-              <p className="text-4xl font-display font-bold text-white">${financialData.totals.simGasPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
-              <div className="flex items-center gap-2 mt-4 text-xs text-on-surface-variant">
-                <span className="font-bold text-[#4ade80]">Base: ${financialData.totals.baselineGasPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                <span>(Jul-Dic Simulado)</span>
+              <div>
+                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Pagos Efectivos (Vigencia 2026)</h4>
+                <p className="text-3xl font-display font-bold text-white">${financialData.totals.simGasPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
+              </div>
+              <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
+                <div className="flex justify-between">
+                  <span>CORTE A JUN 30 (REAL)</span>
+                  <span className="text-white font-bold">${semesterTotals.eneJunPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>PROYECCIÓN JUL-DIC</span>
+                  <span className="text-[#4ade80] font-bold">${semesterTotals.julDicPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1116,6 +1177,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 onChange={(e) => setSensResource(e.target.value)}
                 className="bg-transparent text-xs text-white font-bold outline-none cursor-pointer"
               >
+                <option value="Todos" className="bg-[#0f172a]">Todos los Recursos</option>
                 {RESOURCES_LIST.map(r => (
                   <option key={r} value={r} className="bg-[#0f172a]">{getResourceFullName(r)}</option>
                 ))}
@@ -1331,13 +1393,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Monte Carlo & Tornado Chart Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                      {/* Monte Carlo & Tornado Chart Column Stack */}
+          <div className="flex flex-col gap-8 mt-6">
             
             {/* Monte Carlo Simulation Dashboard */}
             <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col justify-between bg-surface/50">
@@ -1370,18 +1427,18 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   </div>
                   <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-center">
                     <p className="text-[9px] text-on-surface-variant font-mono uppercase">Intervalo 95%</p>
-                    <p className="text-[10px] font-mono font-bold text-white mt-2 truncate" title={`[${sensitivityAnalysis.monteCarlo.low95.toFixed(0)}M, ${sensitivityAnalysis.monteCarlo.high95.toFixed(0)}M]`}>
-                      [${sensitivityAnalysis.monteCarlo.low95.toFixed(0)}M, ${sensitivityAnalysis.monteCarlo.high95.toFixed(0)}M]
+                    <p className="text-[10px] font-mono font-bold text-white mt-2 truncate" title={`[${sensitivityAnalysis.monteCarlo.low95.toLocaleString('es-CO', {maximumFractionDigits:1})}M, ${sensitivityAnalysis.monteCarlo.high95.toLocaleString('es-CO', {maximumFractionDigits:1})}M]`}>
+                      [${sensitivityAnalysis.monteCarlo.low95.toLocaleString('es-CO', {maximumFractionDigits:1})}M, ${sensitivityAnalysis.monteCarlo.high95.toLocaleString('es-CO', {maximumFractionDigits:1})}M]
                     </p>
                   </div>
                 </div>
 
                 {/* Histogram */}
-                <div className="h-44 w-full">
+                <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={sensitivityAnalysis.monteCarlo.bins}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="range" stroke="#94a3b8" className="text-[8px] font-mono" interval={1} />
+                      <XAxis dataKey="range" stroke="#94a3b8" className="text-[9px] font-mono" interval={0} />
                       <YAxis stroke="#94a3b8" className="text-[9px] font-mono" />
                       <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
                       <Bar dataKey="Frecuencia" fill="#c084fc" radius={[4, 4, 0, 0]} />
@@ -1407,7 +1464,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </p>
 
                 {/* Tornado Bar Chart */}
-                <div className="h-56 w-full">
+                <div className="h-[400px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       layout="vertical"
@@ -1416,7 +1473,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={true} horizontal={false} />
                       <XAxis type="number" stroke="#94a3b8" className="text-[9px] font-mono" />
-                      <YAxis type="category" dataKey="name" stroke="#94a3b8" className="text-[9px] font-mono" width={100} />
+                      <YAxis type="category" dataKey="name" stroke="#94a3b8" className="text-[10px] font-mono" width={150} tickLine={false} />
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }}
                         formatter={(value: any, name: any) => {
@@ -1432,6 +1489,9 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </div>
                 <p className="text-[9px] text-on-surface-variant mt-2 text-center font-mono">El ancho de barra representa la elasticidad del recurso. Barras más largas indican mayor impacto presupuestal.</p>
               </div>
+            </div>
+
+          </div>             </div>
             </div>
 
           </div>

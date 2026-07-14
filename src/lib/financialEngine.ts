@@ -422,6 +422,10 @@ export function calculateProjections({
     const year = row.año;
     if (year !== 2026 && year !== 2025) return;
 
+    // Prevent duplication: only include first semester 2026 (Ene-Jun) and second semester 2025 (Jul-Dic)
+    if (year === 2026 && monthIdx >= 6) return;
+    if (year === 2025 && monthIdx < 6) return;
+
     const is2026RealGas = (expensesCompByYearRes[2026][recMapped].reduce((a,b)=>a+b, 0) + expensesPagoByYearRes[2026][recMapped].reduce((a,b)=>a+b, 0)) > 0;
     const useRealGas = monthIdx < 6 && is2026RealGas;
 
