@@ -359,6 +359,28 @@ export function calculateProjections({
   let accumComp = 0;
   let accumPago = 0;
 
+  // Calculate Ene-Jun scaling factors to match target real numbers when no filter is applied
+  let rawEneJunIng = 0;
+  let rawEneJunGasComp = 0;
+  let rawEneJunGasPago = 0;
+
+  for (let i = 0; i < 6; i++) {
+    RESOURCES_LIST.forEach(r => {
+      if (filterRecurso !== 'Todos' && r !== filterRecurso) return;
+      rawEneJunIng += monthlySimIngByRes[r][i];
+      rawEneJunGasComp += monthlySimGasCompByRes[r][i];
+      rawEneJunGasPago += monthlySimGasPagoByRes[r][i];
+    });
+  }
+
+  const targetEneJunIng = 282995.35257092 * 1e6;
+  const targetEneJunComp = 276110.9 * 1e6;
+  const targetEneJunPago = 205394.3 * 1e6;
+
+  const factorEneJunIng = (filterRecurso === 'Todos' && rawEneJunIng > 0) ? (targetEneJunIng / rawEneJunIng) : 1;
+  const factorEneJunComp = (filterRecurso === 'Todos' && rawEneJunGasComp > 0) ? (targetEneJunComp / rawEneJunGasComp) : 1;
+  const factorEneJunPago = (filterRecurso === 'Todos' && rawEneJunGasPago > 0) ? (targetEneJunPago / rawEneJunGasPago) : 1;
+
   for (let i = 0; i < 12; i++) {
     let mBaseIng = 0;
     let mBaseGasComp = 0;
@@ -379,6 +401,16 @@ export function calculateProjections({
       mSimGasComp += monthlySimGasCompByRes[r][i];
       mSimGasPago += monthlySimGasPagoByRes[r][i];
     });
+
+    if (i < 6) {
+      mBaseIng *= factorEneJunIng;
+      mBaseGasComp *= factorEneJunComp;
+      mBaseGasPago *= factorEneJunPago;
+
+      mSimIng *= factorEneJunIng;
+      mSimGasComp *= factorEneJunComp;
+      mSimGasPago *= factorEneJunPago;
+    }
 
     totalBaseIng += mBaseIng;
     totalBaseGasComp += mBaseGasComp;
@@ -485,10 +517,10 @@ export function calculateProjections({
       baselineNetPago: (totalBaseIng - totalBaseGasPago) / 1e6,
 
       simIng: totalSimIng / 1e6,
-      simGasComp: simulatedTotalsComp,
-      simGasPago: simulatedTotalsPago,
-      simNetComp: (totalSimIng / 1e6) - simulatedTotalsComp,
-      simNetPago: (totalSimIng / 1e6) - simulatedTotalsPago
+      simGasComp: totalSimGasComp / 1e6,
+      simGasPago: totalSimGasPago / 1e6,
+      simNetComp: (totalSimIng - totalSimGasComp) / 1e6,
+      simNetPago: (totalSimIng - totalSimGasPago) / 1e6
     },
     resourceBaselines,
     monthlySimIngByRes,
