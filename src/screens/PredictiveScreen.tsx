@@ -377,9 +377,9 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     const exp1PctNPV = calculateNPV(exp1PctFlows, sensDiscountRate);
     const elasticityGas = baseNPV !== 0 ? ((exp1PctNPV - baseNPV) / baseNPV) * 100 : 0;
 
-    // 5. Monte Carlo Simulation (500 runs)
+    // 5. Monte Carlo Simulation (1000 runs)
     const mcNpvList: number[] = [];
-    for (let iter = 0; iter < 500; iter++) {
+    for (let iter = 0; iter < 1000; iter++) {
       const randIng = 1 + (Math.random() - 0.5) * 2 * 0.20; // Uniform +- 20%
       const randGas = 1 + (Math.random() - 0.5) * 2 * 0.15; // Uniform +- 15%
       const randFlows = baseIngArray.map((ing, i) => (ing * randIng) - (baseGasArray[i] * randGas));
@@ -387,12 +387,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       mcNpvList.push(randNPV);
     }
     mcNpvList.sort((a, b) => a - b);
-    const mcMean = mcNpvList.reduce((a, b) => a + b, 0) / 500;
+    const mcMean = mcNpvList.reduce((a, b) => a + b, 0) / 1000;
     const mcMin = mcNpvList[0];
-    const mcMax = mcNpvList[499];
-    const mcProbPos = (mcNpvList.filter(v => v > 0).length / 500) * 100;
-    const mcLow95 = mcNpvList[12];
-    const mcHigh95 = mcNpvList[487];
+    const mcMax = mcNpvList[999];
+    const mcProbPos = (mcNpvList.filter(v => v > 0).length / 1000) * 100;
+    const mcLow95 = mcNpvList[24];
+    const mcHigh95 = mcNpvList[974];
 
     const binWidth = (mcMax - mcMin) / 10;
     const mcBins = new Array(10).fill(0).map((_, idx) => {
@@ -1393,7 +1393,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     </p>
                   </div>
                 </div>
-                      {/* Monte Carlo & Tornado Chart Column Stack */}
+              </div>
+            </div>
+          </div>
+
+          {/* Monte Carlo & Tornado Chart Column Stack */}
           <div className="flex flex-col gap-8 mt-6">
             
             {/* Monte Carlo Simulation Dashboard */}
@@ -1401,14 +1405,14 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                    <Activity size={16} className="text-[#c084fc]" /> Simulación de Monte Carlo (500 Iteraciones)
+                    <Activity size={16} className="text-[#c084fc]" /> Simulación de Monte Carlo (1000 Iteraciones)
                   </h4>
                   <span className="px-2.5 py-0.5 bg-[#c084fc]/10 border border-[#c084fc]/20 text-[#c084fc] text-[9px] font-bold font-mono rounded-md uppercase">
                     Modelado Estocástico
                   </span>
                 </div>
                 <p className="text-xs text-on-surface-variant leading-relaxed mb-6">
-                  Simulación de variabilidad aleatoria de ingresos (±20%) y egresos (±15%) para medir la probabilidad de éxito financiero.
+                  Simulación de variabilidad aleatoria de ingresos (±20%) y egresos (±15%) para medir la probabilidad de éxito financiero (1000 corridas estocásticas).
                 </p>
 
                 {/* Monte Carlo Key Stats */}
@@ -1489,9 +1493,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </div>
                 <p className="text-[9px] text-on-surface-variant mt-2 text-center font-mono">El ancho de barra representa la elasticidad del recurso. Barras más largas indican mayor impacto presupuestal.</p>
               </div>
-            </div>
-
-          </div>             </div>
             </div>
 
           </div>
