@@ -7,7 +7,7 @@ import {
 import { 
   Filter, DollarSign, Activity, TrendingUp, Briefcase, RefreshCw, Layers, 
   Compass, ChevronRight, PieChart as PieChartIcon, Table, CheckSquare,
-  AlertTriangle
+  AlertTriangle, ShieldAlert, Gauge, TrendingDown, Target, ShieldCheck
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateProjections, aggregateFlow, CashFlowItem, ProjectionResults } from '../lib/financialEngine';
@@ -318,7 +318,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         elasticityIng: 0,
         elasticityGas: 0,
         monteCarlo: { mean: 0, min: 0, max: 0, probPos: 0, low95: 0, high95: 0, bins: [] },
-        tornado: []
+        tornado: [],
+        dscrBase: 0,
+        dscrPessimistic: 0,
+        dscrOptimistic: 0,
+        cushion: 0,
+        ruptureVar: 0,
+        ruptureValue: 0,
+        dscr1DData: [],
+        dscrTornado: []
       };
     }
 
@@ -341,6 +349,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
     // Annual income baseline sum
     const baseIngTotal = baseIngArray.reduce((a, b) => a + b, 0);
+    const baseGasTotal = baseGasArray.reduce((a, b) => a + b, 0);
 
     // 1. Base Scenario
     const baseFlows = baseIngArray.map((ing, i) => ing - baseGasArray[i]);
@@ -431,6 +440,58 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       };
     }).sort((a, b) => b.width - a.width);
 
+    // 7. DSCR & Covenant coverage calculations
+    const dscrBase = baseGasTotal > 0 ? (baseIngTotal / baseGasTotal) : 0;
+    const dscrPessimistic = (baseGasTotal * pesGasFactor) > 0 ? (baseIngTotal * pesIngFactor) / (baseGasTotal * pesGasFactor) : 0;
+    const dscrOptimistic = (baseGasTotal * optGasFactor) > 0 ? (baseIngTotal * optIngFactor) / (baseGasTotal * optGasFactor) : 0;
+    
+    // Cushion relative to minimum covenant (1.25x)
+    const cushion = dscrBase > 0 ? ((dscrBase - 1.25) / 1.25) * 100 : 0;
+
+    // Rupture point calculation:
+    // Solve for x: (R * (1 + x/100)) / (1 - (x/1.5)/100) = 1.25
+    // Let R = dscrBase.
+    // If dscrBase is already below 1.25, rupture has occurred.
+    const K = dscrBase > 0 ? 1.25 / dscrBase : 0;
+    const ruptureVar = dscrBase > 1.25 ? 300 * (K - 1) / (3 + 2 * K) : 0;
+    const ruptureValue = baseIngTotal * (1 + ruptureVar / 100);
+
+    // 1D Sensibility data DSCR vs Price variation
+    const dscr1DData = [-15, -12.5, -10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5, 10, 12.5, 15].map(v => {
+      const ingF = 1 + v / 100;
+      const gasF = v < 0 ? (1 + Math.abs(v) / 1.5 / 100) : (1 - (v / 1.5) / 100);
+      const dscr_v = baseGasTotal > 0 ? (baseIngTotal * ingF) / (baseGasTotal * gasF) : 0;
+      return {
+        vLabel: `${v >= 0 ? '+' : ''}${v}%`,
+        vVal: v,
+        DSCR: parseFloat(dscr_v.toFixed(2)),
+        Covenant: 1.25
+      };
+    });
+
+    // DSCR Tornado chart data (Driver impact on DSCR)
+    const dscrTornado = RESOURCES_LIST.map(r => {
+      const rIngSum = (financialData.monthlySimIngByRes[r] || []).reduce((a,b)=>a+b, 0) / 1e6;
+      const rGasSum = (financialData.monthlySimGasPagoByRes[r] || []).reduce((a,b)=>a+b, 0) / 1e6;
+
+      const highIng = baseIngTotal + rIngSum * 0.10;
+      const highGas = Math.max(1, baseGasTotal - rGasSum * (10 / 1.5 / 100));
+      const dscrHigh = highGas > 0 ? highIng / highGas : 0;
+
+      const lowIng = baseIngTotal - rIngSum * 0.10;
+      const lowGas = baseGasTotal + rGasSum * (10 / 1.5 / 100);
+      const dscrLow = lowGas > 0 ? lowIng / lowGas : 0;
+
+      return {
+        name: r,
+        fullName: getResourceFullName(r),
+        labelName: getResourceFullName(r).substring(0, 15) + '...',
+        low: parseFloat(dscrLow.toFixed(2)),
+        high: parseFloat(dscrHigh.toFixed(2)),
+        rangeWidth: Math.abs(dscrHigh - dscrLow)
+      };
+    }).sort((a, b) => b.rangeWidth - a.rangeWidth).slice(0, 8); // Top 8 drivers
+
     return {
       pessimistic: { npv: pesNPV, irr: pesIRR, flowSum: pesFlowSum, ingTotal: pesIngTotal, flows: pesFlows },
       base: { npv: baseNPV, irr: baseIRR, flowSum: baseFlowSum, ingTotal: baseIngTotal, flows: baseFlows },
@@ -438,7 +499,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       elasticityIng,
       elasticityGas,
       monteCarlo: { mean: mcMean, min: mcMin, max: mcMax, probPos: mcProbPos, low95: mcLow95, high95: mcHigh95, bins: mcBins },
-      tornado: tornadoData
+      tornado: tornadoData,
+      dscrBase,
+      dscrPessimistic,
+      dscrOptimistic,
+      cushion,
+      ruptureVar,
+      ruptureValue,
+      dscr1DData,
+      dscrTornado
     };
   }, [sensResource, sensDiscountRate, sensPessimisticPct, sensOptimisticPct, financialData]);
 
@@ -1506,6 +1575,192 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </div>
             </div>
 
+          </div>
+
+          {/* New DSCR & Covenant Analysis Section */}
+          <div className="border-t border-white/10 pt-10 mt-10 space-y-8">
+            <div className="flex justify-between items-center flex-wrap gap-4">
+              <div>
+                <h3 className="text-xl font-display font-medium text-white flex items-center gap-2">
+                  <ShieldCheck className="text-primary-container" size={24} />
+                  Ratio de Cobertura de Caja (DSCR) y Cumplimiento de Covenants
+                </h3>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Análisis dinámico de cobertura del servicio de egresos sobre ingresos y simulación de umbrales críticos.
+                </p>
+              </div>
+              
+              <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-xl text-[10px] font-mono text-on-surface-variant">
+                Covenant Mínimo Requerido: <span className="text-[#ffcc29] font-bold">1.25x</span>
+              </div>
+            </div>
+
+            {/* DSCR Top 5 Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {/* Card 1: DSCR Base */}
+              <div className="glass-card rounded-2xl p-5 border border-white/5 bg-[#0f172a]/40 relative overflow-hidden flex flex-col justify-between">
+                <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider block mb-1">DSCR Base</span>
+                <span className="text-2xl font-display font-bold text-white mt-2 flex items-center gap-1.5">
+                  {sensitivityAnalysis.dscrBase.toFixed(2)}x
+                  <TrendingUp className="text-[#4ade80]" size={16} />
+                </span>
+              </div>
+
+              {/* Card 2: Covenant Mínimo */}
+              <div className="glass-card rounded-2xl p-5 border border-white/5 bg-[#0f172a]/40 relative overflow-hidden flex flex-col justify-between">
+                <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider block mb-1">Covenant mínimo</span>
+                <span className="text-2xl font-display font-bold text-[#f43f5e] mt-2 flex items-center gap-1.5">
+                  1.25x
+                  <ShieldAlert className="text-[#f43f5e]" size={16} />
+                </span>
+              </div>
+
+              {/* Card 3: Colchón */}
+              <div className="glass-card rounded-2xl p-5 border border-white/5 bg-[#0f172a]/40 relative overflow-hidden flex flex-col justify-between">
+                <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider block mb-1">Colchón</span>
+                <span className="text-2xl font-display font-bold text-[#4ade80] mt-2 flex items-center gap-1.5">
+                  {sensitivityAnalysis.cushion >= 0 ? '+' : ''}{sensitivityAnalysis.cushion.toFixed(1)}%
+                  <Gauge className="text-[#4ade80]" size={16} />
+                </span>
+              </div>
+
+              {/* Card 4: Rupture Point */}
+              <div className="glass-card rounded-2xl p-5 border border-white/5 bg-[#0f172a]/40 relative overflow-hidden flex flex-col justify-between">
+                <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider block mb-1">Pto. Ruptura (Ingreso)</span>
+                <span className="text-2xl font-display font-bold text-[#ffcc29] mt-2 flex items-center gap-1.5">
+                  ${sensitivityAnalysis.ruptureValue.toLocaleString('es-CO', {maximumFractionDigits:1})}M
+                  <Target className="text-[#ffcc29]" size={16} />
+                </span>
+              </div>
+
+              {/* Card 5: Drop vs Base */}
+              <div className="glass-card rounded-2xl p-5 border border-white/5 bg-[#0f172a]/40 relative overflow-hidden flex flex-col justify-between">
+                <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider block mb-1">Var. Límite vs Base</span>
+                <span className="text-2xl font-display font-bold text-orange-400 mt-2 flex items-center gap-1.5">
+                  {sensitivityAnalysis.ruptureVar.toFixed(1)}%
+                  <TrendingDown className="text-orange-400" size={16} />
+                </span>
+              </div>
+            </div>
+
+            {/* Charts row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Chart: DSCR vs Variación */}
+              <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col h-[380px] bg-surface/50">
+                <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-4">Sensibilidad 1D · DSCR vs Variación</h4>
+                <div className="flex-1 w-full relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={sensitivityAnalysis.dscr1DData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis dataKey="vLabel" stroke="#94a3b8" className="text-[10px] font-mono" />
+                      <YAxis stroke="#94a3b8" className="text-[10px] font-mono" domain={[0, 'auto']} />
+                      <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
+                      <Line type="monotone" dataKey="DSCR" name="DSCR (x)" stroke="#4ade80" strokeWidth={3} activeDot={{ r: 8 }} />
+                      <Line type="monotone" dataKey="Covenant" name="Covenant Límite (1.25x)" stroke="#f43f5e" strokeDasharray="5 5" strokeWidth={2} dot={false} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Right Chart: Driver impact on DSCR */}
+              <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col h-[380px] bg-surface/50">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-widest">Tornado · Impacto de Drivers sobre el DSCR (±10%)</h4>
+                  <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-bold font-mono rounded">
+                    Driver Crítico: {sensitivityAnalysis.dscrTornado[0]?.fullName?.split('-')[0]?.trim() || 'Precio'}
+                  </span>
+                </div>
+                <div className="flex-1 w-full relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart layout="vertical" data={sensitivityAnalysis.dscrTornado} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={true} horizontal={false} />
+                      <XAxis type="number" stroke="#94a3b8" className="text-[10px] font-mono" domain={[0, 'auto']} />
+                      <YAxis type="category" dataKey="labelName" stroke="#94a3b8" className="text-[10px] font-mono" width={100} tickLine={false} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }}
+                        formatter={(value: any, name: any) => {
+                          const val = parseFloat(value);
+                          return [`${val}x`, name === 'low' ? 'Impacto Adverso (-10%)' : 'Impacto Favorable (+10%)'];
+                        }}
+                      />
+                      <ReferenceLine x={sensitivityAnalysis.dscrBase} stroke="#ffffff" strokeOpacity={0.2} strokeDasharray="3 3" />
+                      <Bar dataKey="low" fill="#f43f5e" radius={[4, 0, 0, 4]} stackId="stack" name="Impacto Adverso" />
+                      <Bar dataKey="high" fill="#4ade80" radius={[0, 4, 4, 0]} stackId="stack" name="Impacto Favorable" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* Scenario compliance cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-4">
+              {/* Covenant Min Box */}
+              <div className="glass-card rounded-2xl p-6 border border-white/10 bg-[#0f172a]/20 flex flex-col items-center justify-center text-center">
+                <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider block mb-2">Covenant mínimo</span>
+                <span className="text-3xl font-display font-bold text-white">1,25x</span>
+                <div className="w-full border-t border-dashed border-white/10 mt-3 pt-3 text-[10px] text-on-surface-variant font-mono">
+                  Umbral de Cumplimiento
+                </div>
+              </div>
+
+              {/* Base scenario compliance */}
+              <div className="glass-card rounded-2xl p-6 border border-[#4ade80]/20 bg-[#4ade80]/5 flex flex-col items-center justify-center text-center">
+                <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider block mb-2">Escenario Base</span>
+                <span className="text-3xl font-display font-bold text-[#4ade80]">{sensitivityAnalysis.dscrBase.toFixed(2)}x</span>
+                <div className={`mt-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${sensitivityAnalysis.dscrBase >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-red-500/10 text-red-400'}`}>
+                  {sensitivityAnalysis.dscrBase >= 1.25 ? '✓ CUMPLE' : '✗ NO CUMPLE'}
+                </div>
+              </div>
+
+              {/* Optimistic scenario compliance */}
+              <div className="glass-card rounded-2xl p-6 border border-[#4ade80]/20 bg-[#4ade80]/5 flex flex-col items-center justify-center text-center">
+                <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider block mb-2">Escenario Optimista</span>
+                <span className="text-3xl font-display font-bold text-[#4ade80]">{sensitivityAnalysis.dscrOptimistic.toFixed(2)}x</span>
+                <div className={`mt-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${sensitivityAnalysis.dscrOptimistic >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-red-500/10 text-red-400'}`}>
+                  {sensitivityAnalysis.dscrOptimistic >= 1.25 ? '✓ CUMPLE' : '✗ NO CUMPLE'}
+                </div>
+              </div>
+
+              {/* Pessimistic scenario compliance */}
+              <div className="glass-card rounded-2xl p-6 border border-red-500/20 bg-red-500/5 flex flex-col items-center justify-center text-center">
+                <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider block mb-2">Escenario Pesimista</span>
+                <span className="text-3xl font-display font-bold text-red-400">{sensitivityAnalysis.dscrPessimistic.toFixed(2)}x</span>
+                <div className={`mt-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${sensitivityAnalysis.dscrPessimistic >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-red-500/10 text-red-400'}`}>
+                  {sensitivityAnalysis.dscrPessimistic >= 1.25 ? '✓ CUMPLE' : '✗ NO CUMPLE'}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom text statements */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-white/5">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-full bg-[#4ade80]/10 flex items-center justify-center shrink-0 border border-[#4ade80]/20">
+                  <ShieldCheck className="text-[#4ade80]" size={22} />
+                </div>
+                <p className="text-xs text-white/80 leading-relaxed font-mono">
+                  El caso base cumple el covenant con un colchón del <span className="text-[#4ade80] font-bold">{sensitivityAnalysis.cushion.toFixed(1)}%</span>.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0 border border-orange-500/20">
+                  <TrendingDown className="text-orange-400" size={22} />
+                </div>
+                <p className="text-xs text-white/80 leading-relaxed font-mono">
+                  Una caída del <span className="text-orange-400 font-bold">{Math.abs(sensitivityAnalysis.ruptureVar).toFixed(1)}%</span> en los ingresos llevaría al punto de ruptura.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-full bg-[#ffcc29]/10 flex items-center justify-center shrink-0 border border-[#ffcc29]/20">
+                  <Layers className="text-[#ffcc29]" size={22} />
+                </div>
+                <p className="text-xs text-white/80 leading-relaxed font-mono">
+                  El recurso <span className="text-[#ffcc29] font-bold">{sensitivityAnalysis.dscrTornado[0]?.fullName?.split('-')[0]?.trim() || 'principal'}</span> es el driver que más mueve el DSCR.
+                </p>
+              </div>
+            </div>
           </div>
 
         </div>
