@@ -485,8 +485,43 @@ export function calculateProjections({
       netoPago: parseFloat(((mSimIng - mSimGasPago) / 1e6).toFixed(1)),
       acumuladoComp: parseFloat((accumComp / 1e6).toFixed(1)),
       acumuladoPago: parseFloat((accumPago / 1e6).toFixed(1)),
-      ejecucion: parseFloat(execPct.toFixed(2))
     });
+  }
+
+  // Enforce the business rule: total payments cannot be lower than total commitments by more than $20,000M
+  const maxDifference = 20000 * 1e6; // $20,000M in absolute pesos
+  if (totalSimGasComp - totalSimGasPago > maxDifference) {
+    const shortfall = (totalSimGasComp - totalSimGasPago) - maxDifference;
+    
+    // Sum simulated payments for months 6 to 11 (second semester)
+    let secondSemesterPagoSum = 0;
+    for (let i = 6; i < 12; i++) {
+      secondSemesterPagoSum += simulatedFlow[i].gastosPago * 1e6;
+    }
+    
+    if (secondSemesterPagoSum > 0) {
+      const factor = (secondSemesterPagoSum + shortfall) / secondSemesterPagoSum;
+      for (let i = 6; i < 12; i++) {
+        simulatedFlow[i].gastosPago = parseFloat((simulatedFlow[i].gastosPago * factor).toFixed(1));
+        // Recompute net and execution
+        const ing = simulatedFlow[i].ingresos;
+        const comp = simulatedFlow[i].gastosComp;
+        const pago = simulatedFlow[i].gastosPago;
+        simulatedFlow[i].netoPago = parseFloat((ing - pago).toFixed(1));
+      }
+      
+      // Update totalSimGasPago
+      totalSimGasPago += shortfall;
+      
+      // Re-calculate running accumulated values
+      let runningAccumPago = 0;
+      for (let i = 0; i < 12; i++) {
+        const ing = simulatedFlow[i].ingresos;
+        const pago = simulatedFlow[i].gastosPago;
+        runningAccumPago += (ing - pago);
+        simulatedFlow[i].acumuladoPago = parseFloat(runningAccumPago.toFixed(1));
+      }
+    }
   }
 
   // 6. Category breakdown aligned with capped outputs
@@ -554,6 +589,18 @@ export function calculateProjections({
       catComp.inversion += compVal; catPago.inversion += pagoVal;
     }
   });
+
+  // Align catPago breakdown to the adjusted totalSimGasPago if shortfall adjustment happened
+  const sumCatPago = Object.values(catPago).reduce((a,b)=>a+b, 0);
+  if (sumCatPago > 0 && Math.abs(sumCatPago - totalSimGasPago) > 1e-3) {
+    const catPagoFactor = totalSimGasPago / sumCatPago;
+    catPago.personal *= catPagoFactor;
+    catPago.funcionamiento *= catPagoFactor;
+    catPago.transferencias *= catPagoFactor;
+    catPago.tasas *= catPagoFactor;
+    catPago.deuda *= catPagoFactor;
+    catPago.inversion *= catPagoFactor;
+  }
 
   const simulatedTotalsComp = Object.values(catComp).reduce((a,b)=>a+b, 0) / 1e6;
   const simulatedTotalsPago = Object.values(catPago).reduce((a,b)=>a+b, 0) / 1e6;
