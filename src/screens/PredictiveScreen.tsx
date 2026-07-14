@@ -343,9 +343,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   <th className="p-4 font-bold border-b border-white/10 text-right">Ingresos</th>
                   <th className="p-4 font-bold border-b border-white/10 text-right">Compromisos</th>
                   <th className="p-4 font-bold border-b border-white/10 text-right">Pagos</th>
-                  <th className="p-4 font-bold border-b border-white/10 text-right">Resultado Neto (Pago)</th>
-                  <th className="p-4 font-bold border-b border-white/10 text-right">Saldo Acumulado</th>
-                  <th className="p-4 font-bold border-b border-white/10 text-right">Ejecución YoY</th>
+                  <th className="p-4 font-bold border-b border-white/10 text-right">Ejecución</th>
                 </tr>
               </thead>
               <tbody>
@@ -355,10 +353,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     <td className="p-4 text-right text-[#4ade80]">${row.ingresos.toLocaleString('es-CO', {minimumFractionDigits: 1})}M</td>
                     <td className="p-4 text-right text-[#f43f5e]">${row.gastosComp.toLocaleString('es-CO', {minimumFractionDigits: 1})}M</td>
                     <td className="p-4 text-right text-[#ffcc29]">${row.gastosPago.toLocaleString('es-CO', {minimumFractionDigits: 1})}M</td>
-                    <td className={`p-4 text-right font-bold ${row.netoPago >= 0 ? 'text-[#4ade80]' : 'text-red-400'}`}>
-                      ${row.netoPago.toLocaleString('es-CO', {minimumFractionDigits: 1})}M
-                    </td>
-                    <td className="p-4 text-right text-[#7bd0ff]">${row.acumuladoPago.toLocaleString('es-CO', {minimumFractionDigits: 1})}M</td>
                     <td className="p-4 text-right font-bold text-white/80">{row.ejecucion.toFixed(2)}%</td>
                   </tr>
                 ))}

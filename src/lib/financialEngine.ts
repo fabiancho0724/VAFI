@@ -387,7 +387,7 @@ export function calculateProjections({
     accumComp += (mSimIng - mSimGasComp);
     accumPago += (mSimIng - mSimGasPago);
 
-    const execPct = mSimGasComp > 0 ? (mSimGasPago / mSimGasComp) / (mSimIng || 1) * 100 : 0;
+    const execPct = mSimIng > 0 ? (mSimGasComp / mSimIng) * 100 : 0;
 
     simulatedFlow.push({
       name: MONTHS_STR[i],
@@ -531,7 +531,7 @@ export function aggregateFlow(monthlyFlow: CashFlowItem[], granularity: 'monthly
     }
 
     if (isEnd) {
-      const execPct = compSum > 0 ? (pagoSum / compSum) / (ingSum || 1) * 100 : 0;
+      const execPct = ingSum > 0 ? (compSum / ingSum) * 100 : 0;
       aggregated.push({
         name: currentGroup,
         ingresos: parseFloat(ingSum.toFixed(1)),

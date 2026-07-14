@@ -46,7 +46,7 @@ export const budgetData: BudgetItem[] = [
   { year: 2025, category: 'Nómina', resourceCode: '32', description: 'Extension', amount: 16635582, source: 'Recursos Propios' },
   { year: 2025, category: 'Nómina', resourceCode: '33', description: 'Convenios con derechos', amount: 2771135861, source: 'Recursos Propios' },
   { year: 2025, category: 'Nómina', resourceCode: '35', description: 'Educacion continuada', amount: 239026834, source: 'Recursos Propios' },
-  { year: 2026, category: 'Nómina', resourceCode: '10.0', description: 'Aportes Nacion - Funcionamiento', amount: 301099000000, source: 'Recursos Nación' },
+  { year: 2026, category: 'Nómina', resourceCode: '10.0', description: 'Aportes Nacion - Funcionamiento', amount: 301082531622, source: 'Recursos Nación' },
   { year: 2026, category: 'Nómina', resourceCode: '10.5', description: 'Aportes Nación - Política de gratuidad', amount: 20708427143, source: 'Recursos Nación' },
   { year: 2026, category: 'Nómina', resourceCode: '13', description: 'Cooperativas', amount: 1330468203, source: 'Recursos Nación' },
   { year: 2026, category: 'Nómina', resourceCode: '14', description: 'Matriculas FSE', amount: 18737327483, source: 'Recursos Nación' },
