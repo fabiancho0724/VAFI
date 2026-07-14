@@ -1442,7 +1442,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={sensitivityAnalysis.monteCarlo.bins}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="range" stroke="#94a3b8" className="text-[9px] font-mono" interval={0} />
+                      <XAxis 
+                        dataKey="range" 
+                        stroke="#94a3b8" 
+                        className="text-[9px] font-mono" 
+                        interval={0} 
+                        angle={-30} 
+                        textAnchor="end" 
+                        height={60} 
+                      />
                       <YAxis stroke="#94a3b8" className="text-[9px] font-mono" />
                       <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
                       <Bar dataKey="Frecuencia" fill="#c084fc" radius={[4, 4, 0, 0]} />
