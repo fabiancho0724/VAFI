@@ -898,7 +898,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* AI Recommendation Modal */}
       {selectedAiResource && (
