@@ -3,7 +3,7 @@ import { Layout } from './components/Layout';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { PredictiveScreen } from './screens/PredictiveScreen';
 import { HistoricalScreen } from './screens/HistoricalScreen';
-import { BudgetScreen } from './screens/BudgetScreen';
+import { ProgramCostingScreen } from './screens/ProgramCostingScreen';
 import { CalendarScreen } from './screens/CalendarScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { RepositoryScreen } from './screens/RepositoryScreen';
@@ -30,7 +30,7 @@ export default function App() {
       {currentScreen === 'dashboard' && <DashboardScreen onNavigate={handleNavigate} />}
       {currentScreen === 'predictive' && <PredictiveScreen onNavigate={handleNavigate} />}
       {currentScreen === 'historical' && <HistoricalScreen onNavigate={handleNavigate} />}
-      {currentScreen === 'budget' && <BudgetScreen onNavigate={handleNavigate} />}
+      {currentScreen === 'budget' && <ProgramCostingScreen onNavigate={handleNavigate} />}
       {currentScreen === 'calendar' && <CalendarScreen onNavigate={handleNavigate} />}
       {currentScreen === 'settings' && <SettingsScreen onNavigate={handleNavigate} />}
       {currentScreen === 'repository' && <RepositoryScreen onNavigate={handleNavigate} />}

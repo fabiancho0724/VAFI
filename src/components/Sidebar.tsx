@@ -47,7 +47,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
          screen === 'nomina' ? 'Nómina' :
          screen === 'posgrados' ? 'Posgrados' :
          screen === 'predictive' ? 'Proyección Financiera' :
-         screen === 'budget' ? 'Alertas' :
+         screen === 'budget' ? 'Costeo de Programa' :
          screen === 'reports' ? 'Reportes' :
          screen === 'repository' ? 'Repositorio' :
          screen === 'assistant' ? 'Asistente IA' :
