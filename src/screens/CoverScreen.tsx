@@ -221,11 +221,18 @@ export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void })
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
              {MODULES.map((mod) => (
-               <div 
-                 key={mod.id}
-                 onClick={() => onNavigate(mod.id)}
-                 className="group relative glass-card p-5 cursor-pointer overflow-hidden transition-all duration-300 hover:bg-white/5 hover:border-[#ffcc29]/30 hover:-translate-y-1.5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
-               >
+                <div 
+                  key={mod.id}
+                  onClick={() => {
+                    if (mod.id === 'multiyear') {
+                      localStorage.setItem('vafi_activePredictiveTab', 'multiyear');
+                      onNavigate('predictive');
+                    } else {
+                      onNavigate(mod.id);
+                    }
+                  }}
+                  className="group relative glass-card p-5 cursor-pointer overflow-hidden transition-all duration-300 hover:bg-white/5 hover:border-[#ffcc29]/30 hover:-translate-y-1.5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
+                >
                   {/* Hover Left Stripe */}
                   <div className="absolute top-0 left-0 w-[2px] h-0 bg-[#ffcc29] transition-all duration-300 group-hover:h-full"></div>
                   

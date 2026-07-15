@@ -12,7 +12,6 @@ import { NominaScreen } from './screens/NominaScreen';
 import { PosgradosScreen } from './screens/PosgradosScreen';
 import { CoverScreen } from './screens/CoverScreen';
 import { AssistantScreen } from './screens/AssistantScreen';
-import { MultiYearProjectionScreen } from './screens/MultiYearProjectionScreen';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('cover');
@@ -30,7 +29,6 @@ export default function App() {
     <Layout currentScreen={currentScreen} onNavigate={handleNavigate}>
       {currentScreen === 'dashboard' && <DashboardScreen onNavigate={handleNavigate} />}
       {currentScreen === 'predictive' && <PredictiveScreen onNavigate={handleNavigate} />}
-      {currentScreen === 'multiyear' && <MultiYearProjectionScreen onNavigate={handleNavigate} />}
       {currentScreen === 'historical' && <HistoricalScreen onNavigate={handleNavigate} />}
       {currentScreen === 'budget' && <BudgetScreen onNavigate={handleNavigate} />}
       {currentScreen === 'calendar' && <CalendarScreen onNavigate={handleNavigate} />}

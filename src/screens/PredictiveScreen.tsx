@@ -14,6 +14,7 @@ import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateProjections, aggregateFlow, CashFlowItem, ProjectionResults } from '../lib/financialEngine';
 import { RESOURCES_LIST, getResourceFullName, getRecursoEquivalence, getRowResourceCode } from '../lib/resourceMapper';
 import rawHistoricalGastos from '../data/historicalGastos.json';
+import { MultiYearProjectionScreen } from './MultiYearProjectionScreen';
 
 // NPV Helper (monthly discount rate)
 function calculateNPV(flows: number[], discountRateAnnual: number) {
@@ -58,7 +59,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [expandedGastoCardGroup, setExpandedGastoCardGroup] = useState<string | null>(null);
   
   // Tabs
-  const [activeTab, setActiveTab] = useState<'kpi' | 'flow' | 'equilibrium' | 'simulator' | 'sensitivity'>('kpi');
+  const [activeTab, setActiveTab] = useState<'kpi' | 'flow' | 'equilibrium' | 'simulator' | 'sensitivity' | 'multiyear'>(() => {
+    return (localStorage.getItem('vafi_activePredictiveTab') as any) || 'kpi';
+  });
+
+  useEffect(() => {
+    localStorage.removeItem('vafi_activePredictiveTab');
+  }, []);
 
   // Sensitivity analysis settings
   const [sensResource, setSensResource] = useState<string>(RESOURCES_LIST[0] || '10.0');
@@ -915,7 +922,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           { id: 'flow', label: 'Flujo de Caja', icon: Table },
           { id: 'equilibrium', label: 'Punto de Equilibrio', icon: Compass },
           { id: 'simulator', label: 'Simulador Escenarios', icon: RefreshCw },
-          { id: 'sensitivity', label: 'Sensibilidad y Elasticidad', icon: TrendingUp }
+          { id: 'sensitivity', label: 'Sensibilidad y Elasticidad', icon: TrendingUp },
+          { id: 'multiyear', label: 'Proyección Multivigencia', icon: Layers }
         ].map(t => (
           <button
             key={t.id}
@@ -2652,6 +2660,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             })()}
           </div>
         </div>
+      )}
+
+      {activeTab === 'multiyear' && (
+        <MultiYearProjectionScreen onNavigate={onNavigate} />
       )}
     </div>
   );
