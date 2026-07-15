@@ -10,7 +10,8 @@ import {
   FolderOpen,
   Users,
   GraduationCap,
-  Bot
+  Bot,
+  Layers
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -46,8 +47,9 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
          screen === 'historical' ? 'Histórico' :
          screen === 'nomina' ? 'Nómina' :
          screen === 'posgrados' ? 'Posgrados' :
-         screen === 'budget' ? 'Alertas' :
          screen === 'predictive' ? 'Proyección Financiera' :
+         screen === 'multiyear' ? 'Multivigencia' :
+         screen === 'budget' ? 'Alertas' :
          screen === 'reports' ? 'Reportes' :
          screen === 'repository' ? 'Repositorio' :
          screen === 'assistant' ? 'Asistente IA' :
@@ -85,6 +87,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
         <IconWrapper icon={Users} screen="nomina" />
         <IconWrapper icon={GraduationCap} screen="posgrados" />
         <IconWrapper icon={BarChart3} screen="predictive" />
+        <IconWrapper icon={Layers} screen="multiyear" />
         <IconWrapper icon={Wallet} screen="budget" />
         <IconWrapper icon={FileText} screen="reports" />
         <IconWrapper icon={FolderOpen} screen="repository" />

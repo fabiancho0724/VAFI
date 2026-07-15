@@ -81,27 +81,59 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   // Slider State (Julio-Diciembre Variations)
   const [simIngByResource, setSimIngByResource] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_simIngByResource');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
     const init: Record<string, number> = {};
     RESOURCES_LIST.forEach(r => { init[r] = 0; });
     return init;
   });
 
   const [simGasByResource, setSimGasByResource] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_simGasByResource');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
     const init: Record<string, number> = {};
     RESOURCES_LIST.forEach(r => { init[r] = 0; });
     return init;
   });
 
-  const [simGasByType, setSimGasByType] = useState<Record<string, number>>({
-    "Personal": 0,
-    "Funcionamiento": 0,
-    "Transferencias": 0,
-    "Tasas": 0,
-    "Deuda": 0,
-    "Inversion": 0
+  const [simGasByType, setSimGasByType] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_simGasByType');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      "Personal": 0,
+      "Funcionamiento": 0,
+      "Transferencias": 0,
+      "Tasas": 0,
+      "Deuda": 0,
+      "Inversion": 0
+    };
   });
 
-  const [expenseAdjustMode, setExpenseAdjustMode] = useState<'resource' | 'category'>('resource');
+  const [expenseAdjustMode, setExpenseAdjustMode] = useState<'resource' | 'category'>(() => {
+    return (localStorage.getItem('vafi_expenseAdjustMode') as any) || 'resource';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('vafi_simIngByResource', JSON.stringify(simIngByResource));
+  }, [simIngByResource]);
+
+  useEffect(() => {
+    localStorage.setItem('vafi_simGasByResource', JSON.stringify(simGasByResource));
+  }, [simGasByResource]);
+
+  useEffect(() => {
+    localStorage.setItem('vafi_simGasByType', JSON.stringify(simGasByType));
+  }, [simGasByType]);
+
+  useEffect(() => {
+    localStorage.setItem('vafi_expenseAdjustMode', expenseAdjustMode);
+  }, [expenseAdjustMode]);
 
   // Fetch Incomes (2023-2026)
   useEffect(() => {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   BarChart3, LineChart, Wallet, Users, FileText, 
   Settings, FolderOpen, ArrowRight, GraduationCap, Bot,
-  TrendingUp, Activity, CheckCircle, Database, HelpCircle, Shield, Sparkles
+  TrendingUp, Activity, CheckCircle, Database, HelpCircle, Shield, Sparkles, Layers
 } from 'lucide-react';
 
 const MODULES = [
@@ -11,6 +11,7 @@ const MODULES = [
   { id: 'nomina', icon: Users, title: 'Nómina', desc: 'Análisis de personal, salarios y prestaciones.' },
   { id: 'posgrados', icon: GraduationCap, title: 'Posgrados', desc: 'Matrículas, flexibilización y programas.' },
   { id: 'predictive', icon: BarChart3, title: 'Proyección Financiera', desc: 'Simulador, flujo de caja y escenarios futuros.' },
+  { id: 'multiyear', icon: Layers, title: 'Proyección Multivigencia', desc: 'Simulación presupuestal de mediano y largo plazo (1 a 20 años) con indexadores IPC/ICES.' },
   { id: 'budget', icon: Wallet, title: 'Alertas', desc: 'Control de ejecución presupuestal y anomalías.' },
   { id: 'reports', icon: FileText, title: 'Reportes', desc: 'Informes detallados listos para exportar.' },
   { id: 'repository', icon: FolderOpen, title: 'Repositorio', desc: 'Archivos y documentos financieros.' },
