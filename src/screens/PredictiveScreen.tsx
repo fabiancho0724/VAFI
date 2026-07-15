@@ -53,12 +53,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [selectedAiExpenseResource, setSelectedAiExpenseResource] = useState<string | null>(null);
   const [selectedAiExpenseCategory, setSelectedAiExpenseCategory] = useState<string | null>(null);
   const [showSaveSuccess, setShowSaveSuccess] = useState<boolean>(false);
-  const [incomeAnalysisFilter, setIncomeAnalysisFilter] = useState<'Todos' | 'Recursos UPTC' | 'Recursos del Balance'>('Todos');
+  const incomeAnalysisFilter = 'Todos';
   const [expandedIngresoGroup, setExpandedIngresoGroup] = useState<string | null>(null);
   const [expandedGastoCardGroup, setExpandedGastoCardGroup] = useState<string | null>(null);
   
   // Tabs
-  const [activeTab, setActiveTab] = useState<'kpi' | 'flow' | 'equilibrium' | 'simulator' | 'expenses' | 'sensitivity'>('kpi');
+  const [activeTab, setActiveTab] = useState<'kpi' | 'flow' | 'equilibrium' | 'simulator' | 'sensitivity'>('kpi');
 
   // Sensitivity analysis settings
   const [sensResource, setSensResource] = useState<string>(RESOURCES_LIST[0] || '10.0');
@@ -883,7 +883,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           { id: 'flow', label: 'Flujo de Caja', icon: Table },
           { id: 'equilibrium', label: 'Punto de Equilibrio', icon: Compass },
           { id: 'simulator', label: 'Simulador Escenarios', icon: RefreshCw },
-          { id: 'expenses', label: 'Análisis de Gastos', icon: PieChartIcon },
           { id: 'sensitivity', label: 'Sensibilidad y Elasticidad', icon: TrendingUp }
         ].map(t => (
           <button
@@ -1070,22 +1069,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           </div>
 
           {/* Análisis de Ingresos */}
-          <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="mt-8 flex items-center justify-between gap-4">
             <h3 className="text-xl font-display text-white flex items-center gap-2 font-medium">
               <Wallet className="text-[#ffcc29]" size={22} />
               Análisis de Ingresos Proyectados
             </h3>
-            <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
-              {(['Todos', 'Recursos UPTC', 'Recursos del Balance'] as const).map(f => (
-                <button
-                  key={f}
-                  onClick={() => setIncomeAnalysisFilter(f)}
-                  className={`px-3 py-1 text-xs font-mono rounded-md transition-colors ${incomeAnalysisFilter === f ? 'bg-[#ffcc29] text-black font-bold' : 'text-on-surface-variant hover:text-white'}`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -1356,41 +1344,73 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {activeTab === 'equilibrium' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
-          {/* Speedometer card */}
-          <div className="glass-card rounded-[32px] p-8 border border-white/10 flex flex-col items-center justify-center glow-primary min-h-[400px]">
-            <h3 className="text-xl font-display font-medium text-white mb-6 text-center">Cobertura Presupuestal</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in duration-300">
+          {/* Speedometers card */}
+          <div className="glass-card rounded-[32px] p-8 border border-white/10 flex flex-col items-center justify-center glow-primary min-h-[400px] lg:col-span-2">
+            <h3 className="text-xl font-display font-medium text-white mb-8 text-center">Ejecución Presupuestal y Cobertura</h3>
             
             {(() => {
-              const coverage = (financialData.totals.simIng / financialData.totals.simGasPago) * 100 || 0;
-              const angle = Math.min(180, (coverage / 150) * 180); // Gauge 0 to 150%
+              const compromisoExec = (financialData.totals.simGasComp / financialData.totals.simIng) * 100 || 0;
+              const pagoExec = (financialData.totals.simGasPago / financialData.totals.simIng) * 100 || 0;
+              
               return (
-                <div className="relative w-64 h-36 flex flex-col items-center justify-end overflow-hidden">
-                  <svg className="w-full h-full">
-                    {/* Background gauge */}
-                    <path d="M 12 144 A 116 116 0 0 1 244 144" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="22" strokeLinecap="round" />
-                    {/* Active gauge */}
-                    <path 
-                      d="M 12 144 A 116 116 0 0 1 244 144" 
-                      fill="none" 
-                      stroke={coverage >= 100 ? "#4ade80" : "#ffcc29"} 
-                      strokeWidth="22" 
-                      strokeLinecap="round"
-                      strokeDasharray="364"
-                      strokeDashoffset={364 - (364 * Math.min(100, coverage)) / 100}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-end pb-3">
-                    <span className="text-4xl font-display font-bold text-white">{coverage.toFixed(1)}%</span>
-                    <span className="text-xs text-on-surface-variant mt-1 uppercase font-mono tracking-widest">Saldo Cobertura</span>
+                <div className="flex flex-col md:flex-row items-center justify-around gap-8 w-full">
+                  {/* Gauge 1: Compromiso */}
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="relative w-56 h-28 flex flex-col items-center justify-end overflow-hidden">
+                      <svg className="w-full h-full">
+                        {/* Background gauge */}
+                        <path d="M 12 100 A 82 82 0 0 1 200 100" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="18" strokeLinecap="round" />
+                        {/* Active gauge */}
+                        <path 
+                          d="M 12 100 A 82 82 0 0 1 200 100" 
+                          fill="none" 
+                          stroke="#f43f5e" 
+                          strokeWidth="18" 
+                          strokeLinecap="round"
+                          strokeDasharray="258"
+                          strokeDashoffset={258 - (258 * Math.min(100, compromisoExec)) / 100}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-end pb-1">
+                        <span className="text-3xl font-display font-bold text-white">{compromisoExec.toFixed(1)}%</span>
+                        <span className="text-[10px] text-on-surface-variant mt-0.5 uppercase font-mono tracking-wider">Ejecución Compromiso</span>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-on-surface-variant text-center max-w-[220px] leading-relaxed">
+                      Proporción de compromisos adquiridos frente al recaudo total proyectado.
+                    </p>
+                  </div>
+
+                  {/* Gauge 2: Pago Efectivo */}
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="relative w-56 h-28 flex flex-col items-center justify-end overflow-hidden">
+                      <svg className="w-full h-full">
+                        {/* Background gauge */}
+                        <path d="M 12 100 A 82 82 0 0 1 200 100" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="18" strokeLinecap="round" />
+                        {/* Active gauge */}
+                        <path 
+                          d="M 12 100 A 82 82 0 0 1 200 100" 
+                          fill="none" 
+                          stroke="#ffcc29" 
+                          strokeWidth="18" 
+                          strokeLinecap="round"
+                          strokeDasharray="258"
+                          strokeDashoffset={258 - (258 * Math.min(100, pagoExec)) / 100}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-end pb-1">
+                        <span className="text-3xl font-display font-bold text-white">{pagoExec.toFixed(1)}%</span>
+                        <span className="text-[10px] text-on-surface-variant mt-0.5 uppercase font-mono tracking-wider">Ejecución Pago</span>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-on-surface-variant text-center max-w-[220px] leading-relaxed">
+                      Proporción de pagos reales realizados frente al recaudo total proyectado.
+                    </p>
                   </div>
                 </div>
               );
             })()}
-
-            <p className="text-xs text-on-surface-variant text-center mt-6 max-w-sm">
-              Muestra el porcentaje de cobertura de egresos pagados frente a los ingresos recaudados simulación. Un valor superior a **100%** indica superávit de caja.
-            </p>
           </div>
 
           {/* Margen de equilibrio card */}
@@ -1813,88 +1833,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         </div>
       )}
 
-      {activeTab === 'expenses' && (
-        <div className="space-y-8 animate-in fade-in duration-300">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Donut Chart */}
-            <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col items-center justify-center glow-primary min-h-[400px]">
-              <h3 className="text-xl font-display font-medium text-white mb-6">Distribución de Gastos por Rubro</h3>
-              <div className="w-full h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={expensesBreakdown[viewDimension] || []}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={65}
-                      outerRadius={95}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {(expensesBreakdown[viewDimension] || []).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              
-              {/* Legend */}
-              <div className="grid grid-cols-2 gap-4 mt-6 text-xs w-full max-w-md font-mono">
-                {(expensesBreakdown[viewDimension] || []).map((entry, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
-                    <span className="text-white/80 truncate" title={entry.name}>{entry.name.substring(0, 24)}...</span>
-                    <span className="text-[#ffcc29] font-bold ml-auto">${entry.value.toFixed(1)}M</span>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Matrix table */}
-            <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-display font-medium text-white">Matriz Rubros vs. Recursos</h3>
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-1 flex gap-1 text-[10px] font-bold uppercase">
-                    <button 
-                      onClick={() => setViewDimension('compromiso')}
-                      className={`px-3 py-1 rounded-lg ${viewDimension === 'compromiso' ? 'bg-[#ffcc29] text-black' : 'text-white/60'}`}
-                    >
-                      Compromiso
-                    </button>
-                    <button 
-                      onClick={() => setViewDimension('pago')}
-                      className={`px-3 py-1 rounded-lg ${viewDimension === 'pago' ? 'bg-[#ffcc29] text-black' : 'text-white/60'}`}
-                    >
-                      Pago
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                  {(expensesBreakdown[viewDimension] || []).map((row, idx) => {
-                    const totalVal = (expensesBreakdown[viewDimension] || []).reduce((acc: number, item: any) => acc + (item.value || 0), 0);
-                    const pct = totalVal > 0 ? (row.value / totalVal) * 100 : 0;
-                    return (
-                      <div key={idx} className="space-y-1">
-                        <div className="flex justify-between text-xs font-mono">
-                          <span className="text-white/80 font-bold">{row.name}</span>
-                          <span className="text-white font-bold">${row.value.toLocaleString('es-CO', {maximumFractionDigits:1})}M ({pct.toFixed(1)}%)</span>
-                        </div>
-                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
 
       {activeTab === 'sensitivity' && (
         <div className="space-y-8 animate-in fade-in duration-300">
