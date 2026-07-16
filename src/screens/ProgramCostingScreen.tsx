@@ -206,6 +206,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
   const [activeSubTab, setActiveSubTab] = useState<'simulator' | 'pensum' | 'staff' | 'report' | 'assistant'>('simulator');
   const [newScenarioName, setNewScenarioName] = useState<string>("");
+  const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
 
   // AI Assistant state
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'bot'; text: string }[]>([
@@ -689,6 +690,33 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
       setChatMessages(prev => [...prev, { sender: 'bot' as const, text: replyText }]);
     }, 450);
+  };
+
+  const handleExportCSV = () => {
+    let csv = "\uFEFFConcepto;Valor de Simulación\n";
+    csv += `Facultad;${facultad}\n`;
+    csv += `Programa;${programa}\n`;
+    csv += `Año de Inicio;${anioInicio}\n`;
+    csv += `Estudiantes Mínimos por Cohorte;${minStudents}\n`;
+    csv += `Nivel Académico;${level.toUpperCase()}\n`;
+    csv += `Modalidad;${modality.toUpperCase()}\n`;
+    csv += `Tasa Deserción;${attritionPct}%\n`;
+    csv += `Costo Inscripción UPTC (20% Especialización);$${Math.round(valorInscripcion).toLocaleString()} COP\n`;
+    csv += `Créditos Totales del Pensum;${aggregatedTotals.programTotalCredits} cr.\n`;
+    csv += `Total Estudiantes Nuevos;${aggregatedTotals.totalActiveNewStudents}\n`;
+    csv += `Total Ingresos Proyectados (COP);${aggregatedTotals.totalFunctioningIncome}\n`;
+    csv += `Total Costos Proyectados (COP);${aggregatedTotals.totalExpenses}\n`;
+    csv += `Utilidad/Déficit Neto (COP);${aggregatedTotals.totalBalance}\n`;
+    csv += `Punto de Equilibrio en Créditos;${aggregatedTotals.breakEvenCredits} cr.\n`;
+    csv += `Punto de Equilibrio en Estudiantes;${aggregatedTotals.breakEvenStudents} estudiantes\n`;
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `Reporte_Costeo_${programa.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -1582,8 +1610,8 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
             
             <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5">
               <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4">Ingresos vs Costos de Operación (M COP)</h4>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height={240}>
+              <div className="h-64" style={{ width: '100%', height: 240, minWidth: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                     <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={9} />
@@ -1603,8 +1631,8 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
             <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5">
               <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4">Distribución del Estatus de Egresos</h4>
               <div className="h-64 flex flex-col justify-between">
-                <div className="h-40 relative flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height={150}>
+                <div className="h-40 relative flex items-center justify-center" style={{ width: '100%', height: 160, minWidth: 200 }}>
+                  <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={expensePieChartData}
