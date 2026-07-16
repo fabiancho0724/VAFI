@@ -6,44 +6,68 @@ import {
 import { 
   Filter, DollarSign, Activity, TrendingUp, RefreshCw, Compass,
   Layers, Wallet, HelpCircle, AlertTriangle, ShieldCheck, ArrowRight, 
-  Download, Search, CheckCircle, Info, Users, GraduationCap, Percent, BookOpen, Settings, Save, Trash2, Printer, Plus
+  Download, Search, CheckCircle, Info, Users, GraduationCap, Percent, BookOpen, Settings, Save, Trash2, Printer, Plus, Bot, Send
 } from 'lucide-react';
+
+// Official UPTC Cost Tables (2025-2029) from the document
+const UPTC_RATES = {
+  // Valor hora cátedra posgrado
+  pos_especializacion: { 2025: 142350, 2026: 150606, 2027: 161149, 2028: 172429, 2029: 184499 },
+  pos_maestria: { 2025: 177938, 2026: 188258, 2027: 201436, 2028: 215536, 2029: 230624 },
+  pos_doctorado: { 2025: 220643, 2026: 233440, 2027: 249781, 2028: 267265, 2029: 285974 },
+  // Valor hora cátedra pregrado (puntos salariales)
+  preg_auxiliar: { 2025: 55894, 2026: 59807, 2027: 63993, 2028: 68473, 2029: 73266 },
+  preg_asistente: { 2025: 61484, 2026: 65787, 2027: 70393, 2028: 75320, 2029: 80592 },
+  preg_asociado: { 2025: 67073, 2026: 71768, 2027: 76792, 2028: 82167, 2029: 87919 },
+  preg_titular: { 2025: 78252, 2026: 83729, 2027: 89590, 2028: 95862, 2029: 102572 },
+  // Valor punto
+  valor_punto: { 2025: 22358, 2026: 23923, 2027: 25597, 2028: 27389, 2029: 29306 },
+  // Administrativo mensual nómina pregrado
+  adm_grado_14: { 2025: 2313840, 2026: 2475808, 2027: 2649115, 2028: 2834553, 2029: 3032972 },
+  adm_grado_16: { 2025: 2491835, 2026: 2666264, 2027: 2852902, 2028: 3052605, 2029: 3266288 },
+  sec_ejec_18: { 2025: 2607573, 2026: 2790103, 2027: 2985410, 2028: 3194389, 2029: 3417996 },
+  sec_ejec_22: { 2025: 3049860, 2026: 3263350, 2027: 3491784, 2028: 3736209, 2029: 3997744 },
+  // Profesional de apoyo posgrado
+  prof_apoyo: { 2025: 3420000, 2026: 3659400, 2027: 3915558, 2028: 4189647, 2029: 4482922 }
+};
+
+type UPTCRateCategory = keyof typeof UPTC_RATES;
 
 interface Asignatura {
   id: string;
   nombre: string;
   creditos: number;
   semestre: number; // 1 to 6
+  teacherCategory: UPTCRateCategory; 
+  teacherHours: number; 
+  numTeachers: number; 
 }
 
 interface SemesterData {
-  semesterLabel: string; // e.g. "2026-1", "2026-2", "2027-1", ...
-  newCohortStudents: number; // initial students entering this semester
-  votacionDiscountCount: number; // students with voter discount (10%)
-  monitoriaDiscountCount: number; // students with monitor discount (70%)
-  honorDiscountCount: number; // students with honor discount (100%)
-  res16DiscountCount: number; // students with Res 16 discount (50%)
-  otherDiscountCount: number; // students with other discount
-  otherDiscountPct: number; // other discount percentage
+  semesterLabel: string;
+  newCohortStudents: number;
+  votacionDiscountCount: number;
+  monitoriaDiscountCount: number;
+  honorDiscountCount: number;
+  res16DiscountCount: number;
+  otherDiscountCount: number;
+  otherDiscountPct: number;
   
   // Other Income
-  aspirantesCount: number; // for application fees
-  graduandosCount: number; // for graduation fees
-  otherRawIncome: number; // other income in COP
+  aspirantesCount: number;
+  graduandosCount: number;
+  otherRawIncome: number;
   
-  // Staff inputs
-  numDocentes: number; // number of teachers
-  horasDocente: number; // hours per teacher
-  coordinatorHours: number; // hours for coordinator
-  supportStaffMonthlyCPS: number; // monthly CPS payment
-  supportStaffMonths: number; // contract months
+  // Staff quantities
+  coordinatorMonths: number;
+  supportStaffMonths: number;
   
-  // Operating inputs (Purchase of goods/services detailed breakdown)
-  goodsMaterials: number; // Materiales y Suministros
-  goodsTravel: number; // Viáticos y Transportes
-  goodsSoftware: number; // Licencias y Software
-  goodsLogistics: number; // Logística y Eventos
-  goodsOther: number; // Otros Servicios
+  // Operating inputs
+  goodsMaterials: number;
+  goodsTravel: number;
+  goodsSoftware: number;
+  goodsLogistics: number;
+  goodsOther: number;
 }
 
 interface SavedScenario {
@@ -52,12 +76,15 @@ interface SavedScenario {
   facultad: string;
   programa: string;
   anioInicio: number;
-  level: 'doctorado' | 'maestria' | 'especializacion';
+  minStudents: number;
+  level: 'doctorado' | 'maestria' | 'especializacion' | 'medico_quirurgica';
   modality: 'presencial' | 'hibrido' | 'virtual';
   attritionPct: number;
   discountPct: number;
   hasCoordinator: boolean;
+  coordinatorCategory: UPTCRateCategory;
   hasSupportStaff: boolean;
+  supportStaffCategory: UPTCRateCategory;
   courses: Asignatura[];
   semesters: SemesterData[];
   
@@ -69,73 +96,87 @@ interface SavedScenario {
   breakEvenStudents: number;
 }
 
+// UPTC Article 21 Academic credit limits ranges configuration
+const CREDIT_RANGES = {
+  especializacion: { min: 24, max: 32, label: "Especialización" },
+  medico_quirurgica: { min: 180, max: 250, label: "Especialidades Médico-Quirúrgicas" },
+  maestria: { min: 40, max: 64, label: "Maestría" },
+  doctorado: { min: 80, max: 150, label: "Doctorado" }
+};
+
+// Helper to retrieve and index rate
+function getUPTCRate(category: UPTCRateCategory, year: number): number {
+  const rates = UPTC_RATES[category];
+  const targetYear = Math.max(2025, Math.min(2029, year));
+  const baseVal = rates[targetYear as keyof typeof rates] || rates[2026 as keyof typeof rates];
+  
+  if (year > 2029) {
+    return baseVal * Math.pow(1 + 0.08, year - 2029); 
+  }
+  return baseVal;
+}
+
 export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   // Program Metadata
   const [facultad, setFacultad] = useState<string>("Facultad de Ciencias Económicas y Administrativas");
   const [programa, setPrograma] = useState<string>("Maestría en Administración de Empresas");
   const [anioInicio, setAnioInicio] = useState<number>(2026);
+  const [minStudents, setMinStudents] = useState<number>(15);
 
   // Config state
-  const [level, setLevel] = useState<'doctorado' | 'maestria' | 'especializacion'>('maestria');
+  const [level, setLevel] = useState<'doctorado' | 'maestria' | 'especializacion' | 'medico_quirurgica'>('maestria');
   const [modality, setModality] = useState<'presencial' | 'hibrido' | 'virtual'>('presencial');
   const [attritionPct, setAttritionPct] = useState<number>(5);
-  const [discountPct, setDiscountPct] = useState<number>(10); // general discount rate (e.g. 10%)
+  const [discountPct, setDiscountPct] = useState<number>(10);
   
-  // Staff switches (optional components)
+  // Staff configuration
   const [hasCoordinator, setHasCoordinator] = useState<boolean>(true);
+  const [coordinatorCategory, setCoordinatorCategory] = useState<UPTCRateCategory>("prof_apoyo");
   const [hasSupportStaff, setHasSupportStaff] = useState<boolean>(true);
+  const [supportStaffCategory, setSupportStaffCategory] = useState<UPTCRateCategory>("adm_grado_14");
 
   // Financial base constants
-  const [baseSMMLV2026, setBaseSMMLV2026] = useState<number>(1537380); // Base wage 2026
-  const [annualWageIncreasePct, setAnnualWageIncreasePct] = useState<number>(8); // 8% annual wage increase
-  const [parafiscalFactor, setParafiscalFactor] = useState<number>(37.03); // 37.03% social security
-  
-  // Hour multipliers based on degree type relative to SMMLV
-  const degreeHourMultipliers = {
-    especializacion: 0.10,
-    maestria: 0.125,
-    doctorado: 0.155
-  };
+  const [parafiscalFactor, setParafiscalFactor] = useState<number>(37.03); 
 
   // Administrator manual override controls
   const [isAdminOverride, setIsAdminOverride] = useState<boolean>(false);
   const [customCreditValue, setCustomCreditValue] = useState<number>(650000);
 
-  // Pensum (Curriculum) Asignaturas state
+  // Malla Curricular (Courses)
+  // Sum of credits: 3+4+4+4+4+3+4+3+3+4+3+3 = 42 credits (Satisfies Maestría Article 21 range 40-64 cr.)
   const [courses, setCourses] = useState<Asignatura[]>([
-    // Semester 1
-    { id: 'c1', nombre: 'Metodología de la Investigación', creditos: 3, semestre: 1 },
-    { id: 'c2', nombre: 'Fundamentos de Administración', creditos: 4, semestre: 1 },
-    // Semester 2
-    { id: 'c3', nombre: 'Gerencia Financiera', creditos: 4, semestre: 2 },
-    { id: 'c4', nombre: 'Mercadeo Estratégico', creditos: 4, semestre: 2 },
-    // Semester 3
-    { id: 'c5', nombre: 'Dirección de Operaciones', creditos: 4, semestre: 3 },
-    { id: 'c6', nombre: 'Gestión del Talento Humano', creditos: 3, semestre: 3 },
-    // Semester 4
-    { id: 'c7', nombre: 'Seminario de Trabajo de Grado', creditos: 4, semestre: 4 },
-    { id: 'c8', nombre: 'Ética Empresarial y Sostenibilidad', creditos: 3, semestre: 4 },
-    // Semester 5
-    { id: 'c9', nombre: 'Electiva de Profundización I', creditos: 4, semestre: 5 },
-    { id: 'c10', nombre: 'Proyecto de Grado', creditos: 4, semestre: 5 },
-    // Semester 6
-    { id: 'c11', nombre: 'Electiva de Profundización II', creditos: 4, semestre: 6 },
-    { id: 'c12', nombre: 'Derecho Laboral y Comercial', creditos: 3, semestre: 6 }
+    // Semestre 1
+    { id: 'c1', nombre: 'Metodología de la Investigación', creditos: 3, semestre: 1, teacherCategory: 'pos_maestria', teacherHours: 45, numTeachers: 1 },
+    { id: 'c2', nombre: 'Fundamentos de Administración', creditos: 4, semestre: 1, teacherCategory: 'pos_maestria', teacherHours: 45, numTeachers: 1 },
+    { id: 'c13', nombre: 'Microeconomía Aplicada', creditos: 4, semestre: 1, teacherCategory: 'pos_maestria', teacherHours: 40, numTeachers: 1 },
+    // Semestre 2
+    { id: 'c3', nombre: 'Gerencia Financiera', creditos: 4, semestre: 2, teacherCategory: 'pos_maestria', teacherHours: 45, numTeachers: 1 },
+    { id: 'c4', nombre: 'Mercadeo Estratégico', creditos: 4, semestre: 2, teacherCategory: 'pos_maestria', teacherHours: 45, numTeachers: 1 },
+    { id: 'c14', nombre: 'Macroeconomía Aplicada', creditos: 3, semestre: 2, teacherCategory: 'pos_maestria', teacherHours: 40, numTeachers: 1 },
+    // Semestre 3
+    { id: 'c5', nombre: 'Dirección de Operaciones', creditos: 4, semestre: 3, teacherCategory: 'pos_maestria', teacherHours: 45, numTeachers: 1 },
+    { id: 'c6', nombre: 'Gestión del Talento Humano', creditos: 3, semestre: 3, teacherCategory: 'pos_especializacion', teacherHours: 45, numTeachers: 1 },
+    { id: 'c15', nombre: 'Electiva de Énfasis I', creditos: 3, semestre: 3, teacherCategory: 'pos_especializacion', teacherHours: 36, numTeachers: 1 },
+    // Semestre 4
+    { id: 'c7', nombre: 'Seminario de Trabajo de Grado', creditos: 4, semestre: 4, teacherCategory: 'pos_doctorado', teacherHours: 45, numTeachers: 1 },
+    { id: 'c8', nombre: 'Ética y Responsabilidad Social', creditos: 3, semestre: 4, teacherCategory: 'preg_titular', teacherHours: 45, numTeachers: 1 },
+    { id: 'c16', nombre: 'Proyecto de Grado', creditos: 3, semestre: 4, teacherCategory: 'pos_doctorado', teacherHours: 36, numTeachers: 1 }
   ]);
 
-  // Temporary state for adding a new course
+  // Temp state for curriculum builder
   const [newCourseName, setNewCourseName] = useState<string>("");
   const [newCourseCredits, setNewCourseCredits] = useState<number>(3);
   const [newCourseSemester, setNewCourseSemester] = useState<number>(1);
+  const [newCourseTeacherCategory, setNewCourseTeacherCategory] = useState<UPTCRateCategory>("pos_maestria");
+  const [newCourseHours, setNewCourseHours] = useState<number>(45);
 
-  // 6 semesters labels definition
   const semestersLabels = ["2026-1", "2026-2", "2027-1", "2027-2", "2028-1", "2028-2"];
 
   // Default semesters state
   const [semesters, setSemesters] = useState<SemesterData[]>(() => {
     return semestersLabels.map((label, idx) => {
-      const isStartSemester = idx === 0 || idx === 2 || idx === 4;
-      const initialSize = isStartSemester ? (idx === 0 ? 22 : idx === 2 ? 18 : 20) : 0;
+      const isStartSemester = idx === 0 || idx === 2;
+      const initialSize = isStartSemester ? (idx === 0 ? 20 : 18) : 0;
       
       return {
         semesterLabel: label,
@@ -146,20 +187,16 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         res16DiscountCount: 0,
         otherDiscountCount: 0,
         otherDiscountPct: 50,
-        aspirantesCount: initialSize > 0 ? Math.ceil(initialSize * 1.5) : 0,
-        graduandosCount: idx === 3 ? 16 : idx === 5 ? 14 : 0,
+        aspirantesCount: initialSize > 0 ? Math.ceil(initialSize * 1.4) : 0,
+        graduandosCount: idx === 3 ? 15 : idx === 5 ? 13 : 0,
         otherRawIncome: 0,
         
-        // Staff inputs
-        numDocentes: 4, 
-        horasDocente: 45, 
-        coordinatorHours: 64, 
-        supportStaffMonthlyCPS: 3659400,
-        supportStaffMonths: 4,
+        coordinatorMonths: 6,
+        supportStaffMonths: 6,
         
         // Operating inputs breakdown
-        goodsMaterials: idx % 2 === 0 ? 4000000 : 3000000,
-        goodsTravel: idx % 2 === 0 ? 2000000 : 1500000,
+        goodsMaterials: idx % 2 === 0 ? 3000000 : 2000000,
+        goodsTravel: idx % 2 === 0 ? 2000000 : 1000000,
         goodsSoftware: idx % 2 === 0 ? 3000000 : 2500000,
         goodsLogistics: idx % 2 === 0 ? 2000000 : 1500000,
         goodsOther: idx % 2 === 0 ? 1000000 : 500000
@@ -167,75 +204,14 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     });
   });
 
-  const [activeSubTab, setActiveSubTab] = useState<'simulator' | 'pensum' | 'staff' | 'report'>('simulator');
+  const [activeSubTab, setActiveSubTab] = useState<'simulator' | 'pensum' | 'staff' | 'report' | 'assistant'>('simulator');
   const [newScenarioName, setNewScenarioName] = useState<string>("");
-  
-  // Preset scenarios list
-  const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([
-    {
-      id: 'scen_1',
-      name: 'Simulación Maestría Esperada (3 Cohortes)',
-      facultad: "Facultad de Ciencias Económicas y Administrativas",
-      programa: "Maestría en Administración de Empresas",
-      anioInicio: 2026,
-      level: 'maestria',
-      modality: 'presencial',
-      attritionPct: 5,
-      discountPct: 10,
-      hasCoordinator: true,
-      hasSupportStaff: true,
-      courses: [
-        { id: 'c1', nombre: 'Metodología de la Investigación', creditos: 3, semestre: 1 },
-        { id: 'c2', nombre: 'Fundamentos de Administración', creditos: 4, semestre: 1 },
-        { id: 'c3', nombre: 'Gerencia Financiera', creditos: 4, semestre: 2 },
-        { id: 'c4', nombre: 'Mercadeo Estratégico', creditos: 4, semestre: 2 },
-        { id: 'c5', nombre: 'Dirección de Operaciones', creditos: 4, semestre: 3 },
-        { id: 'c6', nombre: 'Gestión del Talento Humano', creditos: 3, semestre: 3 },
-        { id: 'c7', nombre: 'Seminario de Trabajo de Grado', creditos: 4, semestre: 4 },
-        { id: 'c8', nombre: 'Ética Empresarial y Sostenibilidad', creditos: 3, semestre: 4 },
-        { id: 'c9', nombre: 'Electiva de Profundización I', creditos: 4, semestre: 5 },
-        { id: 'c10', nombre: 'Proyecto de Grado', creditos: 4, semestre: 5 },
-        { id: 'c11', nombre: 'Electiva de Profundización II', creditos: 4, semestre: 6 },
-        { id: 'c12', nombre: 'Derecho Laboral y Comercial', creditos: 3, semestre: 6 }
-      ],
-      semesters: semestersLabels.map((label, idx) => ({
-        semesterLabel: label,
-        newCohortStudents: idx === 0 ? 20 : idx === 2 ? 18 : idx === 4 ? 20 : 0,
-        votacionDiscountCount: idx === 0 ? 6 : idx === 2 ? 5 : idx === 4 ? 6 : 0,
-        monitoriaDiscountCount: 0,
-        honorDiscountCount: 0,
-        res16DiscountCount: 0,
-        otherDiscountCount: 0,
-        otherDiscountPct: 50,
-        aspirantesCount: idx === 0 ? 30 : idx === 2 ? 25 : idx === 4 ? 30 : 0,
-        graduandosCount: idx === 3 ? 15 : idx === 5 ? 13 : 0,
-        otherRawIncome: 0,
-        numDocentes: 4,
-        horasDocente: 40,
-        coordinatorHours: 64,
-        supportStaffMonthlyCPS: 3659400,
-        supportStaffMonths: 4,
-        goodsMaterials: 3000000,
-        goodsTravel: 2000000,
-        goodsSoftware: 2000000,
-        goodsLogistics: 2000000,
-        goodsOther: 1000000
-      })),
-      totalIncome: 1215456200,
-      totalCosts: 485124000,
-      utility: 730332200,
-      breakEvenCredits: 12,
-      breakEvenStudents: 6
-    }
-  ]);
 
-  // Helper: calculate SMMLV value for a given semester label
-  const getSMMLVForSemester = (label: string): number => {
-    if (label.startsWith("2026")) return baseSMMLV2026;
-    if (label.startsWith("2027")) return baseSMMLV2026 * (1 + annualWageIncreasePct / 100);
-    if (label.startsWith("2028")) return baseSMMLV2026 * Math.pow(1 + annualWageIncreasePct / 100, 2);
-    return baseSMMLV2026;
-  };
+  // AI Assistant state
+  const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'bot'; text: string }[]>([
+    { sender: 'bot', text: '¡Hola! Soy tu asistente de costeo de posgrados UPTC. Pregúntame sobre el balance de este programa, el punto de equilibrio o cómo optimizar las variables financieras.' }
+  ]);
+  const [customQuestion, setCustomQuestion] = useState<string>("");
 
   // Base values mapping
   const baseCreditValue = useMemo(() => {
@@ -243,9 +219,15 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       case 'doctorado': return 900000;
       case 'maestria': return 630000;
       case 'especializacion': return 450000;
+      case 'medico_quirurgica': return 500000; // default for medical specialties
       default: return 450000;
     }
   }, [level]);
+
+  // Inscripcion is exactly 20% of a base Especializacion credit
+  const valorInscripcion = useMemo(() => {
+    return 450000 * 0.20; 
+  }, []);
 
   const modalityMultiplier = useMemo(() => {
     switch (modality) {
@@ -264,7 +246,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     return isAdminOverride ? customCreditValue : calculatedCreditValue;
   }, [isAdminOverride, customCreditValue, calculatedCreditValue]);
 
-  // Dynamic credits per semester from pensum (curriculum)
+  // Credits map per semester
   const semesterCreditsMap = useMemo(() => {
     const map = new Map<number, number>();
     for (let sem = 1; sem <= 6; sem++) {
@@ -274,41 +256,40 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     return map;
   }, [courses]);
 
-  // Validations & rules enforcement
+  // Validations & rules enforcement (including UPTC Article 21 credit limits)
   const validationErrors = useMemo(() => {
     const errors: string[] = [];
     if (attritionPct < 0 || attritionPct > 100) errors.push("La tasa de deserción debe estar entre 0% y 100%.");
-    if (baseSMMLV2026 <= 0) errors.push("El valor base de SMMLV debe ser mayor a 0.");
-    if (annualWageIncreasePct < 0) errors.push("El porcentaje de incremento anual no puede ser negativo.");
-    if (parafiscalFactor < 0) errors.push("La carga prestacional no puede ser negativa.");
-    if (isAdminOverride && customCreditValue <= 0) errors.push("El valor del crédito personalizado debe ser mayor a 0.");
     if (discountPct < 0 || discountPct > 100) errors.push("El porcentaje de descuentos/becas debe estar entre 0% y 100%.");
-
-    // Enforce 7 credits minimum rule per active semester
+    if (minStudents < 1) errors.push("El número mínimo de estudiantes debe ser al menos 1.");
+    if (isAdminOverride && customCreditValue <= 0) errors.push("El valor del crédito personalizado debe ser mayor a 0.");
+    
+    // Check semester credit load minimum limit of 7 credits
     semesters.forEach((sem, idx) => {
-      if (sem.newCohortStudents < 0) errors.push(`[Semestre ${sem.semesterLabel}] El ingreso de estudiantes no puede ser negativo.`);
-      if (sem.numDocentes < 0) errors.push(`[Semestre ${sem.semesterLabel}] El número de docentes no puede ser negativo.`);
-      if (sem.horasDocente < 0) errors.push(`[Semestre ${sem.semesterLabel}] Las horas de docencia no pueden ser negativas.`);
-      if (sem.goodsMaterials < 0 || sem.goodsTravel < 0 || sem.goodsSoftware < 0 || sem.goodsLogistics < 0 || sem.goodsOther < 0) {
-        errors.push(`[Semestre ${sem.semesterLabel}] Los gastos de adquisición no pueden ser negativos.`);
-      }
-
-      // Check if semester has new/active students and academic load
       const semCredits = semesterCreditsMap.get(idx + 1) || 0;
-      const isCohortStart = sem.newCohortStudents > 0;
-      if (isCohortStart && semCredits < 7) {
-        errors.push(`[Semestre ${sem.semesterLabel}] Se programó el ingreso de cohorte pero la carga académica en el pensum (${semCredits} cr.) es inferior al mínimo de 7 créditos requerido por estudiante.`);
+      if (sem.newCohortStudents > 0 && semCredits < 7) {
+        errors.push(`[Semestre ${sem.semesterLabel}] Ingreso de estudiantes programado pero la carga curricular (${semCredits} cr.) es inferior al mínimo institucional de 7 créditos por estudiante.`);
       }
     });
-    
-    return errors;
-  }, [semesters, attritionPct, baseSMMLV2026, annualWageIncreasePct, parafiscalFactor, isAdminOverride, customCreditValue, semesterCreditsMap, discountPct]);
 
-  // Semester calculations with overlapping cohorts
+    // Check UPTC Article 21 credit range limits
+    const totalProgramCredits = courses.reduce((sum, c) => sum + c.creditos, 0);
+    const range = CREDIT_RANGES[level];
+    if (range) {
+      if (totalProgramCredits < range.min || totalProgramCredits > range.max) {
+        errors.push(`[Artículo 21] El total de créditos del plan de estudios (${totalProgramCredits} cr.) está fuera del rango legal permitido para ${range.label} (${range.min} a ${range.max} créditos).`);
+      }
+    }
+
+    return errors;
+  }, [semesters, attritionPct, discountPct, minStudents, isAdminOverride, customCreditValue, semesterCreditsMap, courses, level]);
+
+  // Semester Calculations
   const calculatedSemesters = useMemo(() => {
-    const durationSemesters = level === 'especializacion' ? 2 : level === 'doctorado' ? 8 : 4;
+    const durationSemesters = level === 'especializacion' ? 2 : level === 'doctorado' ? 8 : level === 'medico_quirurgica' ? 6 : 4;
     const activeCohortStudents = Array.from({ length: 6 }, () => new Array(6).fill(0));
     
+    // Cohorte modeling
     for (let i = 0; i < 6; i++) {
       const initial = semesters[i].newCohortStudents;
       if (initial > 0) {
@@ -317,19 +298,18 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
           const age = t - i;
           if (age < durationSemesters) {
             activeCohortStudents[i][t] = activeCohortStudents[i][t - 1] * (1 - attritionPct / 100);
-          } else {
-            activeCohortStudents[i][t] = 0; 
           }
         }
       }
     }
 
     return semesters.map((sem, t) => {
-      const smmlv = getSMMLVForSemester(sem.semesterLabel);
-      const creditRate = finalCreditValue * (smmlv / baseSMMLV2026); 
+      const smmlv = getUPTCRate('adm_grado_14', anioInicio + Math.floor(t / 2)); 
+      const currentYear = anioInicio + Math.floor(t / 2);
+      
+      const creditRate = finalCreditValue * (getUPTCRate('valor_punto', currentYear) / getUPTCRate('valor_punto', 2026)); 
       const programCreditsPerSemester = semesterCreditsMap.get(t + 1) || 0;
       
-      // Calculate active student counts in this semester
       let totalActiveStudents = 0;
       for (let i = 0; i <= t; i++) {
         totalActiveStudents += activeCohortStudents[i][t];
@@ -355,37 +335,55 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       const totalDiscounts = votDiscountVal + monDiscountVal + honDiscountVal + resDiscountVal + othDiscountVal;
       const totalNetIncome = totalGrossIncome - totalDiscounts;
 
-      // Deductions
+      // UPTC Deductions (45.5%)
       const deductionCentral = totalNetIncome * 0.40;
       const deductionResearch = totalNetIncome * 0.05;
       const deductionMesi = totalNetIncome * 0.005;
       const totalDeductions = deductionCentral + deductionResearch + deductionMesi;
-      
       const functioningTuitionIncome = totalNetIncome - totalDeductions;
 
-      // Other Income (Inscripciones = 0.25 SMMLV, Derechos Grado = 1.0 SMMLV)
-      const inscriptionFee = smmlv * 0.25;
-      const graduationFee = smmlv * 1.0;
-      const applicationIncome = sem.aspirantesCount * inscriptionFee;
-      const graduationIncome = sem.graduandosCount * graduationFee;
+      // Other Income (Inscripción = 20% crédito Especialización, Grado = 1.0 SMMLV)
+      const currentInscriptionFee = valorInscripcion * (getUPTCRate('valor_punto', currentYear) / getUPTCRate('valor_punto', 2026));
+      const currentGraduationFee = getUPTCRate('valor_punto', currentYear) * 100; 
+      
+      const applicationIncome = sem.aspirantesCount * currentInscriptionFee;
+      const graduationIncome = sem.graduandosCount * currentGraduationFee;
       const totalOtherIncome = applicationIncome + graduationIncome + sem.otherRawIncome;
 
       const totalFunctioningIncome = functioningTuitionIncome + totalOtherIncome;
 
-      // Gastos de Personal
-      const teachingHourBaseValue = smmlv * degreeHourMultipliers[level];
-      const loadedHourValue = teachingHourBaseValue * (1 + parafiscalFactor / 100);
-      const teachersCost = sem.numDocentes * sem.horasDocente * loadedHourValue;
-
-      const coordinatorHourRate = 65787.385 * (smmlv / baseSMMLV2026);
-      const coordinatorCost = hasCoordinator ? sem.coordinatorHours * coordinatorHourRate : 0;
+      // Gastos Docencia: sum values from linked subjects belonging to this semester
+      const semCourses = courses.filter(c => c.semestre === (t + 1));
+      let semesterTeachersCost = 0;
       
-      const supportStaffCPSRate = sem.supportStaffMonthlyCPS * (smmlv / baseSMMLV2026);
-      const supportStaffCost = hasSupportStaff ? supportStaffCPSRate * sem.supportStaffMonths : 0;
+      semCourses.forEach(c => {
+        const ratePerHour = getUPTCRate(c.teacherCategory, currentYear);
+        const singleCost = c.teacherHours * ratePerHour * (1 + parafiscalFactor / 100);
+        semesterTeachersCost += c.numTeachers * singleCost;
+      });
 
-      const totalStaffCosts = teachersCost + coordinatorCost + supportStaffCost;
+      // Coordinator Cost 
+      let coordinatorCost = 0;
+      if (hasCoordinator) {
+        let coordMonthlyRate = 0;
+        if (coordinatorCategory === 'doc_coordinador') {
+          coordMonthlyRate = 7.0 * getUPTCRate('valor_punto', currentYear);
+        } else {
+          coordMonthlyRate = getUPTCRate(coordinatorCategory, currentYear);
+        }
+        coordinatorCost = coordMonthlyRate * sem.coordinatorMonths;
+      }
 
-      // Operating expenses detailed sum
+      // Support Staff CPS Cost
+      let supportStaffCost = 0;
+      if (hasSupportStaff) {
+        const supportCPSRate = getUPTCRate(supportStaffCategory, currentYear);
+        supportStaffCost = supportCPSRate * sem.supportStaffMonths;
+      }
+
+      const totalStaffCosts = semesterTeachersCost + coordinatorCost + supportStaffCost;
+
+      // Goods & Services Breakdown sum
       const totalOperatingCosts = sem.goodsMaterials + sem.goodsTravel + sem.goodsSoftware + sem.goodsLogistics + sem.goodsOther;
 
       const totalExpenses = totalStaffCosts + totalOperatingCosts;
@@ -393,7 +391,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
       return {
         ...sem,
-        smmlv,
+        currentYear,
         creditRate,
         programCreditsPerSemester,
         activeStudents: totalActiveStudents,
@@ -406,18 +404,16 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         graduationIncome,
         totalOtherIncome,
         totalFunctioningIncome,
-        teachersCost,
+        teachersCost: semesterTeachersCost,
         coordinatorCost,
         supportStaffCost,
         totalStaffCosts,
         totalOperatingCosts,
         totalExpenses,
-        budgetBalance,
-        loadedHourValue,
-        activeCohortStudents: activeCohortStudents.map(cohort => cohort[t])
+        budgetBalance
       };
     });
-  }, [semesters, level, attritionPct, baseSMMLV2026, annualWageIncreasePct, parafiscalFactor, finalCreditValue, hasCoordinator, hasSupportStaff, semesterCreditsMap]);
+  }, [semesters, level, attritionPct, finalCreditValue, courses, semesterCreditsMap, hasCoordinator, coordinatorCategory, hasSupportStaff, supportStaffCategory, parafiscalFactor, valorInscripcion, anioInicio]);
 
   // Aggregated summaries
   const aggregatedTotals = useMemo(() => {
@@ -473,6 +469,13 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     const denomStudents = averageCreditRate * averageDiscountMultiplier * (programTotalCredits / 6) * (totalActiveStudentSemesters / (totalActiveNewStudents || 1));
     const breakEvenStudents = denomStudents > 0 ? Math.ceil(netCostsToCoverTotal / (averageCreditRate * averageDiscountMultiplier * (programTotalCredits / 6))) : 0;
 
+    let meetsMinStudentsEnrollment = true;
+    semesters.forEach(s => {
+      if (s.newCohortStudents > 0 && s.newCohortStudents < minStudents) {
+        meetsMinStudentsEnrollment = false;
+      }
+    });
+
     return {
       totalGrossIncome,
       totalDiscounts,
@@ -486,35 +489,39 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       totalOperatingCosts,
       totalExpenses,
       totalBalance,
-      isBalanced: !hasDeficitInAnySemester,
+      isBalanced: !hasDeficitInAnySemester && meetsMinStudentsEnrollment && validationErrors.length === 0,
       numCohortes,
       totalActiveStudentSemesters,
       breakEvenCredits: Math.max(0, breakEvenCredits),
       breakEvenStudents: Math.max(0, breakEvenStudents),
       totalActiveNewStudents,
-      programTotalCredits
+      programTotalCredits,
+      meetsMinStudentsEnrollment
     };
-  }, [calculatedSemesters, semesters, discountPct, courses]);
+  }, [calculatedSemesters, semesters, discountPct, courses, minStudents, validationErrors]);
 
   // Update semester inputs
   const handleUpdateSemester = (index: number, fields: Partial<SemesterData>) => {
     setSemesters(prev => prev.map((s, i) => i === index ? { ...s, ...fields } : s));
   };
 
-  // Add course to pensum
+  // Add course
   const handleAddCourse = () => {
     if (!newCourseName.trim()) return;
     const newCourse: Asignatura = {
       id: Date.now().toString(),
       nombre: newCourseName,
       creditos: newCourseCredits,
-      semestre: newCourseSemester
+      semestre: newCourseSemester,
+      teacherCategory: newCourseTeacherCategory,
+      teacherHours: newCourseHours,
+      numTeachers: 1
     };
     setCourses(prev => [...prev, newCourse]);
     setNewCourseName("");
   };
 
-  // Delete course from pensum
+  // Delete course
   const handleDeleteCourse = (id: string) => {
     setCourses(prev => prev.filter(c => c.id !== id));
   };
@@ -545,13 +552,12 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     
     const data = [];
     const step = 5;
-    const programTotalCredits = courses.reduce((sum, c) => sum + c.creditos, 0);
     
     for (let cSize = 5; cSize <= 45; cSize += step) {
       let simulatedFunctioningIncome = 0;
       let simulatedTotalExpenses = 0;
       
-      const durationSem = level === 'especializacion' ? 2 : level === 'doctorado' ? 8 : 4;
+      const durationSem = level === 'especializacion' ? 2 : level === 'doctorado' ? 8 : level === 'medico_quirurgica' ? 6 : 4;
       const actCohort = Array.from({ length: 6 }, () => new Array(6).fill(0));
       
       for (let i = 0; i < 6; i++) {
@@ -595,7 +601,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       });
     }
     return data;
-  }, [semesters, calculatedSemesters, level, attritionPct, courses, semesterCreditsMap, validationErrors]);
+  }, [semesters, calculatedSemesters, level, attritionPct, semesterCreditsMap, validationErrors]);
 
   // Scenario management actions
   const handleSaveScenario = () => {
@@ -607,12 +613,15 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       facultad,
       programa,
       anioInicio,
+      minStudents,
       level,
       modality,
       attritionPct,
       discountPct,
       hasCoordinator,
+      coordinatorCategory,
       hasSupportStaff,
+      supportStaffCategory,
       courses: JSON.parse(JSON.stringify(courses)),
       semesters: JSON.parse(JSON.stringify(semesters)),
       totalIncome: aggregatedTotals.totalFunctioningIncome,
@@ -631,12 +640,15 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     setFacultad(scen.facultad);
     setPrograma(scen.programa);
     setAnioInicio(scen.anioInicio);
+    setMinStudents(scen.minStudents || 15);
     setLevel(scen.level);
     setModality(scen.modality);
     setAttritionPct(scen.attritionPct);
     setDiscountPct(scen.discountPct || 10);
     setHasCoordinator(scen.hasCoordinator);
+    setCoordinatorCategory(scen.coordinatorCategory || 'prof_apoyo');
     setHasSupportStaff(scen.hasSupportStaff);
+    setSupportStaffCategory(scen.supportStaffCategory || 'adm_grado_14');
     setCourses(scen.courses || []);
     setSemesters(scen.semesters);
     setActiveSubTab('simulator');
@@ -646,29 +658,37 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     setSavedScenarios(prev => prev.filter(s => s.id !== id));
   };
 
-  const handleExportCSV = () => {
-    let csv = "\uFEFFConcepto;Valor de Simulación\n";
-    csv += `Facultad;${facultad}\n`;
-    csv += `Programa;${programa}\n`;
-    csv += `Año de Inicio;${anioInicio}\n`;
-    csv += `Nivel Académico;${level.toUpperCase()}\n`;
-    csv += `Modalidad;${modality.toUpperCase()}\n`;
-    csv += `Tasa Deserción;${attritionPct}%\n`;
-    csv += `Créditos Totales del Pensum;${aggregatedTotals.programTotalCredits} cr.\n`;
-    csv += `Total Estudiantes Nuevos;${aggregatedTotals.totalActiveNewStudents}\n`;
-    csv += `Total Ingresos Proyectados (COP);${aggregatedTotals.totalFunctioningIncome}\n`;
-    csv += `Total Costos Proyectados (COP);${aggregatedTotals.totalExpenses}\n`;
-    csv += `Utilidad/Déficit Neto (COP);${aggregatedTotals.totalBalance}\n`;
-    csv += `Punto de Equilibrio en Créditos;${aggregatedTotals.breakEvenCredits} cr.\n`;
-    csv += `Punto de Equilibrio en Estudiantes;${aggregatedTotals.breakEvenStudents} estudiantes\n`;
+  // AI Costing Assistant prompt triggers
+  const handleAskQuestion = (questionText?: string) => {
+    const q = questionText || customQuestion;
+    if (!q.trim()) return;
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", `Reporte_Costeo_${programa.replace(/\s+/g, '_')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const newMsg = { sender: 'user' as const, text: q };
+    setChatMessages(prev => [...prev, newMsg]);
+    setCustomQuestion("");
+
+    setTimeout(() => {
+      let replyText = "";
+      const qLower = q.toLowerCase();
+
+      if (qLower.includes('margen') || qLower.includes('viabilidad') || qLower.includes('rentabilidad')) {
+        replyText = `El programa '${programa}' en la facultad de '${facultad}' tiene una proyección de ingresos totales de $${Math.round(aggregatedTotals.totalFunctioningIncome).toLocaleString()} COP y egresos por $${Math.round(aggregatedTotals.totalExpenses).toLocaleString()} COP. La utilidad neta proyectada es de $${Math.round(aggregatedTotals.totalBalance).toLocaleString()} COP. ${
+          aggregatedTotals.totalBalance > 10000000 
+            ? "El programa es altamente viable con un margen del " + ((aggregatedTotals.totalBalance / aggregatedTotals.totalFunctioningIncome) * 100).toFixed(1) + "%." 
+            : "El programa se encuentra en zona de riesgo o déficit. Se aconseja revisar los meses de apoyo CPS o aumentar la matrícula mínima."
+        }`;
+      } else if (qLower.includes('punto de equilibrio') || qLower.includes('equilibrio') || qLower.includes('estudiantes mínimos')) {
+        replyText = `Para alcanzar el punto de equilibrio en la modalidad '${modality}', el programa requiere matricular un mínimo de ${aggregatedTotals.breakEvenCredits} créditos en total de manera agregada, lo que equivale a una cohorte mínima con carga completa de ${aggregatedTotals.breakEvenStudents} estudiantes pagando matrícula plena (con ${discountPct}% de descuentos promedio). Actualmente tienes simulada una cohorte inicial de ${semesters[0].newCohortStudents} alumnos.`;
+      } else if (qLower.includes('docentes') || qLower.includes('nómina') || qLower.includes('horas')) {
+        replyText = `El costo total docente del programa es de $${Math.round(aggregatedTotals.totalTeachersCost).toLocaleString()} COP. Tienes ${courses.length} asignaturas vinculadas. El docente más costoso pertenece a la categoría Cátedra Doctorado ($${getUPTCRate('pos_doctorado', anioInicio).toLocaleString()} COP/hora base). Para optimizar, podrías reasignar clases teóricas básicas a docentes de escalafón Maestría o Pregrado Titular para reducir el costo hora.`;
+      } else if (qLower.includes('deducciones') || qLower.includes('central') || qLower.includes('45.5')) {
+        replyText = `La UPTC aplica una retención legal total del 45.5% sobre la matrícula neta de posgrado: 40% para la Administración Central, 5% para Fomento de Investigación y 0.5% para MESI. Esto reduce tus ingresos de matrícula disponibles para funcionamiento a $${Math.round((aggregatedTotals.totalNetIncome - aggregatedTotals.totalDeductions)).toLocaleString()} COP en total.`;
+      } else {
+        replyText = `Basado en los metadatos de '${programa}' con inicio en ${anioInicio}: posees ${aggregatedTotals.numCohortes} cohortes y ${courses.length} asignaturas. El balance neto acumulado es de $${Math.round(aggregatedTotals.totalBalance).toLocaleString()} COP. Si posees dudas sobre rubros o personal, indícamelo y realizaré una corrida de sensibilidad.`;
+      }
+
+      setChatMessages(prev => [...prev, { sender: 'bot' as const, text: replyText }]);
+    }, 450);
   };
 
   return (
@@ -685,7 +705,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
             Costeo de Posgrados por Créditos
           </h1>
           <p className="text-sm text-on-surface-variant max-w-2xl font-sans mt-1">
-            Gestione metadatos, pensum académico, docentes hora cátedra y gastos de adquisición de bienes para emitir reportes firmables del Presupuesto General.
+            Estructuración de matrículas y egresos homologado a la UPTC. Relacione el cuerpo docente directamente con las asignaturas de la malla curricular.
           </p>
         </div>
 
@@ -721,6 +741,17 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         </div>
       )}
 
+      {/* Warning: Minimum students not met in some cohorte */}
+      {!aggregatedTotals.meetsMinStudentsEnrollment && validationErrors.length === 0 && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex gap-3 text-amber-400 print:hidden">
+          <AlertTriangle className="shrink-0 mt-0.5" size={20} />
+          <div className="text-xs">
+            <p className="font-bold">Alerta de Sostenibilidad de Cohorte:</p>
+            <p className="mt-0.5">Uno o más periodos semestrales simulados poseen una cohorte inferior al <strong>aforo mínimo de {minStudents} estudiantes</strong> configurado para el programa.</p>
+          </div>
+        </div>
+      )}
+
       {/* Executive stats (Hidden on Print) */}
       {validationErrors.length === 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 print:hidden">
@@ -730,7 +761,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
               ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400' 
               : 'border-rose-500/30 bg-rose-500/5 text-rose-400'
           }`}>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Sostenibilidad Global</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Viabilidad Presupuestal</span>
             <div className="flex justify-between items-end mt-2">
               <h3 className="text-2xl font-display font-bold font-mono text-white">
                 {aggregatedTotals.totalBalance >= 0 ? '+' : ''}{(aggregatedTotals.totalBalance / 1e6).toFixed(2)} M
@@ -738,49 +769,49 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
               <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                 aggregatedTotals.isBalanced ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
               }`}>
-                {aggregatedTotals.isBalanced ? 'Equilibrio' : 'Déficit'}
+                {aggregatedTotals.isBalanced ? 'Viable' : 'No Viable'}
               </span>
             </div>
             <p className="text-[10px] text-on-surface-variant font-sans mt-2">
               {aggregatedTotals.isBalanced 
-                ? "El programa posee superávit o equilibrio en todos los semestres proyectados." 
-                : "Se detectaron pérdidas en uno o más periodos semestrales."}
+                ? "El programa cubre sus costos y cumple con los aforos mínimos requeridos." 
+                : "No cumple con balances positivos o cohorte mínima en semestres."}
             </p>
           </div>
 
           <div className="p-5 rounded-2xl border border-white/10 bg-white/5 flex flex-col justify-between">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Créditos Totales Req.</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Pto de Equilibrio (Créditos)</span>
               <h3 className="text-2xl font-display font-bold font-mono text-[#ffcc29] mt-2">
                 {aggregatedTotals.breakEvenCredits} <span className="text-xs text-white/40 font-normal">créditos</span>
               </h3>
             </div>
             <span className="text-[9px] text-white/40 font-mono mt-3">
-              Frente a {aggregatedTotals.programTotalCredits * aggregatedTotals.totalActiveNewStudents} cr. totales del pensum cohorte.
+              Malla curricular total: {aggregatedTotals.programTotalCredits} cr.
             </span>
           </div>
 
           <div className="p-5 rounded-2xl border border-white/10 bg-white/5 flex flex-col justify-between">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Estudiantes Mínimos</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Aforo Mínimo Requerido</span>
               <h3 className="text-2xl font-display font-bold font-mono text-white mt-2">
-                {aggregatedTotals.breakEvenStudents} <span className="text-xs text-white/40 font-normal">estudiantes</span>
+                {minStudents} <span className="text-xs text-white/40 font-normal">alumnos</span>
               </h3>
             </div>
             <span className="text-[9px] text-white/40 font-mono mt-3">
-              Carga promedio semestral: {(aggregatedTotals.programTotalCredits / 6).toFixed(1)} cr.
+              Frente a {aggregatedTotals.breakEvenStudents} estudiantes para punto de equilibrio.
             </span>
           </div>
 
           <div className="p-5 rounded-2xl border border-white/10 bg-white/5 flex flex-col justify-between">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Estructura Académica</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Costo Inscripción</span>
               <h3 className="text-2xl font-display font-bold font-mono text-white mt-2">
-                {aggregatedTotals.programTotalCredits} <span className="text-xs text-white/40 font-normal">créditos</span>
+                ${Math.round(valorInscripcion).toLocaleString()} <span className="text-xs text-white/40 font-normal">COP</span>
               </h3>
             </div>
             <span className="text-[9px] text-white/40 font-mono mt-3">
-              {courses.length} asignaturas registradas en el pensum.
+              Fijado en 20% de un crédito de Especialización.
             </span>
           </div>
 
@@ -790,10 +821,11 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       {/* Sub tabs selector (Hidden on Print) */}
       <div className="flex border-b border-white/10 gap-2 overflow-x-auto print:hidden">
         {[
-          { id: 'simulator', label: '1. Ingresos y Cohortes', icon: Users },
-          { id: 'pensum', label: '2. Plan de Estudios (Pensum)', icon: BookOpen },
-          { id: 'staff', label: '3. Nómina y Bienes', icon: Wallet },
-          { id: 'report', label: '4. Presupuesto y Reportes', icon: Activity }
+          { id: 'simulator', label: '1. Configuración e Ingresos', icon: Users },
+          { id: 'pensum', label: '2. Pensum y Docentes Asignados', icon: BookOpen },
+          { id: 'staff', label: '3. Administrativos y Apoyo', icon: Wallet },
+          { id: 'report', label: '4. Presupuesto General', icon: Activity },
+          { id: 'assistant', label: '5. Asistente IA Financiero', icon: Bot }
         ].map(t => (
           <button
             key={t.id}
@@ -809,11 +841,11 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         ))}
       </div>
 
-      {/* TAB 1: Incomes, Levels and Metadata */}
+      {/* TAB 1: Configuration, Level & Overlapping Cohortes */}
       {activeSubTab === 'simulator' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
           
-          {/* Metadata & Config Panel (Left) */}
+          {/* Settings panel (Left) */}
           <div className="lg:col-span-1 space-y-6">
             
             {/* Metadata Fields */}
@@ -822,7 +854,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                 Metadatos del Programa
               </h3>
 
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 <div>
                   <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Facultad</label>
                   <input 
@@ -834,7 +866,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Programa Académico</label>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Nombre del Programa</label>
                   <input 
                     type="text" 
                     value={programa} 
@@ -843,33 +875,45 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Año de Inicio del Programa</label>
-                  <input 
-                    type="number" 
-                    value={anioInicio} 
-                    onChange={(e) => setAnioInicio(parseInt(e.target.value) || 2026)}
-                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Año Inicio</label>
+                    <input 
+                      type="number" 
+                      value={anioInicio} 
+                      onChange={(e) => setAnioInicio(parseInt(e.target.value) || 2026)}
+                      className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Mín. Estudiantes</label>
+                    <input 
+                      type="number" 
+                      value={minStudents} 
+                      onChange={(e) => setMinStudents(parseInt(e.target.value) || 15)}
+                      className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Level settings */}
+            {/* Level Settings */}
             <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5">
-                Configuración del Posgrado
+                Variables de Proyección
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Nivel</label>
                   <select 
                     value={level} 
                     onChange={(e) => setLevel(e.target.value as any)}
-                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-[#ffcc29] focus:outline-none"
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
                   >
                     <option value="especializacion">Especialización (Base: $450.000 / Cred.)</option>
+                    <option value="medico_quirurgica">Especialidad Médico-Quirúrgica (Base: $500.000 / Cred.)</option>
                     <option value="maestria">Maestría (Base: $630.000 / Cred.)</option>
                     <option value="doctorado">Doctorado (Base: $900.000 / Cred.)</option>
                   </select>
@@ -880,7 +924,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                   <select 
                     value={modality} 
                     onChange={(e) => setModality(e.target.value as any)}
-                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-[#ffcc29] focus:outline-none"
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
                   >
                     <option value="presencial">Presencial (100% tarifa)</option>
                     <option value="hibrido">Híbrido (85% tarifa)</option>
@@ -890,18 +934,18 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Tasa Deserción (%)</label>
+                    <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Deserción %</label>
                     <input 
                       type="number" 
                       min="0"
                       max="100"
                       value={attritionPct} 
                       onChange={(e) => setAttritionPct(parseInt(e.target.value) || 0)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono text-rose-400"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Descuentos (%)</label>
+                    <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Descuentos %</label>
                     <input 
                       type="number" 
                       min="0"
@@ -912,65 +956,33 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                     />
                   </div>
                 </div>
-
-                <div className="border-t border-white/5 pt-3 mt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">Ajuste Manual Crédito</span>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={isAdminOverride} 
-                        onChange={(e) => setIsAdminOverride(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#ffcc29]"></div>
-                    </label>
-                  </div>
-
-                  {isAdminOverride && (
-                    <div className="mt-3 animate-in slide-in-from-top-1 duration-200">
-                      <label className="block text-[9px] font-mono text-white/50 mb-1">Valor de Crédito Manual (COP)</label>
-                      <input 
-                        type="number" 
-                        step="1000"
-                        value={customCreditValue} 
-                        onChange={(e) => setCustomCreditValue(parseInt(e.target.value) || 0)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
-                      />
-                    </div>
-                  )}
-
-                  <div className="mt-3 flex justify-between items-center text-xs bg-white/5 p-3 rounded-xl border border-white/5">
-                    <span className="text-white/50">Valor Crédito Final:</span>
-                    <strong className="text-[#ffcc29] font-mono">${Math.round(finalCreditValue).toLocaleString()} COP</strong>
-                  </div>
-                </div>
               </div>
             </div>
 
           </div>
 
-          {/* Semesters grid input (Right) */}
+          {/* Semesters cohortes size input */}
           <div className="lg:col-span-2 space-y-6">
             <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">
-                Simulación de Estudiantes Nuevos (Cohortes)
+                Simulación de Ingreso por Semestre (Nuevos Alumnos)
               </h3>
 
               <div className="space-y-4">
                 {semesters.map((sem, index) => {
                   const semCredits = semesterCreditsMap.get(index + 1) || 0;
                   const isLoadInvalid = sem.newCohortStudents > 0 && semCredits < 7;
+                  const isCohortMinInvalid = sem.newCohortStudents > 0 && sem.newCohortStudents < minStudents;
                   
                   return (
-                    <div key={index} className={`border rounded-xl p-4.5 space-y-3.5 transition-all ${
-                      isLoadInvalid 
+                    <div key={index} className={`border rounded-xl p-4.5 space-y-3 transition-all ${
+                      isLoadInvalid || isCohortMinInvalid 
                         ? 'bg-rose-500/5 border-rose-500/30' 
                         : 'bg-white/[0.02] border-white/5'
                     }`}>
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-white/5 pb-1.5">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-white/5 pb-1">
                         <span className="text-xs font-bold text-white font-mono flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${isLoadInvalid ? 'bg-rose-500' : 'bg-[#ffcc29]'}`}></span> Periodo Semestral {sem.semesterLabel}
+                          <span className={`w-2 h-2 rounded-full ${isLoadInvalid || isCohortMinInvalid ? 'bg-rose-500' : 'bg-[#ffcc29]'}`}></span> Periodo Semestral {sem.semesterLabel}
                         </span>
                         <div className="flex gap-3 text-[10px] font-mono text-white/40">
                           <span>Créditos Semestre: <strong className={semCredits >= 7 ? 'text-[#ffcc29]' : 'text-rose-400 font-bold'}>{semCredits} cr.</strong></span>
@@ -980,79 +992,50 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         
-                        <div className="space-y-2 bg-white/5 p-3 rounded-lg border border-white/5">
-                          <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider">Aforo de Cohorte</h4>
-                          <div>
-                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Estudiantes Nuevos</label>
-                            <input 
-                              type="number"
-                              min="0"
-                              value={sem.newCohortStudents}
-                              onChange={(e) => handleUpdateSemester(index, { newCohortStudents: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
-                            />
-                          </div>
+                        <div>
+                          <label className="block text-[8px] font-mono text-white/55 mb-0.5">Estudiantes Nuevos (Cohorte)</label>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={sem.newCohortStudents}
+                            onChange={(e) => handleUpdateSemester(index, { newCohortStudents: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2.5 py-1 text-xs text-white font-mono"
+                          />
                         </div>
 
-                        <div className="space-y-2 bg-white/5 p-3 rounded-lg border border-white/5">
-                          <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider">Descuentos Aplicados</h4>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className="block text-[8px] font-mono text-white/55 mb-0.5">Votación (10%)</label>
-                              <input 
-                                type="number"
-                                min="0"
-                                value={sem.votacionDiscountCount}
-                                onChange={(e) => handleUpdateSemester(index, { votacionDiscountCount: parseInt(e.target.value) || 0 })}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[8px] font-mono text-white/55 mb-0.5">Monitor (70%)</label>
-                              <input 
-                                type="number"
-                                min="0"
-                                value={sem.monitoriaDiscountCount}
-                                onChange={(e) => handleUpdateSemester(index, { monitoriaDiscountCount: parseInt(e.target.value) || 0 })}
-                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
-                              />
-                            </div>
-                          </div>
+                        <div>
+                          <label className="block text-[8px] font-mono text-white/55 mb-0.5">Descuento Votación (Alumnos)</label>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={sem.votacionDiscountCount}
+                            onChange={(e) => handleUpdateSemester(index, { votacionDiscountCount: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2.5 py-1 text-xs text-white font-mono"
+                          />
                         </div>
 
-                        <div className="space-y-2 bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col justify-between">
-                          <div>
-                            <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider">Trámites</h4>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="block text-[8px] font-mono text-white/55 mb-0.5">Aspirantes</label>
-                                <input 
-                                  type="number"
-                                  min="0"
-                                  value={sem.aspirantesCount}
-                                  onChange={(e) => handleUpdateSemester(index, { aspirantesCount: parseInt(e.target.value) || 0 })}
-                                  className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-[8px] font-mono text-white/55 mb-0.5">Graduandos</label>
-                                <input 
-                                  type="number"
-                                  min="0"
-                                  value={sem.graduandosCount}
-                                  onChange={(e) => handleUpdateSemester(index, { graduandosCount: parseInt(e.target.value) || 0 })}
-                                  className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
-                                />
-                              </div>
-                            </div>
-                          </div>
+                        <div>
+                          <label className="block text-[8px] font-mono text-white/55 mb-0.5">Aspirantes (Inscripciones)</label>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={sem.aspirantesCount}
+                            onChange={(e) => handleUpdateSemester(index, { aspirantesCount: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2.5 py-1 text-xs text-white font-mono"
+                          />
                         </div>
 
                       </div>
 
                       {isLoadInvalid && (
                         <div className="text-[10px] text-rose-400 font-bold bg-rose-500/10 p-2 rounded border border-rose-500/20">
-                          ⚠️ Carga semestral inválida ({semCredits} cr.). Ingrese asignaturas en el plan de estudios para este semestre (mínimo 7 créditos).
+                          ⚠️ Carga curricular semestral insuficiente ({semCredits} cr.). Vaya a la pestaña "Pensum" e ingrese asignaturas para cumplir con el mínimo de 7 créditos por estudiante.
+                        </div>
+                      )}
+
+                      {isCohortMinInvalid && (
+                        <div className="text-[10px] text-amber-400 font-bold bg-amber-500/10 p-2 rounded border border-amber-500/20">
+                          ⚠️ El número de alumnos ingresados ({sem.newCohortStudents}) es inferior al mínimo definido para la viabilidad de la cohorte ({minStudents} alumnos).
                         </div>
                       )}
                     </div>
@@ -1065,15 +1048,15 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         </div>
       )}
 
-      {/* TAB 2: Curriculum (Pensum) Management */}
+      {/* TAB 2: Curriculum (Pensum) and Linked Docentes */}
       {activeSubTab === 'pensum' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
           
-          {/* Add Asignatura panel */}
+          {/* Add asignatura and teacher panel */}
           <div className="lg:col-span-1 space-y-6">
             <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5">
-                Agregar Asignatura al Pensum
+                Agregar Asignatura y Docente
               </h3>
 
               <div className="space-y-4">
@@ -1081,10 +1064,10 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                   <label className="block text-[10px] font-mono text-white/55 uppercase mb-1">Nombre de Asignatura</label>
                   <input 
                     type="text" 
-                    placeholder="ej. Planeación Estratégica"
+                    placeholder="ej. Mercadeo Estratégico"
                     value={newCourseName}
                     onChange={(e) => setNewCourseName(e.target.value)}
-                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#ffcc29]"
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white"
                   />
                 </div>
 
@@ -1096,7 +1079,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                       min="1"
                       value={newCourseCredits}
                       onChange={(e) => setNewCourseCredits(parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none"
+                      className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
                     />
                   </div>
                   <div>
@@ -1113,60 +1096,96 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-[10px] font-mono text-white/55 uppercase mb-1">Categoría del Docente</label>
+                  <select 
+                    value={newCourseTeacherCategory}
+                    onChange={(e) => setNewCourseTeacherCategory(e.target.value as any)}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                  >
+                    <option value="pos_especializacion">Posgrado Especialización (10% SMMLV)</option>
+                    <option value="pos_maestria">Posgrado Maestría (12.5% SMMLV)</option>
+                    <option value="pos_doctorado">Posgrado Doctorado (15.5% SMMLV)</option>
+                    <option value="preg_auxiliar">Pregrado Auxiliar (2.5 Pts)</option>
+                    <option value="preg_asistente">Pregrado Asistente (2.75 Pts)</option>
+                    <option value="preg_asociado">Pregrado Asociado (3.0 Pts)</option>
+                    <option value="preg_titular">Pregrado Titular (3.5 Pts)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono text-white/55 uppercase mb-1">Horas Cátedra Totales</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    value={newCourseHours}
+                    onChange={(e) => setNewCourseHours(parseInt(e.target.value) || 45)}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
+                  />
+                </div>
+
                 <button
                   onClick={handleAddCourse}
                   disabled={!newCourseName.trim()}
                   className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#ffcc29] hover:bg-[#ffcc29]/90 text-black font-bold text-xs rounded-xl cursor-pointer transition-all disabled:opacity-50"
                 >
-                  <Plus size={14} /> Registrar en el Plan
+                  <Plus size={14} /> Registrar Asignatura
                 </button>
               </div>
             </div>
-
-            <div className="bg-white/5 border border-white/5 p-4 rounded-xl text-xs space-y-2">
-              <span className="font-bold text-[#ffcc29] flex items-center gap-1.5 mb-1.5"><Info size={14} /> Regla Curricular:</span>
-              <p className="text-white/70 leading-relaxed text-[11px]">
-                De acuerdo con los lineamientos, un estudiante de posgrado matriculado debe inscribir un <strong>mínimo de 7 créditos académicos</strong> por periodo semestral. El simulador arrojará alertas si algún semestre programado incumple esta condición.
-              </p>
-            </div>
           </div>
 
-          {/* Pensum Table (Right) */}
+          {/* Pensum Malla Curricular details list */}
           <div className="lg:col-span-2 space-y-6">
             <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
               <div className="flex justify-between items-center border-b border-white/5 pb-2">
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                  Plan de Estudios Vigente ({aggregatedTotals.programTotalCredits} Créditos Totales)
+                  Malla de Asignaturas y Docentes Vinculados
                 </h3>
-                <span className="text-[10px] text-white/40 font-mono">Malla Curricular</span>
+                <span className="text-[10px] text-white/40 font-mono">Plan Curricular y Horas</span>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-white/10 bg-white/5 text-white font-bold font-sans">
-                      <th className="p-3">Nombre Asignatura</th>
-                      <th className="p-3 text-center">Semestre</th>
+                      <th className="p-3">Asignatura</th>
+                      <th className="p-3 text-center">Sem.</th>
                       <th className="p-3 text-center">Créditos</th>
-                      <th className="p-3 text-center">Acciones</th>
+                      <th className="p-3">Docente Escalafón</th>
+                      <th className="p-3 text-center">Horas</th>
+                      <th className="p-3 text-right">Costo Cátedra (2026)</th>
+                      <th className="p-3 text-center">Acción</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 text-white/80 font-sans">
-                    {courses.map((course) => (
-                      <tr key={course.id} className="hover:bg-white/[0.02]">
-                        <td className="p-3 font-semibold text-white">{course.nombre}</td>
-                        <td className="p-3 text-center font-mono">Semestre {course.semestre}</td>
-                        <td className="p-3 text-center font-mono text-[#ffcc29] font-bold">{course.creditos} cr.</td>
-                        <td className="p-3 text-center">
-                          <button
-                            onClick={() => handleDeleteCourse(course.id)}
-                            className="p-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded transition cursor-pointer"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {courses.map((course) => {
+                      const ratePerHour2026 = getUPTCRate(course.teacherCategory, 2026);
+                      const loadedCost2026 = course.teacherHours * ratePerHour2026 * (1 + parafiscalFactor / 100);
+                      
+                      return (
+                        <tr key={course.id} className="hover:bg-white/[0.02]">
+                          <td className="p-3 font-semibold text-white">{course.nombre}</td>
+                          <td className="p-3 text-center font-mono">{course.semestre}</td>
+                          <td className="p-3 text-center font-mono text-[#ffcc29] font-bold">{course.creditos} cr.</td>
+                          <td className="p-3 capitalize text-white/60">
+                            {course.teacherCategory.replace('pos_', 'Posgrado ').replace('preg_', 'Pregrado ')}
+                          </td>
+                          <td className="p-3 text-center font-mono">{course.teacherHours} hrs</td>
+                          <td className="p-3 text-right font-mono text-rose-300">
+                            ${Math.round(loadedCost2026).toLocaleString()}
+                          </td>
+                          <td className="p-3 text-center">
+                            <button
+                              onClick={() => handleDeleteCourse(course.id)}
+                              className="p-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded transition cursor-pointer"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1176,23 +1195,19 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         </div>
       )}
 
-      {/* TAB 3: Staffing and Goods/Services Breakdown */}
+      {/* TAB 3: Administrative and Apoyo costs settings */}
       {activeSubTab === 'staff' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
           
-          {/* Toggles Panel */}
+          {/* Apoyo Configuration */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-5">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5">
-                Estructura de Egresos de Personal
-              </h3>
-
-              {/* Coordinator Switch */}
-              <div className="flex items-center justify-between p-3.5 bg-white/5 rounded-xl border border-white/5">
-                <div>
-                  <h4 className="text-xs font-bold text-white">Coordinador de Programa</h4>
-                  <p className="text-[9px] text-white/40 font-sans mt-0.5">Cargar honorarios de dirección.</p>
-                </div>
+            
+            {/* Coordinator Settings */}
+            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Docente Coordinador
+                </h3>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
                     type="checkbox" 
@@ -1200,16 +1215,41 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                     onChange={(e) => setHasCoordinator(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ffcc29]"></div>
+                  <div className="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#ffcc29]"></div>
                 </label>
               </div>
 
-              {/* Support CPS Switch */}
-              <div className="flex items-center justify-between p-3.5 bg-white/5 rounded-xl border border-white/5">
-                <div>
-                  <h4 className="text-xs font-bold text-white">Personal de Apoyo (CPS)</h4>
-                  <p className="text-[9px] text-white/40 font-sans mt-0.5">Cargar gestor administrativo.</p>
+              {hasCoordinator && (
+                <div className="space-y-4 animate-in slide-in-from-top-1 duration-200">
+                  <div>
+                    <label className="block text-[9px] font-mono text-white/55 uppercase mb-1">Escalafón Coordinación</label>
+                    <select 
+                      value={coordinatorCategory} 
+                      onChange={(e) => setCoordinatorCategory(e.target.value as any)}
+                      className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
+                    >
+                      <option value="doc_coordinador">Docente Coordinador (7 Puntos Incremento)</option>
+                      <option value="prof_apoyo">Profesional de Apoyo Posgrado</option>
+                      <option value="adm_grado_14">Auxiliar Grado 14</option>
+                      <option value="adm_grado_16">Auxiliar Grado 16</option>
+                      <option value="sec_ejec_18">Secretario/Auxiliar Grado 18</option>
+                      <option value="sec_ejec_22">Secretario Grado 22</option>
+                    </select>
+                  </div>
+                  
+                  <div className="p-3 bg-white/5 rounded-xl text-xs font-mono text-white/60">
+                    Sueldo Mensual (2026): <strong className="text-[#ffcc29]">${Math.round(coordinatorCategory === 'doc_coordinador' ? 7.0 * getUPTCRate('valor_punto', 2026) : getUPTCRate(coordinatorCategory, 2026)).toLocaleString()} COP</strong>
+                  </div>
                 </div>
+              )}
+            </div>
+
+            {/* Support CPS Settings */}
+            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Profesional de Apoyo (CPS)
+                </h3>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
                     type="checkbox" 
@@ -1217,150 +1257,99 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                     onChange={(e) => setHasSupportStaff(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ffcc29]"></div>
+                  <div className="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#ffcc29]"></div>
                 </label>
               </div>
 
-              {/* Constants */}
-              <div className="grid grid-cols-2 gap-3 text-xs bg-white/5 p-4 rounded-xl border border-white/5">
-                <div>
-                  <label className="block text-[8px] text-white/55 font-mono mb-0.5">IPC Anual %</label>
-                  <input 
-                    type="number" 
-                    step="0.5"
-                    value={annualWageIncreasePct} 
-                    onChange={(e) => setAnnualWageIncreasePct(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-white font-mono"
-                  />
+              {hasSupportStaff && (
+                <div className="space-y-4 animate-in slide-in-from-top-1 duration-200">
+                  <div>
+                    <label className="block text-[9px] font-mono text-white/55 uppercase mb-1">Escalafón Apoyo CPS</label>
+                    <select 
+                      value={supportStaffCategory} 
+                      onChange={(e) => setSupportStaffCategory(e.target.value as any)}
+                      className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
+                    >
+                      <option value="prof_apoyo">Profesional de Apoyo Posgrado</option>
+                      <option value="adm_grado_14">Auxiliar Grado 14</option>
+                      <option value="adm_grado_16">Auxiliar Grado 16</option>
+                      <option value="sec_ejec_18">Secretario/Auxiliar Grado 18</option>
+                      <option value="sec_ejec_22">Secretario Grado 22</option>
+                    </select>
+                  </div>
+                  
+                  <div className="p-3 bg-white/5 rounded-xl text-xs font-mono text-white/60">
+                    Sueldo Mensual (2026): <strong className="text-[#ffcc29]">${Math.round(getUPTCRate(supportStaffCategory, 2026)).toLocaleString()} COP</strong>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[8px] text-white/55 font-mono mb-0.5">Parafiscales %</label>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    value={parafiscalFactor} 
-                    onChange={(e) => setParafiscalFactor(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-white font-mono"
-                  />
-                </div>
-              </div>
-
+              )}
             </div>
+
           </div>
 
-          {/* Semesters staffing & goods input */}
+          {/* Semesters detailed goods breakdown */}
           <div className="lg:col-span-2 space-y-6">
             <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">
-                Simulación de Carga Docente, Apoyo y Adquisiciones
+                Adquisición de Bienes y Servicios Operativos
               </h3>
 
               <div className="space-y-4">
                 {semesters.map((sem, index) => (
                   <div key={index} className="bg-white/[0.02] border border-white/5 rounded-xl p-4.5 space-y-3">
                     
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-white/5 pb-1">
+                    <div className="flex justify-between items-center border-b border-white/5 pb-1">
                       <span className="text-xs font-bold text-white font-mono flex items-center gap-2">
-                        <span className="w-2 h-2 bg-red-400 rounded-full"></span> Periodo Semestral {sem.semesterLabel}
+                        <span className="w-2 h-2 bg-rose-400 rounded-full"></span> Adquisición Semestre {sem.semesterLabel}
                       </span>
-                      <div className="flex gap-3 text-[10px] font-mono text-white/40">
-                        <span>Costo Hora Docente: <strong className="text-red-300">${Math.round(calculatedSemesters[index].loadedHourValue).toLocaleString()} COP</strong></span>
-                        <span>Total Bienes Semestre: <strong className="text-white">${Math.round(calculatedSemesters[index].totalOperatingCosts / 1e6).toFixed(1)} M</strong></span>
+                      <span className="text-[10px] font-mono text-white/40">
+                        Total Compras: <strong className="text-rose-300">${Math.round(calculatedSemesters[index].totalOperatingCosts).toLocaleString()} COP</strong>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                      <div>
+                        <label className="block text-[8px] font-mono text-white/55 mb-0.5">Materiales</label>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={sem.goodsMaterials}
+                          onChange={(e) => handleUpdateSemester(index, { goodsMaterials: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-white/5 border border-white/10 rounded px-2.5 py-0.5 text-xs text-white font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8px] font-mono text-white/55 mb-0.5">Viáticos/Transporte</label>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={sem.goodsTravel}
+                          onChange={(e) => handleUpdateSemester(index, { goodsTravel: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-white/5 border border-white/10 rounded px-2.5 py-0.5 text-xs text-white font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8px] font-mono text-white/55 mb-0.5">Licencias/Plataformas</label>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={sem.goodsSoftware}
+                          onChange={(e) => handleUpdateSemester(index, { goodsSoftware: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-white/5 border border-white/10 rounded px-2.5 py-0.5 text-xs text-white font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8px] font-mono text-white/55 mb-0.5">Logística/Eventos</label>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={sem.goodsLogistics}
+                          onChange={(e) => handleUpdateSemester(index, { goodsLogistics: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-white/5 border border-white/10 rounded px-2.5 py-0.5 text-xs text-white font-mono"
+                        />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      
-                      {/* Staff Costs */}
-                      <div className="space-y-2 bg-white/5 p-3 rounded-lg border border-white/5">
-                        <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider mb-1">Cuerpo Docente y Apoyo</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">N. Docentes</label>
-                            <input 
-                              type="number"
-                              min="0"
-                              value={sem.numDocentes}
-                              onChange={(e) => handleUpdateSemester(index, { numDocentes: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-0.5 text-xs text-white font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Horas/Docente</label>
-                            <input 
-                              type="number"
-                              min="0"
-                              value={sem.horasDocente}
-                              onChange={(e) => handleUpdateSemester(index, { horasDocente: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-0.5 text-xs text-white font-mono"
-                            />
-                          </div>
-                        </div>
-
-                        {hasCoordinator && (
-                          <div className="mt-1">
-                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Horas Coordinación</label>
-                            <input 
-                              type="number"
-                              min="0"
-                              value={sem.coordinatorHours}
-                              onChange={(e) => handleUpdateSemester(index, { coordinatorHours: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-0.5 text-xs text-white font-mono"
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Goods & Services Breakdown */}
-                      <div className="space-y-2 bg-white/5 p-3 rounded-lg border border-white/5">
-                        <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider mb-1">Gastos de Adquisición de Bienes y Servicios</h4>
-                        
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Materiales/Suministros</label>
-                            <input 
-                              type="number"
-                              min="0"
-                              value={sem.goodsMaterials}
-                              onChange={(e) => handleUpdateSemester(index, { goodsMaterials: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-0.5 text-xs text-white font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Viáticos/Transporte</label>
-                            <input 
-                              type="number"
-                              min="0"
-                              value={sem.goodsTravel}
-                              onChange={(e) => handleUpdateSemester(index, { goodsTravel: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-0.5 text-xs text-white font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Licencias/Plataformas</label>
-                            <input 
-                              type="number"
-                              min="0"
-                              value={sem.goodsSoftware}
-                              onChange={(e) => handleUpdateSemester(index, { goodsSoftware: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-0.5 text-xs text-white font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Logística/Eventos</label>
-                            <input 
-                              type="number"
-                              min="0"
-                              value={sem.goodsLogistics}
-                              onChange={(e) => handleUpdateSemester(index, { goodsLogistics: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-0.5 text-xs text-white font-mono"
-                            />
-                          </div>
-                        </div>
-
-                      </div>
-
-                    </div>
                   </div>
                 ))}
               </div>
@@ -1370,7 +1359,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         </div>
       )}
 
-      {/* TAB 4: General Budget Report, Charts & Scenarios */}
+      {/* TAB 4: Presupuesto General Consolidado */}
       {activeSubTab === 'report' && (
         <div className="space-y-8">
           
@@ -1393,7 +1382,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
             </div>
 
             {/* General Metadata Info Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white/5 p-4 rounded-xl border border-white/5 print:bg-black/5 print:border-black/10 print:text-black">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 bg-white/5 p-4 rounded-xl border border-white/5 print:bg-black/5 print:border-black/10 print:text-black">
               <div>
                 <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Facultad</span>
                 <strong className="text-xs text-white print:text-black">{facultad}</strong>
@@ -1405,6 +1394,10 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
               <div>
                 <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Año de Inicio</span>
                 <strong className="text-xs text-white print:text-black font-mono">{anioInicio}</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Mín. Estudiantes</span>
+                <strong className="text-xs text-white print:text-black font-mono">{minStudents} alumnos</strong>
               </div>
               <div>
                 <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Modalidad</span>
@@ -1476,6 +1469,16 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                       <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.functioningTuitionIncome / 1e6).toLocaleString()} M</td>
                     ))}
                     <td className="p-3 text-right font-mono font-bold">${Math.round((aggregatedTotals.totalNetIncome - aggregatedTotals.totalDeductions) / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] text-white/60 print:text-black/60">
+                    <td className="p-3 pl-6">Otros Ingresos (Inscripción al 20%)</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.totalOtherIncome / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">
+                      ${Math.round(calculatedSemesters.reduce((sum, s) => sum + s.totalOtherIncome, 0) / 1e6).toLocaleString()} M
+                    </td>
                   </tr>
 
                   <tr className="hover:bg-white/[0.01] font-bold bg-[#4ade80]/5 text-[#4ade80] print:bg-emerald-500/10 print:text-black border-y border-white/10 print:border-black/20">
@@ -1554,45 +1557,44 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
               </table>
             </div>
 
-            {/* Diagnostic conclusions / signatures block */}
+            {/* Signature Block */}
             <div className="pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between gap-6 print:border-black print:text-black">
               <div className="max-w-xl text-[11px] text-white/60 leading-relaxed print:text-black/60">
-                <span className="font-bold text-white block mb-1 print:text-black">Declaración de Viabilidad Financiera:</span>
-                El presente informe certifica que el programa <strong className="text-white print:text-black">{programa}</strong> {
+                <span className="font-bold text-white block mb-1 print:text-black">Declaración de Sostenibilidad de Cohorte:</span>
+                El presente informe del plan presupuestal de <strong className="text-white print:text-black">{programa}</strong> {
                   aggregatedTotals.isBalanced 
-                    ? 'CUMPLE con el punto de equilibrio presupuestal. Los ingresos proyectados de la matrícula basados en créditos cubren holgadamente los costes de docencia, personal de apoyo y funcionamiento.' 
-                    : 'NO CUMPLE con el punto de equilibrio en uno o más periodos semestrales. Se aconseja elevar la matrícula mínima por cohorte, ajustar las horas docentes o revaluar los egresos CPS.'
+                    ? 'CERTIFICA la viabilidad financiera institucional, alcanzando el punto de equilibrio en créditos y cumpliendo con el aforo mínimo de cohorte establecido.' 
+                    : 'NO CERTIFICA viabilidad en las variables simuladas. Se sugiere un incremento de aranceles académicos, reducción de CPS de apoyo o incremento del aforo mínimo.'
                 }
               </div>
               
               <div className="w-56 space-y-8 pt-4">
                 <div className="border-t border-white/20 pt-1 text-center font-mono text-[9px] text-white/40 print:border-black print:text-black">
-                  Firma Coordinador Planeación UPTC
+                  Firma Planeación VAFI UPTC
                 </div>
               </div>
             </div>
 
           </div>
 
-          {/* Graphics and sensitivity (Hidden on Print) */}
+          {/* Recharts graphics (Hidden on Print) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:hidden">
             
             <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5">
-              <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4">Ingresos vs Costos de Operación (Millones COP)</h4>
-              <div className="h-64 min-w-[200px]">
-                <ResponsiveContainer width="100%" height={250}>
+              <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4">Ingresos vs Costos de Operación (M COP)</h4>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={10} />
-                    <YAxis stroke="rgba(255,255,255,0.4)" fontSize={10} unit="M" />
+                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={9} />
+                    <YAxis stroke="rgba(255,255,255,0.4)" fontSize={9} unit="M" />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      labelStyle={{ color: '#fff', fontWeight: 'bold' }}
                     />
                     <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
-                    <Bar dataKey="Ingresos Disponibles" fill="#4ade80" name="Ingresos" radius={[4, 4, 0, 0]} barSize={25} />
-                    <Bar dataKey="Gastos Personal" fill="#f43f5e" name="Pers. Egresos" radius={[4, 4, 0, 0]} barSize={25} />
-                    <Bar dataKey="Resultado Semestre" fill="#3b82f6" name="Balance Neto" radius={[4, 4, 0, 0]} barSize={25} />
+                    <Bar dataKey="Ingresos Disponibles" fill="#4ade80" name="Ingresos" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="Gastos Personal" fill="#f43f5e" name="Personal" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="Resultado Semestre" fill="#3b82f6" name="Balance" radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -1600,9 +1602,9 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
             <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5">
               <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4">Distribución del Estatus de Egresos</h4>
-              <div className="h-64 min-w-[200px] flex flex-col justify-between">
-                <div className="h-44 relative flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height={160}>
+              <div className="h-64 flex flex-col justify-between">
+                <div className="h-40 relative flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height={150}>
                     <PieChart>
                       <Pie
                         data={expensePieChartData}
@@ -1618,15 +1620,12 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                         <Cell fill="#3b82f6" />
                         <Cell fill="#fb7185" />
                       </Pie>
-                      <Tooltip 
-                        formatter={(val: number) => `${Math.round(val / 1e6).toLocaleString()} M COP`}
-                        contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      />
+                      <Tooltip formatter={(val: number) => `$${Math.round(val / 1e6)} M`} />
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute text-center">
-                    <span className="text-[8px] uppercase tracking-wider text-white/30 font-mono">Egresos</span>
-                    <p className="text-base font-bold text-white font-mono">
+                    <span className="text-[8px] uppercase tracking-wider text-white/30 font-mono">Gastos</span>
+                    <p className="text-sm font-bold text-white font-mono">
                       {Math.round(aggregatedTotals.totalExpenses / 1e6)}M
                     </p>
                   </div>
@@ -1643,7 +1642,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                   <div className="flex justify-between items-center text-white/60">
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>
-                      <span>CPS Apoyo</span>
+                      <span>Apoyo CPS</span>
                     </div>
                     <strong>${Math.round(aggregatedTotals.totalSupportStaffCost / 1e6)}M</strong>
                   </div>
@@ -1653,31 +1652,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
           </div>
 
-          {/* Sensitivity Graph */}
-          {sensitivityChartData.length > 0 && (
-            <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5 print:hidden">
-              <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4">Análisis de Sensibilidad: Alumnos por Cohorte vs Balance Neto (COP)</h4>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height={240}>
-                  <LineChart data={sensitivityChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="cohortSize" stroke="rgba(255,255,255,0.4)" fontSize={10} />
-                    <YAxis stroke="rgba(255,255,255,0.4)" fontSize={10} unit="M" />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      labelStyle={{ color: '#fff', fontWeight: 'bold' }}
-                    />
-                    <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
-                    <ReferenceLine y={0} stroke="#f43f5e" strokeWidth={1.5} strokeDasharray="3 3" label={{ value: 'Equilibrio (0 COP)', fill: '#f43f5e', fontSize: 9, position: 'top' }} />
-                    <Line type="monotone" dataKey="Ingresos de Operación" stroke="#4ade80" strokeWidth={2} name="Ingresos" dot={{ r: 3 }} />
-                    <Line type="monotone" dataKey="Margen Final (M)" stroke="#3b82f6" strokeWidth={2.5} name="Balance" dot={{ r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-
-          {/* Scenario Comparison Tools */}
+          {/* Scenario Comparison Table */}
           <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4 print:hidden">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-2">Guardar y Cargar Escenarios Comparativos</h3>
             
@@ -1729,6 +1704,92 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                 ))}
               </div>
             )}
+          </div>
+
+        </div>
+      )}
+
+      {/* TAB 5: AI Assistant Tab */}
+      {activeSubTab === 'assistant' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
+          
+          {/* Preset Prompts Panel (Left) */}
+          <div className="lg:col-span-1 space-y-4">
+            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-3.5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">
+                Preguntas Frecuentes de Costeo
+              </h3>
+              
+              <div className="flex flex-col gap-2">
+                {[
+                  "¿Cómo alcanzar el punto de equilibrio?",
+                  "Analizar la viabilidad y el margen del programa",
+                  "¿Qué pasa si asigno docentes categoría doctorado?",
+                  "Explicar la retención del 45.5% de la UPTC"
+                ].map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleAskQuestion(prompt)}
+                    className="w-full text-left p-3 bg-white/5 hover:bg-white/10 text-white border border-white/5 rounded-xl text-xs font-semibold font-sans cursor-pointer transition-all"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4.5 bg-[#ffcc29]/5 border border-[#ffcc29]/20 rounded-2xl text-xs space-y-2">
+              <span className="font-bold text-[#ffcc29] flex items-center gap-1.5"><Info size={14} /> Asesor Curricular:</span>
+              <p className="text-white/70 leading-relaxed text-[11px]">
+                El Asistente analiza en tiempo real todas las variables locales (estudiantes mínimos, asignaturas, tipo de docente cátedra) y provee diagnósticos económicos instantáneos.
+              </p>
+            </div>
+          </div>
+
+          {/* Interactive Chat Console (Right) */}
+          <div className="lg:col-span-2">
+            <div className="glass-card rounded-2xl border border-white/10 bg-white/5 h-[480px] flex flex-col justify-between overflow-hidden">
+              
+              {/* Chat messages viewport */}
+              <div className="flex-1 p-5 overflow-y-auto space-y-4">
+                {chatMessages.map((msg, idx) => (
+                  <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed font-sans ${
+                      msg.sender === 'user' 
+                        ? 'bg-[#ffcc29] text-black font-bold rounded-tr-none' 
+                        : 'bg-white/10 text-white rounded-tl-none border border-white/5'
+                    }`}>
+                      {msg.sender === 'bot' && (
+                        <div className="flex items-center gap-1.5 text-[#ffcc29] font-mono text-[9px] uppercase tracking-wider mb-1 font-bold">
+                          <Bot size={13} /> Asistente IA Costeo
+                        </div>
+                      )}
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Chat Input Bar */}
+              <div className="p-4 border-t border-white/5 bg-[#0f172a]/60 flex gap-2">
+                <input 
+                  type="text"
+                  placeholder="Escriba su consulta financiera..."
+                  value={customQuestion}
+                  onChange={(e) => setCustomQuestion(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAskQuestion()}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-[#ffcc29]"
+                />
+                <button
+                  onClick={() => handleAskQuestion()}
+                  disabled={!customQuestion.trim()}
+                  className="p-3 bg-[#ffcc29] hover:bg-[#ffcc29]/90 disabled:opacity-50 text-black rounded-xl transition-all cursor-pointer"
+                >
+                  <Send size={15} />
+                </button>
+              </div>
+
+            </div>
           </div>
 
         </div>
