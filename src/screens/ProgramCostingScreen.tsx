@@ -6,23 +6,47 @@ import {
 import { 
   Filter, DollarSign, Activity, TrendingUp, RefreshCw, Compass,
   Layers, Wallet, HelpCircle, AlertTriangle, ShieldCheck, ArrowRight, 
-  Download, Search, CheckCircle, Info, Users, GraduationCap, Percent, BookOpen, Settings, Save, Trash2
+  Download, Search, CheckCircle, Info, Users, GraduationCap, Percent, BookOpen, Settings, Save, Trash2, Printer
 } from 'lucide-react';
+
+interface SemesterData {
+  semesterLabel: string; // e.g. "2026-1", "2026-2", "2027-1", ...
+  newCohortStudents: number; // initial students entering this semester
+  votacionDiscountCount: number; // students with voter discount (10%)
+  monitoriaDiscountCount: number; // students with monitor discount (70%)
+  honorDiscountCount: number; // students with honor discount (100%)
+  res16DiscountCount: number; // students with Res 16 discount (50%)
+  otherDiscountCount: number; // students with other discount
+  otherDiscountPct: number; // other discount percentage
+  
+  // Other Income
+  aspirantesCount: number; // for application fees
+  graduandosCount: number; // for graduation fees
+  otherRawIncome: number; // other income in COP
+  
+  // Staff inputs
+  numDocentes: number; // number of teachers
+  horasDocente: number; // hours per teacher
+  coordinatorHours: number; // hours for coordinator
+  supportStaffMonthlyCPS: number; // monthly CPS payment
+  supportStaffMonths: number; // contract months
+  
+  // Operating inputs (Purchase of goods/services)
+  operatingGoodsAndServices: number; // total goods and services in COP
+}
 
 interface SavedScenario {
   id: string;
   name: string;
   level: 'doctorado' | 'maestria' | 'especializacion';
   modality: 'presencial' | 'hibrido' | 'virtual';
-  studentsCount: number;
-  programCredits: number;
-  fixedCosts: number;
-  variableCosts: number;
-  otherIncome: number;
-  discountPct: number;
-  isAdminOverride: boolean;
-  customCreditValue: number;
-  // Calculated summaries for quick comparison
+  tuitionSMMLV: number;
+  attritionPct: number;
+  hasCoordinator: boolean;
+  hasSupportStaff: boolean;
+  semesters: SemesterData[];
+  
+  // Calculated summaries
   totalIncome: number;
   totalCosts: number;
   utility: number;
@@ -31,86 +55,153 @@ interface SavedScenario {
 }
 
 export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
-  // Input parameters state
+  // Config state
   const [level, setLevel] = useState<'doctorado' | 'maestria' | 'especializacion'>('maestria');
   const [modality, setModality] = useState<'presencial' | 'hibrido' | 'virtual'>('presencial');
-  const [studentsCount, setStudentsCount] = useState<number>(20);
-  const [programCredits, setProgramCredits] = useState<number>(36);
-  const [fixedCosts, setFixedCosts] = useState<number>(140000000);
-  const [variableCosts, setVariableCosts] = useState<number>(60000000);
-  const [otherIncome, setOtherIncome] = useState<number>(15000000);
-  const [discountPct, setDiscountPct] = useState<number>(10); // average scholarship/discount rate (e.g. 10%)
+  const [tuitionSMMLV, setTuitionSMMLV] = useState<number>(7);
+  const [attritionPct, setAttritionPct] = useState<number>(5);
   
+  // Staff switches (optional components)
+  const [hasCoordinator, setHasCoordinator] = useState<boolean>(true);
+  const [hasSupportStaff, setHasSupportStaff] = useState<boolean>(true);
+
+  // Financial base constants
+  const [baseSMMLV2026, setBaseSMMLV2026] = useState<number>(1537380); // Base wage 2026
+  const [annualWageIncreasePct, setAnnualWageIncreasePct] = useState<number>(8); // 8% annual wage increase
+  const [parafiscalFactor, setParafiscalFactor] = useState<number>(37.03); // 37.03% social security
+  
+  // Hour multipliers based on degree type relative to SMMLV
+  const degreeHourMultipliers = {
+    especializacion: 0.10,
+    maestria: 0.125,
+    doctorado: 0.155
+  };
+
   // Administrator manual override controls
   const [isAdminOverride, setIsAdminOverride] = useState<boolean>(false);
   const [customCreditValue, setCustomCreditValue] = useState<number>(650000);
 
-  // Scenario management
+  // 6 semesters labels definition
+  const semestersLabels = ["2026-1", "2026-2", "2027-1", "2027-2", "2028-1", "2028-2"];
+
+  // Default semesters state
+  const [semesters, setSemesters] = useState<SemesterData[]>(() => {
+    // Populate with a standard 3-cohort annual intake scenario
+    return semestersLabels.map((label, idx) => {
+      // Cohorts enter in odd semesters (2026-1 = 20 students, 2027-1 = 18 students, 2028-1 = 20 students)
+      const isStartSemester = idx === 0 || idx === 2 || idx === 4;
+      const initialSize = isStartSemester ? (idx === 0 ? 22 : idx === 2 ? 18 : 20) : 0;
+      
+      return {
+        semesterLabel: label,
+        newCohortStudents: initialSize,
+        votacionDiscountCount: initialSize > 0 ? Math.ceil(initialSize * 0.3) : 0, // 30% have vote cards
+        monitoriaDiscountCount: 0,
+        honorDiscountCount: 0,
+        res16DiscountCount: 0,
+        otherDiscountCount: 0,
+        otherDiscountPct: 50,
+        aspirantesCount: initialSize > 0 ? Math.ceil(initialSize * 1.5) : 0,
+        graduandosCount: idx === 3 ? 16 : idx === 5 ? 14 : 0,
+        otherRawIncome: 0,
+        
+        // Staff inputs
+        numDocentes: 4, // 4 teachers
+        horasDocente: 45, // 45 hours each = 180 total hours
+        coordinatorHours: 64, // 64 hours coordinate
+        supportStaffMonthlyCPS: 3659400,
+        supportStaffMonths: 4,
+        
+        // Operating inputs
+        operatingGoodsAndServices: idx % 2 === 0 ? 12000000 : 9000000
+      };
+    });
+  });
+
+  const [activeSubTab, setActiveSubTab] = useState<'simulator' | 'staff' | 'report'>('simulator');
   const [newScenarioName, setNewScenarioName] = useState<string>("");
+  
+  // Preset scenarios list
   const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([
     {
-      id: 'default_esperado',
-      name: 'Escenario Esperado (Presencial)',
+      id: 'scen_1',
+      name: 'Simulación Maestría Esperada (3 Cohortes)',
       level: 'maestria',
       modality: 'presencial',
-      studentsCount: 20,
-      programCredits: 36,
-      fixedCosts: 140000000,
-      variableCosts: 60000000,
-      otherIncome: 15000000,
-      discountPct: 10,
-      isAdminOverride: false,
-      customCreditValue: 650000,
-      totalIncome: 423900000,
-      totalCosts: 200000000,
-      utility: 223900000,
-      breakEvenCredits: 17,
-      breakEvenStudents: 10
+      tuitionSMMLV: 7,
+      attritionPct: 5,
+      hasCoordinator: true,
+      hasSupportStaff: true,
+      semesters: semestersLabels.map((label, idx) => ({
+        semesterLabel: label,
+        newCohortStudents: idx === 0 ? 20 : idx === 2 ? 18 : idx === 4 ? 20 : 0,
+        votacionDiscountCount: idx === 0 ? 6 : idx === 2 ? 5 : idx === 4 ? 6 : 0,
+        monitoriaDiscountCount: 0,
+        honorDiscountCount: 0,
+        res16DiscountCount: 0,
+        otherDiscountCount: 0,
+        otherDiscountPct: 50,
+        aspirantesCount: idx === 0 ? 30 : idx === 2 ? 25 : idx === 4 ? 30 : 0,
+        graduandosCount: idx === 3 ? 15 : idx === 5 ? 13 : 0,
+        otherRawIncome: 0,
+        numDocentes: 4,
+        horasDocente: 40,
+        coordinatorHours: 64,
+        supportStaffMonthlyCPS: 3659400,
+        supportStaffMonths: 4,
+        operatingGoodsAndServices: 10000000
+      })),
+      totalIncome: 1215456200,
+      totalCosts: 485124000,
+      utility: 730332200,
+      breakEvenCredits: 12,
+      breakEvenStudents: 6
     },
     {
-      id: 'default_conservador',
-      name: 'Escenario Híbrido Conservador',
-      level: 'maestria',
-      modality: 'hibrido',
-      studentsCount: 15,
-      programCredits: 36,
-      fixedCosts: 140000000,
-      variableCosts: 50000000,
-      otherIncome: 10000000,
-      discountPct: 15,
-      isAdminOverride: false,
-      customCreditValue: 650000,
-      totalIncome: 255721500,
-      totalCosts: 190000000,
-      utility: 65721500,
-      breakEvenCredits: 26,
-      breakEvenStudents: 11
-    },
-    {
-      id: 'default_pesimista',
-      name: 'Escenario Crítico (Virtual Bajo Aforo)',
-      level: 'maestria',
+      id: 'scen_2',
+      name: 'Especialización Corta (2 Cohortes, Virtual)',
+      level: 'especializacion',
       modality: 'virtual',
-      studentsCount: 8,
-      programCredits: 36,
-      fixedCosts: 120000000,
-      variableCosts: 40000000,
-      otherIncome: 5000000,
-      discountPct: 20,
-      isAdminOverride: false,
-      customCreditValue: 650000,
-      totalIncome: 106673600,
-      totalCosts: 160000000,
-      utility: -53326400,
-      breakEvenCredits: 55, // exceeds program credits
-      breakEvenStudents: 13
+      tuitionSMMLV: 5,
+      attritionPct: 2,
+      hasCoordinator: true,
+      hasSupportStaff: false, // No support staff needed
+      semesters: semestersLabels.map((label, idx) => ({
+        semesterLabel: label,
+        newCohortStudents: idx === 0 ? 25 : idx === 2 ? 25 : 0,
+        votacionDiscountCount: idx === 0 ? 8 : idx === 2 ? 8 : 0,
+        monitoriaDiscountCount: 0,
+        honorDiscountCount: 0,
+        res16DiscountCount: 0,
+        otherDiscountCount: 0,
+        otherDiscountPct: 50,
+        aspirantesCount: idx === 0 ? 40 : idx === 2 ? 40 : 0,
+        graduandosCount: idx === 1 ? 22 : idx === 3 ? 23 : 0,
+        otherRawIncome: 0,
+        numDocentes: 3,
+        horasDocente: 36,
+        coordinatorHours: 48,
+        supportStaffMonthlyCPS: 3659400,
+        supportStaffMonths: 0, // Disabled
+        operatingGoodsAndServices: 6000000
+      })),
+      totalIncome: 452900000,
+      totalCosts: 215000000,
+      utility: 237900000,
+      breakEvenCredits: 19,
+      breakEvenStudents: 10
     }
   ]);
 
-  // Tab navigation
-  const [activeTab, setActiveTab] = useState<'simulator' | 'scenarios'>('simulator');
+  // Helper: calculate SMMLV value for a given semester label
+  const getSMMLVForSemester = (label: string): number => {
+    if (label.startsWith("2026")) return baseSMMLV2026;
+    if (label.startsWith("2027")) return baseSMMLV2026 * (1 + annualWageIncreasePct / 100);
+    if (label.startsWith("2028")) return baseSMMLV2026 * Math.pow(1 + annualWageIncreasePct / 100, 2);
+    return baseSMMLV2026;
+  };
 
-  // Base Credit Value calculation
+  // Base values mapping
   const baseCreditValue = useMemo(() => {
     switch (level) {
       case 'doctorado': return 900000;
@@ -120,7 +211,6 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     }
   }, [level]);
 
-  // Modality multiplier calculation
   const modalityMultiplier = useMemo(() => {
     switch (modality) {
       case 'presencial': return 1.0;
@@ -138,131 +228,310 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     return isAdminOverride ? customCreditValue : calculatedCreditValue;
   }, [isAdminOverride, customCreditValue, calculatedCreditValue]);
 
-  // Validations check
+  // Validations
   const validationErrors = useMemo(() => {
     const errors: string[] = [];
-    if (studentsCount < 1) errors.push("El número de estudiantes debe ser al menos 1.");
-    if (programCredits <= 0) errors.push("El número de créditos del programa debe ser mayor que 0.");
-    if (fixedCosts < 0) errors.push("Los costos fijos no pueden ser negativos.");
-    if (variableCosts < 0) errors.push("Los costos variables no pueden ser negativos.");
-    if (otherIncome < 0) errors.push("Otros ingresos institucionales no pueden ser negativos.");
-    if (discountPct < 0 || discountPct > 100) errors.push("El porcentaje de descuentos/becas debe estar entre 0% y 100%.");
-    if (isAdminOverride && customCreditValue <= 0) errors.push("El valor del crédito personalizado debe ser mayor que 0.");
+    if (tuitionSMMLV <= 0) errors.push("El costo de la matrícula en créditos debe ser mayor a 0.");
+    if (attritionPct < 0 || attritionPct > 100) errors.push("La tasa de deserción debe estar entre 0% y 100%.");
+    if (baseSMMLV2026 <= 0) errors.push("El valor base de SMMLV debe ser mayor a 0.");
+    if (annualWageIncreasePct < 0) errors.push("El porcentaje de incremento anual no puede ser negativo.");
+    if (parafiscalFactor < 0) errors.push("La carga prestacional no puede ser negativa.");
+    if (isAdminOverride && customCreditValue <= 0) errors.push("El valor del crédito personalizado debe ser mayor a 0.");
+    
+    semesters.forEach((sem, idx) => {
+      if (sem.newCohortStudents < 0) errors.push(`[Semestre ${sem.semesterLabel}] El ingreso de estudiantes no puede ser negativo.`);
+      if (sem.numDocentes < 0) errors.push(`[Semestre ${sem.semesterLabel}] El número de docentes no puede ser negativo.`);
+      if (sem.horasDocente < 0) errors.push(`[Semestre ${sem.semesterLabel}] Las horas de docencia no pueden ser negativas.`);
+      if (sem.operatingGoodsAndServices < 0) errors.push(`[Semestre ${sem.semesterLabel}] Las compras de bienes y servicios no pueden ser negativas.`);
+    });
+    
     return errors;
-  }, [studentsCount, programCredits, fixedCosts, variableCosts, otherIncome, discountPct, isAdminOverride, customCreditValue]);
+  }, [semesters, tuitionSMMLV, attritionPct, baseSMMLV2026, annualWageIncreasePct, parafiscalFactor, isAdminOverride, customCreditValue]);
 
-  // Financial calculations
-  const financials = useMemo(() => {
-    if (validationErrors.length > 0) {
-      return {
-        grossIncome: 0,
-        discounts: 0,
-        netTuitionIncome: 0,
-        totalIncome: 0,
-        totalCosts: 0,
-        utility: 0,
-        marginPct: 0,
-        profitabilityPct: 0,
-        breakEvenCredits: 0,
-        breakEvenStudents: 0,
-        avgRevenuePerStudent: 0,
-        avgCostPerStudent: 0
-      };
+  // Semester calculations with overlapping cohorts
+  const calculatedSemesters = useMemo(() => {
+    // Cohorte duration based on level type
+    const durationSemesters = level === 'especializacion' ? 2 : level === 'doctorado' ? 8 : 4;
+    
+    // Track active students from each cohort launched in semester i (0 to 5)
+    const activeCohortStudents = Array.from({ length: 6 }, () => new Array(6).fill(0));
+    
+    for (let i = 0; i < 6; i++) {
+      const initial = semesters[i].newCohortStudents;
+      if (initial > 0) {
+        activeCohortStudents[i][i] = initial;
+        for (let t = i + 1; t < 6; t++) {
+          const age = t - i;
+          if (age < durationSemesters) {
+            activeCohortStudents[i][t] = activeCohortStudents[i][t - 1] * (1 - attritionPct / 100);
+          } else {
+            activeCohortStudents[i][t] = 0; // graduated
+          }
+        }
+      }
     }
 
-    const grossIncome = finalCreditValue * programCredits * studentsCount;
-    const discounts = grossIncome * (discountPct / 100);
-    const netTuitionIncome = grossIncome - discounts;
-    const totalIncome = netTuitionIncome + otherIncome;
+    return semesters.map((sem, t) => {
+      const smmlv = getSMMLVForSemester(sem.semesterLabel);
+      const creditRate = finalCreditValue * (smmlv / baseSMMLV2026); // index credit value with inflation/SMMLV rate
+      const programCreditsPerSemester = tuitionSMMLV; // credits taken in this semester
+      
+      // Calculate active student counts in this semester
+      let totalActiveStudents = 0;
+      for (let i = 0; i <= t; i++) {
+        totalActiveStudents += activeCohortStudents[i][t];
+      }
+
+      // Gross tuition income: active_students * creditRate * programCreditsPerSemester
+      const totalGrossIncome = totalActiveStudents * creditRate * programCreditsPerSemester;
+
+      // Discounts counts capping
+      const maxDiscountsStudents = Math.max(0, totalActiveStudents);
+      const votCount = Math.min(sem.votacionDiscountCount, maxDiscountsStudents);
+      const monCount = Math.min(sem.monitoriaDiscountCount, maxDiscountsStudents - votCount);
+      const honCount = Math.min(sem.honorDiscountCount, maxDiscountsStudents - votCount - monCount);
+      const resCount = Math.min(sem.res16DiscountCount, maxDiscountsStudents - votCount - monCount - honCount);
+      const othCount = Math.min(sem.otherDiscountCount, maxDiscountsStudents - votCount - monCount - honCount - resCount);
+
+      const votDiscountVal = votCount * creditRate * programCreditsPerSemester * 0.10;
+      const monDiscountVal = monCount * creditRate * programCreditsPerSemester * 0.70;
+      const honDiscountVal = honCount * creditRate * programCreditsPerSemester * 1.00;
+      const resDiscountVal = resCount * creditRate * programCreditsPerSemester * 0.50;
+      const othDiscountVal = othCount * creditRate * programCreditsPerSemester * (sem.otherDiscountPct / 100);
+
+      const totalDiscounts = votDiscountVal + monDiscountVal + honDiscountVal + resDiscountVal + othDiscountVal;
+      const totalNetIncome = totalGrossIncome - totalDiscounts;
+
+      // UPTC Deductions (Administración Central 40%, Investigación 5%, MESI 0.5% = 45.5% Total)
+      const deductionCentral = totalNetIncome * 0.40;
+      const deductionResearch = totalNetIncome * 0.05;
+      const deductionMesi = totalNetIncome * 0.005;
+      const totalDeductions = deductionCentral + deductionResearch + deductionMesi;
+      
+      const functioningTuitionIncome = totalNetIncome - totalDeductions;
+
+      // Other Income (Inscripciones = 0.25 SMMLV, Derechos Grado = 1.0 SMMLV)
+      const inscriptionFee = smmlv * 0.25;
+      const graduationFee = smmlv * 1.0;
+      const applicationIncome = sem.aspirantesCount * inscriptionFee;
+      const graduationIncome = sem.graduandosCount * graduationFee;
+      const totalOtherIncome = applicationIncome + graduationIncome + sem.otherRawIncome;
+
+      const totalFunctioningIncome = functioningTuitionIncome + totalOtherIncome;
+
+      // Gastos de Personal (Staff Costs)
+      // Docentes Hora Catedra
+      const teachingHourBaseValue = smmlv * degreeHourMultipliers[level];
+      const loadedHourValue = teachingHourBaseValue * (1 + parafiscalFactor / 100);
+      const teachersCost = sem.numDocentes * sem.horasDocente * loadedHourValue;
+
+      // Coordinador (indexed with inflation)
+      const coordinatorHourRate = 65787.385 * (smmlv / baseSMMLV2026);
+      const coordinatorCost = hasCoordinator ? sem.coordinatorHours * coordinatorHourRate : 0;
+      
+      // Personal de Apoyo CPS
+      const supportStaffCPSRate = sem.supportStaffMonthlyCPS * (smmlv / baseSMMLV2026);
+      const supportStaffCost = hasSupportStaff ? supportStaffCPSRate * sem.supportStaffMonths : 0;
+
+      const totalStaffCosts = teachersCost + coordinatorCost + supportStaffCost;
+
+      // Operating expenses
+      const totalOperatingCosts = sem.operatingGoodsAndServices;
+
+      // Net result
+      const totalExpenses = totalStaffCosts + totalOperatingCosts;
+      const budgetBalance = totalFunctioningIncome - totalExpenses;
+
+      return {
+        ...sem,
+        smmlv,
+        creditRate,
+        activeStudents: totalActiveStudents,
+        grossIncome: totalGrossIncome,
+        totalDiscounts,
+        netIncome: totalNetIncome,
+        totalDeductions,
+        functioningTuitionIncome,
+        applicationIncome,
+        graduationIncome,
+        totalOtherIncome,
+        totalFunctioningIncome,
+        teachersCost,
+        coordinatorCost,
+        supportStaffCost,
+        totalStaffCosts,
+        totalExpenses,
+        budgetBalance,
+        loadedHourValue,
+        activeCohortStudents: activeCohortStudents.map(cohort => cohort[t])
+      };
+    });
+  }, [semesters, level, tuitionSMMLV, attritionPct, baseSMMLV2026, annualWageIncreasePct, parafiscalFactor, finalCreditValue, hasCoordinator, hasSupportStaff]);
+
+  // Aggregated summaries
+  const aggregatedTotals = useMemo(() => {
+    let totalGrossIncome = 0;
+    let totalDiscounts = 0;
+    let totalNetIncome = 0;
+    let totalDeductions = 0;
+    let totalFunctioningIncome = 0;
     
-    const totalCosts = fixedCosts + variableCosts;
-    const utility = totalIncome - totalCosts;
-    const marginPct = totalIncome > 0 ? (utility / totalIncome) * 100 : 0;
-    const profitabilityPct = totalCosts > 0 ? (utility / totalCosts) * 100 : 0;
+    let totalTeachersCost = 0;
+    let totalCoordinatorCost = 0;
+    let totalSupportStaffCost = 0;
+    let totalStaffCosts = 0;
     
-    const avgRevenuePerStudent = studentsCount > 0 ? totalIncome / studentsCount : 0;
-    const avgCostPerStudent = studentsCount > 0 ? totalCosts / studentsCount : 0;
+    let totalOperatingCosts = 0;
+    let totalExpenses = 0;
+    let totalBalance = 0;
+    let hasDeficitInAnySemester = false;
+    let totalActiveStudentSemesters = 0;
 
-    // Break Even calculations
-    // Costos netos a cubrir = Costos Totales - Otros Ingresos
-    const netCostsToCover = Math.max(0, totalCosts - otherIncome);
-    const netRevenuePerCreditStudent = finalCreditValue * (1 - discountPct / 100);
+    calculatedSemesters.forEach(sem => {
+      totalGrossIncome += sem.grossIncome;
+      totalDiscounts += sem.totalDiscounts;
+      totalNetIncome += sem.netIncome;
+      totalDeductions += sem.totalDeductions;
+      totalFunctioningIncome += sem.totalFunctioningIncome;
+      
+      totalTeachersCost += sem.teachersCost;
+      totalCoordinatorCost += sem.coordinatorCost;
+      totalSupportStaffCost += sem.supportStaffCost;
+      totalStaffCosts += sem.totalStaffCosts;
+      
+      totalOperatingCosts += sem.operatingGoodsAndServices;
+      totalExpenses += sem.totalExpenses;
+      totalBalance += sem.budgetBalance;
+      totalActiveStudentSemesters += sem.activeStudents;
+      
+      if (sem.budgetBalance < 0) {
+        hasDeficitInAnySemester = true;
+      }
+    });
 
-    // Break Even Credits = netCostsToCover / (finalCreditValue * studentsCount * (1 - discountPct/100))
-    const creditsDenom = netRevenuePerCreditStudent * studentsCount;
-    const breakEvenCredits = creditsDenom > 0 ? Math.ceil(netCostsToCover / creditsDenom) : 0;
+    // Implicit cohorts count
+    const numCohortes = semesters.filter(s => s.newCohortStudents > 0).length;
 
-    // Break Even Students = netCostsToCover / (finalCreditValue * programCredits * (1 - discountPct/100))
-    const studentsDenom = netRevenuePerCreditStudent * programCredits;
-    const breakEvenStudents = studentsDenom > 0 ? Math.ceil(netCostsToCover / studentsDenom) : 0;
+    // Break Even Credits Total
+    // Costos Netos Totales a cubrir (descontando otros ingresos)
+    const netCostsToCoverTotal = Math.max(0, totalExpenses + totalDeductions - (calculatedSemesters.reduce((sum, s) => sum + s.totalOtherIncome, 0)));
+    const averageCreditRate = calculatedSemesters.reduce((sum, s) => sum + s.creditRate, 0) / 6;
+    const averageDiscountMultiplier = 1 - discountPct / 100;
+    const totalActiveNewStudents = semesters.reduce((sum, s) => sum + s.newCohortStudents, 0);
+
+    // Minimum credits across all active students combined
+    const denomCredits = averageCreditRate * averageDiscountMultiplier * totalActiveNewStudents;
+    const breakEvenCredits = denomCredits > 0 ? Math.ceil(netCostsToCoverTotal / (averageCreditRate * averageDiscountMultiplier * (totalActiveStudentSemesters / (numCohortes || 1)))) : 0;
+    
+    // Minimum students with full credit charge to reach break even
+    const denomStudents = averageCreditRate * averageDiscountMultiplier * tuitionSMMLV * (totalActiveStudentSemesters / (totalActiveNewStudents || 1));
+    const breakEvenStudents = denomStudents > 0 ? Math.ceil(netCostsToCoverTotal / (averageCreditRate * averageDiscountMultiplier * tuitionSMMLV)) : 0;
 
     return {
-      grossIncome,
-      discounts,
-      netTuitionIncome,
-      totalIncome,
-      totalCosts,
-      utility,
-      marginPct,
-      profitabilityPct,
-      breakEvenCredits,
-      breakEvenStudents,
-      avgRevenuePerStudent,
-      avgCostPerStudent
+      totalGrossIncome,
+      totalDiscounts,
+      totalNetIncome,
+      totalDeductions,
+      totalFunctioningIncome,
+      totalTeachersCost,
+      totalCoordinatorCost,
+      totalSupportStaffCost,
+      totalStaffCosts,
+      totalOperatingCosts,
+      totalExpenses,
+      totalBalance,
+      isBalanced: !hasDeficitInAnySemester,
+      numCohortes,
+      totalActiveStudentSemesters,
+      breakEvenCredits: Math.max(0, breakEvenCredits),
+      breakEvenStudents: Math.max(0, breakEvenStudents),
+      totalActiveNewStudents
     };
-  }, [finalCreditValue, programCredits, studentsCount, fixedCosts, variableCosts, otherIncome, discountPct, validationErrors]);
+  }, [calculatedSemesters, semesters, discountPct, tuitionSMMLV]);
 
-  // Color-coding based on net utility result (Green = surplus, Yellow = break even, Red = deficit)
-  const financialStatus = useMemo(() => {
-    if (validationErrors.length > 0) return 'neutral';
-    if (financials.utility > 5000000) return 'surplus'; // surplus greater than 5m COP
-    if (financials.utility < -5000000) return 'deficit'; // deficit greater than 5m COP
-    return 'equilibrium'; // close to zero
-  }, [financials.utility, validationErrors]);
+  // Update semester inputs
+  const handleUpdateSemester = (index: number, fields: Partial<SemesterData>) => {
+    setSemesters(prev => prev.map((s, i) => i === index ? { ...s, ...fields } : s));
+  };
 
-  // Sensitivity analysis data mapping (varies number of students from 5 to 40)
+  // Recharts graphics mapping
+  const chartData = useMemo(() => {
+    return calculatedSemesters.map(sem => ({
+      name: sem.semesterLabel,
+      'Ingresos Disponibles': Math.round(sem.totalFunctioningIncome / 1e6 * 100) / 100,
+      'Gastos Personal': Math.round(sem.totalStaffCosts / 1e6 * 100) / 100,
+      'Gastos Funcionamiento': Math.round(sem.operatingGoodsAndServices / 1e6 * 100) / 100,
+      'Resultado Semestre': Math.round(sem.budgetBalance / 1e6 * 100) / 100
+    }));
+  }, [calculatedSemesters]);
+
+  const expensePieChartData = useMemo(() => {
+    return [
+      { name: 'Gastos Docentes Cátedra', value: aggregatedTotals.totalTeachersCost },
+      { name: 'Gastos Coordinación', value: aggregatedTotals.totalCoordinatorCost },
+      { name: 'Gastos Apoyo CPS', value: aggregatedTotals.totalSupportStaffCost },
+      { name: 'Gastos Adquisición (Bienes)', value: aggregatedTotals.totalOperatingCosts }
+    ];
+  }, [aggregatedTotals]);
+
+  // Sensitivity Analysis graph data (varies new students per cohort from 5 to 40)
   const sensitivityChartData = useMemo(() => {
     if (validationErrors.length > 0) return [];
     
+    // We assume cohort size scales uniformly
     const data = [];
     const step = 5;
-    for (let sCount = 5; sCount <= 40; sCount += step) {
-      const gIncome = finalCreditValue * programCredits * sCount;
-      const disc = gIncome * (discountPct / 100);
-      const nTuition = gIncome - disc;
-      const tIncome = nTuition + otherIncome;
-      const tCosts = fixedCosts + variableCosts;
-      const ut = tIncome - tCosts;
+    for (let cSize = 5; cSize <= 45; cSize += step) {
+      // Recalculate whole cohorte path with cohort size = cSize
+      let simulatedFunctioningIncome = 0;
+      let simulatedTotalExpenses = 0;
       
+      const durationSem = level === 'especializacion' ? 2 : level === 'doctorado' ? 8 : 4;
+      const actCohort = Array.from({ length: 6 }, () => new Array(6).fill(0));
+      
+      for (let i = 0; i < 6; i++) {
+        // If the original semester had students > 0, scale it to cSize
+        const initial = semesters[i].newCohortStudents > 0 ? cSize : 0;
+        if (initial > 0) {
+          actCohort[i][i] = initial;
+          for (let t = i + 1; t < 6; t++) {
+            if (t - i < durationSem) {
+              actCohort[i][t] = actCohort[i][t - 1] * (1 - attritionPct / 100);
+            }
+          }
+        }
+      }
+
+      calculatedSemesters.forEach((sem, t) => {
+        let activeStud = 0;
+        let originalStudents = semesters.reduce((sum, s) => sum + s.newCohortStudents, 0);
+        
+        for (let i = 0; i <= t; i++) {
+          activeStud += actCohort[i][t];
+        }
+
+        const gross = activeStud * sem.creditRate * tuitionSMMLV;
+        // scale discounts proportionally
+        const ratio = originalStudents > 0 ? activeStud / (sem.activeStudents || 1) : 1;
+        const disc = sem.totalDiscounts * ratio;
+        const net = gross - disc;
+        const deduct = net * 0.455;
+        const funcTuition = net - deduct;
+        const totalFunc = funcTuition + sem.totalOtherIncome;
+        
+        simulatedFunctioningIncome += totalFunc;
+        simulatedTotalExpenses += sem.totalExpenses; // fixed staffing / operating costs
+      });
+
       data.push({
-        students: sCount,
-        'Ingresos Proyectados': Math.round(tIncome / 1e6 * 100) / 100,
-        'Costos Fijos + Variables': Math.round(tCosts / 1e6 * 100) / 100,
-        'Resultado Neto (COP)': Math.round(ut / 1e6 * 100) / 100
+        cohortSize: cSize,
+        'Ingresos de Operación': Math.round(simulatedFunctioningIncome / 1e6 * 100) / 100,
+        'Gastos y Costos': Math.round(simulatedTotalExpenses / 1e6 * 100) / 100,
+        'Margen Final (M)': Math.round((simulatedFunctioningIncome - simulatedTotalExpenses) / 1e6 * 100) / 100
       });
     }
     return data;
-  }, [finalCreditValue, programCredits, discountPct, otherIncome, fixedCosts, variableCosts, validationErrors]);
-
-  // General chart comparison data
-  const mainBarChartData = useMemo(() => {
-    return [
-      {
-        name: 'Simulación Actual',
-        'Ingresos Totales': Math.round(financials.totalIncome / 1e6 * 100) / 100,
-        'Costos Totales': Math.round(financials.totalCosts / 1e6 * 100) / 100,
-        'Utilidad/Déficit': Math.round(financials.utility / 1e6 * 100) / 100
-      }
-    ];
-  }, [financials]);
-
-  // Cost structure pie chart
-  const costDistributionChartData = useMemo(() => {
-    return [
-      { name: 'Costos Fijos', value: fixedCosts },
-      { name: 'Costos Variables', value: variableCosts }
-    ];
-  }, [fixedCosts, variableCosts]);
+  }, [semesters, calculatedSemesters, level, attritionPct, tuitionSMMLV, validationErrors]);
 
   // Scenario management actions
   const handleSaveScenario = () => {
@@ -273,100 +542,53 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       name: newScenarioName,
       level,
       modality,
-      studentsCount,
-      programCredits,
-      fixedCosts,
-      variableCosts,
-      otherIncome,
-      discountPct,
-      isAdminOverride,
-      customCreditValue,
-      totalIncome: financials.totalIncome,
-      totalCosts: financials.totalCosts,
-      utility: financials.utility,
-      breakEvenCredits: financials.breakEvenCredits,
-      breakEvenStudents: financials.breakEvenStudents
+      tuitionSMMLV,
+      attritionPct,
+      hasCoordinator,
+      hasSupportStaff,
+      semesters: JSON.parse(JSON.stringify(semesters)),
+      totalIncome: aggregatedTotals.totalFunctioningIncome,
+      totalCosts: aggregatedTotals.totalExpenses,
+      utility: aggregatedTotals.totalBalance,
+      breakEvenCredits: aggregatedTotals.breakEvenCredits,
+      breakEvenStudents: aggregatedTotals.breakEvenStudents
     };
 
     setSavedScenarios(prev => [scenario, ...prev]);
     setNewScenarioName("");
-    setActiveTab('scenarios'); // switch to comparison view
+    setActiveSubTab('report'); // redirect to comparison/report
   };
 
-  const handleLoadScenario = (scenario: SavedScenario) => {
-    setLevel(scenario.level);
-    setModality(scenario.modality);
-    setStudentsCount(scenario.studentsCount);
-    setProgramCredits(scenario.programCredits);
-    setFixedCosts(scenario.fixedCosts);
-    setVariableCosts(scenario.variableCosts);
-    setOtherIncome(scenario.otherIncome);
-    setDiscountPct(scenario.discountPct);
-    setIsAdminOverride(scenario.isAdminOverride);
-    setCustomCreditValue(scenario.customCreditValue);
-    setActiveTab('simulator');
+  const handleLoadScenario = (scen: SavedScenario) => {
+    setLevel(scen.level);
+    setModality(scen.modality);
+    setTuitionSMMLV(scen.tuitionSMMLV);
+    setAttritionPct(scen.attritionPct);
+    setHasCoordinator(scen.hasCoordinator);
+    setHasSupportStaff(scen.hasSupportStaff);
+    setSemesters(scen.semesters);
+    setActiveSubTab('simulator');
   };
 
   const handleDeleteScenario = (id: string) => {
     setSavedScenarios(prev => prev.filter(s => s.id !== id));
   };
 
-  // Scenario comparison chart mapping
-  const scenarioComparisonChartData = useMemo(() => {
-    return savedScenarios.map(s => ({
-      name: s.name,
-      'Ingresos': Math.round(s.totalIncome / 1e6),
-      'Costos': Math.round(s.totalCosts / 1e6),
-      'Margen Neto': Math.round(s.utility / 1e6)
-    }));
-  }, [savedScenarios]);
-
-  // Export to CSV Function
-  const handleExportCSV = () => {
-    let csv = "\uFEFFConcepto;Valor de Simulación\n";
-    csv += `Nivel Académico;${level.toUpperCase()}\n`;
-    csv += `Modalidad;${modality.toUpperCase()}\n`;
-    csv += `Número de Estudiantes;${studentsCount}\n`;
-    csv += `Créditos del Programa;${programCredits}\n`;
-    csv += `Valor Crédito Aplicado (COP);${finalCreditValue}\n`;
-    csv += `Porcentaje Descuentos/Becas;${discountPct}%\n`;
-    csv += `Otros Ingresos (COP);${otherIncome}\n`;
-    csv += `Costos Fijos (COP);${fixedCosts}\n`;
-    csv += `Costos Variables (COP);${variableCosts}\n`;
-    csv += `Total Ingresos Proyectados (COP);${financials.totalIncome}\n`;
-    csv += `Total Costos Proyectados (COP);${financials.totalCosts}\n`;
-    csv += `Utilidad/Déficit Neto (COP);${financials.utility}\n`;
-    csv += `Punto de Equilibrio en Créditos;${financials.breakEvenCredits} créditos\n`;
-    csv += `Punto de Equilibrio en Estudiantes;${financials.breakEvenStudents} estudiantes\n`;
-    csv += `Ingreso Promedio por Estudiante (COP);${financials.avgRevenuePerStudent.toFixed(0)}\n`;
-    csv += `Costo Promedio por Estudiante (COP);${financials.avgCostPerStudent.toFixed(0)}\n`;
-    csv += `Margen Financiero;${financials.marginPct.toFixed(1)}%\n`;
-    csv += `Rentabilidad;${financials.profitabilityPct.toFixed(1)}%\n`;
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", `Costeo_Posgrados_Creditos_${programCredits}cr.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-300 print:space-y-4 print:text-black">
       
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-6">
+      {/* Header (Hidden on Print) */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-6 print:hidden">
         <div>
           <div className="flex items-center gap-2 text-[#ffcc29] text-xs font-mono uppercase tracking-wider mb-1">
-            <BookOpen size={14} />
-            <span>Simulador Financiero UPTC</span>
+            <GraduationCap size={14} />
+            <span>Planificación y Viabilidad Financiera de Posgrados</span>
           </div>
           <h1 className="text-3xl font-display font-bold text-white tracking-tight">
             Costeo de Posgrados por Créditos
           </h1>
           <p className="text-sm text-on-surface-variant max-w-2xl font-sans mt-1">
-            Herramienta interactiva para calcular el valor de matrícula por créditos académicos de posgrado, determinar el punto de equilibrio financiero y evaluar la sostenibilidad de programas.
+            Simulador presupuestal multicohorte homologado a la UPTC. Modifique estudiantes, docentes, coordinaciones y bienes para validar el punto de equilibrio en créditos.
           </p>
         </div>
 
@@ -374,26 +596,26 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
           <button 
             onClick={handleExportCSV} 
             disabled={validationErrors.length > 0}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-semibold font-sans transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-semibold font-sans transition-all cursor-pointer disabled:opacity-50"
           >
-            <Download size={14} className="text-[#ffcc29]" /> Exportar CSV
+            <Download size={14} className="text-[#ffcc29]" /> Exportar Presupuesto
           </button>
           <button 
             onClick={() => window.print()} 
             className="flex items-center gap-2 px-4 py-2.5 bg-[#ffcc29] hover:bg-[#ffcc29]/90 text-black rounded-xl text-xs font-bold font-sans transition-all cursor-pointer"
           >
-            Imprimir Reporte
+            <Printer size={14} /> Imprimir Reporte PDF
           </button>
         </div>
       </div>
 
-      {/* Validations warnings */}
+      {/* Validations errors list */}
       {validationErrors.length > 0 && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex gap-3 text-rose-400">
+        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex gap-3 text-rose-400 print:hidden">
           <AlertTriangle className="shrink-0 mt-0.5" size={20} />
           <div className="text-xs space-y-1">
-            <p className="font-bold">Error de Validación en Parámetros:</p>
-            <ul className="list-disc list-inside space-y-0.5">
+            <p className="font-bold">Por favor corrija los siguientes errores de configuración:</p>
+            <ul className="list-disc list-inside space-y-0.5 font-mono">
               {validationErrors.map((err, idx) => (
                 <li key={idx}>{err}</li>
               ))}
@@ -402,133 +624,113 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         </div>
       )}
 
-      {/* Main KPI Bar */}
+      {/* Top executive summary boxes (Hidden on Print) */}
       {validationErrors.length === 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 print:hidden">
           
-          {/* Net balance result card */}
+          {/* Sostenibilidad / Balance general */}
           <div className={`p-5 rounded-2xl border transition-all duration-300 ${
-            financialStatus === 'surplus' ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400' :
-            financialStatus === 'deficit' ? 'border-rose-500/30 bg-rose-500/5 text-rose-400' :
-            'border-amber-500/30 bg-amber-500/5 text-amber-400'
+            aggregatedTotals.isBalanced 
+              ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400' 
+              : 'border-rose-500/30 bg-rose-500/5 text-rose-400'
           }`}>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-white/50">Resultado Financiero</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Sostenibilidad Global</span>
             <div className="flex justify-between items-end mt-2">
-              <h3 className="text-2xl font-display font-bold font-mono tracking-tight text-white">
-                {financials.utility >= 0 ? '+' : ''}{(financials.utility / 1e6).toFixed(2)} M
+              <h3 className="text-2xl font-display font-bold font-mono text-white">
+                {aggregatedTotals.totalBalance >= 0 ? '+' : ''}{(aggregatedTotals.totalBalance / 1e6).toFixed(2)} M
               </h3>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                financialStatus === 'surplus' ? 'bg-emerald-500/10 text-emerald-400' :
-                financialStatus === 'deficit' ? 'bg-rose-500/10 text-rose-400' :
-                'bg-amber-500/10 text-amber-400'
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                aggregatedTotals.isBalanced ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
               }`}>
-                {financialStatus === 'surplus' ? 'Superávit' :
-                 financialStatus === 'deficit' ? 'Déficit' :
-                 'Equilibrio'}
+                {aggregatedTotals.isBalanced ? 'Equilibrio' : 'Déficit'}
               </span>
             </div>
-            <p className="text-[10px] text-on-surface-variant font-sans mt-2.5 leading-snug">
-              {financialStatus === 'surplus' ? "El programa cubre la totalidad de sus costos y genera utilidad." :
-               financialStatus === 'deficit' ? "El programa genera pérdidas presupuestales en esta cohorte." :
-               "El programa se encuentra cercano al equilibrio financiero."}
+            <p className="text-[10px] text-on-surface-variant font-sans mt-2">
+              {aggregatedTotals.isBalanced 
+                ? "El programa posee superávit o equilibrio en todos los semestres proyectados." 
+                : "Se detectaron pérdidas en uno o más periodos semestrales."}
             </p>
           </div>
 
-          {/* Break-even Credits card */}
+          {/* Break even créditos acumulados */}
           <div className="p-5 rounded-2xl border border-white/10 bg-white/5 flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-start">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-white/50">Equilibrio (Créditos)</span>
-                <HelpCircle size={14} className="text-white/30 cursor-help" title="Número mínimo de créditos totales que deben matricularse para cubrir costos." />
-              </div>
-              <h3 className="text-2xl font-display font-bold font-mono tracking-tight text-white mt-2">
-                {financials.breakEvenCredits} <span className="text-xs text-white/40 font-normal">créditos</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Créditos Totales Req.</span>
+              <h3 className="text-2xl font-display font-bold font-mono text-[#ffcc29] mt-2">
+                {aggregatedTotals.breakEvenCredits} <span className="text-xs text-white/40 font-normal">créditos</span>
               </h3>
             </div>
-            <p className="text-[10px] text-on-surface-variant font-sans mt-2.5">
-              De un total de <strong className="text-[#ffcc29]">{programCredits * studentsCount}</strong> créditos potenciales matriculados.
-            </p>
+            <span className="text-[9px] text-white/40 font-mono mt-3">
+              Frente a {tuitionSMMLV * aggregatedTotals.totalActiveStudentSemesters} cr. facturados en cohorte.
+            </span>
           </div>
 
-          {/* Break-even Students card */}
+          {/* Estudiantes requeridos por cohorte */}
           <div className="p-5 rounded-2xl border border-white/10 bg-white/5 flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-start">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-white/50">Estudiantes Mínimos</span>
-                <HelpCircle size={14} className="text-white/30 cursor-help" title="Número mínimo de alumnos con la carga de créditos completa para llegar al equilibrio." />
-              </div>
-              <h3 className="text-2xl font-display font-bold font-mono tracking-tight text-[#ffcc29] mt-2">
-                {financials.breakEvenStudents} <span className="text-xs text-[#ffcc29]/50 font-normal">alumnos</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Estudiantes Mínimos</span>
+              <h3 className="text-2xl font-display font-bold font-mono text-white mt-2">
+                {aggregatedTotals.breakEvenStudents} <span className="text-xs text-white/40 font-normal">estudiantes</span>
               </h3>
             </div>
-            <p className="text-[10px] text-on-surface-variant font-sans mt-2.5">
-              Frente a los <strong className="text-white">{studentsCount}</strong> estudiantes simulados actualmente.
-            </p>
+            <span className="text-[9px] text-white/40 font-mono mt-3">
+              Tamaño mínimo de cohorte con carga completa.
+            </span>
           </div>
 
-          {/* Margin & Profitability card */}
+          {/* Resumen de cohortes proyectadas */}
           <div className="p-5 rounded-2xl border border-white/10 bg-white/5 flex flex-col justify-between">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-white/50">Margen & Rentabilidad</span>
-              <div className="flex gap-4 mt-2">
-                <div>
-                  <span className="text-[9px] font-mono text-white/30 uppercase block">Margen</span>
-                  <span className={`text-lg font-bold font-mono ${financials.marginPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {financials.marginPct.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="border-l border-white/5 pl-4">
-                  <span className="text-[9px] font-mono text-white/30 uppercase block">Rentabilidad</span>
-                  <span className={`text-lg font-bold font-mono ${financials.profitabilityPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {financials.profitabilityPct.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">Estructura Proyectada</span>
+              <h3 className="text-2xl font-display font-bold font-mono text-white mt-2">
+                {aggregatedTotals.numCohortes} <span className="text-xs text-white/40 font-normal">cohortes</span>
+              </h3>
             </div>
-            <span className="text-[9px] text-white/30 font-mono mt-3">Rendimiento de los recursos invertidos</span>
+            <span className="text-[9px] text-white/40 font-mono mt-3">
+              {aggregatedTotals.totalActiveNewStudents} alumnos totales matriculados en cohorte.
+            </span>
           </div>
 
         </div>
       )}
 
-      {/* Main layout switcher */}
-      <div className="flex border-b border-white/10 gap-2">
-        <button
-          onClick={() => setActiveTab('simulator')}
-          className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
-            activeTab === 'simulator' ? 'border-[#ffcc29] text-[#ffcc29]' : 'border-transparent text-white/50 hover:text-white'
-          }`}
-        >
-          <Activity size={15} /> Simulador y Gráficos
-        </button>
-        <button
-          onClick={() => setActiveTab('scenarios')}
-          className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
-            activeTab === 'scenarios' ? 'border-[#ffcc29] text-[#ffcc29]' : 'border-transparent text-white/50 hover:text-white'
-          }`}
-        >
-          <Layers size={15} /> Comparativa de Escenarios ({savedScenarios.length})
-        </button>
+      {/* Sub tabs selector (Hidden on Print) */}
+      <div className="flex border-b border-white/10 gap-2 overflow-x-auto print:hidden">
+        {[
+          { id: 'simulator', label: '1. Ingresos y Cohortes', icon: Users },
+          { id: 'staff', label: '2. Nómina y Docentes', icon: Wallet },
+          { id: 'report', label: '3. Presupuesto y Reportes', icon: Activity }
+        ].map(t => (
+          <button
+            key={t.id}
+            onClick={() => setActiveSubTab(t.id as any)}
+            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === t.id 
+                ? 'border-[#ffcc29] text-[#ffcc29]' 
+                : 'border-transparent text-white/50 hover:text-white'
+            }`}
+          >
+            <t.icon size={15} /> {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* Tab 1: Simulator main view */}
-      {activeTab === 'simulator' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* TAB CONTENT: 1. Incomes, Levels and Modalities */}
+      {activeSubTab === 'simulator' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
           
-          {/* Controls Column (Left) */}
+          {/* Parameters block (Left) */}
           <div className="lg:col-span-1 space-y-6">
             
-            {/* Input Variables panel */}
+            {/* General posgrad settings */}
             <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5">
-                Variables de Simulación
+                Configuración Académica
               </h3>
-
+              
               <div className="space-y-4">
-                
-                {/* Level selection */}
                 <div>
-                  <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Nivel Académico (Posgrado)</label>
+                  <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Nivel del Posgrado</label>
                   <select 
                     value={level} 
                     onChange={(e) => setLevel(e.target.value as any)}
@@ -540,7 +742,6 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                   </select>
                 </div>
 
-                {/* Modality selection */}
                 <div>
                   <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Modalidad de Dictado</label>
                   <select 
@@ -548,67 +749,40 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                     onChange={(e) => setModality(e.target.value as any)}
                     className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-[#ffcc29] focus:outline-none"
                   >
-                    <option value="presencial">Presencial (100% Tarifa)</option>
-                    <option value="hibrido">Híbrido (85% Tarifa)</option>
-                    <option value="virtual">Virtual (70% Tarifa)</option>
+                    <option value="presencial">Presencial (100% tarifa)</option>
+                    <option value="hibrido">Híbrido (85% tarifa)</option>
+                    <option value="virtual">Virtual (70% tarifa)</option>
                   </select>
                 </div>
 
-                {/* Slider: Students */}
-                <div>
-                  <div className="flex justify-between text-xs font-mono mb-1.5">
-                    <span className="text-white/60">Número de Estudiantes</span>
-                    <span className="text-white font-bold">{studentsCount} alumnos</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Créditos / Semestre</label>
+                    <input 
+                      type="number" 
+                      min="1"
+                      value={tuitionSMMLV} 
+                      onChange={(e) => setTuitionSMMLV(parseInt(e.target.value) || 0)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
+                    />
                   </div>
-                  <input 
-                    type="range" 
-                    min="1" 
-                    max="60" 
-                    step="1"
-                    value={studentsCount} 
-                    onChange={(e) => setStudentsCount(parseInt(e.target.value) || 1)}
-                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                  />
+
+                  <div>
+                    <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Tasa Deserción (%)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      max="100"
+                      value={attritionPct} 
+                      onChange={(e) => setAttritionPct(parseInt(e.target.value) || 0)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono text-rose-400"
+                    />
+                  </div>
                 </div>
 
-                {/* Slider: Program Credits */}
-                <div>
-                  <div className="flex justify-between text-xs font-mono mb-1.5">
-                    <span className="text-white/60">Créditos del Programa</span>
-                    <span className="text-white font-bold">{programCredits} créditos</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="6" 
-                    max="90" 
-                    step="1"
-                    value={programCredits} 
-                    onChange={(e) => setProgramCredits(parseInt(e.target.value) || 1)}
-                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                  />
-                </div>
-
-                {/* Slider: Discount / Becas */}
-                <div>
-                  <div className="flex justify-between text-xs font-mono mb-1.5">
-                    <span className="text-white/60">Porcentaje Promedio Becas/Descuentos</span>
-                    <span className="text-red-400 font-bold">{discountPct}%</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="60" 
-                    step="5"
-                    value={discountPct} 
-                    onChange={(e) => setDiscountPct(parseInt(e.target.value) || 0)}
-                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                  />
-                </div>
-
-                {/* Admin override panel */}
                 <div className="border-t border-white/5 pt-3 mt-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">Ajuste Manual de Crédito (Admin)</span>
+                    <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">Ajustar Valor Crédito (Manual)</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input 
                         type="checkbox" 
@@ -621,11 +795,11 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                   </div>
 
                   {isAdminOverride && (
-                    <div className="mt-3">
-                      <label className="block text-[9px] font-mono text-white/50 mb-1">Valor de Crédito Manual (COP)</label>
+                    <div className="mt-3 animate-in slide-in-from-top-1 duration-200">
+                      <label className="block text-[9px] font-mono text-white/50 mb-1">Valor de Crédito Personalizado (COP)</label>
                       <input 
                         type="number" 
-                        step="5000"
+                        step="1000"
                         value={customCreditValue} 
                         onChange={(e) => setCustomCreditValue(parseInt(e.target.value) || 0)}
                         className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
@@ -634,336 +808,574 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                   )}
 
                   <div className="mt-3 flex justify-between items-center text-xs bg-white/5 p-3 rounded-xl border border-white/5">
-                    <span className="text-white/50">Valor del Crédito Final:</span>
+                    <span className="text-white/50">Valor Crédito Aplicado:</span>
                     <strong className="text-[#ffcc29] font-mono">${Math.round(finalCreditValue).toLocaleString()} COP</strong>
                   </div>
                 </div>
 
-              </div>
-            </div>
-
-            {/* Financial cost config panel */}
-            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5">
-                Presupuesto de Costos y Otros
-              </h3>
-
-              <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Costos Fijos del Programa</label>
+                  <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Descuentos / Becas (%)</label>
                   <input 
                     type="number" 
-                    step="1000000"
-                    value={fixedCosts} 
-                    onChange={(e) => setFixedCosts(parseInt(e.target.value) || 0)}
+                    min="0"
+                    max="100"
+                    value={discountPct} 
+                    onChange={(e) => setDiscountPct(parseInt(e.target.value) || 0)}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
                   />
-                  <p className="text-[9px] text-white/40 mt-1">Coordinaciones, personal de apoyo, licencias fijas, hosting, etc.</p>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Costos Variables del Programa</label>
-                  <input 
-                    type="number" 
-                    step="1000000"
-                    value={variableCosts} 
-                    onChange={(e) => setVariableCosts(parseInt(e.target.value) || 0)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
-                  />
-                  <p className="text-[9px] text-white/40 mt-1">Nómina docente, material de clases por alumno, laboratorios.</p>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5">Otros Ingresos Institucionales</label>
-                  <input 
-                    type="number" 
-                    step="1000000"
-                    value={otherIncome} 
-                    onChange={(e) => setOtherIncome(parseInt(e.target.value) || 0)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono text-[#4ade80]"
-                  />
-                  <p className="text-[9px] text-white/40 mt-1">Inscripciones, derechos de grado, convenios o aportes centrales.</p>
                 </div>
               </div>
             </div>
 
-            {/* Scenario saver card */}
+            {/* Macro constants settings */}
             <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5 space-y-3">
-              <h4 className="text-[10px] font-bold text-white uppercase tracking-wider">Guardar Escenario Actual</h4>
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="Nombre de escenario..."
-                  value={newScenarioName}
-                  onChange={(e) => setNewScenarioName(e.target.value)}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/20"
-                />
-                <button
-                  onClick={handleSaveScenario}
-                  disabled={!newScenarioName.trim() || validationErrors.length > 0}
-                  className="px-3 bg-[#ffcc29] hover:bg-[#ffcc29]/90 text-black rounded-xl text-xs font-bold font-sans cursor-pointer transition-all disabled:opacity-50"
-                >
-                  <Save size={15} />
-                </button>
+              <h4 className="text-[10px] font-bold text-white uppercase tracking-wider">Variables Macroeconómicas</h4>
+              
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-[9px] text-white/55 font-mono mb-1">IPC / Alza Anual %</label>
+                  <input 
+                    type="number" 
+                    step="0.5"
+                    value={annualWageIncreasePct} 
+                    onChange={(e) => setAnnualWageIncreasePct(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] text-white/55 font-mono mb-1">Parafiscales %</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    value={parafiscalFactor} 
+                    onChange={(e) => setParafiscalFactor(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-white font-mono"
+                  />
+                </div>
               </div>
             </div>
 
           </div>
 
-          {/* Graphs and Detailed Tables (Right) */}
+          {/* Semesters grid input (Right) */}
           <div className="lg:col-span-2 space-y-6">
-            
-            {/* Visual Charts section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Financial comparison bar */}
-              <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5">
-                <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4">Ingresos vs Costos de Operación</h4>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mainBarChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={10} />
-                      <YAxis stroke="rgba(255,255,255,0.4)" fontSize={10} unit="M" />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                        labelStyle={{ color: '#fff', fontWeight: 'bold' }}
-                      />
-                      <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
-                      <Bar dataKey="Ingresos Totales" fill="#4ade80" name="Ingresos Neto" radius={[4, 4, 0, 0]} barSize={35} />
-                      <Bar dataKey="Costos Totales" fill="#f43f5e" name="Costos Totales" radius={[4, 4, 0, 0]} barSize={35} />
-                      <Bar dataKey="Utilidad/Déficit" fill="#3b82f6" name="Margen Neto" radius={[4, 4, 0, 0]} barSize={35} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Costs Breakdown Donut */}
-              <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5 flex flex-col justify-between">
-                <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4">Distribución de Costos del Programa</h4>
-                <div className="h-44 relative flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={costDistributionChartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={70}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        <Cell fill="#a78bfa" />
-                        <Cell fill="#fb7185" />
-                      </Pie>
-                      <Tooltip 
-                        formatter={(val: number) => `${Math.round(val / 1e6).toLocaleString()} M COP`}
-                        contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute text-center">
-                    <span className="text-[8px] uppercase tracking-wider text-white/30 font-mono">Egresos</span>
-                    <p className="text-base font-bold text-white font-mono">
-                      {Math.round(financials.totalCosts / 1e6)}M
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Cost legends */}
-                <div className="space-y-1.5 border-t border-white/5 pt-3 text-xs">
-                  <div className="flex justify-between items-center text-white/60">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#a78bfa]"></div>
-                      <span>Fijos (Inst., Coord.)</span>
-                    </div>
-                    <strong className="font-mono text-white">${Math.round(fixedCosts).toLocaleString()}</strong>
-                  </div>
-                  <div className="flex justify-between items-center text-white/60">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#fb7185]"></div>
-                      <span>Variables (Docencia, Lab)</span>
-                    </div>
-                    <strong className="font-mono text-white">${Math.round(variableCosts).toLocaleString()}</strong>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Chart: Break-even Sensitivity graph */}
-            {sensitivityChartData.length > 0 && (
-              <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5">
-                <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4">Análisis de Sensibilidad: Estudiantes vs Balance Neto</h4>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sensitivityChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="students" stroke="rgba(255,255,255,0.4)" fontSize={10} label={{ value: 'Número de Estudiantes', position: 'bottom', offset: -10, fill: 'rgba(255,255,255,0.4)', fontSize: 9 }} />
-                      <YAxis stroke="rgba(255,255,255,0.4)" fontSize={10} unit="M" />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                        labelStyle={{ color: '#fff', fontWeight: 'bold' }}
-                      />
-                      <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
-                      <ReferenceLine y={0} stroke="#f43f5e" strokeWidth={1.5} strokeDasharray="3 3" label={{ value: 'Equilibrio (0 COP)', fill: '#f43f5e', fontSize: 9, position: 'top' }} />
-                      <Line type="monotone" dataKey="Ingresos Proyectados" stroke="#4ade80" strokeWidth={2} name="Ingresos" dot={{ r: 3 }} />
-                      <Line type="monotone" dataKey="Resultado Neto (COP)" stroke="#3b82f6" strokeWidth={2.5} name="Resultado Neto" dot={{ r: 4 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-
-            {/* Detailed summary card grid */}
-            <div className="glass-card rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5">
-                Resumen Presupuestal Detallado (COP)
+            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">
+                Simulación de Estudiantes Nuevos (Cohortes) y Descuentos
               </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
-                
-                <div className="space-y-2 border-r border-white/5 pr-4">
-                  <div className="flex justify-between py-1 border-b border-white/5">
-                    <span className="text-white/60">Matrículas Brutas Proyectadas:</span>
-                    <strong className="font-mono text-white">${Math.round(financials.grossIncome).toLocaleString()}</strong>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-white/5 text-rose-300">
-                    <span>Becas / Descuentos ({discountPct}%):</span>
-                    <strong className="font-mono">- ${Math.round(financials.discounts).toLocaleString()}</strong>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-white/5">
-                    <span className="text-white/60">Matrículas Netas:</span>
-                    <strong className="font-mono text-white">${Math.round(financials.netTuitionIncome).toLocaleString()}</strong>
-                  </div>
-                  <div className="flex justify-between py-1 text-[#4ade80] font-bold">
-                    <span>INGRESOS TOTALES DISPONIBLES:</span>
-                    <strong className="font-mono">${Math.round(financials.totalIncome).toLocaleString()}</strong>
-                  </div>
-                </div>
 
-                <div className="space-y-2 pl-0 md:pl-4">
-                  <div className="flex justify-between py-1 border-b border-white/5">
-                    <span className="text-white/60">Costos de Operación Fijos:</span>
-                    <strong className="font-mono text-white">${Math.round(fixedCosts).toLocaleString()}</strong>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-white/5">
-                    <span className="text-white/60">Costos de Operación Variables:</span>
-                    <strong className="font-mono text-white">${Math.round(variableCosts).toLocaleString()}</strong>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-white/5">
-                    <span className="text-white/60">Ingreso Central Promedio / Estudiante:</span>
-                    <strong className="font-mono text-white">${Math.round(financials.avgRevenuePerStudent).toLocaleString()}</strong>
-                  </div>
-                  <div className="flex justify-between py-1 text-red-300">
-                    <span>Costo Central Promedio / Estudiante:</span>
-                    <strong className="font-mono">${Math.round(financials.avgCostPerStudent).toLocaleString()}</strong>
-                  </div>
-                </div>
+              <div className="space-y-4">
+                {semesters.map((sem, index) => (
+                  <div key={index} className="bg-white/[0.02] border border-white/5 rounded-xl p-4.5 space-y-3.5">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-white/5 pb-1.5">
+                      <span className="text-xs font-bold text-white font-mono flex items-center gap-2">
+                        <span className="w-2 h-2 bg-[#ffcc29] rounded-full"></span> Periodo Semestral {sem.semesterLabel}
+                      </span>
+                      <div className="flex gap-3 text-[10px] font-mono text-white/40">
+                        <span>Matrícula/Alumno: <strong className="text-white">${Math.round(calculatedSemesters[index].creditRate * tuitionSMMLV).toLocaleString()} COP</strong></span>
+                        <span>Activos: <strong className="text-[#4ade80]">{calculatedSemesters[index].activeStudents.toFixed(1)}</strong></span>
+                      </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      
+                      {/* Cohort size & application */}
+                      <div className="space-y-2.5 bg-white/5 p-3 rounded-lg border border-white/5">
+                        <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider">Aforo de Cohorte</h4>
+                        <div>
+                          <label className="block text-[8px] font-mono text-white/55 mb-0.5">Nuevos Estudiantes Cohorte</label>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={sem.newCohortStudents}
+                            onChange={(e) => handleUpdateSemester(index, { newCohortStudents: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-mono text-white/55 mb-0.5">Inscritos (Aspirantes)</label>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={sem.aspirantesCount}
+                            onChange={(e) => handleUpdateSemester(index, { aspirantesCount: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Discounts */}
+                      <div className="space-y-2.5 bg-white/5 p-3 rounded-lg border border-white/5">
+                        <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider">Descuentos Específicos (Alumnos)</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Votación (10%)</label>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={sem.votacionDiscountCount}
+                              onChange={(e) => handleUpdateSemester(index, { votacionDiscountCount: parseInt(e.target.value) || 0 })}
+                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Monitor (70%)</label>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={sem.monitoriaDiscountCount}
+                              onChange={(e) => handleUpdateSemester(index, { monitoriaDiscountCount: parseInt(e.target.value) || 0 })}
+                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Graduation */}
+                      <div className="space-y-2.5 bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider mb-1.5">Grado</h4>
+                          <div>
+                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Graduandos en Semestre</label>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={sem.graduandosCount}
+                              onChange={(e) => handleUpdateSemester(index, { graduandosCount: parseInt(e.target.value) || 0 })}
+                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                            />
+                          </div>
+                        </div>
+                        <span className="text-[8px] text-white/30 block leading-tight mt-1">Calcula derechos de grado basados en el SMMLV vigente.</span>
+                      </div>
+
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-
           </div>
 
         </div>
       )}
 
-      {/* Tab 2: Scenario Comparison View */}
-      {activeTab === 'scenarios' && (
+      {/* TAB CONTENT: 2. Staffing and Teaching Expenses */}
+      {activeSubTab === 'staff' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
+          
+          {/* Toggles panel (Left) */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-5">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5">
+                Estructura de Egresos de Personal
+              </h3>
+
+              {/* Coordinator switch */}
+              <div className="flex items-center justify-between p-3.5 bg-white/5 rounded-xl border border-white/5">
+                <div>
+                  <h4 className="text-xs font-bold text-white">Coordinador de Programa</h4>
+                  <p className="text-[9px] text-white/40 font-sans mt-0.5">Cargar honorarios de dirección.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={hasCoordinator} 
+                    onChange={(e) => setHasCoordinator(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ffcc29]"></div>
+                </label>
+              </div>
+
+              {/* Support CPS switch */}
+              <div className="flex items-center justify-between p-3.5 bg-white/5 rounded-xl border border-white/5">
+                <div>
+                  <h4 className="text-xs font-bold text-white">Personal de Apoyo (CPS)</h4>
+                  <p className="text-[9px] text-white/40 font-sans mt-0.5">Cargar gestor administrativo.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={hasSupportStaff} 
+                    onChange={(e) => setHasSupportStaff(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ffcc29]"></div>
+                </label>
+              </div>
+
+              <div className="bg-white/5 border border-white/5 p-4 rounded-xl text-xs space-y-2">
+                <span className="font-bold text-[#ffcc29] flex items-center gap-1.5 mb-1.5"><Info size={14} /> Fórmulas de Nómina:</span>
+                <p className="text-white/70 leading-relaxed text-[11px]">
+                  <strong>Docente hora:</strong> Tarifa base ({degreeHourMultipliers[level]} SMMLV) $\times$ (1 + {parafiscalFactor}% Parafiscales).
+                </p>
+                <p className="text-white/70 leading-relaxed text-[11px]">
+                  <strong>Coordinadores:</strong> Horas $\times$ hora base de $\$65.787$ (indexado al salario mínimo).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Semesters grid input (Right) */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">
+                Simulación de Carga Docente, Apoyo y Bienes
+              </h3>
+
+              <div className="space-y-4">
+                {semesters.map((sem, index) => (
+                  <div key={index} className="bg-white/[0.02] border border-white/5 rounded-xl p-4.5 space-y-3.5">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-white/5 pb-1.5">
+                      <span className="text-xs font-bold text-white font-mono flex items-center gap-2">
+                        <span className="w-2 h-2 bg-red-400 rounded-full"></span> Periodo Semestral {sem.semesterLabel}
+                      </span>
+                      <div className="flex gap-3 text-[10px] font-mono text-white/40">
+                        <span>Costo Hora Docente: <strong className="text-red-400">${Math.round(calculatedSemesters[index].loadedHourValue).toLocaleString()} COP</strong></span>
+                        <span>Personal Semestre: <strong className="text-white">${Math.round(calculatedSemesters[index].totalStaffCosts / 1e6).toFixed(1)} M</strong></span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      
+                      {/* Docentes hours */}
+                      <div className="space-y-2 bg-white/5 p-3 rounded-lg border border-white/5">
+                        <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider mb-2">Docentes Hora Cátedra</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">N. Docentes</label>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={sem.numDocentes}
+                              onChange={(e) => handleUpdateSemester(index, { numDocentes: parseInt(e.target.value) || 0 })}
+                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Horas/Docente</label>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={sem.horasDocente}
+                              onChange={(e) => handleUpdateSemester(index, { horasDocente: parseInt(e.target.value) || 0 })}
+                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Coordinator & CPS support */}
+                      <div className="space-y-2 bg-white/5 p-3 rounded-lg border border-white/5">
+                        <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider mb-2">Apoyo y Coordinación</h4>
+                        {hasCoordinator ? (
+                          <div>
+                            <label className="block text-[8px] font-mono text-white/55 mb-0.5">Horas Coordinación</label>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={sem.coordinatorHours}
+                              onChange={(e) => handleUpdateSemester(index, { coordinatorHours: parseInt(e.target.value) || 0 })}
+                              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-white/20 py-2.5 text-center">Coordinador inactivo</div>
+                        )}
+                      </div>
+
+                      {/* Goods/Services and CPS payments */}
+                      <div className="space-y-2 bg-white/5 p-3 rounded-lg border border-white/5">
+                        <h4 className="text-[9px] font-bold text-[#ffcc29] uppercase tracking-wider mb-2">Funcionamiento e Insumos</h4>
+                        <div>
+                          <label className="block text-[8px] font-mono text-white/55 mb-0.5">Adquisición Bienes y Serv (COP)</label>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={sem.operatingGoodsAndServices}
+                            onChange={(e) => handleUpdateSemester(index, { operatingGoodsAndServices: parseInt(e.target.value) || 0 })}
+                            className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono text-red-300"
+                          />
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* TAB CONTENT: 3. General Budget and Printable PDF Report */}
+      {activeSubTab === 'report' && (
         <div className="space-y-8 animate-in fade-in duration-300">
           
-          {/* Comparison bar chart */}
-          {savedScenarios.length > 0 ? (
-            <div className="glass-card rounded-2xl border border-white/10 p-5 bg-white/5">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Comparativa de Escenarios Financieros (Millones COP)</h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={scenarioComparisonChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={9} />
-                    <YAxis stroke="rgba(255,255,255,0.4)" fontSize={10} unit="M" />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                      labelStyle={{ color: '#fff', fontWeight: 'bold' }}
-                    />
-                    <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
-                    <Bar dataKey="Ingresos" fill="#4ade80" name="Ingresos" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Costos" fill="#f43f5e" name="Costos" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Margen Neto" fill="#3b82f6" name="Balance Neto" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+          {/* Printable Report Wrapper */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 space-y-6 bg-white/[0.01] print:bg-white print:border-none print:p-0 print:text-black">
+            
+            {/* Report Header (Stylized for institutions) */}
+            <div className="border-b border-white/10 pb-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:border-black print:text-black">
+              <div>
+                <span className="text-[10px] font-mono font-bold text-[#ffcc29] uppercase tracking-wider print:text-[#ffcc29]">UNIVERSIDAD PEDAGÓGICA Y TECNOLÓGICA DE COLOMBIA</span>
+                <h2 className="text-2xl font-display font-bold text-white mt-1 print:text-black">INFORME DE PRESUPUESTO GENERAL Y VIABILIDAD</h2>
+                <p className="text-xs text-white/60 font-sans mt-0.5 print:text-black/60">
+                  Estudio financiero de cohorte multicohorte - Nivel: <strong className="text-white print:text-black capitalize">{level.replace('_', ' ')}</strong> | Modalidad: <strong className="text-white print:text-black capitalize">{modality}</strong>
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-[9px] font-mono text-white/40 block print:text-black/40">Fecha de Reporte:</span>
+                <strong className="text-xs font-mono text-white print:text-black">{new Date().toLocaleDateString()}</strong>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-12 bg-white/5 border border-white/10 rounded-2xl">
-              <AlertTriangle className="mx-auto text-white/20 mb-3" size={36} />
-              <p className="text-sm text-white/50">No hay escenarios guardados para comparar. Ajusta parámetros y guarda algunos escenarios.</p>
-            </div>
-          )}
 
-          {/* Saved scenarios table */}
-          {savedScenarios.length > 0 && (
-            <div className="glass-card rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
-              <div className="p-4 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Listado de Escenarios Guardados</h3>
-                <span className="text-[10px] text-white/40 font-mono">Simulados y Comparados</span>
+            {/* General Info Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white/5 p-4 rounded-xl border border-white/5 print:bg-black/5 print:border-black/10 print:text-black">
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Programa Académico</span>
+                <strong className="text-xs text-white print:text-black">{level === 'doctorado' ? 'Doctorado' : level === 'maestria' ? 'Maestría' : 'Especialización'}</strong>
               </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Matrícula por Crédito</span>
+                <strong className="text-xs text-white print:text-black font-mono">${Math.round(finalCreditValue).toLocaleString()} COP</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Carga Académica</span>
+                <strong className="text-xs text-white print:text-black font-mono">{tuitionSMMLV} créditos/semestre</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Cohortes Proyectadas</span>
+                <strong className="text-xs text-white print:text-black">{aggregatedTotals.numCohortes} activas</strong>
+              </div>
+            </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-white/10 bg-white/5 text-white font-bold font-sans">
-                      <th className="p-4">Nombre Escenario</th>
-                      <th className="p-4">Programa / Modalidad</th>
-                      <th className="p-4 text-center">Alumnos</th>
-                      <th className="p-4 text-center">Créditos</th>
-                      <th className="p-4 text-right">Ingresos</th>
-                      <th className="p-4 text-right">Costos</th>
-                      <th className="p-4 text-right">Margen Neto</th>
-                      <th className="p-4 text-center">Eq. Créditos</th>
-                      <th className="p-4 text-center">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5 text-white/80 font-sans">
-                    {savedScenarios.map((scen) => (
-                      <tr key={scen.id} className="hover:bg-white/[0.02]">
-                        <td className="p-4 font-bold text-white">{scen.name}</td>
-                        <td className="p-4 capitalize text-white/60">
-                          {scen.level.replace('_', ' ')} ({scen.modality})
-                        </td>
-                        <td className="p-4 text-center font-mono">{scen.studentsCount}</td>
-                        <td className="p-4 text-center font-mono">{scen.programCredits}</td>
-                        <td className="p-4 text-right font-mono text-[#4ade80]">${Math.round(scen.totalIncome).toLocaleString()}</td>
-                        <td className="p-4 text-right font-mono text-rose-300">${Math.round(scen.totalCosts).toLocaleString()}</td>
-                        <td className={`p-4 text-right font-mono font-bold ${scen.utility >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {scen.utility >= 0 ? '+' : ''}${Math.round(scen.utility).toLocaleString()}
-                        </td>
-                        <td className="p-4 text-center font-mono text-[#ffcc29] font-bold">{scen.breakEvenCredits} cr.</td>
-                        <td className="p-4 text-center">
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={() => handleLoadScenario(scen)}
-                              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-bold transition cursor-pointer"
-                            >
-                              Cargar
-                            </button>
-                            <button
-                              onClick={() => handleDeleteScenario(scen.id)}
-                              className="p-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition cursor-pointer"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+            {/* Main Report Table (Presupuesto General) */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/5 text-white font-bold print:bg-black/5 print:text-black print:border-black/20">
+                    <th className="p-3 w-64">Concepto Presupuestal / Renglón</th>
+                    {calculatedSemesters.map(s => (
+                      <th key={s.semesterLabel} className="p-3 text-right font-mono">{s.semesterLabel}</th>
                     ))}
-                  </tbody>
-                </table>
+                    <th className="p-3 text-right font-mono text-[#ffcc29] print:text-black">Acumulado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 text-white/80 print:divide-black/10 print:text-black">
+                  
+                  {/* Students stats */}
+                  <tr className="hover:bg-white/[0.01]">
+                    <td className="p-3 font-semibold text-white print:text-black">Aforo Nuevos Estudiantes</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono text-emerald-400 print:text-black">{s.newCohortStudents}</td>
+                    ))}
+                    <td className="p-3 text-right font-mono text-emerald-400 font-bold print:text-black">
+                      {aggregatedTotals.totalActiveNewStudents}
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01]">
+                    <td className="p-3 pl-6">Estudiantes Activos Totales</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono text-white/60 print:text-black/60">{s.activeStudents.toFixed(1)}</td>
+                    ))}
+                    <td className="p-3 text-right font-mono">-</td>
+                  </tr>
+
+                  {/* INCOMES ROWS */}
+                  <tr className="hover:bg-white/[0.01] bg-white/[0.01] print:bg-black/5">
+                    <td className="p-3 font-bold text-white print:text-black">1. INGRESO BRUTO MATRÍCULAS</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.grossIncome / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">${Math.round(aggregatedTotals.totalGrossIncome / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] text-rose-300 print:text-black/80">
+                    <td className="p-3 pl-6">Becas y Descuentos Aplicados ({discountPct}%)</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">- ${Math.round(s.totalDiscounts / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">- ${Math.round(aggregatedTotals.totalDiscounts / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] text-white/50 print:text-black/60">
+                    <td className="p-3 pl-6">Deducciones UPTC (Administración, MESI, Inv.)</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">- ${Math.round(s.totalDeductions / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">- ${Math.round(aggregatedTotals.totalDeductions / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] font-semibold text-[#4ade80] print:text-black">
+                    <td className="p-3 pl-6">Ingreso Matrículas Neto Funcionamiento</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.functioningTuitionIncome / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">${Math.round((aggregatedTotals.totalNetIncome - aggregatedTotals.totalDeductions) / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01]">
+                    <td className="p-3 pl-6">Otros Ingresos (Inscripción y Grado)</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono text-white/60 print:text-black/60">${Math.round(s.totalOtherIncome / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">
+                      ${Math.round(calculatedSemesters.reduce((sum, s) => sum + s.totalOtherIncome, 0) / 1e6).toLocaleString()} M
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] font-bold bg-[#4ade80]/5 text-[#4ade80] print:bg-emerald-500/10 print:text-black border-y border-white/10 print:border-black/20">
+                    <td className="p-3">TOTAL INGRESOS FUNCIONAMIENTO</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.totalFunctioningIncome / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">${Math.round(aggregatedTotals.totalFunctioningIncome / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  {/* EXPENSES ROWS */}
+                  <tr className="hover:bg-white/[0.01] font-bold text-white print:text-black">
+                    <td className="p-3">2. GASTOS DE PERSONAL</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.totalStaffCosts / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">${Math.round(aggregatedTotals.totalStaffCosts / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] text-white/60 print:text-black/70">
+                    <td className="p-3 pl-6">- Docentes cátedra posgrado</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.teachersCost / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono">${Math.round(aggregatedTotals.totalTeachersCost / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] text-white/60 print:text-black/70">
+                    <td className="p-3 pl-6">- Coordinaciones (Programa/Prácticas)</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.coordinatorCost / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono">${Math.round(aggregatedTotals.totalCoordinatorCost / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] text-white/60 print:text-black/70">
+                    <td className="p-3 pl-6">- Personal de apoyo administrativo (CPS)</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.supportStaffCost / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono">${Math.round(aggregatedTotals.totalSupportStaffCost / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] font-bold text-white print:text-black">
+                    <td className="p-3">3. COMPRA DE BIENES Y SERVICIOS (OP.)</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.operatingGoodsAndServices / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">${Math.round(aggregatedTotals.totalOperatingCosts / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  <tr className="hover:bg-white/[0.01] font-bold bg-rose-500/5 text-rose-300 print:bg-rose-500/10 print:text-black border-y border-white/10 print:border-black/20">
+                    <td className="p-3">TOTAL EGRESOS Y COSTOS</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className="p-3 text-right font-mono">${Math.round(s.totalExpenses / 1e6).toLocaleString()} M</td>
+                    ))}
+                    <td className="p-3 text-right font-mono font-bold">${Math.round(aggregatedTotals.totalExpenses / 1e6).toLocaleString()} M</td>
+                  </tr>
+
+                  {/* NET BALANCE */}
+                  <tr className="hover:bg-white/[0.01] font-bold bg-white/5 text-white print:bg-black/5 print:text-black">
+                    <td className="p-3 font-mono">BALANCE PRESUPUESTAL NETO</td>
+                    {calculatedSemesters.map(s => (
+                      <td key={s.semesterLabel} className={`p-3 text-right font-mono font-bold ${s.budgetBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'} print:text-black`}>
+                        {s.budgetBalance >= 0 ? '+' : ''}
+                        {Math.round(s.budgetBalance / 1e6).toLocaleString()} M
+                      </td>
+                    ))}
+                    <td className={`p-3 text-right font-mono font-bold ${aggregatedTotals.totalBalance >= 0 ? 'text-[#ffcc29]' : 'text-rose-400'} print:text-black`}>
+                      {aggregatedTotals.totalBalance >= 0 ? '+' : ''}
+                      {Math.round(aggregatedTotals.totalBalance / 1e6).toLocaleString()} M
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+            </div>
+
+            {/* Diagnostic conclusions / signatures block (Styled for printing) */}
+            <div className="pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between gap-6 print:border-black print:text-black">
+              <div className="max-w-xl text-[11px] text-white/60 leading-relaxed print:text-black/60">
+                <span className="font-bold text-white block mb-1 print:text-black">Declaración de Viabilidad:</span>
+                El presente informe certifica que el programa <strong className="text-white print:text-black">{level.toUpperCase()}</strong> en modalidad <strong className="text-white print:text-black">{modality.toUpperCase()}</strong> {
+                  aggregatedTotals.isBalanced 
+                    ? 'CUMPLE con el punto de equilibrio presupuestal. Los ingresos proyectados de la matrícula basados en créditos cubren holgadamente los costes de docencia y funcionamiento.' 
+                    : 'NO CUMPLE con el punto de equilibrio en uno o más periodos semestrales. Se aconseja elevar la matrícula mínima por cohorte, ajustar las horas docentes o revaluar los egresos CPS.'
+                }
+              </div>
+              
+              <div className="w-56 space-y-8 pt-4">
+                <div className="border-t border-white/20 pt-1 text-center font-mono text-[9px] text-white/40 print:border-black print:text-black">
+                  Firma Coordinador Planeación UPTC
+                </div>
               </div>
             </div>
-          )}
+
+          </div>
+
+          {/* Scenario comparison tools (Hidden on Print) */}
+          <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4 print:hidden">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-2">Guardar y Cargar Escenarios Comparativos</h3>
+            
+            <div className="flex gap-2 mb-4">
+              <input 
+                type="text" 
+                placeholder="Nombre escenario..."
+                value={newScenarioName}
+                onChange={(e) => setNewScenarioName(e.target.value)}
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/20"
+              />
+              <button
+                onClick={handleSaveScenario}
+                disabled={!newScenarioName.trim() || validationErrors.length > 0}
+                className="px-4 bg-[#ffcc29] hover:bg-[#ffcc29]/90 text-black rounded-xl text-xs font-bold font-sans cursor-pointer transition-all disabled:opacity-50"
+              >
+                Guardar
+              </button>
+            </div>
+
+            {savedScenarios.length > 0 && (
+              <div className="space-y-3.5">
+                {savedScenarios.map((scen) => (
+                  <div key={scen.id} className="p-4 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center hover:bg-white/10 transition-colors">
+                    <div>
+                      <h4 className="text-xs font-bold text-white">{scen.name}</h4>
+                      <p className="text-[10px] text-white/50 font-mono mt-1">
+                        Utilidad: <span className={scen.utility >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}>
+                          ${Math.round(scen.utility / 1e6)} M COP
+                        </span> | Eq: <span className="text-[#ffcc29] font-bold">{scen.breakEvenCredits} cr.</span>
+                      </p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleLoadScenario(scen)}
+                        className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-[10px] font-bold transition cursor-pointer"
+                      >
+                        Cargar
+                      </button>
+                      <button
+                        onClick={() => handleDeleteScenario(scen.id)}
+                        className="p-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded transition cursor-pointer"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
         </div>
       )}
