@@ -7,7 +7,7 @@ import {
 import { 
   GraduationCap, MapPin, Building2, BookOpen, Users, DollarSign, 
   Filter, Percent, CreditCard, Activity, TrendingUp, TrendingDown, MoreHorizontal,
-  Info, Sparkles, ArrowRight, Shield, Database, HelpCircle
+  Info, Sparkles, ArrowRight, Shield, Database, HelpCircle, Bot
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 
