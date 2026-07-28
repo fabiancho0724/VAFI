@@ -102,6 +102,12 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
   const [ipcRate, setIpcRate] = useState<number>(4.0); // indexation of expenses
   const [enrollmentGrowthRate, setEnrollmentGrowthRate] = useState<number>(0.5); // annual growth of students after 2030
 
+  // VARIABLES DE PROYECCIÓN STATE (Matching the costing simulator inputs)
+  const [sensLevel, setSensLevel] = useState<'especializacion' | 'maestria' | 'doctorado' | 'medico_quirurgica'>('maestria');
+  const [sensModality, setSensModality] = useState<'presencial' | 'hibrido' | 'virtual'>('presencial');
+  const [sensAttrition, setSensAttrition] = useState<number>(5);
+  const [sensDiscount, setSensDiscount] = useState<number>(10);
+
   // Dashboard state
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
   const [matriculasData, setMatriculasData] = useState<any[]>([]);
@@ -272,23 +278,45 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
   // SENSITIVITY AND ELASTICITY CALCULATIONS
   // Projections now cover 2027 - 2030 (4 years)
+  // Incorporating projection variables (sensLevel, sensModality, sensAttrition, sensDiscount)
   const sensitivityProjections = useMemo(() => {
+    // 1. Determine baseline VBCI per level
+    const levelBaselines = {
+      especializacion: 500000,
+      maestria: 630000,
+      doctorado: 750000,
+      medico_quirurgica: 820000
+    };
+    const selectedVbci = levelBaselines[sensLevel] || 630000;
+
+    // 2. Modality factor
+    const modalityFactors = {
+      presencial: 1.0,
+      hibrido: 0.85,
+      virtual: 0.70
+    };
+    const selectedModalityFactor = modalityFactors[sensModality] || 1.0;
+
+    // 3. Multipliers compared to the default case (Maestría, Presencial, 5% Attrition, 10% Discount)
+    const priceMultiplier = (selectedVbci / 630000) * selectedModalityFactor * ((1 - sensDiscount / 100) / 0.90);
+    const studentMultiplier = (1 - sensAttrition / 100) / 0.95;
+
     return PROJECTED_BASE_2027.map(base => {
-      // 1. Average price per student baseline
+      // Average price per student baseline
       const priceBase = base.recaudo / base.estudiantes;
       
-      // 2. Adjust price ratio by slider variation
+      // Adjust price ratio by slider variation and selected tariff variables
       const priceRatio = 1 + priceVarPct / 100;
-      const simulatedPrice = priceBase * priceRatio;
+      const simulatedPrice = priceBase * priceRatio * priceMultiplier;
       
-      // 3. Elasticity effect: % Change in Q = elasticity * % Change in Price
+      // Elasticity effect
       const qChangePct = (elasticity * priceVarPct) / 100;
-      const simulatedEstudiantes = Math.max(0, Math.round(base.estudiantes * (1 + qChangePct)));
+      const simulatedEstudiantes = Math.max(0, Math.round(base.estudiantes * (1 + qChangePct) * studentMultiplier));
       
-      // 4. Recalculated total revenue
+      // Recalculated total revenue
       const simulatedRecaudo = simulatedEstudiantes * simulatedPrice;
       
-      // 5. Expenditures: central legal deductions + direct program operating costs
+      // Expenditures: central legal deductions + direct program operating costs
       const deduccionCentral = simulatedRecaudo * (centralDeductionPct / 100);
       const gastoOperativo = simulatedRecaudo * (operatingCostPct / 100);
       const totalGastos = deduccionCentral + gastoOperativo;
@@ -306,7 +334,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
         margenNeto
       };
     });
-  }, [priceVarPct, elasticity, operatingCostPct, centralDeductionPct, PROJECTED_BASE_2027]);
+  }, [priceVarPct, elasticity, operatingCostPct, centralDeductionPct, PROJECTED_BASE_2027, sensLevel, sensModality, sensAttrition, sensDiscount]);
 
   // MULTI-YEAR FINANCIAL PROJECTIONS ENGINE (PROYECCIÓN MULTIVIGENCIA)
   const multiYearProjections = useMemo(() => {
@@ -1133,662 +1161,736 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
             </button>
           </div>
 
-          {/* SUB-TAB 1: ESCENARIOS Y FLUJOS */}
-          {activeSensSubTab === 'scenarios' && (
-            <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
-              
-              {/* Scenarios Cards Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Pessimistic */}
-                <div className="bg-[#0f172a] border border-rose-500/20 rounded-[28px] p-6 relative overflow-hidden flex flex-col justify-between shadow-2xl bg-gradient-to-br from-[#0f172a] to-[#220c11]">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-rose-500"></div>
-                  <div>
-                    <h4 className="text-sm font-bold text-rose-400 font-display">Escenario Pesimista</h4>
-                    <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado a -15% en Ingresos / +10% en Gastos</p>
-                    
-                    <div className="space-y-3 mt-6">
-                      <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">Ingreso Acumulado (2027-2030)</span>
-                        <span className="font-mono font-bold text-white">{formatCurrency(posgradSensitivityAnalysis.pessimistic.ingTotal)}</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">VAN / NPV</span>
-                        <span className={`font-mono font-bold ${posgradSensitivityAnalysis.pessimistic.npv >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                          {formatCurrency(posgradSensitivityAnalysis.pessimistic.npv)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">TIR / IRR</span>
-                        <span className="font-mono font-bold text-white">
-                          {posgradSensitivityAnalysis.pessimistic.irr !== 0 ? `${posgradSensitivityAnalysis.pessimistic.irr.toFixed(1)}%` : 'N/A'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 text-xs">
-                        <span className="text-white/60">Flujo Neto Acumulado</span>
-                        <span className={`font-mono font-bold ${posgradSensitivityAnalysis.pessimistic.flowSum >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                          {formatCurrency(posgradSensitivityAnalysis.pessimistic.flowSum)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Base */}
-                <div className="bg-[#0f172a] border border-white/10 rounded-[28px] p-6 relative overflow-hidden flex flex-col justify-between shadow-2xl">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-white/30"></div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white font-display">Escenario Base</h4>
-                    <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado con sliders actuales de créditos</p>
-                    
-                    <div className="space-y-3 mt-6">
-                      <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">Ingreso Acumulado (2027-2030)</span>
-                        <span className="font-mono font-bold text-white">{formatCurrency(posgradSensitivityAnalysis.base.ingTotal)}</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">VAN / NPV</span>
-                        <span className={`font-mono font-bold ${posgradSensitivityAnalysis.base.npv >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                          {formatCurrency(posgradSensitivityAnalysis.base.npv)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">TIR / IRR</span>
-                        <span className="font-mono font-bold text-white">
-                          {posgradSensitivityAnalysis.base.irr !== 0 ? `${posgradSensitivityAnalysis.base.irr.toFixed(1)}%` : 'N/A'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 text-xs">
-                        <span className="text-white/60">Flujo Neto Acumulado</span>
-                        <span className={`font-mono font-bold ${posgradSensitivityAnalysis.base.flowSum >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                          {formatCurrency(posgradSensitivityAnalysis.base.flowSum)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Optimistic */}
-                <div className="bg-[#0f172a] border border-[#4ade80]/20 rounded-[28px] p-6 relative overflow-hidden flex flex-col justify-between shadow-2xl bg-gradient-to-br from-[#0f172a] to-[#0a2414]">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-[#4ade80]"></div>
-                  <div>
-                    <h4 className="text-sm font-bold text-[#4ade80] font-display">Escenario Optimista</h4>
-                    <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado a +15% en Ingresos / -10% en Gastos</p>
-                    
-                    <div className="space-y-3 mt-6">
-                      <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">Ingreso Acumulado (2027-2030)</span>
-                        <span className="font-mono font-bold text-white">{formatCurrency(posgradSensitivityAnalysis.optimistic.ingTotal)}</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">VAN / NPV</span>
-                        <span className={`font-mono font-bold ${posgradSensitivityAnalysis.optimistic.npv >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                          {formatCurrency(posgradSensitivityAnalysis.optimistic.npv)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">TIR / IRR</span>
-                        <span className="font-mono font-bold text-white">
-                          {posgradSensitivityAnalysis.optimistic.irr !== 0 ? `${posgradSensitivityAnalysis.optimistic.irr.toFixed(1)}%` : 'N/A'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 text-xs">
-                        <span className="text-white/60">Flujo Neto Acumulado</span>
-                        <span className={`font-mono font-bold ${posgradSensitivityAnalysis.optimistic.flowSum >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                          {formatCurrency(posgradSensitivityAnalysis.optimistic.flowSum)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Chart: Comparative cash flow of scenarios */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Evolution chart */}
-                <div className="lg:col-span-2 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Evolución de Flujos por Escenario de Créditos (2027-2030)</h4>
-                  <div className="h-72" style={{ width: '100%', height: 288, minWidth: 200 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={new Array(4).fill(0).map((_, i) => ({
-                          name: (2027 + i).toString(),
-                          Pesimista: Math.round(posgradSensitivityAnalysis.pessimistic.flows[i] / 1e6 * 10) / 10,
-                          Base: Math.round(posgradSensitivityAnalysis.base.flows[i] / 1e6 * 10) / 10,
-                          Optimista: Math.round(posgradSensitivityAnalysis.optimistic.flows[i] / 1e6 * 10) / 10
-                        }))}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                        <XAxis dataKey="name" stroke="#64748b" className="text-[10px] font-mono" />
-                        <YAxis stroke="#64748b" className="text-[10px] font-mono" tickFormatter={(v) => `$${v}M`} />
-                        <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
-                        <Legend wrapperStyle={{ fontSize: '11px' }} />
-                        <Area type="monotone" dataKey="Optimista" stroke="#4ade80" fill="#4ade80" fillOpacity={0.03} strokeWidth={2} />
-                        <Area type="monotone" dataKey="Base" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.03} strokeWidth={2} />
-                        <Area type="monotone" dataKey="Pesimista" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.03} strokeWidth={2} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                {/* Elasticity indicators */}
-                <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col justify-between font-sans">
-                  <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Elasticidad de Recaudo vs 2026 Histórico</h4>
-                    
-                    <div className="space-y-4">
-                      {/* Selected year comparison */}
-                      <div className="bg-white/5 border border-white/5 rounded-xl p-3">
-                        <span className="text-[9px] text-[#ffcc29] uppercase tracking-widest block font-mono font-bold mb-1">Año de Evaluación: {elasticityYear}</span>
-                        <div className="flex justify-between items-center text-xs border-b border-white/5 pb-1">
-                          <span className="text-white/60">Var. Alumnos vs 2026</span>
-                          <span className="font-mono text-white font-bold">
-                            {comparisonSelectedYear.deltaEstudiantes >= 0 ? '+' : ''}{comparisonSelectedYear.deltaEstudiantesPct.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs border-b border-white/5 py-1">
-                          <span className="text-white/60">Var. Precio vs 2026</span>
-                          <span className="font-mono text-white font-bold text-rose-400">
-                            {comparisonSelectedYear.deltaPrecioPct.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs pt-1">
-                          <span className="text-white/60 font-semibold">Elasticidad Comparada</span>
-                          <span className="font-mono text-[#ffcc29] font-bold">
-                            ε = {comparisonSelectedYear.calculatedElasticity.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-white/5 border border-white/5 rounded-xl p-3 flex items-start gap-3">
-                        <TrendingUp className="w-5 h-5 text-[#4ade80] shrink-0 mt-0.5" />
-                        <div>
-                          <span className="text-[10px] text-white/50 block">Elasticidad Ingresos vs VAN</span>
-                          <span className="text-sm font-bold text-white font-mono">
-                            {posgradSensitivityAnalysis.elasticityIng >= 0 ? '+' : ''}{posgradSensitivityAnalysis.elasticityIng.toFixed(2)}%
-                          </span>
-                          <p className="text-[9px] text-white/40 mt-1 leading-normal">
-                            Por cada 1% de incremento en ingresos, el VAN aumenta un <strong>{Math.abs(posgradSensitivityAnalysis.elasticityIng).toFixed(2)}%</strong>.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+          {/* MAIN GRID LAYOUT FOR THE SIMULATOR INTERFACE */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            
+            {/* LEFT COLUMN: VARIABLES DE PROYECCIÓN (Visible in all tabs except report, hidden on print) */}
+            {activeSensSubTab !== 'report' && (
+              <div className="xl:col-span-3 space-y-6 print:hidden">
+                <div className="bg-[#0f172a] border border-white/10 p-5 rounded-[24px] shadow-2xl space-y-4">
+                  <h4 className="text-xs font-bold text-[#ffcc29] uppercase tracking-widest border-b border-white/5 pb-2">Variables de Proyección</h4>
+                  
+                  {/* Nivel Dropdown */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-white/50 font-mono uppercase tracking-wider block">Nivel</label>
+                    <select
+                      value={sensLevel}
+                      onChange={(e) => setSensLevel(e.target.value as any)}
+                      className="w-full bg-[#1e293b] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29] cursor-pointer"
+                    >
+                      <option value="especializacion">Especialización (Base: $500.000 / Cred.)</option>
+                      <option value="maestria">Maestría (Base: $630.000 / Cred.)</option>
+                      <option value="doctorado">Doctorado (Base: $750.000 / Cred.)</option>
+                      <option value="medico_quirurgica">Esp. Médica (Base: $820.000 / Cred.)</option>
+                    </select>
                   </div>
 
-                  <div className="text-[9px] text-white/40 font-mono mt-4 leading-normal bg-black/30 p-2.5 rounded-lg">
-                    💡 Comparando {elasticityYear} vs 2026, la elasticidad calculada es de {comparisonSelectedYear.calculatedElasticity.toFixed(2)}.
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Timeline baseline */}
-              <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Histórico vs Proyección Simulada (Línea de Tiempo Completa 2020-2030)</h4>
-                </div>
-                <div className="h-72" style={{ width: '100%', height: 288, minWidth: 200 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={unifiedTimelineData} margin={{ top: 10, right: -5, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="anio" tick={{fill: '#64748b', fontSize: 10}} />
-                      <YAxis yAxisId="left" stroke="none" tick={{fill: '#64748b', fontSize: 10}} tickFormatter={(val) => `$${val}M`} />
-                      <YAxis yAxisId="right" orientation="right" stroke="none" tick={{fill: '#64748b', fontSize: 10}} />
-                      <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', borderRadius: '8px', fontSize: '11px'}} />
-                      <Legend wrapperStyle={{ fontSize: '11px' }} />
-                      <Bar yAxisId="left" dataKey="Modelo Histórico (Recaudo M)" fill="#334155" name="Ingreso Histórico" radius={[3, 3, 0, 0]} barSize={14} />
-                      <Bar yAxisId="left" dataKey="Modelo por Créditos (Recaudo M)" fill="#ffcc29" name="Ingreso Créditos (Simulado)" radius={[3, 3, 0, 0]} barSize={14} />
-                      <Line yAxisId="right" type="monotone" dataKey="Estudiantes Históricos" stroke="#94a3b8" name="Alumnos Históricos" strokeWidth={1.5} dot={{r: 2}} strokeDasharray="4 4" />
-                      <Line yAxisId="right" type="monotone" dataKey="Estudiantes Créditos" stroke="#4ade80" name="Alumnos Créditos (Simulado)" strokeWidth={2.5} dot={{r: 3}} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* SUB-TAB 2: MONTE CARLO Y TORNADO */}
-          {activeSensSubTab === 'montecarlo' && (
-            <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
-              
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
-                {/* Monte Carlo card */}
-                <div className="lg:col-span-8 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col h-[400px]">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                    <div>
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider">Simulación de Monte Carlo (1,000 Iteraciones)</h4>
-                      <p className="text-[9px] text-white/50 mt-0.5">Distribución probabilística del VAN del fondo R31 bajo variaciones de ±20% precio / ±15% gastos.</p>
-                    </div>
-                    
-                    <div className="flex gap-4 text-xs font-mono">
-                      <div>
-                        <span className="text-white/40 block text-[9px]">Valor Esperado</span>
-                        <strong className="text-white font-bold">{formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.mean)}</strong>
-                      </div>
-                      <div>
-                        <span className="text-white/40 block text-[9px]">Viabilidad (VAN &gt; 0)</span>
-                        <strong className="text-[#4ade80] font-bold">{posgradSensitivityAnalysis.monteCarlo.probPos.toFixed(1)}%</strong>
-                      </div>
-                    </div>
+                  {/* Modalidad Dropdown */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-white/50 font-mono uppercase tracking-wider block">Modalidad</label>
+                    <select
+                      value={sensModality}
+                      onChange={(e) => setSensModality(e.target.value as any)}
+                      className="w-full bg-[#1e293b] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29] cursor-pointer"
+                    >
+                      <option value="presencial">Presencial (100% tarifa)</option>
+                      <option value="hibrido">Híbrido (85% tarifa)</option>
+                      <option value="virtual">Virtual (70% tarifa)</option>
+                    </select>
                   </div>
 
-                  <div className="flex-1 w-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={posgradSensitivityAnalysis.monteCarlo.bins} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                        <XAxis dataKey="range" stroke="#64748b" className="text-[8px] font-mono" height={36} angle={-15} textAnchor="end" />
-                        <YAxis stroke="#64748b" className="text-[10px] font-mono" />
-                        <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
-                        <Bar dataKey="Frecuencia" fill="#ffcc29" radius={[3, 3, 0, 0]} barSize={24} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                {/* Monte Carlo Stats details */}
-                <div className="lg:col-span-4 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col justify-between h-[400px]">
-                  <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Resultados Estadísticos</h4>
-                    
-                    <div className="space-y-4">
-                      
-                      <div className="border-b border-white/5 pb-2.5 flex justify-between items-center text-xs">
-                        <span className="text-white/60">Viabilidad Presupuestal</span>
-                        <div className="text-right">
-                          <span className="font-bold text-[#4ade80] font-mono block">{posgradSensitivityAnalysis.monteCarlo.probPos.toFixed(1)}%</span>
-                          <span className="text-[8px] text-white/40 font-mono">Probabilidad de Superávit</span>
-                        </div>
-                      </div>
-
-                      <div className="border-b border-white/5 pb-2.5 flex justify-between items-center text-xs">
-                        <span className="text-white/60">VAN Esperado Promedio</span>
-                        <div className="text-right">
-                          <span className="font-bold text-white font-mono block">{formatCurrency(posgradSensitivityAnalysis.monteCarlo.mean)}</span>
-                          <span className="text-[8px] text-white/40 font-mono">Promedio Ponderado</span>
-                        </div>
-                      </div>
-
-                      <div className="border-b border-white/5 pb-2.5 flex justify-between items-center text-xs">
-                        <span className="text-white/60">Intervalo Confianza (95%)</span>
-                        <div className="text-right">
-                          <span className="font-bold text-[#ffcc29] font-mono block text-[11px] truncate max-w-[170px]" title={`[${formatCurrency(posgradSensitivityAnalysis.monteCarlo.low95)}, ${formatCurrency(posgradSensitivityAnalysis.monteCarlo.high95)}]`}>
-                            [{formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.low95)}, {formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.high95)}]
-                          </span>
-                          <span className="text-[8px] text-white/40 font-mono">Rango de confianza</span>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-white/60">Rango Absoluto Simulado</span>
-                        <div className="text-right">
-                          <span className="font-bold text-white font-mono block text-[11px] truncate max-w-[170px]" title={`[${formatCurrency(posgradSensitivityAnalysis.monteCarlo.min)}, ${formatCurrency(posgradSensitivityAnalysis.monteCarlo.max)}]`}>
-                            [{formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.min)}, {formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.max)}]
-                          </span>
-                          <span className="text-[8px] text-white/40 font-mono">Mínimo y Máximo hallados</span>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-
-                  <div className="bg-[#4ade80]/5 border border-[#4ade80]/15 p-3 rounded-2xl flex items-start gap-2.5 mt-2">
-                    <ShieldCheck className="w-5 h-5 text-[#4ade80] shrink-0" />
-                    <p className="text-[10px] text-white/80 leading-relaxed">
-                      {posgradSensitivityAnalysis.monteCarlo.probPos >= 70 ? (
-                        `El fondo de posgrados R31 tiene una alta viabilidad contable (${posgradSensitivityAnalysis.monteCarlo.probPos.toFixed(1)}%). Existe una certeza sólida de superávit.`
-                      ) : (
-                        `Riesgo crítico de insolvencia detectado. Existe una probabilidad del ${(100 - posgradSensitivityAnalysis.monteCarlo.probPos).toFixed(1)}% de incurrir en déficit.`
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Tornado Chart NPV Impact */}
-              <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 shadow-2xl">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Tornado · Sensibilidad del VAN R31 ante Cambios en Variables (±5% o ±0.2)</h4>
-                    <p className="text-[9px] text-white/50 mt-0.5">Mide el impacto incremental en millones sobre el valor actual neto al variar individualmente cada driver.</p>
-                  </div>
-                  <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-bold font-mono rounded">
-                    Driver Dominante: {posgradSensitivityAnalysis.tornado[0]?.name || 'Tarifa'}
-                  </span>
-                </div>
-
-                <div className="h-64" style={{ width: '100%', height: 256, minWidth: 200 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart layout="vertical" data={posgradSensitivityAnalysis.tornado} margin={{ top: 10, right: 15, left: 10, bottom: 5 }} barSize={14}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={true} horizontal={false} />
-                      <XAxis type="number" stroke="#64748b" className="text-[9px] font-mono" />
-                      <YAxis type="category" dataKey="name" stroke="#64748b" className="text-[9px] font-mono font-medium" width={140} tickLine={false} />
-                      <RechartsTooltip 
-                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }}
-                        formatter={(value: any, name: any) => {
-                          const val = parseFloat(value);
-                          return [`${val > 0 ? '+' : ''}${val}M COP`, name === 'low' ? 'Impacto Adverso' : 'Impacto Favorable'];
-                        }}
+                  {/* Deserción & Descuentos inputs */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-white/50 font-mono uppercase tracking-wider block">Deserción %</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={sensAttrition}
+                        onChange={(e) => setSensAttrition(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                        className="w-full bg-[#1e293b] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29]"
                       />
-                      <ReferenceLine x={0} stroke="#ffffff" strokeOpacity={0.25} />
-                      <Bar dataKey="low" fill="#f43f5e" radius={[4, 0, 0, 4]} stackId="stack" name="Impacto Adverso" />
-                      <Bar dataKey="high" fill="#4ade80" radius={[0, 4, 4, 0]} stackId="stack" name="Impacto Favorable" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-white/50 font-mono uppercase tracking-wider block">Descuentos %</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={sensDiscount}
+                        onChange={(e) => setSensDiscount(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                        className="w-full bg-[#1e293b] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29]"
+                      />
+                    </div>
+                  </div>
+
                 </div>
               </div>
+            )}
 
-            </div>
-          )}
-
-          {/* SUB-TAB 3: COBERTURAS DSCR */}
-          {activeSensSubTab === 'dscr' && (
-            <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
+            {/* RIGHT COLUMN: ACTIVE TAB CONTENT AREA */}
+            <div className={`${activeSensSubTab === 'report' ? 'xl:col-span-12' : 'xl:col-span-9'} space-y-6`}>
               
-              {/* Compliance boxes */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                
-                {/* Minimum Covenant Limit */}
-                <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-xl">
-                  <span className="text-[9px] text-white/50 font-mono uppercase tracking-wider mb-1.5">Límite Mínimo Covenant</span>
-                  <span className="text-2xl font-bold font-mono text-white">1.25x</span>
-                  <div className="w-full border-t border-dashed border-white/5 mt-3 pt-2 text-[9px] text-white/40 font-mono">
-                     Tasa Mínima Exigida
+              {/* SUB-TAB 1: ESCENARIOS Y FLUJOS */}
+              {activeSensSubTab === 'scenarios' && (
+                <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
+                  
+                  {/* Scenarios Cards Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    {/* Pessimistic */}
+                    <div className="bg-[#0f172a] border border-rose-500/20 rounded-[28px] p-6 relative overflow-hidden flex flex-col justify-between shadow-2xl bg-gradient-to-br from-[#0f172a] to-[#220c11]">
+                      <div className="absolute top-0 left-0 w-full h-1 bg-rose-500"></div>
+                      <div>
+                        <h4 className="text-sm font-bold text-rose-400 font-display">Escenario Pesimista</h4>
+                        <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado a -15% en Ingresos / +10% en Gastos</p>
+                        
+                        <div className="space-y-3 mt-6">
+                          <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
+                            <span className="text-white/60">Ingreso Acumulado (2027-2030)</span>
+                            <span className="font-mono font-bold text-white">{formatCurrency(posgradSensitivityAnalysis.pessimistic.ingTotal)}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
+                            <span className="text-white/60">VAN / NPV</span>
+                            <span className={`font-mono font-bold ${posgradSensitivityAnalysis.pessimistic.npv >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                              {formatCurrency(posgradSensitivityAnalysis.pessimistic.npv)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
+                            <span className="text-white/60">TIR / IRR</span>
+                            <span className="font-mono font-bold text-white">
+                              {posgradSensitivityAnalysis.pessimistic.irr !== 0 ? `${posgradSensitivityAnalysis.pessimistic.irr.toFixed(1)}%` : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 text-xs">
+                            <span className="text-white/60">Flujo Neto Acumulado</span>
+                            <span className={`font-mono font-bold ${posgradSensitivityAnalysis.pessimistic.flowSum >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                              {formatCurrency(posgradSensitivityAnalysis.pessimistic.flowSum)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Base */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[28px] p-6 relative overflow-hidden flex flex-col justify-between shadow-2xl">
+                      <div className="absolute top-0 left-0 w-full h-1 bg-white/30"></div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white font-display">Escenario Base</h4>
+                        <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado con sliders actuales de créditos</p>
+                        
+                        <div className="space-y-3 mt-6">
+                          <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
+                            <span className="text-white/60">Ingreso Acumulado (2027-2030)</span>
+                            <span className="font-mono font-bold text-white">{formatCurrency(posgradSensitivityAnalysis.base.ingTotal)}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
+                            <span className="text-white/60">VAN / NPV</span>
+                            <span className={`font-mono font-bold ${posgradSensitivityAnalysis.base.npv >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                              {formatCurrency(posgradSensitivityAnalysis.base.npv)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
+                            <span className="text-white/60">TIR / IRR</span>
+                            <span className="font-mono font-bold text-white">
+                              {posgradSensitivityAnalysis.base.irr !== 0 ? `${posgradSensitivityAnalysis.base.irr.toFixed(1)}%` : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 text-xs">
+                            <span className="text-white/60">Flujo Neto Acumulado</span>
+                            <span className={`font-mono font-bold ${posgradSensitivityAnalysis.base.flowSum >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                              {formatCurrency(posgradSensitivityAnalysis.base.flowSum)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Optimistic */}
+                    <div className="bg-[#0f172a] border border-[#4ade80]/20 rounded-[28px] p-6 relative overflow-hidden flex flex-col justify-between shadow-2xl bg-gradient-to-br from-[#0f172a] to-[#0a2414]">
+                      <div className="absolute top-0 left-0 w-full h-1 bg-[#4ade80]"></div>
+                      <div>
+                        <h4 className="text-sm font-bold text-[#4ade80] font-display">Escenario Optimista</h4>
+                        <p className="text-[10px] text-on-surface-variant font-mono mt-1">Simulado a +15% en Ingresos / -10% en Gastos</p>
+                        
+                        <div className="space-y-3 mt-6">
+                          <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
+                            <span className="text-white/60">Ingreso Acumulado (2027-2030)</span>
+                            <span className="font-mono font-bold text-white">{formatCurrency(posgradSensitivityAnalysis.optimistic.ingTotal)}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
+                            <span className="text-white/60">VAN / NPV</span>
+                            <span className={`font-mono font-bold ${posgradSensitivityAnalysis.optimistic.npv >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                              {formatCurrency(posgradSensitivityAnalysis.optimistic.npv)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
+                            <span className="text-white/60">TIR / IRR</span>
+                            <span className="font-mono font-bold text-white">
+                              {posgradSensitivityAnalysis.optimistic.irr !== 0 ? `${posgradSensitivityAnalysis.optimistic.irr.toFixed(1)}%` : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 text-xs">
+                            <span className="text-white/60">Flujo Neto Acumulado</span>
+                            <span className={`font-mono font-bold ${posgradSensitivityAnalysis.optimistic.flowSum >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                              {formatCurrency(posgradSensitivityAnalysis.optimistic.flowSum)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
-                </div>
 
-                {/* Base scenario DSCR */}
-                <div className={`bg-[#0f172a] border rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-xl ${
-                  posgradSensitivityAnalysis.dscrBase >= 1.25 ? 'border-[#4ade80]/20 bg-[#4ade80]/5' : 'border-rose-500/20 bg-rose-500/5'
-                }`}>
-                  <span className="text-[9px] text-white/50 font-mono uppercase tracking-wider mb-1.5">DSCR Escenario Base</span>
-                  <span className={`text-2xl font-bold font-mono ${posgradSensitivityAnalysis.dscrBase >= 1.25 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                    {posgradSensitivityAnalysis.dscrBase.toFixed(2)}x
-                  </span>
-                  <div className={`mt-2 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                    posgradSensitivityAnalysis.dscrBase >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-rose-500/10 text-rose-400'
-                  }`}>
-                    {posgradSensitivityAnalysis.dscrBase >= 1.25 ? '✓ Cumple' : '✗ Ruptura'}
+                  {/* Chart: Comparative cash flow of scenarios */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    {/* Evolution chart */}
+                    <div className="lg:col-span-2 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Evolución de Flujos por Escenario de Créditos (2027-2030)</h4>
+                      <div className="h-72" style={{ width: '100%', height: 288, minWidth: 200 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart
+                            data={new Array(4).fill(0).map((_, i) => ({
+                              name: (2027 + i).toString(),
+                              Pesimista: Math.round(posgradSensitivityAnalysis.pessimistic.flows[i] / 1e6 * 10) / 10,
+                              Base: Math.round(posgradSensitivityAnalysis.base.flows[i] / 1e6 * 10) / 10,
+                              Optimista: Math.round(posgradSensitivityAnalysis.optimistic.flows[i] / 1e6 * 10) / 10
+                            }))}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="name" stroke="#64748b" className="text-[10px] font-mono" />
+                            <YAxis stroke="#64748b" className="text-[10px] font-mono" tickFormatter={(v) => `$${v}M`} />
+                            <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
+                            <Legend wrapperStyle={{ fontSize: '11px' }} />
+                            <Area type="monotone" dataKey="Optimista" stroke="#4ade80" fill="#4ade80" fillOpacity={0.03} strokeWidth={2} />
+                            <Area type="monotone" dataKey="Base" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.03} strokeWidth={2} />
+                            <Area type="monotone" dataKey="Pesimista" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.03} strokeWidth={2} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Elasticity indicators */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col justify-between font-sans">
+                      <div>
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Elasticidad de Recaudo vs 2026 Histórico</h4>
+                        
+                        <div className="space-y-4">
+                          {/* Selected year comparison */}
+                          <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+                            <span className="text-[9px] text-[#ffcc29] uppercase tracking-widest block font-mono font-bold mb-1">Año de Evaluación: {elasticityYear}</span>
+                            <div className="flex justify-between items-center text-xs border-b border-white/5 pb-1">
+                              <span className="text-white/60">Var. Alumnos vs 2026</span>
+                              <span className="font-mono text-white font-bold">
+                                {comparisonSelectedYear.deltaEstudiantes >= 0 ? '+' : ''}{comparisonSelectedYear.deltaEstudiantesPct.toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs border-b border-white/5 py-1">
+                              <span className="text-white/60">Var. Precio vs 2026</span>
+                              <span className="font-mono text-white font-bold text-rose-400">
+                                {comparisonSelectedYear.deltaPrecioPct.toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs pt-1">
+                              <span className="text-white/60 font-semibold">Elasticidad Comparada</span>
+                              <span className="font-mono text-[#ffcc29] font-bold">
+                                ε = {comparisonSelectedYear.calculatedElasticity.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="bg-white/5 border border-white/5 rounded-xl p-3 flex items-start gap-3">
+                            <TrendingUp className="w-5 h-5 text-[#4ade80] shrink-0 mt-0.5" />
+                            <div>
+                              <span className="text-[10px] text-white/50 block">Elasticidad Ingresos vs VAN</span>
+                              <span className="text-sm font-bold text-white font-mono">
+                                {posgradSensitivityAnalysis.elasticityIng >= 0 ? '+' : ''}{posgradSensitivityAnalysis.elasticityIng.toFixed(2)}%
+                              </span>
+                              <p className="text-[9px] text-white/40 mt-1 leading-normal">
+                                Por cada 1% de incremento en ingresos, el VAN aumenta un <strong>{Math.abs(posgradSensitivityAnalysis.elasticityIng).toFixed(2)}%</strong>.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-[9px] text-white/40 font-mono mt-4 leading-normal bg-black/30 p-2.5 rounded-lg">
+                        💡 Comparando {elasticityYear} vs 2026, la elasticidad calculada es de {comparisonSelectedYear.calculatedElasticity.toFixed(2)}.
+                      </div>
+                    </div>
+
                   </div>
-                </div>
 
-                {/* Optimistic scenario DSCR */}
-                <div className={`bg-[#0f172a] border rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-xl ${
-                  posgradSensitivityAnalysis.dscrOptimistic >= 1.25 ? 'border-[#4ade80]/20 bg-[#4ade80]/5' : 'border-rose-500/20 bg-rose-500/5'
-                }`}>
-                  <span className="text-[9px] text-white/50 font-mono uppercase tracking-wider mb-1.5">DSCR Optimista</span>
-                  <span className={`text-2xl font-bold font-mono ${posgradSensitivityAnalysis.dscrOptimistic >= 1.25 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                    {posgradSensitivityAnalysis.dscrOptimistic.toFixed(2)}x
-                  </span>
-                  <div className={`mt-2 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                    posgradSensitivityAnalysis.dscrOptimistic >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-rose-500/10 text-rose-400'
-                  }`}>
-                    {posgradSensitivityAnalysis.dscrOptimistic >= 1.25 ? '✓ Cumple' : '✗ Ruptura'}
-                  </div>
-                </div>
-
-                {/* Pessimistic scenario DSCR */}
-                <div className={`bg-[#0f172a] border rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-xl ${
-                  posgradSensitivityAnalysis.dscrPessimistic >= 1.25 ? 'border-[#4ade80]/20 bg-[#4ade80]/5' : 'border-rose-500/20 bg-rose-500/5'
-                }`}>
-                  <span className="text-[9px] text-white/50 font-mono uppercase tracking-wider mb-1.5">DSCR Pesimista</span>
-                  <span className={`text-2xl font-bold font-mono ${posgradSensitivityAnalysis.dscrPessimistic >= 1.25 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                    {posgradSensitivityAnalysis.dscrPessimistic.toFixed(2)}x
-                  </span>
-                  <div className={`mt-2 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                    posgradSensitivityAnalysis.dscrPessimistic >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-rose-500/10 text-rose-400'
-                  }`}>
-                    {posgradSensitivityAnalysis.dscrPessimistic >= 1.25 ? '✓ Cumple' : '✗ Ruptura'}
-                  </div>
-                </div>
-
-              </div>
-
-              {/* DSCR Curves & Tornado */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
-                {/* Left Chart: 1D DSCR sensitivity */}
-                <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col h-[380px]">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Sensibilidad 1D · DSCR vs Variación Costo de Crédito</h4>
-                  <div className="flex-1 w-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={posgradSensitivityAnalysis.dscr1DData} margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                        <XAxis dataKey="vLabel" stroke="#64748b" className="text-[9px] font-mono" />
-                        <YAxis stroke="#64748b" className="text-[10px] font-mono" />
-                        <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
-                        <Legend wrapperStyle={{ fontSize: '11px' }} />
-                        <Line type="monotone" dataKey="DSCR" name="DSCR Cobertura (x)" stroke="#4ade80" strokeWidth={3} activeDot={{ r: 8 }} />
-                        <Line type="monotone" dataKey="Covenant" name="Límite Convenido (1.25x)" stroke="#f43f5e" strokeDasharray="5 5" strokeWidth={1.5} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                {/* Right Chart: Driver impact on DSCR */}
-                <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col h-[380px]">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Tornado · Impacto de Drivers sobre el DSCR (±5%)</h4>
-                  <div className="flex-1 w-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart layout="vertical" data={posgradSensitivityAnalysis.dscrTornado} margin={{ top: 15, right: 15, left: 10, bottom: 5 }} barSize={14}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={true} horizontal={false} />
-                        <XAxis type="number" stroke="#64748b" className="text-[9px] font-mono" />
-                        <YAxis type="category" dataKey="labelName" stroke="#64748b" className="text-[9px] font-mono" width={110} tickLine={false} />
-                        <RechartsTooltip 
-                          contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }}
-                          formatter={(value: any, name: any) => [`${parseFloat(value).toFixed(2)}x`, name === 'low' ? 'Impacto Adverso' : 'Impacto Favorable']}
-                        />
-                        <ReferenceLine x={posgradSensitivityAnalysis.dscrBase} stroke="#ffffff" strokeOpacity={0.2} strokeDasharray="3 3" />
-                        <Bar dataKey="low" fill="#f43f5e" radius={[4, 0, 0, 4]} stackId="stack" name="Impacto Adverso" />
-                        <Bar dataKey="high" fill="#4ade80" radius={[0, 4, 4, 0]} stackId="stack" name="Impacto Favorable" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Rupture point diagnostics */}
-              <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                <div className="space-y-1">
-                  <span className="text-white/45 text-[9px] font-mono uppercase tracking-wider block">Análisis de Ruptura de Caja del Fondo R31</span>
-                  <h4 className="text-sm font-bold text-white">Límite de Resistencia de Egresos / Retenciones</h4>
-                  <p className="text-[11px] text-white/60 font-sans max-w-xl leading-relaxed">
-                    El caso base cumple el covenant de cobertura con un colchón del <span className="text-[#4ade80] font-bold">{posgradSensitivityAnalysis.cushion.toFixed(1)}%</span>. 
-                    Una variación acumulada en la retención central superior al <span className="text-rose-400 font-bold">{posgradSensitivityAnalysis.ruptureVar.toFixed(1)}%</span> llevaría al punto de ruptura del fondo, forzando un recaudo bruto mínimo de <span className="text-[#ffcc29] font-bold">{formatCurrency(posgradSensitivityAnalysis.ruptureValue)}</span> para mantener el equilibrio financiero.
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 border border-white/5 px-5 py-4 rounded-xl flex flex-col justify-center items-center shrink-0 min-w-[150px]">
-                  <span className="text-[9px] text-white/50 uppercase tracking-widest block font-mono">Punto Ruptura</span>
-                  <span className="text-xl font-bold font-mono text-rose-400 mt-1">{posgradSensitivityAnalysis.ruptureVar.toFixed(1)}%</span>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* SUB-TAB 4: FINANCIAL MULTI-YEAR PROJECTION VIEW */}
-          {activeSensSubTab === 'multiyear' && (
-            <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
-              
-              {/* Multi-Year Indexation Sliders */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-5 bg-[#0f172a] border border-white/10 p-5 rounded-2xl shadow-xl">
-                
-                {/* Years count */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-white/60">Años a Proyectar</span>
-                    <strong className="text-[#ffcc29] font-bold font-mono">{numYearsProyectar} años</strong>
-                  </div>
-                  <input 
-                    type="range"
-                    min="5"
-                    max="20"
-                    step="1"
-                    value={numYearsProyectar}
-                    onChange={(e) => setNumYearsProyectar(parseInt(e.target.value) || 10)}
-                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                  />
-                  <span className="text-[8px] text-white/40 font-mono block">Horizonte: 2027 a {2026 + numYearsProyectar}</span>
-                </div>
-
-                {/* ICES growth */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-white/60">Tasa Anual ICES (Ingresos)</span>
-                    <strong className="text-[#ffcc29] font-bold font-mono">{icesRate}%</strong>
-                  </div>
-                  <input 
-                    type="range"
-                    min="1"
-                    max="10"
-                    step="0.1"
-                    value={icesRate}
-                    onChange={(e) => setIcesRate(parseFloat(e.target.value) || 4.5)}
-                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                  />
-                  <span className="text-[8px] text-white/40 font-mono block">Indexación del valor de los créditos</span>
-                </div>
-
-                {/* IPC growth */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-white/60">Tasa Anual IPC (Gastos)</span>
-                    <strong className="text-[#ffcc29] font-bold font-mono">{ipcRate}%</strong>
-                  </div>
-                  <input 
-                    type="range"
-                    min="1"
-                    max="10"
-                    step="0.1"
-                    value={ipcRate}
-                    onChange={(e) => setIpcRate(parseFloat(e.target.value) || 4.0)}
-                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                  />
-                  <span className="text-[8px] text-white/40 font-mono block">Inflación aplicada a egresos operativos</span>
-                </div>
-
-                {/* Enrollment growth */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-white/60">Crecimiento Matrícula Anual</span>
-                    <strong className={`font-bold font-mono ${enrollmentGrowthRate >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                      {enrollmentGrowthRate > 0 ? '+' : ''}{enrollmentGrowthRate}%
-                    </strong>
-                  </div>
-                  <input 
-                    type="range"
-                    min="-5"
-                    max="5"
-                    step="0.1"
-                    value={enrollmentGrowthRate}
-                    onChange={(e) => setEnrollmentGrowthRate(parseFloat(e.target.value) || 0.5)}
-                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                  />
-                  <span className="text-[8px] text-white/40 font-mono block">Var. anual de alumnos post-2030</span>
-                </div>
-
-              </div>
-
-              {/* Graphs area for Multi-Year */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Cash Flow Area Chart */}
-                <div className="lg:col-span-2 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Proyección Multivigencia de Caja del R31 (2027-{2026 + numYearsProyectar})</h4>
-                  <div className="h-72" style={{ width: '100%', height: 288, minWidth: 200 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={multiYearProjections.map(d => ({
-                        name: d.anio.toString(),
-                        'Ingresos (M)': Math.round(d.recaudo / 1e6 * 10) / 10,
-                        'Gastos (M)': Math.round(d.totalGastos / 1e6 * 10) / 10,
-                        'Excedente (M)': Math.round(d.margenNeto / 1e6 * 10) / 10
-                      }))} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                        <XAxis dataKey="name" stroke="#64748b" className="text-[10px] font-mono" />
-                        <YAxis stroke="#64748b" className="text-[10px] font-mono" tickFormatter={(v) => `$${v}M`} />
-                        <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
-                        <Legend wrapperStyle={{ fontSize: '11px' }} />
-                        <Area type="monotone" dataKey="Ingresos (M)" stroke="#ffcc29" fill="#ffcc29" fillOpacity={0.03} strokeWidth={2} />
-                        <Area type="monotone" dataKey="Gastos (M)" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.03} strokeWidth={1.5} />
-                        <Area type="monotone" dataKey="Excedente (M)" stroke="#4ade80" fill="#4ade80" fillOpacity={0.03} strokeWidth={2} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                {/* DSCR Line Chart over horizon */}
-                <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Sostenibilidad del Covenant DSCR (Largo Plazo)</h4>
-                    <div className="h-60" style={{ width: '100%', height: 240, minWidth: 200 }}>
+                  {/* Timeline baseline */}
+                  <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider">Histórico vs Proyección Simulada (Línea de Tiempo Completa 2020-2030)</h4>
+                    </div>
+                    <div className="h-72" style={{ width: '100%', height: 288, minWidth: 200 }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={multiYearProjections} margin={{ top: 10, right: 10, left: -30, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                          <XAxis dataKey="anio" stroke="#64748b" className="text-[10px] font-mono" />
-                          <YAxis stroke="#64748b" className="text-[10px] font-mono" />
-                          <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
-                          <Line type="monotone" dataKey="dscr" name="Ratio DSCR (x)" stroke="#4ade80" strokeWidth={2.5} dot={{ r: 2 }} />
-                          <ReferenceLine y={1.25} stroke="#f43f5e" strokeDasharray="4 4" strokeWidth={1.5} />
-                        </LineChart>
+                        <ComposedChart data={unifiedTimelineData} margin={{ top: 10, right: -5, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                          <XAxis dataKey="anio" tick={{fill: '#64748b', fontSize: 10}} />
+                          <YAxis yAxisId="left" stroke="none" tick={{fill: '#64748b', fontSize: 10}} tickFormatter={(val) => `$${val}M`} />
+                          <YAxis yAxisId="right" orientation="right" stroke="none" tick={{fill: '#64748b', fontSize: 10}} />
+                          <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', borderRadius: '8px', fontSize: '11px'}} />
+                          <Legend wrapperStyle={{ fontSize: '11px' }} />
+                          <Bar yAxisId="left" dataKey="Modelo Histórico (Recaudo M)" fill="#334155" name="Ingreso Histórico" radius={[3, 3, 0, 0]} barSize={14} />
+                          <Bar yAxisId="left" dataKey="Modelo por Créditos (Recaudo M)" fill="#ffcc29" name="Ingreso Créditos (Simulado)" radius={[3, 3, 0, 0]} barSize={14} />
+                          <Line yAxisId="right" type="monotone" dataKey="Estudiantes Históricos" stroke="#94a3b8" name="Alumnos Históricos" strokeWidth={1.5} dot={{r: 2}} strokeDasharray="4 4" />
+                          <Line yAxisId="right" type="monotone" dataKey="Estudiantes Créditos" stroke="#4ade80" name="Alumnos Créditos (Simulado)" strokeWidth={2.5} dot={{r: 3}} />
+                        </ComposedChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
-                  <span className="text-[9px] text-white/40 block leading-normal bg-black/40 p-2 rounded-lg">
-                    La línea roja punteada representa la cobertura crítica (1.25x). Si la curva verde cae por debajo, el fondo genera déficit administrativo.
-                  </span>
-                </div>
 
-              </div>
-
-              {/* Table view */}
-              <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6">
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4 font-sans">Tabla de Proyecciones Multivigencia R31</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-white/10 bg-white/5 font-bold text-white">
-                        <th className="p-3">Año</th>
-                        <th className="p-3 text-right">Alumnos Proyectados</th>
-                        <th className="p-3 text-right">Costo Promedio / Est.</th>
-                        <th className="p-3 text-right">Recaudo Bruto</th>
-                        <th className="p-3 text-right">Deducciones Centrales</th>
-                        <th className="p-3 text-right">Gastos Directos</th>
-                        <th className="p-3 text-right">Excedente Neto</th>
-                        <th className="p-3 text-right">DSCR Cobertura</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 text-white/80 font-mono">
-                      {multiYearProjections.map(p => (
-                        <tr key={p.anio} className="hover:bg-white/[0.04]">
-                          <td className="p-3 font-sans font-bold text-white">{p.anio}</td>
-                          <td className="p-3 text-right text-[#4ade80] font-bold">{p.estudiantes}</td>
-                          <td className="p-3 text-right">{formatCurrencyShort(p.precio)}</td>
-                          <td className="p-3 text-right text-[#ffcc29] font-bold">{formatCurrency(p.recaudo)}</td>
-                          <td className="p-3 text-right text-rose-300">-{formatCurrency(p.deduccionCentral)}</td>
-                          <td className="p-3 text-right text-rose-300">-{formatCurrency(p.gastoOperativo)}</td>
-                          <td className={`p-3 text-right font-bold ${p.margenNeto >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                            {p.margenNeto >= 0 ? '+' : ''}{formatCurrency(p.margenNeto)}
-                          </td>
-                          <td className="p-3 text-right">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${p.dscr >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-rose-500/10 text-rose-400'}`}>
-                              {p.dscr.toFixed(2)}x
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
-              </div>
+              )}
+
+              {/* SUB-TAB 2: MONTE CARLO Y TORNADO */}
+              {activeSensSubTab === 'montecarlo' && (
+                <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    {/* Monte Carlo card */}
+                    <div className="lg:col-span-8 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col h-[400px]">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                        <div>
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">Simulación de Monte Carlo (1,000 Iteraciones)</h4>
+                          <p className="text-[9px] text-white/50 mt-0.5">Distribución probabilística del VAN del fondo R31 bajo variaciones de ±20% precio / ±15% gastos.</p>
+                        </div>
+                        
+                        <div className="flex gap-4 text-xs font-mono">
+                          <div>
+                            <span className="text-white/40 block text-[9px]">Valor Esperado</span>
+                            <strong className="text-white font-bold">{formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.mean)}</strong>
+                          </div>
+                          <div>
+                            <span className="text-white/40 block text-[9px]">Viabilidad (VAN &gt; 0)</span>
+                            <strong className="text-[#4ade80] font-bold">{posgradSensitivityAnalysis.monteCarlo.probPos.toFixed(1)}%</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 w-full relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={posgradSensitivityAnalysis.monteCarlo.bins} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="range" stroke="#64748b" className="text-[8px] font-mono" height={36} angle={-15} textAnchor="end" />
+                            <YAxis stroke="#64748b" className="text-[10px] font-mono" />
+                            <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
+                            <Bar dataKey="Frecuencia" fill="#ffcc29" radius={[3, 3, 0, 0]} barSize={24} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Monte Carlo Stats details */}
+                    <div className="lg:col-span-4 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col justify-between h-[400px]">
+                      <div>
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Resultados Estadísticos</h4>
+                        
+                        <div className="space-y-4">
+                          
+                          <div className="border-b border-white/5 pb-2.5 flex justify-between items-center text-xs">
+                            <span className="text-white/60">Viabilidad Presupuestal</span>
+                            <div className="text-right">
+                              <span className="font-bold text-[#4ade80] font-mono block">{posgradSensitivityAnalysis.monteCarlo.probPos.toFixed(1)}%</span>
+                              <span className="text-[8px] text-white/40 font-mono">Probabilidad de Superávit</span>
+                            </div>
+                          </div>
+
+                          <div className="border-b border-white/5 pb-2.5 flex justify-between items-center text-xs">
+                            <span className="text-white/60">VAN Esperado Promedio</span>
+                            <div className="text-right">
+                              <span className="font-bold text-white font-mono block">{formatCurrency(posgradSensitivityAnalysis.monteCarlo.mean)}</span>
+                              <span className="text-[8px] text-white/40 font-mono">Promedio Ponderado</span>
+                            </div>
+                          </div>
+
+                          <div className="border-b border-white/5 pb-2.5 flex justify-between items-center text-xs">
+                            <span className="text-white/60">Intervalo Confianza (95%)</span>
+                            <div className="text-right">
+                              <span className="font-bold text-[#ffcc29] font-mono block text-[11px] truncate max-w-[170px]" title={`[${formatCurrency(posgradSensitivityAnalysis.monteCarlo.low95)}, ${formatCurrency(posgradSensitivityAnalysis.monteCarlo.high95)}]`}>
+                                [{formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.low95)}, {formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.high95)}]
+                              </span>
+                              <span className="text-[8px] text-white/40 font-mono">Rango de confianza</span>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-white/60">Rango Absoluto Simulado</span>
+                            <div className="text-right">
+                              <span className="font-bold text-white font-mono block text-[11px] truncate max-w-[170px]" title={`[${formatCurrency(posgradSensitivityAnalysis.monteCarlo.min)}, ${formatCurrency(posgradSensitivityAnalysis.monteCarlo.max)}]`}>
+                                [{formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.min)}, {formatCurrencyShort(posgradSensitivityAnalysis.monteCarlo.max)}]
+                              </span>
+                              <span className="text-[8px] text-white/40 font-mono">Mínimo y Máximo hallados</span>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <div className="bg-[#4ade80]/5 border border-[#4ade80]/15 p-3 rounded-2xl flex items-start gap-2.5 mt-2">
+                        <ShieldCheck className="w-5 h-5 text-[#4ade80] shrink-0" />
+                        <p className="text-[10px] text-white/80 leading-relaxed">
+                          {posgradSensitivityAnalysis.monteCarlo.probPos >= 70 ? (
+                            `El fondo de posgrados R31 tiene una alta viabilidad contable (${posgradSensitivityAnalysis.monteCarlo.probPos.toFixed(1)}%). Existe una certeza sólida de superávit.`
+                          ) : (
+                            `Riesgo crítico de insolvencia detectado. Existe una probabilidad del ${(100 - posgradSensitivityAnalysis.monteCarlo.probPos).toFixed(1)}% de incurrir en déficit.`
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Tornado Chart NPV Impact */}
+                  <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 shadow-2xl">
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider">Tornado · Sensibilidad del VAN R31 ante Cambios en Variables (±5% o ±0.2)</h4>
+                        <p className="text-[9px] text-white/50 mt-0.5">Mide el impacto incremental en millones sobre el valor actual neto al variar individualmente cada driver.</p>
+                      </div>
+                      <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-bold font-mono rounded">
+                        Driver Dominante: {posgradSensitivityAnalysis.tornado[0]?.name || 'Tarifa'}
+                      </span>
+                    </div>
+
+                    <div className="h-64" style={{ width: '100%', height: 256, minWidth: 200 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart layout="vertical" data={posgradSensitivityAnalysis.tornado} margin={{ top: 10, right: 15, left: 10, bottom: 5 }} barSize={14}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={true} horizontal={false} />
+                          <XAxis type="number" stroke="#64748b" className="text-[9px] font-mono" />
+                          <YAxis type="category" dataKey="name" stroke="#64748b" className="text-[9px] font-mono font-medium" width={140} tickLine={false} />
+                          <RechartsTooltip 
+                            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }}
+                            formatter={(value: any, name: any) => {
+                              const val = parseFloat(value);
+                              return [`${val > 0 ? '+' : ''}${val}M COP`, name === 'low' ? 'Impacto Adverso' : 'Impacto Favorable'];
+                            }}
+                          />
+                          <ReferenceLine x={0} stroke="#ffffff" strokeOpacity={0.25} />
+                          <Bar dataKey="low" fill="#f43f5e" radius={[4, 0, 0, 4]} stackId="stack" name="Impacto Adverso" />
+                          <Bar dataKey="high" fill="#4ade80" radius={[0, 4, 4, 0]} stackId="stack" name="Impacto Favorable" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* SUB-TAB 3: COBERTURAS DSCR */}
+              {activeSensSubTab === 'dscr' && (
+                <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
+                  
+                  {/* Compliance boxes */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    
+                    {/* Minimum Covenant Limit */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-xl">
+                      <span className="text-[9px] text-white/50 font-mono uppercase tracking-wider mb-1.5">Límite Mínimo Covenant</span>
+                      <span className="text-2xl font-bold font-mono text-white">1.25x</span>
+                      <div className="w-full border-t border-dashed border-white/5 mt-3 pt-2 text-[9px] text-white/40 font-mono">
+                         Tasa Mínima Exigida
+                      </div>
+                    </div>
+
+                    {/* Base scenario DSCR */}
+                    <div className={`bg-[#0f172a] border rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-xl ${
+                      posgradSensitivityAnalysis.dscrBase >= 1.25 ? 'border-[#4ade80]/20 bg-[#4ade80]/5' : 'border-rose-500/20 bg-rose-500/5'
+                    }`}>
+                      <span className="text-[9px] text-white/50 font-mono uppercase tracking-wider mb-1.5">DSCR Escenario Base</span>
+                      <span className={`text-2xl font-bold font-mono ${posgradSensitivityAnalysis.dscrBase >= 1.25 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                        {posgradSensitivityAnalysis.dscrBase.toFixed(2)}x
+                      </span>
+                      <div className={`mt-2 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                        posgradSensitivityAnalysis.dscrBase >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-rose-500/10 text-rose-400'
+                      }`}>
+                        {posgradSensitivityAnalysis.dscrBase >= 1.25 ? '✓ Cumple' : '✗ Ruptura'}
+                      </div>
+                    </div>
+
+                    {/* Optimistic scenario DSCR */}
+                    <div className={`bg-[#0f172a] border rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-xl ${
+                      posgradSensitivityAnalysis.dscrOptimistic >= 1.25 ? 'border-[#4ade80]/20 bg-[#4ade80]/5' : 'border-rose-500/20 bg-rose-500/5'
+                    }`}>
+                      <span className="text-[9px] text-white/50 font-mono uppercase tracking-wider mb-1.5">DSCR Optimista</span>
+                      <span className={`text-2xl font-bold font-mono ${posgradSensitivityAnalysis.dscrOptimistic >= 1.25 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                        {posgradSensitivityAnalysis.dscrOptimistic.toFixed(2)}x
+                      </span>
+                      <div className={`mt-2 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                        posgradSensitivityAnalysis.dscrOptimistic >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-rose-500/10 text-rose-400'
+                      }`}>
+                        {posgradSensitivityAnalysis.dscrOptimistic >= 1.25 ? '✓ Cumple' : '✗ Ruptura'}
+                      </div>
+                    </div>
+
+                    {/* Pessimistic scenario DSCR */}
+                    <div className={`bg-[#0f172a] border rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-xl ${
+                      posgradSensitivityAnalysis.dscrPessimistic >= 1.25 ? 'border-[#4ade80]/20 bg-[#4ade80]/5' : 'border-rose-500/20 bg-rose-500/5'
+                    }`}>
+                      <span className="text-[9px] text-white/50 font-mono uppercase tracking-wider mb-1.5">DSCR Pesimista</span>
+                      <span className={`text-2xl font-bold font-mono ${posgradSensitivityAnalysis.dscrPessimistic >= 1.25 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                        {posgradSensitivityAnalysis.dscrPessimistic.toFixed(2)}x
+                      </span>
+                      <div className={`mt-2 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                        posgradSensitivityAnalysis.dscrPessimistic >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-rose-500/10 text-rose-400'
+                      }`}>
+                        {posgradSensitivityAnalysis.dscrPessimistic >= 1.25 ? '✓ Cumple' : '✗ Ruptura'}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* DSCR Curves & Tornado */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    {/* Left Chart: 1D DSCR sensitivity */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col h-[380px]">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Sensibilidad 1D · DSCR vs Variación Costo de Crédito</h4>
+                      <div className="flex-1 w-full relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={posgradSensitivityAnalysis.dscr1DData} margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="vLabel" stroke="#64748b" className="text-[9px] font-mono" />
+                            <YAxis stroke="#64748b" className="text-[10px] font-mono" />
+                            <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
+                            <Legend wrapperStyle={{ fontSize: '11px' }} />
+                            <Line type="monotone" dataKey="DSCR" name="DSCR Cobertura (x)" stroke="#4ade80" strokeWidth={3} activeDot={{ r: 8 }} />
+                            <Line type="monotone" dataKey="Covenant" name="Límite Convenido (1.25x)" stroke="#f43f5e" strokeDasharray="5 5" strokeWidth={1.5} dot={false} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Right Chart: Driver impact on DSCR */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col h-[380px]">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Tornado · Impacto de Drivers sobre el DSCR (±5%)</h4>
+                      <div className="flex-1 w-full relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart layout="vertical" data={posgradSensitivityAnalysis.dscrTornado} margin={{ top: 15, right: 15, left: 10, bottom: 5 }} barSize={14}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={true} horizontal={false} />
+                            <XAxis type="number" stroke="#64748b" className="text-[9px] font-mono" />
+                            <YAxis type="category" dataKey="labelName" stroke="#64748b" className="text-[9px] font-mono" width={110} tickLine={false} />
+                            <RechartsTooltip 
+                              contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }}
+                              formatter={(value: any, name: any) => [`${parseFloat(value).toFixed(2)}x`, name === 'low' ? 'Impacto Adverso' : 'Impacto Favorable']}
+                            />
+                            <ReferenceLine x={posgradSensitivityAnalysis.dscrBase} stroke="#ffffff" strokeOpacity={0.2} strokeDasharray="3 3" />
+                            <Bar dataKey="low" fill="#f43f5e" radius={[4, 0, 0, 4]} stackId="stack" name="Impacto Adverso" />
+                            <Bar dataKey="high" fill="#4ade80" radius={[0, 4, 4, 0]} stackId="stack" name="Impacto Favorable" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Rupture point diagnostics */}
+                  <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                    <div className="space-y-1">
+                      <span className="text-white/45 text-[9px] font-mono uppercase tracking-wider block">Análisis de Ruptura de Caja del Fondo R31</span>
+                      <h4 className="text-sm font-bold text-white">Límite de Resistencia de Egresos / Retenciones</h4>
+                      <p className="text-[11px] text-white/60 font-sans max-w-xl leading-relaxed">
+                        El caso base cumple el covenant de cobertura con un colchón del <span className="text-[#4ade80] font-bold">{posgradSensitivityAnalysis.cushion.toFixed(1)}%</span>. 
+                        Una variación acumulada en la retención central superior al <span className="text-rose-400 font-bold">{posgradSensitivityAnalysis.ruptureVar.toFixed(1)}%</span> llevaría al punto de ruptura del fondo, forzando un recaudo bruto mínimo de <span className="text-[#ffcc29] font-bold">{formatCurrency(posgradSensitivityAnalysis.ruptureValue)}</span> para mantener el equilibrio financiero.
+                      </p>
+                    </div>
+                    
+                    <div className="bg-white/5 border border-white/5 px-5 py-4 rounded-xl flex flex-col justify-center items-center shrink-0 min-w-[150px]">
+                      <span className="text-[9px] text-white/50 uppercase tracking-widest block font-mono">Punto Ruptura</span>
+                      <span className="text-xl font-bold font-mono text-rose-400 mt-1">{posgradSensitivityAnalysis.ruptureVar.toFixed(1)}%</span>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* SUB-TAB 4: FINANCIAL MULTI-YEAR PROJECTION VIEW */}
+              {activeSensSubTab === 'multiyear' && (
+                <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
+                  
+                  {/* Multi-Year Indexation Sliders */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-5 bg-[#0f172a] border border-white/10 p-5 rounded-2xl shadow-xl">
+                    
+                    {/* Years count */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-white/60">Años a Proyectar</span>
+                        <strong className="text-[#ffcc29] font-bold font-mono">{numYearsProyectar} años</strong>
+                      </div>
+                      <input 
+                        type="range"
+                        min="5"
+                        max="20"
+                        step="1"
+                        value={numYearsProyectar}
+                        onChange={(e) => setNumYearsProyectar(parseInt(e.target.value) || 10)}
+                        className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                      />
+                      <span className="text-[8px] text-white/40 font-mono block">Horizonte: 2027 a {2026 + numYearsProyectar}</span>
+                    </div>
+
+                    {/* ICES growth */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-white/60">Tasa Anual ICES (Ingresos)</span>
+                        <strong className="text-[#ffcc29] font-bold font-mono">{icesRate}%</strong>
+                      </div>
+                      <input 
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="0.1"
+                        value={icesRate}
+                        onChange={(e) => setIcesRate(parseFloat(e.target.value) || 4.5)}
+                        className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                      />
+                      <span className="text-[8px] text-white/40 font-mono block">Indexación del valor de los créditos</span>
+                    </div>
+
+                    {/* IPC growth */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-white/60">Tasa Anual IPC (Gastos)</span>
+                        <strong className="text-[#ffcc29] font-bold font-mono">{ipcRate}%</strong>
+                      </div>
+                      <input 
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="0.1"
+                        value={ipcRate}
+                        onChange={(e) => setIpcRate(parseFloat(e.target.value) || 4.0)}
+                        className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                      />
+                      <span className="text-[8px] text-white/40 font-mono block">Inflación aplicada a egresos operativos</span>
+                    </div>
+
+                    {/* Enrollment growth */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-white/60">Crecimiento Matrícula Anual</span>
+                        <strong className={`font-bold font-mono ${enrollmentGrowthRate >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                          {enrollmentGrowthRate > 0 ? '+' : ''}{enrollmentGrowthRate}%
+                        </strong>
+                      </div>
+                      <input 
+                        type="range"
+                        min="-5"
+                        max="5"
+                        step="0.1"
+                        value={enrollmentGrowthRate}
+                        onChange={(e) => setEnrollmentGrowthRate(parseFloat(e.target.value) || 0.5)}
+                        className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                      />
+                      <span className="text-[8px] text-white/40 font-mono block">Var. anual de alumnos post-2030</span>
+                    </div>
+
+                  </div>
+
+                  {/* Graphs area for Multi-Year */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    {/* Cash Flow Area Chart */}
+                    <div className="lg:col-span-2 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Proyección Multivigencia de Caja del R31 (2027-{2026 + numYearsProyectar})</h4>
+                      <div className="h-72" style={{ width: '100%', height: 288, minWidth: 200 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={multiYearProjections.map(d => ({
+                            name: d.anio.toString(),
+                            'Ingresos (M)': Math.round(d.recaudo / 1e6 * 10) / 10,
+                            'Gastos (M)': Math.round(d.totalGastos / 1e6 * 10) / 10,
+                            'Excedente (M)': Math.round(d.margenNeto / 1e6 * 10) / 10
+                          }))} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="name" stroke="#64748b" className="text-[10px] font-mono" />
+                            <YAxis stroke="#64748b" className="text-[10px] font-mono" tickFormatter={(v) => `$${v}M`} />
+                            <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
+                            <Legend wrapperStyle={{ fontSize: '11px' }} />
+                            <Area type="monotone" dataKey="Ingresos (M)" stroke="#ffcc29" fill="#ffcc29" fillOpacity={0.03} strokeWidth={2} />
+                            <Area type="monotone" dataKey="Gastos (M)" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.03} strokeWidth={1.5} />
+                            <Area type="monotone" dataKey="Excedente (M)" stroke="#4ade80" fill="#4ade80" fillOpacity={0.03} strokeWidth={2} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* DSCR Line Chart over horizon */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Sostenibilidad del Covenant DSCR (Largo Plazo)</h4>
+                        <div className="h-60" style={{ width: '100%', height: 240, minWidth: 200 }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={multiYearProjections} margin={{ top: 10, right: 10, left: -30, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                              <XAxis dataKey="anio" stroke="#64748b" className="text-[10px] font-mono" />
+                              <YAxis stroke="#64748b" className="text-[10px] font-mono" />
+                              <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
+                              <Line type="monotone" dataKey="dscr" name="Ratio DSCR (x)" stroke="#4ade80" strokeWidth={2.5} dot={{ r: 2 }} />
+                              <ReferenceLine y={1.25} stroke="#f43f5e" strokeDasharray="4 4" strokeWidth={1.5} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                      <span className="text-[9px] text-white/40 block leading-normal bg-black/40 p-2 rounded-lg">
+                        La línea roja punteada representa la cobertura crítica (1.25x). Si la curva verde cae por debajo, el fondo genera déficit administrativo.
+                      </span>
+                    </div>
+
+                  </div>
+
+                  {/* Table view */}
+                  <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4 font-sans">Tabla de Proyecciones Multivigencia R31</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/10 bg-white/5 font-bold text-white">
+                            <th className="p-3">Año</th>
+                            <th className="p-3 text-right">Alumnos Proyectados</th>
+                            <th className="p-3 text-right">Costo Promedio / Est.</th>
+                            <th className="p-3 text-right">Recaudo Bruto</th>
+                            <th className="p-3 text-right">Deducciones Centrales</th>
+                            <th className="p-3 text-right">Gastos Directos</th>
+                            <th className="p-3 text-right">Excedente Neto</th>
+                            <th className="p-3 text-right">DSCR Cobertura</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-white/80 font-mono">
+                          {multiYearProjections.map(p => (
+                            <tr key={p.anio} className="hover:bg-white/[0.04]">
+                              <td className="p-3 font-sans font-bold text-white">{p.anio}</td>
+                              <td className="p-3 text-right text-[#4ade80] font-bold">{p.estudiantes}</td>
+                              <td className="p-3 text-right">{formatCurrencyShort(p.precio)}</td>
+                              <td className="p-3 text-right text-[#ffcc29] font-bold">{formatCurrency(p.recaudo)}</td>
+                              <td className="p-3 text-right text-rose-300">-{formatCurrency(p.deduccionCentral)}</td>
+                              <td className="p-3 text-right text-rose-300">-{formatCurrency(p.gastoOperativo)}</td>
+                              <td className={`p-3 text-right font-bold ${p.margenNeto >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                                {p.margenNeto >= 0 ? '+' : ''}{formatCurrency(p.margenNeto)}
+                              </td>
+                              <td className="p-3 text-right">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${p.dscr >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-rose-500/10 text-rose-400'}`}>
+                                  {p.dscr.toFixed(2)}x
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+              )}
 
             </div>
-          )}
+          </div>
 
           {/* SUB-TAB 5: INFORME EJECUTIVO COMPLETO (PDF) */}
           {activeSensSubTab === 'report' && (
@@ -1832,26 +1934,45 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 </div>
 
                 {/* Hypotheses metadata list */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-[10px] bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-700 font-sans">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[10px] bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-700 font-sans">
+                  <div>
+                    <span className="text-slate-400 uppercase font-mono block text-[8px]">Nivel de Costeo</span>
+                    <strong className="text-slate-900 font-sans font-bold text-xs uppercase">{sensLevel}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-mono block text-[8px]">Modalidad</span>
+                    <strong className="text-slate-900 font-sans font-bold text-xs uppercase">{sensModality}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-mono block text-[8px]">Tasa Deserción</span>
+                    <strong className="text-slate-900 font-mono font-bold text-xs">{sensAttrition}%</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-mono block text-[8px]">Descuento Promedio</span>
+                    <strong className="text-slate-900 font-mono font-bold text-xs">{sensDiscount}%</strong>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-[10px] bg-slate-100 border border-slate-200 p-3 rounded-xl text-slate-700 font-sans mt-2">
                   <div>
                     <span className="text-slate-400 uppercase font-mono block text-[8px]">Elasticidad (ε)</span>
-                    <strong className="text-slate-900 font-mono font-bold text-xs">{elasticity.toFixed(2)}</strong>
+                    <strong className="text-slate-900 font-mono font-bold text-[11px]">{elasticity.toFixed(2)}</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase font-mono block text-[8px]">Ajuste Crédito</span>
-                    <strong className="text-slate-900 font-mono font-bold text-xs">{priceVarPct > 0 ? '+' : ''}{priceVarPct}%</strong>
+                    <strong className="text-slate-900 font-mono font-bold text-[11px]">{priceVarPct > 0 ? '+' : ''}{priceVarPct}%</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase font-mono block text-[8px]">Gastos Directos</span>
-                    <strong className="text-slate-900 font-mono font-bold text-xs">{operatingCostPct}%</strong>
+                    <strong className="text-slate-900 font-mono font-bold text-[11px]">{operatingCostPct}%</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase font-mono block text-[8px]">Deducción UPTC</span>
-                    <strong className="text-slate-900 font-mono font-bold text-xs">{centralDeductionPct}%</strong>
+                    <strong className="text-slate-900 font-mono font-bold text-[11px]">{centralDeductionPct}%</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase font-mono block text-[8px]">Tasa Descuento</span>
-                    <strong className="text-slate-900 font-mono font-bold text-xs">{sensDiscountRate}%</strong>
+                    <strong className="text-slate-900 font-mono font-bold text-[11px]">{sensDiscountRate}%</strong>
                   </div>
                 </div>
 
