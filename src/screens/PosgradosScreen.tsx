@@ -1135,109 +1135,128 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                       <Activity className="text-[#ffcc29] w-5 h-5" />
                       <h3 className="text-sm font-bold text-white uppercase tracking-wider">Drivers de Sensibilidad y Límites Financieros</h3>
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    
+                    <div className="space-y-6">
                       
-                      {/* Elasticity */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Elasticidad Matrícula (ε)</span>
-                          <strong className="text-[#ffcc29] font-mono">{elasticity.toFixed(2)}</strong>
+                      {/* Top Row: Core Elasticity / Pricing parameters */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 bg-black/20 border border-white/5 rounded-2xl p-4">
+                        
+                        {/* Elasticity */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-white/60">Elasticidad Matrícula (ε)</span>
+                            <strong className="text-[#ffcc29] font-mono">{elasticity.toFixed(2)}</strong>
+                          </div>
+                          <input 
+                            type="range"
+                            min="-2.0"
+                            max="0.0"
+                            step="0.05"
+                            value={elasticity}
+                            onChange={(e) => setElasticity(parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                          />
                         </div>
-                        <input 
-                          type="range"
-                          min="-2.0"
-                          max="0.0"
-                          step="0.05"
-                          value={elasticity}
-                          onChange={(e) => setElasticity(parseFloat(e.target.value))}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
+
+                        {/* Price Var */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-white/60">Ajuste Tarifa Crédito (%)</span>
+                            <strong className={`font-mono ${priceVarPct >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                              {priceVarPct > 0 ? '+' : ''}{priceVarPct}%
+                            </strong>
+                          </div>
+                          <input 
+                            type="range"
+                            min="-20"
+                            max="20"
+                            step="1"
+                            value={priceVarPct}
+                            onChange={(e) => setPriceVarPct(parseInt(e.target.value) || 0)}
+                            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                          />
+                        </div>
+
+                        {/* Transition Year */}
+                        <div className="space-y-2">
+                          <span className="text-[10px] text-white/55 font-mono uppercase tracking-wider block mb-1">Año Transición Evaluado</span>
+                          <select
+                            value={elasticityYear}
+                            onChange={(e) => setElasticityYear(parseInt(e.target.value) || 2027)}
+                            className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29] cursor-pointer"
+                          >
+                            <option value="2027">2027 vs 2026 Baseline</option>
+                            <option value="2028">2028 vs 2026 Baseline</option>
+                            <option value="2029">2029 vs 2026 Baseline</option>
+                            <option value="2030">2030 vs 2026 Baseline</option>
+                          </select>
+                        </div>
+
                       </div>
 
-                      {/* Price Var */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Ajuste Tarifa Crédito (%)</span>
-                          <strong className={`font-mono ${priceVarPct >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                            {priceVarPct > 0 ? '+' : ''}{priceVarPct}%
-                          </strong>
-                        </div>
-                        <input 
-                          type="range"
-                          min="-20"
-                          max="20"
-                          step="1"
-                          value={priceVarPct}
-                          onChange={(e) => setPriceVarPct(parseInt(e.target.value) || 0)}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
+                      {/* Sub-heading / section label */}
+                      <div className="flex items-center gap-2 text-xs font-bold text-white/70 uppercase tracking-wide border-t border-white/5 pt-4">
+                        <TrendingUp size={14} className="text-[#ffcc29]" />
+                        <span>Escenarios y Tasa de Descuento</span>
                       </div>
 
-                      {/* Discount Rate */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Tasa de Descuento (Costo Cap.)</span>
-                          <strong className="text-white font-mono">{sensDiscountRate}%</strong>
+                      {/* Bottom Row: 3 cards matching the user screenshot layout and text */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        {/* Tasa de descuento card */}
+                        <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-2">
+                          <div className="flex justify-between text-xs font-mono">
+                            <span className="text-white/60">Tasa de Descuento (k)</span>
+                            <span className="text-[#ffcc29] font-bold">{sensDiscountRate}% Anual</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="4"
+                            max="15"
+                            step="0.5"
+                            value={sensDiscountRate}
+                            onChange={(e) => setSensDiscountRate(parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                          />
+                          <p className="text-[10px] text-white/40 font-mono leading-normal pt-1.5">Tasa de oportunidad requerida para calcular el VAN.</p>
                         </div>
-                        <input 
-                          type="range"
-                          min="4"
-                          max="15"
-                          step="0.5"
-                          value={sensDiscountRate}
-                          onChange={(e) => setSensDiscountRate(parseFloat(e.target.value))}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
-                      </div>
 
-                      {/* Transition Year */}
-                      <div className="space-y-2">
-                        <span className="text-[10px] text-white/55 font-mono uppercase tracking-wider block">Año Transición Evaluado</span>
-                        <select
-                          value={elasticityYear}
-                          onChange={(e) => setElasticityYear(parseInt(e.target.value) || 2027)}
-                          className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29] cursor-pointer"
-                        >
-                          <option value="2027">2027 vs 2026 Baseline</option>
-                          <option value="2028">2028 vs 2026 Baseline</option>
-                          <option value="2029">2029 vs 2026 Baseline</option>
-                          <option value="2030">2030 vs 2026 Baseline</option>
-                        </select>
-                      </div>
-
-                      {/* Pessimistic scenario limits */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Escenario Pesimista (% Ingresos)</span>
-                          <strong className="text-rose-400 font-mono">{sensPessimisticPct}%</strong>
+                        {/* Pessimistic scenario limits */}
+                        <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-2">
+                          <div className="flex justify-between text-xs font-mono">
+                            <span className="text-white/60">Variación Escenario Pesimista</span>
+                            <span className="text-rose-400 font-bold">{sensPessimisticPct}% Ingreso</span>
+                          </div>
+                          <input 
+                            type="range"
+                            min="-30"
+                            max="-5"
+                            step="1"
+                            value={sensPessimisticPct}
+                            onChange={(e) => setSensPessimisticPct(parseInt(e.target.value) || -15)}
+                            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                          />
+                          <p className="text-[10px] text-white/40 font-mono leading-normal pt-1.5">Simula la caída de ingresos y aumento proporcional de egresos.</p>
                         </div>
-                        <input 
-                          type="range"
-                          min="-30"
-                          max="-5"
-                          step="1"
-                          value={sensPessimisticPct}
-                          onChange={(e) => setSensPessimisticPct(parseInt(e.target.value) || -15)}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
-                      </div>
 
-                      {/* Optimistic scenario limits */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Escenario Optimista (% Ingresos)</span>
-                          <strong className="text-[#4ade80] font-mono">+{sensOptimisticPct}%</strong>
+                        {/* Optimistic scenario limits */}
+                        <div className="bg-white/5 border border-white/5 rounded-2xl p-5 space-y-2">
+                          <div className="flex justify-between text-xs font-mono">
+                            <span className="text-white/60">Variación Escenario Optimista</span>
+                            <span className="text-[#4ade80] font-bold">+{sensOptimisticPct}% Ingreso</span>
+                          </div>
+                          <input 
+                            type="range"
+                            min="5"
+                            max="30"
+                            step="1"
+                            value={sensOptimisticPct}
+                            onChange={(e) => setSensOptimisticPct(parseInt(e.target.value) || 15)}
+                            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#4ade80]"
+                          />
+                          <p className="text-[10px] text-white/40 font-mono leading-normal pt-1.5">Simula el incremento de ingresos y reducción proporcional de egresos.</p>
                         </div>
-                        <input 
-                          type="range"
-                          min="5"
-                          max="30"
-                          step="1"
-                          value={sensOptimisticPct}
-                          onChange={(e) => setSensOptimisticPct(parseInt(e.target.value) || 15)}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
+
                       </div>
 
                     </div>
