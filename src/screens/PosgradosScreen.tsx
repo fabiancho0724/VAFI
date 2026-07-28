@@ -437,9 +437,28 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
   // FULL SENSITIVITY AND ELASTICITY REPORT MODULE
   const posgradSensitivityAnalysis = useMemo(() => {
+    const levelBaselines = {
+      especializacion: 500000,
+      maestria: 630000,
+      doctorado: 750000,
+      medico_quirurgica: 820000
+    };
+    const selectedVbci = levelBaselines[sensLevel] || 630000;
+
+    const modalityFactors = {
+      presencial: 1.0,
+      hibrido: 0.85,
+      virtual: 0.70
+    };
+    const selectedModalityFactor = modalityFactors[sensModality] || 1.0;
+
+    const priceMultiplier = (selectedVbci / 630000) * selectedModalityFactor * (1 - sensDiscount / 100);
+    const studentMultiplier = (1 - sensAttrition / 100);
+
     const baseIngArray = sensitivityProjections.map(p => p.recaudo);
     const baseGasArray = sensitivityProjections.map(p => p.totalGastos);
     const baseFlows = sensitivityProjections.map(p => p.margenNeto);
+
     
     const baseNPV = calculateNPV(baseFlows, sensDiscountRate);
     const baseIRR = calculateIRR(baseFlows);
@@ -657,7 +676,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       dscr1DData,
       dscrTornado
     };
-  }, [priceVarPct, elasticity, operatingCostPct, centralDeductionPct, sensDiscountRate, sensPessimisticPct, sensOptimisticPct, sensitivityProjections, PROJECTED_BASE_2027]);
+  }, [priceVarPct, elasticity, operatingCostPct, centralDeductionPct, sensDiscountRate, sensPessimisticPct, sensOptimisticPct, sensitivityProjections, PROJECTED_BASE_2027, sensLevel, sensModality, sensDiscount, sensAttrition, elasticityYear]);
 
   // Merge datasets into a unified timelines chart (2020-2030)
   const unifiedTimelineData = useMemo(() => {
