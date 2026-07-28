@@ -7,7 +7,7 @@ import {
 import { 
   GraduationCap, MapPin, Building2, BookOpen, Users, DollarSign, 
   Filter, Percent, CreditCard, Activity, TrendingUp, TrendingDown, MoreHorizontal,
-  Info, Sparkles, ArrowRight, Shield, Database, HelpCircle, Bot, AlertTriangle, ShieldCheck, Target, ChevronRight, Printer, FileText
+  Info, Sparkles, ArrowRight, Shield, Database, HelpCircle, Bot, AlertTriangle, ShieldCheck, Target, ChevronRight, Printer, FileText, Layers
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 
@@ -33,7 +33,7 @@ const PROJECTED_BASE = [
   { anio: 2026, iaepPct: 8.00, fuente: "Politica 2026", estudiantes: 7092, estS1: 3552, estS2: 3540, recaudo: 42925508467 },
   { anio: 2027, iaepPct: 4.14, fuente: "Proyeccion", estudiantes: 6887, estS1: 3445, estS2: 3442, recaudo: 43380775906 },
   { anio: 2028, iaepPct: 4.28, fuente: "Proyeccion", estudiantes: 6734, estS1: 3366, estS2: 3369, recaudo: 44213584770 },
-  { anio: 2029, iaepPct: 4.43, fuente: "Proyeccion", estudiantes: 6633, estS1: 3312, estS2: 3321, recaudo: 45457668641 },
+  { anio: 2029, iaepPct: 4.43, fuente: "Proyeccion", estudiantes: 6633, ices: 4.43, estS2: 3321, recaudo: 45457668641 },
   { anio: 2030, iaepPct: 4.57, fuente: "Proyeccion", estudiantes: 6582, estS1: 3285, estS2: 3297, recaudo: 47153468033 }
 ];
 
@@ -80,7 +80,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sensitivity'>('dashboard');
 
   // Sensitivity main tab settings
-  const [activeSensSubTab, setActiveSensSubTab] = useState<'scenarios' | 'montecarlo' | 'dscr' | 'report'>('scenarios');
+  const [activeSensSubTab, setActiveSensSubTab] = useState<'scenarios' | 'montecarlo' | 'dscr' | 'multiyear' | 'report'>('scenarios');
 
   // Transition year dropdown selection to identify elasticity
   const [elasticityYear, setElasticityYear] = useState<number>(2027);
@@ -95,6 +95,12 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
   // Scenarios bounds
   const [sensPessimisticPct, setSensPessimisticPct] = useState<number>(-15);
   const [sensOptimisticPct, setSensOptimisticPct] = useState<number>(15);
+
+  // Multi-Year projection controls
+  const [numYearsProyectar, setNumYearsProyectar] = useState<number>(10); // default 10 years (2027-2036)
+  const [icesRate, setIcesRate] = useState<number>(4.5); // indexation of income
+  const [ipcRate, setIpcRate] = useState<number>(4.0); // indexation of expenses
+  const [enrollmentGrowthRate, setEnrollmentGrowthRate] = useState<number>(0.5); // annual growth of students after 2030
 
   // Dashboard state
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
@@ -302,6 +308,59 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     });
   }, [priceVarPct, elasticity, operatingCostPct, centralDeductionPct, PROJECTED_BASE_2027]);
 
+  // MULTI-YEAR FINANCIAL PROJECTIONS ENGINE (PROYECCIÓN MULTIVIGENCIA)
+  const multiYearProjections = useMemo(() => {
+    const list: any[] = [];
+    
+    // Extrapolates sensitivityProjections (2027-2030) using ICES and IPC indexes beyond 2030
+    for (let y = 2027; y <= 2026 + numYearsProyectar; y++) {
+      if (y <= 2030) {
+        const baseProj = sensitivityProjections.find(p => p.anio === y);
+        if (baseProj) {
+          const dscr = baseProj.deduccionCentral > 0 ? (baseProj.recaudo - baseProj.gastoOperativo) / baseProj.deduccionCentral : 0;
+          list.push({
+            anio: y,
+            estudiantes: baseProj.estudiantes,
+            precio: baseProj.precio,
+            recaudo: baseProj.recaudo,
+            deduccionCentral: baseProj.deduccionCentral,
+            gastoOperativo: baseProj.gastoOperativo,
+            totalGastos: baseProj.totalGastos,
+            margenNeto: baseProj.margenNeto,
+            dscr
+          });
+        }
+      } else {
+        const prev = list[list.length - 1];
+        if (prev) {
+          const simulatedEstudiantes = Math.max(0, Math.round(prev.estudiantes * (1 + enrollmentGrowthRate / 100)));
+          const simulatedPrice = prev.precio * (1 + icesRate / 100);
+          const simulatedRecaudo = simulatedEstudiantes * simulatedPrice;
+          
+          const deduccionCentral = simulatedRecaudo * (centralDeductionPct / 100);
+          const gastoOperativo = prev.gastoOperativo * (1 + ipcRate / 100);
+          const totalGastos = deduccionCentral + gastoOperativo;
+          const margenNeto = simulatedRecaudo - totalGastos;
+          const dscr = deduccionCentral > 0 ? (simulatedRecaudo - gastoOperativo) / deduccionCentral : 0;
+          
+          list.push({
+            anio: y,
+            estudiantes: simulatedEstudiantes,
+            precio: simulatedPrice,
+            recaudo: simulatedRecaudo,
+            deduccionCentral,
+            gastoOperativo,
+            totalGastos,
+            margenNeto,
+            dscr
+          });
+        }
+      }
+    }
+    
+    return list;
+  }, [sensitivityProjections, numYearsProyectar, icesRate, ipcRate, enrollmentGrowthRate, centralDeductionPct]);
+
   // Transition Analysis: Comparing selected year (e.g. 2027) vs 2026 Historical baseline
   const comparisonSelectedYear = useMemo(() => {
     const historical2026 = HISTORICAL_DATA.find(h => h.vigencia === 2026) || {
@@ -327,7 +386,6 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     const deltaPrecio = simPrice - histPrice;
     const deltaPrecioPct = (deltaPrecio / histPrice) * 100;
 
-    // Evaluated elasticity: change in Q / change in P
     const calculatedElasticity = deltaPrecioPct !== 0 ? (deltaEstudiantesPct / deltaPrecioPct) : 0;
 
     return {
@@ -353,14 +411,12 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     const baseGasArray = sensitivityProjections.map(p => p.totalGastos);
     const baseFlows = sensitivityProjections.map(p => p.margenNeto);
     
-    // 1. NPV & IRR base (4 years: 2027 - 2030)
     const baseNPV = calculateNPV(baseFlows, sensDiscountRate);
     const baseIRR = calculateIRR(baseFlows);
     const baseFlowSum = baseFlows.reduce((a, b) => a + b, 0);
     const baseIngTotal = baseIngArray.reduce((a, b) => a + b, 0);
     const baseGasTotal = baseGasArray.reduce((a, b) => a + b, 0);
     
-    // 2. Pessimistic Scenario: -15% Revenue, +10% Expenses
     const pesIngFactor = 1 + sensPessimisticPct / 100;
     const pesGasFactor = 1 + Math.abs(sensPessimisticPct) / 1.5 / 100;
     const pesIngArray = baseIngArray.map(v => v * pesIngFactor);
@@ -371,7 +427,6 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     const pesFlowSum = pesFlows.reduce((a, b) => a + b, 0);
     const pesIngTotal = baseIngTotal * pesIngFactor;
 
-    // 3. Optimistic Scenario: +15% Revenue, -10% Expenses
     const optIngFactor = 1 + sensOptimisticPct / 100;
     const optGasFactor = 1 - (sensOptimisticPct / 1.5) / 100;
     const optIngArray = baseIngArray.map(v => v * optIngFactor);
@@ -382,7 +437,6 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     const optFlowSum = optFlows.reduce((a, b) => a + b, 0);
     const optIngTotal = baseIngTotal * optIngFactor;
 
-    // 4. Elasticity calculations
     const inc1PctFlows = baseIngArray.map((ing, i) => (ing * 1.01) - baseGasArray[i]);
     const inc1PctNPV = calculateNPV(inc1PctFlows, sensDiscountRate);
     const elasticityIng = baseNPV !== 0 ? ((inc1PctNPV - baseNPV) / baseNPV) * 100 : 0;
@@ -391,11 +445,11 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     const exp1PctNPV = calculateNPV(exp1PctFlows, sensDiscountRate);
     const elasticityGas = baseNPV !== 0 ? ((exp1PctNPV - baseNPV) / baseNPV) * 100 : 0;
 
-    // 5. Monte Carlo Simulation (1000 runs)
+    // Monte Carlo Simulation (1000 runs)
     const mcNpvList: number[] = [];
     for (let iter = 0; iter < 1000; iter++) {
-      const randIng = 1 + (Math.random() - 0.5) * 2 * 0.20; // +- 20%
-      const randGas = 1 + (Math.random() - 0.5) * 2 * 0.15; // +- 15%
+      const randIng = 1 + (Math.random() - 0.5) * 2 * 0.20; 
+      const randGas = 1 + (Math.random() - 0.5) * 2 * 0.15; 
       const randFlows = baseIngArray.map((ing, i) => (ing * randIng) - (baseGasArray[i] * randGas));
       const randNPV = calculateNPV(randFlows, sensDiscountRate);
       mcNpvList.push(randNPV);
@@ -419,7 +473,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       };
     });
 
-    // 6. Tornado Diagram Data (Drivers: Elasticity, Credit cost variation, direct operating cost %, central retentions %)
+    // Tornado Diagram drivers
     const drivers = [
       { key: 'elasticity', name: 'Elasticidad Demanda', valLow: elasticity - 0.2, valHigh: elasticity + 0.2 },
       { key: 'priceVar', name: 'Variación Crédito', valLow: priceVarPct - 5, valHigh: priceVarPct + 5 },
@@ -489,7 +543,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       };
     }).sort((a, b) => b.width - a.width);
 
-    // 7. DSCR Coverage Calculations
+    // DSCR
     const dscrBase = (1 - operatingCostPct / 100) / (centralDeductionPct / 100);
     const dscrPessimistic = (1 - (operatingCostPct * pesGasFactor) / 100) / ((centralDeductionPct * pesGasFactor) / 100);
     const dscrOptimistic = (1 - (operatingCostPct * optGasFactor) / 100) / ((centralDeductionPct * optGasFactor) / 100);
@@ -771,7 +825,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
             {/* TOP 3 TABLES/LIST - Detailed */}
             <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col">
               <div className="flex items-center gap-2 mb-4 bg-[#1e293b] p-2 rounded-lg">
-                 <div className="w-2 h-2 rounded-full bg-[#4ade80] animate-pulse"></div>
+                 <div className="w-2.5 h-2.5 rounded-full bg-[#4ade80] animate-pulse"></div>
                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Top 3 Programas x Recaudo</h3>
               </div>
               
@@ -905,7 +959,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
         </div>
       )}
 
-      {/* TAB 2: SENSITIVITY AND ELASTICITY REPORT (NEW INTEGRATED MODULE WITH ALL ANALYTIC SECTIONS) */}
+      {/* TAB 2: SENSITIVITY AND ELASTICITY REPORT (NEW INTEGRATED MODULE) */}
       {activeTab === 'sensitivity' && (
         <div className="flex flex-col gap-6 animate-in fade-in duration-300">
           
@@ -1058,6 +1112,16 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
               3. Coberturas DSCR y Covenants
             </button>
             <button 
+              onClick={() => setActiveSensSubTab('multiyear')}
+              className={`pb-2 transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
+                activeSensSubTab === 'multiyear' 
+                  ? 'border-[#ffcc29] text-[#ffcc29]' 
+                  : 'border-transparent text-white/55 hover:text-white'
+              }`}
+            >
+              <Layers size={14} /> 4. Proyección Multivigencia
+            </button>
+            <button 
               onClick={() => setActiveSensSubTab('report')}
               className={`pb-2 transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
                 activeSensSubTab === 'report' 
@@ -1065,7 +1129,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   : 'border-transparent text-white/55 hover:text-white'
               }`}
             >
-              <FileText size={14} /> 4. Informe Ejecutivo PDF
+              <FileText size={14} /> 5. Informe Ejecutivo PDF
             </button>
           </div>
 
@@ -1548,7 +1612,185 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
             </div>
           )}
 
-          {/* SUB-TAB 4: INFORME EJECUTIVO COMPLETO (PDF) */}
+          {/* SUB-TAB 4: FINANCIAL MULTI-YEAR PROJECTION VIEW */}
+          {activeSensSubTab === 'multiyear' && (
+            <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
+              
+              {/* Multi-Year Indexation Sliders */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-5 bg-[#0f172a] border border-white/10 p-5 rounded-2xl shadow-xl">
+                
+                {/* Years count */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-white/60">Años a Proyectar</span>
+                    <strong className="text-[#ffcc29] font-bold font-mono">{numYearsProyectar} años</strong>
+                  </div>
+                  <input 
+                    type="range"
+                    min="5"
+                    max="20"
+                    step="1"
+                    value={numYearsProyectar}
+                    onChange={(e) => setNumYearsProyectar(parseInt(e.target.value) || 10)}
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                  />
+                  <span className="text-[8px] text-white/40 font-mono block">Horizonte: 2027 a {2026 + numYearsProyectar}</span>
+                </div>
+
+                {/* ICES growth */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-white/60">Tasa Anual ICES (Ingresos)</span>
+                    <strong className="text-[#ffcc29] font-bold font-mono">{icesRate}%</strong>
+                  </div>
+                  <input 
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="0.1"
+                    value={icesRate}
+                    onChange={(e) => setIcesRate(parseFloat(e.target.value) || 4.5)}
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                  />
+                  <span className="text-[8px] text-white/40 font-mono block">Indexación del valor de los créditos</span>
+                </div>
+
+                {/* IPC growth */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-white/60">Tasa Anual IPC (Gastos)</span>
+                    <strong className="text-[#ffcc29] font-bold font-mono">{ipcRate}%</strong>
+                  </div>
+                  <input 
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="0.1"
+                    value={ipcRate}
+                    onChange={(e) => setIpcRate(parseFloat(e.target.value) || 4.0)}
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                  />
+                  <span className="text-[8px] text-white/40 font-mono block">Inflación aplicada a egresos operativos</span>
+                </div>
+
+                {/* Enrollment growth */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-white/60">Crecimiento Matrícula Anual</span>
+                    <strong className={`font-bold font-mono ${enrollmentGrowthRate >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                      {enrollmentGrowthRate > 0 ? '+' : ''}{enrollmentGrowthRate}%
+                    </strong>
+                  </div>
+                  <input 
+                    type="range"
+                    min="-5"
+                    max="5"
+                    step="0.1"
+                    value={enrollmentGrowthRate}
+                    onChange={(e) => setEnrollmentGrowthRate(parseFloat(e.target.value) || 0.5)}
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                  />
+                  <span className="text-[8px] text-white/40 font-mono block">Var. anual de alumnos post-2030</span>
+                </div>
+
+              </div>
+
+              {/* Graphs area for Multi-Year */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Cash Flow Area Chart */}
+                <div className="lg:col-span-2 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Proyección Multivigencia de Caja del R31 (2027-{2026 + numYearsProyectar})</h4>
+                  <div className="h-72" style={{ width: '100%', height: 288, minWidth: 200 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={multiYearProjections.map(d => ({
+                        name: d.anio.toString(),
+                        'Ingresos (M)': Math.round(d.recaudo / 1e6 * 10) / 10,
+                        'Gastos (M)': Math.round(d.totalGastos / 1e6 * 10) / 10,
+                        'Excedente (M)': Math.round(d.margenNeto / 1e6 * 10) / 10
+                      }))} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                        <XAxis dataKey="name" stroke="#64748b" className="text-[10px] font-mono" />
+                        <YAxis stroke="#64748b" className="text-[10px] font-mono" tickFormatter={(v) => `$${v}M`} />
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
+                        <Legend wrapperStyle={{ fontSize: '11px' }} />
+                        <Area type="monotone" dataKey="Ingresos (M)" stroke="#ffcc29" fill="#ffcc29" fillOpacity={0.03} strokeWidth={2} />
+                        <Area type="monotone" dataKey="Gastos (M)" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.03} strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="Excedente (M)" stroke="#4ade80" fill="#4ade80" fillOpacity={0.03} strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* DSCR Line Chart over horizon */}
+                <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Sostenibilidad del Covenant DSCR (Largo Plazo)</h4>
+                    <div className="h-60" style={{ width: '100%', height: 240, minWidth: 200 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={multiYearProjections} margin={{ top: 10, right: 10, left: -30, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey="anio" stroke="#64748b" className="text-[10px] font-mono" />
+                          <YAxis stroke="#64748b" className="text-[10px] font-mono" />
+                          <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px' }} />
+                          <Line type="monotone" dataKey="dscr" name="Ratio DSCR (x)" stroke="#4ade80" strokeWidth={2.5} dot={{ r: 2 }} />
+                          <ReferenceLine y={1.25} stroke="#f43f5e" strokeDasharray="4 4" strokeWidth={1.5} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <span className="text-[9px] text-white/40 block leading-normal bg-black/40 p-2 rounded-lg">
+                    La línea roja punteada representa la cobertura crítica (1.25x). Si la curva verde cae por debajo, el fondo genera déficit administrativo.
+                  </span>
+                </div>
+
+              </div>
+
+              {/* Table view */}
+              <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4 font-sans">Tabla de Proyecciones Multivigencia R31</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/10 bg-white/5 font-bold text-white">
+                        <th className="p-3">Año</th>
+                        <th className="p-3 text-right">Alumnos Proyectados</th>
+                        <th className="p-3 text-right">Costo Promedio / Est.</th>
+                        <th className="p-3 text-right">Recaudo Bruto</th>
+                        <th className="p-3 text-right">Deducciones Centrales</th>
+                        <th className="p-3 text-right">Gastos Directos</th>
+                        <th className="p-3 text-right">Excedente Neto</th>
+                        <th className="p-3 text-right">DSCR Cobertura</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-white/80 font-mono">
+                      {multiYearProjections.map(p => (
+                        <tr key={p.anio} className="hover:bg-white/[0.04]">
+                          <td className="p-3 font-sans font-bold text-white">{p.anio}</td>
+                          <td className="p-3 text-right text-[#4ade80] font-bold">{p.estudiantes}</td>
+                          <td className="p-3 text-right">{formatCurrencyShort(p.precio)}</td>
+                          <td className="p-3 text-right text-[#ffcc29] font-bold">{formatCurrency(p.recaudo)}</td>
+                          <td className="p-3 text-right text-rose-300">-{formatCurrency(p.deduccionCentral)}</td>
+                          <td className="p-3 text-right text-rose-300">-{formatCurrency(p.gastoOperativo)}</td>
+                          <td className={`p-3 text-right font-bold ${p.margenNeto >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                            {p.margenNeto >= 0 ? '+' : ''}{formatCurrency(p.margenNeto)}
+                          </td>
+                          <td className="p-3 text-right">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${p.dscr >= 1.25 ? 'bg-[#4ade80]/10 text-[#4ade80]' : 'bg-rose-500/10 text-rose-400'}`}>
+                              {p.dscr.toFixed(2)}x
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* SUB-TAB 5: INFORME EJECUTIVO COMPLETO (PDF) */}
           {activeSensSubTab === 'report' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               
@@ -1586,7 +1828,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   <h2 className="text-sm font-bold uppercase tracking-widest text-slate-800 border-y border-slate-200 py-1.5 bg-slate-50">
                     Informe de Viabilidad, Sensibilidad y Elasticidad del Fondo R31 (Posgrados)
                   </h2>
-                  <p className="text-[10px] text-slate-500 italic mt-1.5">Evaluación del impacto de transición del modelo de cobro por créditos académicos (Vigencia Proyectada 2027 - 2030)</p>
+                  <p className="text-[10px] text-slate-500 italic mt-1.5">Evaluación del impacto de transición del modelo de cobro por créditos académicos y proyección multivigencia</p>
                 </div>
 
                 {/* Hypotheses metadata list */}
@@ -1690,37 +1932,73 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   </div>
                 </div>
 
-                {/* Detailed Cash-Flow Table */}
-                <div className="space-y-2 text-xs text-slate-800">
-                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">4. Proyecciones Detalladas por Créditos (2027-2030)</h3>
+                {/* Section 5: Proyección Financiera Multivigencia (2027-2036) */}
+                <div className="space-y-2 text-xs text-slate-800 page-break-before" style={{ pageBreakBefore: 'always' }}>
+                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">4. Proyección Financiera Multivigencia de Mediano Plazo</h3>
+                  <p className="leading-relaxed">
+                    Evaluación de la proyección del fondo de posgrados R31 bajo parámetros macroeconómicos indexados (tasa ICES de {icesRate}% para ingresos, tasa IPC de {ipcRate}% para egresos y crecimiento de alumnado de {enrollmentGrowthRate}%):
+                  </p>
+                  
+                  {/* Summary Table */}
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-[10px] border border-slate-200 border-collapse">
                       <thead>
                         <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
                           <th className="p-2 border-r border-slate-200">Año</th>
                           <th className="p-2 border-r border-slate-200 text-right">Estudiantes</th>
-                          <th className="p-2 border-r border-slate-200 text-right">Costo Est. Prom.</th>
-                          <th className="p-2 border-r border-slate-200 text-right">Ingreso R31</th>
-                          <th className="p-2 border-r border-slate-200 text-right">Deducción Central</th>
-                          <th className="p-2 border-r border-slate-200 text-right">Costo Directo</th>
-                          <th className="p-2 text-right">Excedente Neto</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Recaudo Bruto</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Gastos Totales</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Excedente Neto</th>
+                          <th className="p-2 text-right">Ratio DSCR</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
-                        {sensitivityProjections.map(p => (
+                        {multiYearProjections.map(p => (
                           <tr key={p.anio} className="hover:bg-slate-50">
                             <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">{p.anio}</td>
-                            <td className="p-2 text-right border-r border-slate-200 font-bold">{p.estudiantes}</td>
-                            <td className="p-2 text-right border-r border-slate-200">{formatCurrency(p.precio)}</td>
+                            <td className="p-2 text-right border-r border-slate-200">{p.estudiantes}</td>
                             <td className="p-2 text-right border-r border-slate-200 font-bold text-slate-900">{formatCurrency(p.recaudo)}</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-{formatCurrency(p.deduccionCentral)}</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-{formatCurrency(p.gastoOperativo)}</td>
-                            <td className={`p-2 text-right font-bold ${p.margenNeto >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(p.margenNeto)}</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-{formatCurrency(p.totalGastos)}</td>
+                            <td className={`p-2 text-right border-r border-slate-200 font-bold ${p.margenNeto >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(p.margenNeto)}</td>
+                            <td className={`p-2 text-right font-bold ${p.dscr >= 1.25 ? 'text-emerald-700' : 'text-rose-700'}`}>{p.dscr.toFixed(2)}x</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+                </div>
+
+                {/* Print Multi-Year Chart */}
+                <div className="space-y-1.5">
+                  <h4 className="text-[10px] font-bold text-slate-700 uppercase tracking-widest text-center">Proyección Multivigencia de Caja del R31 (2027-{2026 + numYearsProyectar})</h4>
+                  <div className="h-56 w-full border border-slate-200 p-2 rounded-xl bg-slate-50">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={multiYearProjections.map(d => ({
+                        anio: d.anio.toString(),
+                        'Ingresos (M)': Math.round(d.recaudo / 1e6 * 10) / 10,
+                        'Gastos (M)': Math.round(d.totalGastos / 1e6 * 10) / 10,
+                        'Excedente (M)': Math.round(d.margenNeto / 1e6 * 10) / 10
+                      }))} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                        <XAxis dataKey="anio" stroke="#475569" className="text-[9px] font-mono" />
+                        <YAxis stroke="#475569" className="text-[9px] font-mono" tickFormatter={(val) => `$${val}M`} />
+                        <Area type="monotone" dataKey="Ingresos (M)" stroke="#eab308" fill="#eab308" fillOpacity={0.1} strokeWidth={2} />
+                        <Area type="monotone" dataKey="Gastos (M)" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.05} strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="Excedente (M)" stroke="#16a34a" fill="#16a34a" fillOpacity={0.05} strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Section 6: Dictamen de Riesgo, Sensibilidad y Justificación de la Reforma */}
+                <div className="space-y-2 text-xs text-slate-800 border-t border-slate-200 pt-4 text-justify leading-relaxed">
+                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">5. Dictamen de Riesgo, Sensibilidad y Justificación de la Reforma</h3>
+                  <p>
+                    <strong>Evaluación de Riesgo y Sensibilidad:</strong> El modelo de costeo por créditos presenta una sensibilidad crítica ante el coeficiente de elasticidad precio de la demanda (ε = {elasticity.toFixed(2)}). Variaciones desmedidas en el costo del crédito académico pueden contraer el volumen de inscritos de forma desproporcionada, afectando los flujos de caja y el ratio de cobertura DSCR (situado en {posgradSensitivityAnalysis.dscrBase.toFixed(2)}x contra un covenant límite de 1.25x). Asimismo, el fondo R31 exhibe una alta sensibilidad ante la deducción por estampillas e indirectos de la administración central de la UPTC ({centralDeductionPct}%), la cual absorbe la caja operativa y limita el margen para gastos de docencia y laboratorios.
+                  </p>
+                  <p className="mt-2">
+                    <strong>Necesidad Inaplazable de Reforma:</strong> A pesar de estos riesgos, la modificación del modelo de costeo actual (basado en salarios mínimos fijos por semestre) es estrictamente necesaria. Las estadísticas de la UPTC evidencian un declive sostenido de la matrícula de posgrados, decreciendo de 6,951 estudiantes en 2020 a 5,170 en 2026, lo cual representa una contracción del 25.6%. En Colombia, las dinámicas de educación superior exigen flexibilidad curricular, modularidad (homologaciones fluidas de especialización a maestría) e inclusión socioeconómica. Conservar la tarifa fija semestral penaliza al estudiante que inscribe menos materias, incentiva la deserción y resta competitividad a la oferta académica de la UPTC. La transición al cobro por créditos permite sincerar las finanzas de los programas, adecuar el cobro al avance real del alumno y dinamizar la captación de estudiantes, garantizando la viabilidad del Recurso R31 a mediano y largo plazo.
+                  </p>
                 </div>
 
                 {/* Signatures block */}
