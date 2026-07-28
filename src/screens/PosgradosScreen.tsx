@@ -305,15 +305,24 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       const priceRatio = 1 + priceVarPct / 100;
       const simulatedPrice = priceBase * priceRatio * priceMultiplier;
       
-      const qChangePct = (elasticity * priceVarPct) / 100;
-      const simulatedEstudiantes = Math.max(0, Math.round(base.estudiantes * (1 + qChangePct) * studentMultiplier));
+      // Constant elasticity formula (exponential model): Q = Q0 * (1 + deltaP)^elasticity
+      const priceChangeRatio = 1 + priceVarPct / 100;
+      const qChangeRatio = Math.pow(priceChangeRatio, elasticity);
+      const simulatedEstudiantes = Math.max(0, Math.round(base.estudiantes * qChangeRatio * studentMultiplier));
       
       const simulatedRecaudo = simulatedEstudiantes * simulatedPrice;
       
       const deduccionCentral = simulatedRecaudo * (centralDeductionPct / 100);
-      const gastoOperativo = simulatedRecaudo * (operatingCostPct / 100);
+      
+      // Costos ABC: 60% of base operating cost is fixed, 40% is variable by student volume
+      const baseGastoOperativo = base.recaudo * (operatingCostPct / 100);
+      const fixedGastoOperativo = baseGastoOperativo * 0.60;
+      const variableGastoOperativo = baseGastoOperativo * 0.40 * (simulatedEstudiantes / base.estudiantes);
+      const gastoOperativo = fixedGastoOperativo + variableGastoOperativo;
+      
       const totalGastos = deduccionCentral + gastoOperativo;
       const margenNeto = simulatedRecaudo - totalGastos;
+
       
       return {
         anio: base.anio,
@@ -466,9 +475,9 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     const exp1PctNPV = calculateNPV(exp1PctFlows, sensDiscountRate);
     const elasticityGas = baseNPV !== 0 ? ((exp1PctNPV - baseNPV) / baseNPV) * 100 : 0;
 
-    // Monte Carlo Simulation (1000 runs)
+    // Monte Carlo Simulation (10000 runs for high statistical precision)
     const mcNpvList: number[] = [];
-    for (let iter = 0; iter < 1000; iter++) {
+    for (let iter = 0; iter < 10000; iter++) {
       const randIng = 1 + (Math.random() - 0.5) * 2 * 0.20; 
       const randGas = 1 + (Math.random() - 0.5) * 2 * 0.15; 
       const randFlows = baseIngArray.map((ing, i) => (ing * randIng) - (baseGasArray[i] * randGas));
@@ -476,12 +485,13 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       mcNpvList.push(randNPV);
     }
     mcNpvList.sort((a, b) => a - b);
-    const mcMean = mcNpvList.reduce((a, b) => a + b, 0) / 1000;
+    const mcMean = mcNpvList.reduce((a, b) => a + b, 0) / 10000;
     const mcMin = mcNpvList[0];
-    const mcMax = mcNpvList[999];
-    const mcProbPos = (mcNpvList.filter(v => v > 0).length / 1000) * 100;
-    const mcLow95 = mcNpvList[24];
-    const mcHigh95 = mcNpvList[974];
+    const mcMax = mcNpvList[9999];
+    const mcProbPos = (mcNpvList.filter(v => v > 0).length / 10000) * 100;
+    const mcLow95 = mcNpvList[249];
+    const mcHigh95 = mcNpvList[9749];
+
 
     const binWidth = (mcMax - mcMin) / 10;
     const mcBins = new Array(10).fill(0).map((_, idx) => {
@@ -508,46 +518,57 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
       if (d.key === 'elasticity') {
         const simHigh = PROJECTED_BASE_2027.map(b => {
-          const qChangePct = ((elasticity + 0.2) * priceVarPct) / 100;
-          const simEst = Math.round(b.estudiantes * (1 + qChangePct));
+          // Constant elasticity: Q = Q0 * (1 + deltaP)^elasticity
+          const simEst = Math.round(b.estudiantes * Math.pow(1 + priceVarPct / 100, elasticity + 0.2));
           const simPrice = (b.recaudo / b.estudiantes) * (1 + priceVarPct / 100);
           const simRec = simEst * simPrice;
-          return simRec * (1 - centralDeductionPct / 100 - operatingCostPct / 100);
+          const simDeduccion = simRec * (centralDeductionPct / 100);
+          const baseOpCost = b.recaudo * (operatingCostPct / 100);
+          const simOpCost = (baseOpCost * 0.60) + (baseOpCost * 0.40 * (simEst / b.estudiantes));
+          return simRec - simDeduccion - simOpCost;
         });
         const simLow = PROJECTED_BASE_2027.map(b => {
-          const qChangePct = ((elasticity - 0.2) * priceVarPct) / 100;
-          const simEst = Math.round(b.estudiantes * (1 + qChangePct));
+          const simEst = Math.round(b.estudiantes * Math.pow(1 + priceVarPct / 100, elasticity - 0.2));
           const simPrice = (b.recaudo / b.estudiantes) * (1 + priceVarPct / 100);
           const simRec = simEst * simPrice;
-          return simRec * (1 - centralDeductionPct / 100 - operatingCostPct / 100);
+          const simDeduccion = simRec * (centralDeductionPct / 100);
+          const baseOpCost = b.recaudo * (operatingCostPct / 100);
+          const simOpCost = (baseOpCost * 0.60) + (baseOpCost * 0.40 * (simEst / b.estudiantes));
+          return simRec - simDeduccion - simOpCost;
         });
         highFlows = simHigh;
         lowFlows = simLow;
       } else if (d.key === 'priceVar') {
         const simHigh = PROJECTED_BASE_2027.map(b => {
-          const qChangePct = (elasticity * (priceVarPct + 5)) / 100;
-          const simEst = Math.round(b.estudiantes * (1 + qChangePct));
+          const simEst = Math.round(b.estudiantes * Math.pow(1 + (priceVarPct + 5) / 100, elasticity));
           const simPrice = (b.recaudo / b.estudiantes) * (1 + (priceVarPct + 5) / 100);
           const simRec = simEst * simPrice;
-          return simRec * (1 - centralDeductionPct / 100 - operatingCostPct / 100);
+          const simDeduccion = simRec * (centralDeductionPct / 100);
+          const baseOpCost = b.recaudo * (operatingCostPct / 100);
+          const simOpCost = (baseOpCost * 0.60) + (baseOpCost * 0.40 * (simEst / b.estudiantes));
+          return simRec - simDeduccion - simOpCost;
         });
         const simLow = PROJECTED_BASE_2027.map(b => {
-          const qChangePct = (elasticity * (priceVarPct - 5)) / 100;
-          const simEst = Math.round(b.estudiantes * (1 + qChangePct));
+          const simEst = Math.round(b.estudiantes * Math.pow(1 + (priceVarPct - 5) / 100, elasticity));
           const simPrice = (b.recaudo / b.estudiantes) * (1 + (priceVarPct - 5) / 100);
           const simRec = simEst * simPrice;
-          return simRec * (1 - centralDeductionPct / 100 - operatingCostPct / 100);
+          const simDeduccion = simRec * (centralDeductionPct / 100);
+          const baseOpCost = b.recaudo * (operatingCostPct / 100);
+          const simOpCost = (baseOpCost * 0.60) + (baseOpCost * 0.40 * (simEst / b.estudiantes));
+          return simRec - simDeduccion - simOpCost;
         });
         highFlows = simHigh;
         lowFlows = simLow;
       } else if (d.key === 'operatingCost') {
-        const simHigh = baseIngArray.map(rec => rec * (1 - centralDeductionPct / 100 - (operatingCostPct + 5) / 100));
-        const simLow = baseIngArray.map(rec => rec * (1 - centralDeductionPct / 100 - (operatingCostPct - 5) / 100));
+        const factorHigh = (operatingCostPct + 5) / (operatingCostPct || 1);
+        const factorLow = (operatingCostPct - 5) / (operatingCostPct || 1);
+        const simHigh = sensitivityProjections.map(p => p.recaudo - p.deduccionCentral - p.gastoOperativo * factorHigh);
+        const simLow = sensitivityProjections.map(p => p.recaudo - p.deduccionCentral - p.gastoOperativo * factorLow);
         highFlows = simHigh;
         lowFlows = simLow;
       } else if (d.key === 'centralDeduction') {
-        const simHigh = baseIngArray.map(rec => rec * (1 - (centralDeductionPct + 5) / 100 - operatingCostPct / 100));
-        const simLow = baseIngArray.map(rec => rec * (1 - (centralDeductionPct - 5) / 100 - operatingCostPct / 100));
+        const simHigh = sensitivityProjections.map(p => p.recaudo - p.recaudo * ((centralDeductionPct + 5) / 100) - p.gastoOperativo);
+        const simLow = sensitivityProjections.map(p => p.recaudo - p.recaudo * ((centralDeductionPct - 5) / 100) - p.gastoOperativo);
         highFlows = simHigh;
         lowFlows = simLow;
       }
@@ -564,20 +585,39 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       };
     }).sort((a, b) => b.width - a.width);
 
-    // DSCR
-    const dscrBase = (1 - operatingCostPct / 100) / (centralDeductionPct / 100);
-    const dscrPessimistic = (1 - (operatingCostPct * pesGasFactor) / 100) / ((centralDeductionPct * pesGasFactor) / 100);
-    const dscrOptimistic = (1 - (operatingCostPct * optGasFactor) / 100) / ((centralDeductionPct * optGasFactor) / 100);
+    // DSCR for base, pessimistic, and optimistic scenarios evaluated at the chosen transition year
+    const evalYearFlow = sensitivityProjections.find(p => p.anio === elasticityYear) || sensitivityProjections[0];
+    const dscrBase = evalYearFlow.deduccionCentral > 0 ? (evalYearFlow.recaudo - evalYearFlow.gastoOperativo) / evalYearFlow.deduccionCentral : 0;
+    
+    const pesRec = evalYearFlow.recaudo * pesIngFactor;
+    const pesOp = evalYearFlow.gastoOperativo * pesGasFactor;
+    const pesDed = evalYearFlow.deduccionCentral * pesIngFactor;
+    const dscrPessimistic = pesDed > 0 ? (pesRec - pesOp) / pesDed : 0;
+    
+    const optRec = evalYearFlow.recaudo * optIngFactor;
+    const optOp = evalYearFlow.gastoOperativo * optGasFactor;
+    const optDed = evalYearFlow.deduccionCentral * optIngFactor;
+    const dscrOptimistic = optDed > 0 ? (optRec - optOp) / optDed : 0;
+
     const cushion = ((dscrBase - 1.25) / 1.25) * 100;
 
     const G = 100 / (1.25 * centralDeductionPct + operatingCostPct);
     const ruptureVar = (G - 1) * 100;
     const ruptureValue = baseIngTotal * G;
 
-    // DSCR vs Price variation curve data
+    // DSCR vs Price variation curve data using evaluated year's mixed cost cash flows
+    const evalYearBase = PROJECTED_BASE_2027.find(b => b.anio === elasticityYear) || PROJECTED_BASE_2027[0];
     const dscr1DData = [-15, -12.5, -10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5, 10, 12.5, 15].map(v => {
-      const opCost_v = operatingCostPct / (1 + v / 100);
-      const dscr_v = (1 - opCost_v / 100) / (centralDeductionPct / 100);
+      const priceBase = evalYearBase.recaudo / evalYearBase.estudiantes;
+      const simPrice = priceBase * (1 + v / 100) * priceMultiplier;
+      const simEst = Math.max(0, Math.round(evalYearBase.estudiantes * Math.pow(1 + v / 100, elasticity) * studentMultiplier));
+      const simRec = simEst * simPrice;
+      
+      const simDeduccion = simRec * (centralDeductionPct / 100);
+      const baseOpCost = evalYearBase.recaudo * (operatingCostPct / 100);
+      const simOpCost = (baseOpCost * 0.60) + (baseOpCost * 0.40 * (simEst / evalYearBase.estudiantes));
+      
+      const dscr_v = simDeduccion > 0 ? (simRec - simOpCost) / simDeduccion : 0;
       return {
         vLabel: `${v >= 0 ? '+' : ''}${v}%`,
         vVal: v,
@@ -585,6 +625,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
         Covenant: 1.25
       };
     });
+
 
     // DSCR Tornado Drivers
     const dscrTornado = [
