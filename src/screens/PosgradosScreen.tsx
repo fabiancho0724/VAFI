@@ -656,7 +656,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     
     return {
       conclusions: [
-        `El análisis financiero del Recurso R31 (Fondo de Posgrados) del periodo proyectado 2027-2030 indica que la transición al modelo por créditos es ${isViable ? "financieramente viable y sustentable" : "crítica y presenta riesgos de descapitalización"} bajo las hipótesis actuales de simulación.`,
+        `El análisis financiero del Recurso R31 (Fondo de Posgrados) del periodo proyectado 2027-2030 indica que la transición al modelo por créditos es ${isViable ? "financieramente viable y sustentable" : "crítica y presenta riesgos de descapitalización"} bajo las hipótesis del Proyecto de Acuerdo.`,
         `La demanda de matrícula de posgrado evaluada posee un comportamiento de elasticidad ${elasticityType} (ε = ${elasticity.toFixed(2)}). Esto significa que variaciones del 1% en la tarifa promedio por crédito generan desplazamientos de matrícula del ${Math.abs(elasticity).toFixed(2)}% en sentido inverso.`,
         `El VAN (Valor Actual Neto) acumulado del escenario Base es de ${formatCurrency(posgradSensitivityAnalysis.base.npv)} con una TIR (Tasa Interna de Retorno) de ${posgradSensitivityAnalysis.base.irr > 0 ? `${posgradSensitivityAnalysis.base.irr.toFixed(2)}%` : "N/A"}, indicando que ${posgradSensitivityAnalysis.base.npv > 0 ? "el proyecto compensa el costo de capital de oportunidad" : "el fondo incurre en destrucción neta de valor"}.`
       ],
@@ -1816,10 +1816,10 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   <div className="space-y-1">
                     <h1 className="text-base sm:text-lg font-bold uppercase tracking-wide">Universidad Pedagógica y Tecnológica de Colombia</h1>
                     <h2 className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold font-mono">Vicerrectoría Administrativa y Financiera (VAFI)</h2>
-                    <h3 className="text-xs font-bold text-slate-700">Comité de Matrículas e Ingresos Especiales</h3>
+                    <h3 className="text-xs font-bold text-slate-700">Proyecto de Acuerdo CSU - UPTC</h3>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-[9px] font-mono text-slate-400">INFORME Nº R31-2026-SENS</div>
+                    <div className="text-[9px] font-mono text-slate-400">PROYECTO DE ACUERDO CSU - RECURSO R31</div>
                     <div className="text-[10px] font-bold text-slate-800 font-mono mt-0.5">Fecha: 28 de Julio de 2026</div>
                   </div>
                 </div>
@@ -1828,7 +1828,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   <h2 className="text-sm font-bold uppercase tracking-widest text-slate-800 border-y border-slate-200 py-1.5 bg-slate-50">
                     Informe de Viabilidad, Sensibilidad y Elasticidad del Fondo R31 (Posgrados)
                   </h2>
-                  <p className="text-[10px] text-slate-500 italic mt-1.5">Evaluación del impacto de transición del modelo de cobro por créditos académicos y proyección multivigencia</p>
+                  <p className="text-[10px] text-slate-500 italic mt-1.5">Modelado en concordancia con el Proyecto de Acuerdo del Consejo Superior Universitario (CSU) de la UPTC</p>
                 </div>
 
                 {/* Hypotheses metadata list */}
@@ -1856,10 +1856,13 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 </div>
 
                 {/* Resumen Ejecutivo */}
-                <div className="space-y-2 text-xs text-slate-800">
-                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">1. Resumen Ejecutivo</h3>
-                  <p className="leading-relaxed">
-                    El presente informe analiza la transición de ingresos por matrícula del Recurso R31 (Posgrados) del modelo tradicional ligado a un cobro semestral fijo al modelo por créditos académicos para los años 2027 a 2030. Con base en la línea base de la vigencia 2026 (donde se registraron 5,170 estudiantes y un recaudo de {formatCurrency(comparisonSelectedYear.historicalRecaudo)}), la implementación del modelo por créditos busca corregir la tendencia decreciente de matrículas ofreciendo una estructura de cobros proporcional y adaptada al plan de estudios.
+                <div className="space-y-2 text-xs text-slate-800 text-justify leading-relaxed">
+                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">1. Resumen Ejecutivo y Base Legal</h3>
+                  <p>
+                    El presente informe analiza la transición de ingresos por matrícula del Recurso R31 (Posgrados) del modelo tradicional ligado a un cobro semestral fijo al modelo por créditos académicos para los años 2027 a 2030, fundamentado en el <strong>Proyecto de Acuerdo de Reglamentación Administrativa y Financiera de los Programas de Posgrado de la UPTC</strong>. Con base en la línea base de la vigencia 2026 (donde se registraron 5,170 estudiantes y un recaudo de {formatCurrency(comparisonSelectedYear.historicalRecaudo)}), la implementación del modelo por créditos académicos (establecida en el <strong>Artículo 1</strong> del Proyecto de Acuerdo) busca corregir la tendencia decreciente de matrículas ofreciendo una estructura de cobros proporcional y adaptada al plan de estudios.
+                  </p>
+                  <p className="mt-2">
+                    Este estudio incorpora el marco de la <strong>Constitución Política (Art. 69)</strong> sobre Autonomía Universitaria, la <strong>Ley 30 de 1992</strong>, la <strong>Ley 2568 de 2026</strong> (para fortalecimiento presupuestal de IES públicas) y las variables de ajuste del Valor Base del Crédito Académico Institucional (VBCI) del <strong>Artículo 3</strong> (particularidades del programa, competencia, profesores y estudiantes).
                   </p>
                 </div>
 
@@ -1910,6 +1913,9 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   <ul className="list-disc pl-5 space-y-1 leading-relaxed">
                     {reportConclusions.conclusions.map((c, idx) => <li key={idx}>{c}</li>)}
                     {reportConclusions.observations.map((o, idx) => <li key={idx}>{o}</li>)}
+                    <li>
+                      <strong>Criterio Estudiantil (Artículo 8):</strong> Los cálculos asumen la obligatoriedad de matricular un mínimo de siete (7) créditos académicos por semestre (o el saldo restante en caso de ser inferior) y la prohibición del fraccionamiento de cobro de asignaturas individuales.
+                    </li>
                   </ul>
                 </div>
 
@@ -1934,9 +1940,9 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
                 {/* Section 5: Proyección Financiera Multivigencia (2027-2036) */}
                 <div className="space-y-2 text-xs text-slate-800 page-break-before" style={{ pageBreakBefore: 'always' }}>
-                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">4. Proyección Financiera Multivigencia de Mediano Plazo</h3>
+                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">4. Proyección Financiera Multivigencia e Indexación IAEP (Artículo 5)</h3>
                   <p className="leading-relaxed">
-                    Evaluación de la proyección del fondo de posgrados R31 bajo parámetros macroeconómicos indexados (tasa ICES de {icesRate}% para ingresos, tasa IPC de {ipcRate}% para egresos y crecimiento de alumnado de {enrollmentGrowthRate}%):
+                    Evaluación de la proyección del fondo de posgrados R31 bajo parámetros macroeconómicos indexados y ajustados conforme al Índice de Ajuste Económico de Posgrados (IAEP) del <strong>Artículo 5</strong> (tasa ICES de {icesRate}% para ingresos, tasa IPC de {ipcRate}% para egresos y crecimiento de alumnado de {enrollmentGrowthRate}%):
                   </p>
                   
                   {/* Summary Table */}
@@ -1997,19 +2003,14 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                     <strong>Evaluación de Riesgo y Sensibilidad:</strong> El modelo de costeo por créditos presenta una sensibilidad crítica ante el coeficiente de elasticidad precio de la demanda (ε = {elasticity.toFixed(2)}). Variaciones desmedidas en el costo del crédito académico pueden contraer el volumen de inscritos de forma desproporcionada, afectando los flujos de caja y el ratio de cobertura DSCR (situado en {posgradSensitivityAnalysis.dscrBase.toFixed(2)}x contra un covenant límite de 1.25x). Asimismo, el fondo R31 exhibe una alta sensibilidad ante la deducción por estampillas e indirectos de la administración central de la UPTC ({centralDeductionPct}%), la cual absorbe la caja operativa y limita el margen para gastos de docencia y laboratorios.
                   </p>
                   <p className="mt-2">
-                    <strong>Necesidad Inaplazable de Reforma:</strong> A pesar de estos riesgos, la modificación del modelo de costeo actual (basado en salarios mínimos fijos por semestre) es estrictamente necesaria. Las estadísticas de la UPTC evidencian un declive sostenido de la matrícula de posgrados, decreciendo de 6,951 estudiantes en 2020 a 5,170 en 2026, lo cual representa una contracción del 25.6%. En Colombia, las dinámicas de educación superior exigen flexibilidad curricular, modularidad (homologaciones fluidas de especialización a maestría) e inclusión socioeconómica. Conservar la tarifa fija semestral penaliza al estudiante que inscribe menos materias, incentiva la deserción y resta competitividad a la oferta académica de la UPTC. La transición al cobro por créditos permite sincerar las finanzas de los programas, adecuar el cobro al avance real del alumno y dinamizar la captación de estudiantes, garantizando la viabilidad del Recurso R31 a mediano y largo plazo.
+                    <strong>Necesidad Inaplazable de Reforma:</strong> A pesar de estos riesgos, la modificación del modelo de costeo actual (basado en salarios mínimos fijos por semestre conforme al derogado Acuerdo 025 de 2012) es estrictamente necesaria. Las estadísticas de la UPTC evidencian un declive sostenido de la matrícula de posgrados, decreciendo de 6,951 estudiantes en 2020 a 5,170 en 2026, lo cual representa una contracción del 25.6%. En Colombia, las dinámicas de educación superior exigen flexibilidad curricular, modularidad (homologaciones fluidas de especialización a maestría) e inclusión socioeconómica. Conservar la tarifa fija semestral penaliza al estudiante que inscribe menos materias, incentiva la deserción y resta competitividad a la oferta académica de la UPTC. La transición al cobro por créditos permite sincerar las finanzas de los programas, adecuar el cobro al avance real del alumno y dinamizar la captación de estudiantes, garantizando la viabilidad del Recurso R31 a mediano y largo plazo dentro del periodo de transición de 4 años determinado en el <strong>Artículo 19</strong> del presente Proyecto de Acuerdo.
                   </p>
                 </div>
 
-                {/* Signatures block */}
-                <div className="grid grid-cols-2 gap-10 pt-16 text-center text-xs text-slate-800">
+                {/* Centered single signature block */}
+                <div className="flex justify-center pt-16 text-center text-xs text-slate-800">
                   <div className="space-y-1">
-                    <div className="w-48 border-t border-black mx-auto"></div>
-                    <strong className="block text-slate-900">Comité de Conciliación de Matrículas</strong>
-                    <span className="text-[10px] text-slate-500 block">UPTC Posgrados</span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="w-48 border-t border-black mx-auto"></div>
+                    <div className="w-56 border-t border-black mx-auto"></div>
                     <strong className="block text-slate-900">Vicerrector Administrativo y Financiero</strong>
                     <span className="text-[10px] text-slate-500 block">UPTC - VAFI</span>
                   </div>
