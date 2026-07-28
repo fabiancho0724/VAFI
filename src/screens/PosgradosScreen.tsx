@@ -105,8 +105,9 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
   // VARIABLES DE PROYECCIÓN STATE (Matching the costing simulator inputs)
   const [sensLevel, setSensLevel] = useState<'especializacion' | 'maestria' | 'doctorado' | 'medico_quirurgica'>('maestria');
   const [sensModality, setSensModality] = useState<'presencial' | 'hibrido' | 'virtual'>('presencial');
-  const [sensAttrition, setSensAttrition] = useState<number>(5);
-  const [sensDiscount, setSensDiscount] = useState<number>(10);
+  const [sensAttrition, setSensAttrition] = useState<number>(0);
+  const [sensDiscount, setSensDiscount] = useState<number>(0);
+
 
   // Dashboard state
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
@@ -294,8 +295,9 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     };
     const selectedModalityFactor = modalityFactors[sensModality] || 1.0;
 
-    const priceMultiplier = (selectedVbci / 630000) * selectedModalityFactor * ((1 - sensDiscount / 100) / 0.90);
-    const studentMultiplier = (1 - sensAttrition / 100) / 0.95;
+    const priceMultiplier = (selectedVbci / 630000) * selectedModalityFactor * (1 - sensDiscount / 100);
+    const studentMultiplier = (1 - sensAttrition / 100);
+
 
     return PROJECTED_BASE_2027.map(base => {
       const priceBase = base.recaudo / base.estudiantes;
