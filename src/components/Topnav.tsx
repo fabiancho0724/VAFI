@@ -10,7 +10,7 @@ interface TopnavProps {
 export function Topnav({ isThin, currentScreen, onNavigate }: TopnavProps) {
   return (
     <header className={cn(
-      'fixed top-0 right-0 h-16 bg-background/80 backdrop-blur-md flex justify-between items-center px-6 md:px-8 z-30 transition-all duration-300',
+      'fixed top-0 right-0 h-16 bg-background/80 backdrop-blur-md flex justify-between items-center px-6 md:px-8 z-30 transition-all duration-300 print:hidden',
       isThin ? 'left-20' : 'left-64'
     )}>
       <div className="flex items-center gap-6 flex-1">

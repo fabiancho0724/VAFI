@@ -7,7 +7,7 @@ import {
 import { 
   GraduationCap, MapPin, Building2, BookOpen, Users, DollarSign, 
   Filter, Percent, CreditCard, Activity, TrendingUp, TrendingDown, MoreHorizontal,
-  Info, Sparkles, ArrowRight, Shield, Database, HelpCircle, Bot, AlertTriangle, ShieldCheck, Target, ChevronRight
+  Info, Sparkles, ArrowRight, Shield, Database, HelpCircle, Bot, AlertTriangle, ShieldCheck, Target, ChevronRight, Printer, FileText
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 
@@ -80,18 +80,21 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sensitivity'>('dashboard');
 
   // Sensitivity main tab settings
-  const [activeSensSubTab, setActiveSensSubTab] = useState<'scenarios' | 'montecarlo' | 'dscr'>('scenarios');
+  const [activeSensSubTab, setActiveSensSubTab] = useState<'scenarios' | 'montecarlo' | 'dscr' | 'report'>('scenarios');
+
+  // Transition year dropdown selection to identify elasticity
+  const [elasticityYear, setElasticityYear] = useState<number>(2027);
 
   // Sliders state for Sensitivity & Elasticity analysis
   const [elasticity, setElasticity] = useState<number>(-1.19);
   const [priceVarPct, setPriceVarPct] = useState<number>(0);
   const [operatingCostPct, setOperatingCostPct] = useState<number>(35); 
   const [centralDeductionPct, setCentralDeductionPct] = useState<number>(45.5); 
+  const [sensDiscountRate, setSensDiscountRate] = useState<number>(8);
 
   // Scenarios bounds
   const [sensPessimisticPct, setSensPessimisticPct] = useState<number>(-15);
   const [sensOptimisticPct, setSensOptimisticPct] = useState<number>(15);
-  const [sensDiscountRate, setSensDiscountRate] = useState<number>(8);
 
   // Dashboard state
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
@@ -256,10 +259,15 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     };
   }, [filteredMatriculas, filteredIngresos]);
 
+  // Filter out 2026 from projected data, since the simulation starts in 2027
+  const PROJECTED_BASE_2027 = useMemo(() => {
+    return PROJECTED_BASE.filter(p => p.anio >= 2027);
+  }, []);
+
   // SENSITIVITY AND ELASTICITY CALCULATIONS
-  // Dynamically shifts credit-model projections based on user-controlled variables
+  // Projections now cover 2027 - 2030 (4 years)
   const sensitivityProjections = useMemo(() => {
-    return PROJECTED_BASE.map(base => {
+    return PROJECTED_BASE_2027.map(base => {
       // 1. Average price per student baseline
       const priceBase = base.recaudo / base.estudiantes;
       
@@ -292,19 +300,19 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
         margenNeto
       };
     });
-  }, [priceVarPct, elasticity, operatingCostPct, centralDeductionPct]);
+  }, [priceVarPct, elasticity, operatingCostPct, centralDeductionPct, PROJECTED_BASE_2027]);
 
-  // Transition Analysis: Comparing Year 2026 (Historical vs New Credit Model)
-  const comparison2026 = useMemo(() => {
+  // Transition Analysis: Comparing selected year (e.g. 2027) vs 2026 Historical baseline
+  const comparisonSelectedYear = useMemo(() => {
     const historical2026 = HISTORICAL_DATA.find(h => h.vigencia === 2026) || {
       estudiantes: 5170,
       ingreso: 45472060134
     };
     
-    const simulated = sensitivityProjections.find(p => p.anio === 2026) || {
-      estudiantes: 7092,
-      recaudo: 42925508467,
-      precio: 42925508467 / 7092
+    const simulated = sensitivityProjections.find(p => p.anio === elasticityYear) || {
+      estudiantes: 6887,
+      recaudo: 43380775906,
+      precio: 43380775906 / 6887
     };
 
     const histPrice = historical2026.ingreso / historical2026.estudiantes;
@@ -319,6 +327,9 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     const deltaPrecio = simPrice - histPrice;
     const deltaPrecioPct = (deltaPrecio / histPrice) * 100;
 
+    // Evaluated elasticity: change in Q / change in P
+    const calculatedElasticity = deltaPrecioPct !== 0 ? (deltaEstudiantesPct / deltaPrecioPct) : 0;
+
     return {
       historicalRecaudo: historical2026.ingreso,
       historicalEstudiantes: historical2026.estudiantes,
@@ -331,19 +342,18 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       deltaEstudiantes,
       deltaEstudiantesPct,
       deltaPrecio,
-      deltaPrecioPct
+      deltaPrecioPct,
+      calculatedElasticity
     };
-  }, [sensitivityProjections]);
+  }, [sensitivityProjections, elasticityYear]);
 
   // FULL SENSITIVITY AND ELASTICITY REPORT MODULE
-  // Implements the same calculations as PredictiveScreen.tsx but tailored to Posgrados R31
   const posgradSensitivityAnalysis = useMemo(() => {
-    // 5 annual net cash flows: base timeline
     const baseIngArray = sensitivityProjections.map(p => p.recaudo);
     const baseGasArray = sensitivityProjections.map(p => p.totalGastos);
     const baseFlows = sensitivityProjections.map(p => p.margenNeto);
     
-    // 1. NPV & IRR base
+    // 1. NPV & IRR base (4 years: 2027 - 2030)
     const baseNPV = calculateNPV(baseFlows, sensDiscountRate);
     const baseIRR = calculateIRR(baseFlows);
     const baseFlowSum = baseFlows.reduce((a, b) => a + b, 0);
@@ -422,14 +432,14 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       let lowFlows = baseFlows;
 
       if (d.key === 'elasticity') {
-        const simHigh = PROJECTED_BASE.map(b => {
+        const simHigh = PROJECTED_BASE_2027.map(b => {
           const qChangePct = ((elasticity + 0.2) * priceVarPct) / 100;
           const simEst = Math.round(b.estudiantes * (1 + qChangePct));
           const simPrice = (b.recaudo / b.estudiantes) * (1 + priceVarPct / 100);
           const simRec = simEst * simPrice;
           return simRec * (1 - centralDeductionPct / 100 - operatingCostPct / 100);
         });
-        const simLow = PROJECTED_BASE.map(b => {
+        const simLow = PROJECTED_BASE_2027.map(b => {
           const qChangePct = ((elasticity - 0.2) * priceVarPct) / 100;
           const simEst = Math.round(b.estudiantes * (1 + qChangePct));
           const simPrice = (b.recaudo / b.estudiantes) * (1 + priceVarPct / 100);
@@ -439,14 +449,14 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
         highFlows = simHigh;
         lowFlows = simLow;
       } else if (d.key === 'priceVar') {
-        const simHigh = PROJECTED_BASE.map(b => {
+        const simHigh = PROJECTED_BASE_2027.map(b => {
           const qChangePct = (elasticity * (priceVarPct + 5)) / 100;
           const simEst = Math.round(b.estudiantes * (1 + qChangePct));
           const simPrice = (b.recaudo / b.estudiantes) * (1 + (priceVarPct + 5) / 100);
           const simRec = simEst * simPrice;
           return simRec * (1 - centralDeductionPct / 100 - operatingCostPct / 100);
         });
-        const simLow = PROJECTED_BASE.map(b => {
+        const simLow = PROJECTED_BASE_2027.map(b => {
           const qChangePct = (elasticity * (priceVarPct - 5)) / 100;
           const simEst = Math.round(b.estudiantes * (1 + qChangePct));
           const simPrice = (b.recaudo / b.estudiantes) * (1 + (priceVarPct - 5) / 100);
@@ -480,8 +490,6 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     }).sort((a, b) => b.width - a.width);
 
     // 7. DSCR Coverage Calculations
-    // DSCR = (Revenue - Direct Expenses) / Central Deductions (45.5%)
-    // Base formula fits: DSCR = (1 - OperatingCostPct/100) / (CentralDeductionPct/100)
     const dscrBase = (1 - operatingCostPct / 100) / (centralDeductionPct / 100);
     const dscrPessimistic = (1 - (operatingCostPct * pesGasFactor) / 100) / ((centralDeductionPct * pesGasFactor) / 100);
     const dscrOptimistic = (1 - (operatingCostPct * optGasFactor) / 100) / ((centralDeductionPct * optGasFactor) / 100);
@@ -533,7 +541,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       dscr1DData,
       dscrTornado
     };
-  }, [priceVarPct, elasticity, operatingCostPct, centralDeductionPct, sensDiscountRate, sensPessimisticPct, sensOptimisticPct, sensitivityProjections]);
+  }, [priceVarPct, elasticity, operatingCostPct, centralDeductionPct, sensDiscountRate, sensPessimisticPct, sensOptimisticPct, sensitivityProjections, PROJECTED_BASE_2027]);
 
   // Merge datasets into a unified timelines chart (2020-2030)
   const unifiedTimelineData = useMemo(() => {
@@ -553,17 +561,8 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       'Estudiantes Créditos': d.estudiantes
     }));
 
-    // Seamless connection at 2026
-    const connectingPoint = {
-      anio: "2026 (Créditos)",
-      'Modelo Histórico (Recaudo M)': null,
-      'Modelo por Créditos (Recaudo M)': Math.round(comparison2026.simulatedRecaudo / 1e6 * 100) / 100,
-      'Estudiantes Históricos': null,
-      'Estudiantes Créditos': comparison2026.simulatedEstudiantes
-    };
-
-    return [...histPart, connectingPoint, ...projPart.filter(p => p.anio !== "2026")];
-  }, [sensitivityProjections, comparison2026]);
+    return [...histPart, ...projPart];
+  }, [sensitivityProjections]);
 
   const sensitivityChartData = useMemo(() => {
     return sensitivityProjections.map(d => ({
@@ -588,13 +587,32 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     }
 
     if (elasticity < -1.2) {
-      diagnosis += " La demanda de matrícula es altamente elástica; variaciones mínimas en el costo del crédito detonarán una alta deserción o captación de estudiantes.";
+      diagnosis += " La demanda de matrícula es altamente elástica; variaciones mínimos en el costo del crédito detonarán una alta deserción o captación de estudiantes.";
     } else {
       diagnosis += " El comportamiento del alumnado ante precios es estable. Ajustes regulatorios de tarifa tendrán un efecto directo proporcional en el ingreso final.";
     }
 
     return diagnosis;
   }, [sensitivityProjections, elasticity, centralDeductionPct, operatingCostPct]);
+
+  // Dynamic Conclusions and Recommendations for the Written PDF Report
+  const reportConclusions = useMemo(() => {
+    const isViable = posgradSensitivityAnalysis.base.npv > 0 && posgradSensitivityAnalysis.dscrBase >= 1.25;
+    const elasticityType = Math.abs(elasticity) > 1 ? "Elástica" : Math.abs(elasticity) === 1 ? "Unitaria" : "Inelástica";
+    
+    return {
+      conclusions: [
+        `El análisis financiero del Recurso R31 (Fondo de Posgrados) del periodo proyectado 2027-2030 indica que la transición al modelo por créditos es ${isViable ? "financieramente viable y sustentable" : "crítica y presenta riesgos de descapitalización"} bajo las hipótesis actuales de simulación.`,
+        `La demanda de matrícula de posgrado evaluada posee un comportamiento de elasticidad ${elasticityType} (ε = ${elasticity.toFixed(2)}). Esto significa que variaciones del 1% en la tarifa promedio por crédito generan desplazamientos de matrícula del ${Math.abs(elasticity).toFixed(2)}% en sentido inverso.`,
+        `El VAN (Valor Actual Neto) acumulado del escenario Base es de ${formatCurrency(posgradSensitivityAnalysis.base.npv)} con una TIR (Tasa Interna de Retorno) de ${posgradSensitivityAnalysis.base.irr > 0 ? `${posgradSensitivityAnalysis.base.irr.toFixed(2)}%` : "N/A"}, indicando que ${posgradSensitivityAnalysis.base.npv > 0 ? "el proyecto compensa el costo de capital de oportunidad" : "el fondo incurre en destrucción neta de valor"}.`
+      ],
+      observations: [
+        `Deducciones Centrales UPTC: Con una retención fija del ${centralDeductionPct}%, la administración central de la universidad captará un estimado de ${formatCurrency(posgradSensitivityAnalysis.base.flows.reduce((acc, _, i) => acc + sensitivityProjections[i].deduccionCentral, 0))} a lo largo de los 4 años de proyección.`,
+        `Covenant de Cobertura DSCR: El ratio de cobertura del fondo se sitúa en ${posgradSensitivityAnalysis.dscrBase.toFixed(2)}x. Dado que el límite de seguridad es de 1.25x, el fondo ${posgradSensitivityAnalysis.dscrBase >= 1.25 ? "se encuentra dentro de la zona de cumplimiento seguro" : "se ubica en zona de incumplimiento y ruptura presupuestaria"}.`,
+        `Punto de Ruptura: La máxima variación tolerada en la estructura de egresos/retenciones es del ${posgradSensitivityAnalysis.ruptureVar.toFixed(1)}%. Superar este umbral causará un colapso del excedente neto de caja, obligando al sistema a reestructurar costos o elevar precios.`
+      ]
+    };
+  }, [posgradSensitivityAnalysis, elasticity, centralDeductionPct, sensitivityProjections]);
 
   if (dataStage === 'loading') {
     return (
@@ -606,10 +624,10 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
   }
 
   return (
-    <div className="flex flex-col mb-20 max-w-7xl mx-auto px-4 md:px-0 space-y-6">
+    <div className="flex flex-col mb-20 max-w-7xl mx-auto px-4 md:px-0 space-y-6 print:max-w-none print:m-0 print:p-0 print:bg-white print:text-black">
       
-      {/* Header & Sub-Navigation */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
+      {/* Header & Sub-Navigation (Hidden on print) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 print:hidden">
         <div>
            <h2 className="text-2xl font-display font-bold text-white tracking-tight">Recurso 31 - Posgrados</h2>
            <p className="text-on-surface-variant text-sm mt-1">
@@ -642,9 +660,9 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
         </div>
       </div>
 
-      {/* TAB 1: EXECUTIVE DASHBOARD (ORIGINAL MODULE) */}
+      {/* TAB 1: EXECUTIVE DASHBOARD (ORIGINAL MODULE) (Hidden on print) */}
       {activeTab === 'dashboard' && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 animate-in fade-in duration-300">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 animate-in fade-in duration-300 print:hidden">
           
           {/* LEFT COLUMN */}
           <div className="xl:col-span-3 flex flex-col gap-5">
@@ -797,6 +815,93 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
           </div>
 
+          {/* Faculty demographics bottom widgets */}
+          <div className="xl:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
+            <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
+               <div className="flex-1 w-full">
+                 <h3 className="text-sm font-semibold text-white">Flexibilización VAFI</h3>
+                 <p className="text-[10px] text-on-surface-variant mt-1">Estudiantes con opciones de 2 cuotas vs 1 cuota.</p>
+                 <div className="mt-6 space-y-3">
+                   <div className="flex items-center justify-between text-xs">
+                     <div className="flex items-center gap-2">
+                       <span className="w-3 h-3 rounded-full bg-[#ffcc29]"></span>
+                       <span className="text-white/80">2 Cuotas (Flex)</span>
+                     </div>
+                     <div className="text-right">
+                       <span className="font-bold text-white mr-2">{kpis.estudiantesFlex}</span>
+                       <span className="font-mono text-[10px] text-[#ffcc29]">
+                         {kpis.totalEstudiantes > 0 ? ((kpis.estudiantesFlex / kpis.totalEstudiantes) * 100).toFixed(1) : 0}%
+                       </span>
+                     </div>
+                   </div>
+                   <div className="flex items-center justify-between text-xs">
+                     <div className="flex items-center gap-2">
+                       <span className="w-3 h-3 rounded-full bg-[#334155]"></span>
+                       <span className="text-white/80">1 Cuota (Única)</span>
+                     </div>
+                     <div className="text-right">
+                       <span className="font-bold text-white mr-2">{kpis.totalEstudiantes - kpis.estudiantesFlex}</span>
+                       <span className="font-mono text-[10px] text-[#94a3b8]">
+                         {kpis.totalEstudiantes > 0 ? (((kpis.totalEstudiantes - kpis.estudiantesFlex) / kpis.totalEstudiantes) * 100).toFixed(1) : 0}%
+                       </span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+               <div className="w-[140px] h-[140px] shrink-0" style={{ width: 140, height: 140, minWidth: 100 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={flexibilizacionData} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={65} stroke="none">
+                      </Pie>
+                      <RechartsTooltip formatter={(val: number) => [val, 'Estudiantes']} contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '11px', borderRadius: '8px'}} />
+                    </PieChart>
+                  </ResponsiveContainer>
+               </div>
+            </div>
+
+            <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
+               <div className="flex-1 w-full">
+                 <h3 className="text-sm font-semibold text-white">Tipo de Inscripción</h3>
+                 <p className="text-[10px] text-on-surface-variant mt-1">Opción de Grado vs Inscripción Regular.</p>
+                 <div className="mt-6 space-y-3">
+                   <div className="flex items-center justify-between text-xs">
+                     <div className="flex items-center gap-2">
+                       <span className="w-3 h-3 rounded-full bg-[#4ade80]"></span>
+                       <span className="text-white/80">Opción Grado</span>
+                     </div>
+                     <div className="text-right">
+                       <span className="font-bold text-white mr-2">{kpis.estudiantesOpGrado}</span>
+                       <span className="font-mono text-[10px] text-[#4ade80]">
+                         {kpis.totalEstudiantes > 0 ? ((kpis.estudiantesOpGrado / kpis.totalEstudiantes) * 100).toFixed(1) : 0}%
+                       </span>
+                     </div>
+                   </div>
+                   <div className="flex items-center justify-between text-xs">
+                     <div className="flex items-center gap-2">
+                       <span className="w-3 h-3 rounded-full bg-[#334155]"></span>
+                       <span className="text-white/80">Regular</span>
+                     </div>
+                     <div className="text-right">
+                       <span className="font-bold text-white mr-2">{kpis.estudiantesRegulares}</span>
+                       <span className="font-mono text-[10px] text-[#94a3b8]">
+                         {kpis.totalEstudiantes > 0 ? ((kpis.estudiantesRegulares / kpis.totalEstudiantes) * 100).toFixed(1) : 0}%
+                       </span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+               <div className="w-[140px] h-[140px] shrink-0" style={{ width: 140, height: 140, minWidth: 100 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={opcionGradoData} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={65} stroke="none">
+                      </Pie>
+                      <RechartsTooltip formatter={(val: number) => [val, 'Estudiantes']} contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '11px', borderRadius: '8px'}} />
+                    </PieChart>
+                  </ResponsiveContainer>
+               </div>
+            </div>
+          </div>
+
         </div>
       )}
 
@@ -804,8 +909,8 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       {activeTab === 'sensitivity' && (
         <div className="flex flex-col gap-6 animate-in fade-in duration-300">
           
-          {/* TOP DYNAMIC CONTROLS SLIDERS BAR */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5 bg-[#0f172a] border border-white/10 p-5 rounded-2xl shadow-2xl">
+          {/* TOP DYNAMIC CONTROLS SLIDERS BAR (Hidden on print) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-5 bg-[#0f172a] border border-white/10 p-5 rounded-2xl shadow-2xl print:hidden">
             
             {/* Elasticity */}
             <div className="space-y-1.5">
@@ -822,7 +927,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 onChange={(e) => setElasticity(parseFloat(e.target.value))}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
               />
-              <span className="text-[8px] text-white/40 font-mono block">Efecto del precio en inscritos</span>
+              <span className="text-[8px] text-white/40 font-mono block">Sensibilidad al precio</span>
             </div>
 
             {/* Price var */}
@@ -842,7 +947,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 onChange={(e) => setPriceVarPct(parseInt(e.target.value) || 0)}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
               />
-              <span className="text-[8px] text-white/40 font-mono block">Desplazamiento de matrícula base</span>
+              <span className="text-[8px] text-white/40 font-mono block">Tarifa crédito proyectada</span>
             </div>
 
             {/* Cost var */}
@@ -860,7 +965,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 onChange={(e) => setOperatingCostPct(parseInt(e.target.value) || 35)}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
               />
-              <span className="text-[8px] text-white/40 font-mono block"> CPS directos y docencia cátedra</span>
+              <span className="text-[8px] text-white/40 font-mono block">Cátedras y CPS directos</span>
             </div>
 
             {/* Central deductions */}
@@ -878,7 +983,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 onChange={(e) => setCentralDeductionPct(parseFloat(e.target.value))}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
               />
-              <span className="text-[8px] text-white/40 font-mono block">Sobretasa obligatoria central</span>
+              <span className="text-[8px] text-white/40 font-mono block">Aporte a administración central</span>
             </div>
 
             {/* Discount Rate */}
@@ -896,13 +1001,32 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 onChange={(e) => setSensDiscountRate(parseFloat(e.target.value))}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
               />
-              <span className="text-[8px] text-white/40 font-mono block">Costo de oportunidad del capital</span>
+              <span className="text-[8px] text-white/40 font-mono block">Costo de oportunidad</span>
+            </div>
+
+            {/* Transition year dropdown selection */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="text-white/60 font-medium font-sans">Año de Transición</span>
+                <strong className="text-[#ffcc29] font-mono font-bold">{elasticityYear}</strong>
+              </div>
+              <select
+                value={elasticityYear}
+                onChange={(e) => setElasticityYear(parseInt(e.target.value) || 2027)}
+                className="w-full bg-[#1e293b] border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29] cursor-pointer"
+              >
+                <option value="2027" className="bg-black">Comparar 2027 vs 2026</option>
+                <option value="2028" className="bg-black">Comparar 2028 vs 2026</option>
+                <option value="2029" className="bg-black">Comparar 2029 vs 2026</option>
+                <option value="2030" className="bg-black">Comparar 2030 vs 2026</option>
+              </select>
+              <span className="text-[8px] text-white/40 font-mono block">Identificación de elasticidad</span>
             </div>
 
           </div>
 
-          {/* INTERNAL SENSITIVITY SUB-TABS PILLS */}
-          <div className="flex border-b border-white/5 pb-1 gap-4 text-xs font-bold uppercase tracking-wider mt-1">
+          {/* INTERNAL SENSITIVITY SUB-TABS PILLS (Hidden on print) */}
+          <div className="flex border-b border-white/5 pb-1 gap-4 text-xs font-bold uppercase tracking-wider mt-1 print:hidden">
             <button 
               onClick={() => setActiveSensSubTab('scenarios')}
               className={`pb-2 transition-all cursor-pointer border-b-2 ${
@@ -933,11 +1057,21 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
             >
               3. Coberturas DSCR y Covenants
             </button>
+            <button 
+              onClick={() => setActiveSensSubTab('report')}
+              className={`pb-2 transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
+                activeSensSubTab === 'report' 
+                  ? 'border-[#ffcc29] text-[#ffcc29]' 
+                  : 'border-transparent text-white/55 hover:text-white'
+              }`}
+            >
+              <FileText size={14} /> 4. Informe Ejecutivo PDF
+            </button>
           </div>
 
           {/* SUB-TAB 1: ESCENARIOS Y FLUJOS */}
           {activeSensSubTab === 'scenarios' && (
-            <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
               
               {/* Scenarios Cards Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -951,7 +1085,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                     
                     <div className="space-y-3 mt-6">
                       <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">Ingreso Acumulado 5a</span>
+                        <span className="text-white/60">Ingreso Acumulado (2027-2030)</span>
                         <span className="font-mono font-bold text-white">{formatCurrency(posgradSensitivityAnalysis.pessimistic.ingTotal)}</span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
@@ -985,7 +1119,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                     
                     <div className="space-y-3 mt-6">
                       <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">Ingreso Acumulado 5a</span>
+                        <span className="text-white/60">Ingreso Acumulado (2027-2030)</span>
                         <span className="font-mono font-bold text-white">{formatCurrency(posgradSensitivityAnalysis.base.ingTotal)}</span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
@@ -1019,7 +1153,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                     
                     <div className="space-y-3 mt-6">
                       <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
-                        <span className="text-white/60">Ingreso Acumulado 5a</span>
+                        <span className="text-white/60">Ingreso Acumulado (2027-2030)</span>
                         <span className="font-mono font-bold text-white">{formatCurrency(posgradSensitivityAnalysis.optimistic.ingTotal)}</span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-white/5 text-xs">
@@ -1051,12 +1185,12 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 
                 {/* Evolution chart */}
                 <div className="lg:col-span-2 bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Evolución de Flujos por Escenario de Créditos (2026-2030)</h4>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Evolución de Flujos por Escenario de Créditos (2027-2030)</h4>
                   <div className="h-72" style={{ width: '100%', height: 288, minWidth: 200 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart
-                        data={new Array(5).fill(0).map((_, i) => ({
-                          name: (2026 + i).toString(),
+                        data={new Array(4).fill(0).map((_, i) => ({
+                          name: (2027 + i).toString(),
                           Pesimista: Math.round(posgradSensitivityAnalysis.pessimistic.flows[i] / 1e6 * 10) / 10,
                           Base: Math.round(posgradSensitivityAnalysis.base.flows[i] / 1e6 * 10) / 10,
                           Optimista: Math.round(posgradSensitivityAnalysis.optimistic.flows[i] / 1e6 * 10) / 10
@@ -1076,11 +1210,34 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 </div>
 
                 {/* Elasticity indicators */}
-                <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col justify-between">
+                <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col justify-between font-sans">
                   <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Elasticidad del Valor Actual Neto</h4>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Elasticidad de Recaudo vs 2026 Histórico</h4>
                     
                     <div className="space-y-4">
+                      {/* Selected year comparison */}
+                      <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+                        <span className="text-[9px] text-[#ffcc29] uppercase tracking-widest block font-mono font-bold mb-1">Año de Evaluación: {elasticityYear}</span>
+                        <div className="flex justify-between items-center text-xs border-b border-white/5 pb-1">
+                          <span className="text-white/60">Var. Alumnos vs 2026</span>
+                          <span className="font-mono text-white font-bold">
+                            {comparisonSelectedYear.deltaEstudiantes >= 0 ? '+' : ''}{comparisonSelectedYear.deltaEstudiantesPct.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs border-b border-white/5 py-1">
+                          <span className="text-white/60">Var. Precio vs 2026</span>
+                          <span className="font-mono text-white font-bold text-rose-400">
+                            {comparisonSelectedYear.deltaPrecioPct.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs pt-1">
+                          <span className="text-white/60 font-semibold">Elasticidad Comparada</span>
+                          <span className="font-mono text-[#ffcc29] font-bold">
+                            ε = {comparisonSelectedYear.calculatedElasticity.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+
                       <div className="bg-white/5 border border-white/5 rounded-xl p-3 flex items-start gap-3">
                         <TrendingUp className="w-5 h-5 text-[#4ade80] shrink-0 mt-0.5" />
                         <div>
@@ -1089,20 +1246,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                             {posgradSensitivityAnalysis.elasticityIng >= 0 ? '+' : ''}{posgradSensitivityAnalysis.elasticityIng.toFixed(2)}%
                           </span>
                           <p className="text-[9px] text-white/40 mt-1 leading-normal">
-                            Por cada 1% de incremento en el recaudo por créditos, el VAN aumenta en un <strong>{Math.abs(posgradSensitivityAnalysis.elasticityIng).toFixed(2)}%</strong>.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="bg-white/5 border border-white/5 rounded-xl p-3 flex items-start gap-3">
-                        <TrendingDown className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="text-[10px] text-white/50 block">Elasticidad Egresos vs VAN</span>
-                          <span className="text-sm font-bold text-white font-mono">
-                            {posgradSensitivityAnalysis.elasticityGas >= 0 ? '+' : ''}{posgradSensitivityAnalysis.elasticityGas.toFixed(2)}%
-                          </span>
-                          <p className="text-[9px] text-white/40 mt-1 leading-normal">
-                            Por cada 1% de incremento en los egresos (directos o deducciones), el VAN cae en un <strong>{Math.abs(posgradSensitivityAnalysis.elasticityGas).toFixed(2)}%</strong>.
+                            Por cada 1% de incremento en ingresos, el VAN aumenta un <strong>{Math.abs(posgradSensitivityAnalysis.elasticityIng).toFixed(2)}%</strong>.
                           </p>
                         </div>
                       </div>
@@ -1110,7 +1254,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   </div>
 
                   <div className="text-[9px] text-white/40 font-mono mt-4 leading-normal bg-black/30 p-2.5 rounded-lg">
-                    💡 La diferencia entre ambas magnitudes indica el apalancamiento operativo del recurso R31.
+                    💡 Comparando {elasticityYear} vs 2026, la elasticidad calculada es de {comparisonSelectedYear.calculatedElasticity.toFixed(2)}.
                   </div>
                 </div>
 
@@ -1119,7 +1263,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
               {/* Timeline baseline */}
               <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Histórico vs Proyección Simulada (Línea de Tiempo Completa)</h4>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Histórico vs Proyección Simulada (Línea de Tiempo Completa 2020-2030)</h4>
                 </div>
                 <div className="h-72" style={{ width: '100%', height: 288, minWidth: 200 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -1144,7 +1288,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
           {/* SUB-TAB 2: MONTE CARLO Y TORNADO */}
           {activeSensSubTab === 'montecarlo' && (
-            <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
               
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
@@ -1279,7 +1423,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
           {/* SUB-TAB 3: COBERTURAS DSCR */}
           {activeSensSubTab === 'dscr' && (
-            <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
               
               {/* Compliance boxes */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -1404,8 +1548,202 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
             </div>
           )}
 
-          {/* AI Advisor Diagnostic Box */}
-          <div className="p-5 bg-[#ffcc29]/5 border border-[#ffcc29]/20 rounded-2xl space-y-2">
+          {/* SUB-TAB 4: INFORME EJECUTIVO COMPLETO (PDF) */}
+          {activeSensSubTab === 'report' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              
+              {/* PDF Actions button bar (Hidden on print) */}
+              <div className="flex justify-between items-center bg-[#0f172a] border border-white/10 p-4 rounded-2xl shadow-xl print:hidden">
+                <div className="flex items-center gap-2">
+                  <Info size={16} className="text-[#ffcc29]" />
+                  <span className="text-xs text-white/80 font-medium">Este informe ejecutivo consolidado está formateado para ser exportado a tamaño Carta o A4.</span>
+                </div>
+                <button 
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-[#ffcc29] text-black rounded-lg font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 hover:bg-[#ffcc29]/90 active:scale-[0.98] transition-all cursor-pointer shadow-lg"
+                >
+                  <Printer size={14} /> Descargar / Imprimir PDF
+                </button>
+              </div>
+
+              {/* REPORT DOCUMENT CONTAINER */}
+              <div className="bg-white text-black p-8 sm:p-12 rounded-3xl shadow-2xl space-y-6 border border-slate-200 print:border-none print:shadow-none print:p-0 print:m-0 print:bg-white print:text-black">
+                
+                {/* Institutional Header */}
+                <div className="border-b-2 border-black/80 pb-4 flex justify-between items-end">
+                  <div className="space-y-1">
+                    <h1 className="text-base sm:text-lg font-bold uppercase tracking-wide">Universidad Pedagógica y Tecnológica de Colombia</h1>
+                    <h2 className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold font-mono">Vicerrectoría Administrativa y Financiera (VAFI)</h2>
+                    <h3 className="text-xs font-bold text-slate-700">Comité de Matrículas e Ingresos Especiales</h3>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-[9px] font-mono text-slate-400">INFORME Nº R31-2026-SENS</div>
+                    <div className="text-[10px] font-bold text-slate-800 font-mono mt-0.5">Fecha: 28 de Julio de 2026</div>
+                  </div>
+                </div>
+
+                <div className="text-center py-2">
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-slate-800 border-y border-slate-200 py-1.5 bg-slate-50">
+                    Informe de Viabilidad, Sensibilidad y Elasticidad del Fondo R31 (Posgrados)
+                  </h2>
+                  <p className="text-[10px] text-slate-500 italic mt-1.5">Evaluación del impacto de transición del modelo de cobro por créditos académicos (Vigencia Proyectada 2027 - 2030)</p>
+                </div>
+
+                {/* Hypotheses metadata list */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-[10px] bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-700 font-sans">
+                  <div>
+                    <span className="text-slate-400 uppercase font-mono block text-[8px]">Elasticidad (ε)</span>
+                    <strong className="text-slate-900 font-mono font-bold text-xs">{elasticity.toFixed(2)}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-mono block text-[8px]">Ajuste Crédito</span>
+                    <strong className="text-slate-900 font-mono font-bold text-xs">{priceVarPct > 0 ? '+' : ''}{priceVarPct}%</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-mono block text-[8px]">Gastos Directos</span>
+                    <strong className="text-slate-900 font-mono font-bold text-xs">{operatingCostPct}%</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-mono block text-[8px]">Deducción UPTC</span>
+                    <strong className="text-slate-900 font-mono font-bold text-xs">{centralDeductionPct}%</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 uppercase font-mono block text-[8px]">Tasa Descuento</span>
+                    <strong className="text-slate-900 font-mono font-bold text-xs">{sensDiscountRate}%</strong>
+                  </div>
+                </div>
+
+                {/* Resumen Ejecutivo */}
+                <div className="space-y-2 text-xs text-slate-800">
+                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">1. Resumen Ejecutivo</h3>
+                  <p className="leading-relaxed">
+                    El presente informe analiza la transición de ingresos por matrícula del Recurso R31 (Posgrados) del modelo tradicional ligado a un cobro semestral fijo al modelo por créditos académicos para los años 2027 a 2030. Con base en la línea base de la vigencia 2026 (donde se registraron 5,170 estudiantes y un recaudo de {formatCurrency(comparisonSelectedYear.historicalRecaudo)}), la implementación del modelo por créditos busca corregir la tendencia decreciente de matrículas ofreciendo una estructura de cobros proporcional y adaptada al plan de estudios.
+                  </p>
+                </div>
+
+                {/* Scenarios results and IRR/NPV */}
+                <div className="space-y-2 text-xs text-slate-800">
+                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">2. Análisis de Viabilidad por Escenarios</h3>
+                  <p className="leading-relaxed">
+                    A continuación se resumen los indicadores del VAN (Valor Actual Neto) y la TIR (Tasa Interna de Retorno) de la simulación del flujo de caja de 4 años (2027-2030) a una tasa de oportunidad del {sensDiscountRate}%:
+                  </p>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-[11px] border border-slate-200 border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
+                          <th className="p-2 border-r border-slate-200">Indicador Escenario</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Pesimista (-15% Ing)</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Base (Proyección)</th>
+                          <th className="p-2 text-right">Optimista (+15% Ing)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
+                        <tr>
+                          <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Ingreso Acumulado</td>
+                          <td className="p-2 text-right border-r border-slate-200">{formatCurrency(posgradSensitivityAnalysis.pessimistic.ingTotal)}</td>
+                          <td className="p-2 text-right border-r border-slate-200">{formatCurrency(posgradSensitivityAnalysis.base.ingTotal)}</td>
+                          <td className="p-2 text-right">{formatCurrency(posgradSensitivityAnalysis.optimistic.ingTotal)}</td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Valor Actual Neto (VAN)</td>
+                          <td className={`p-2 text-right border-r border-slate-200 font-bold ${posgradSensitivityAnalysis.pessimistic.npv >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(posgradSensitivityAnalysis.pessimistic.npv)}</td>
+                          <td className={`p-2 text-right border-r border-slate-200 font-bold ${posgradSensitivityAnalysis.base.npv >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(posgradSensitivityAnalysis.base.npv)}</td>
+                          <td className={`p-2 text-right font-bold ${posgradSensitivityAnalysis.optimistic.npv >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(posgradSensitivityAnalysis.optimistic.npv)}</td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">TIR Anualizada</td>
+                          <td className="p-2 text-right border-r border-slate-200">{posgradSensitivityAnalysis.pessimistic.irr !== 0 ? `${posgradSensitivityAnalysis.pessimistic.irr.toFixed(1)}%` : 'N/A'}</td>
+                          <td className="p-2 text-right border-r border-slate-200">{posgradSensitivityAnalysis.base.irr !== 0 ? `${posgradSensitivityAnalysis.base.irr.toFixed(1)}%` : 'N/A'}</td>
+                          <td className="p-2 text-right">{posgradSensitivityAnalysis.optimistic.irr !== 0 ? `${posgradSensitivityAnalysis.optimistic.irr.toFixed(1)}%` : 'N/A'}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Sensitivity and elasticity conclusions */}
+                <div className="space-y-2 text-xs text-slate-800">
+                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">3. Conclusiones y Observaciones Generales</h3>
+                  <ul className="list-disc pl-5 space-y-1 leading-relaxed">
+                    {reportConclusions.conclusions.map((c, idx) => <li key={idx}>{c}</li>)}
+                    {reportConclusions.observations.map((o, idx) => <li key={idx}>{o}</li>)}
+                  </ul>
+                </div>
+
+                {/* Print Chart Timeline */}
+                <div className="space-y-1.5">
+                  <h4 className="text-[10px] font-bold text-slate-700 uppercase tracking-widest text-center">Transición y Proyección del Recurso R31 (2020-2030)</h4>
+                  <div className="h-56 w-full border border-slate-200 p-2 rounded-xl bg-slate-50">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={unifiedTimelineData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                        <XAxis dataKey="anio" stroke="#475569" className="text-[9px] font-mono" />
+                        <YAxis yAxisId="left" stroke="#475569" className="text-[9px] font-mono" tickFormatter={(val) => `$${val}M`} />
+                        <YAxis yAxisId="right" orientation="right" stroke="#475569" className="text-[9px] font-mono" />
+                        <Bar yAxisId="left" dataKey="Modelo Histórico (Recaudo M)" fill="#94a3b8" radius={[2, 2, 0, 0]} barSize={10} />
+                        <Bar yAxisId="left" dataKey="Modelo por Créditos (Recaudo M)" fill="#eab308" radius={[2, 2, 0, 0]} barSize={10} />
+                        <Line yAxisId="right" type="monotone" dataKey="Estudiantes Históricos" stroke="#475569" strokeWidth={1.5} dot={{r: 2}} strokeDasharray="4 4" />
+                        <Line yAxisId="right" type="monotone" dataKey="Estudiantes Créditos" stroke="#16a34a" strokeWidth={2} dot={{r: 2}} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Detailed Cash-Flow Table */}
+                <div className="space-y-2 text-xs text-slate-800">
+                  <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">4. Proyecciones Detalladas por Créditos (2027-2030)</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-[10px] border border-slate-200 border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
+                          <th className="p-2 border-r border-slate-200">Año</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Estudiantes</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Costo Est. Prom.</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Ingreso R31</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Deducción Central</th>
+                          <th className="p-2 border-r border-slate-200 text-right">Costo Directo</th>
+                          <th className="p-2 text-right">Excedente Neto</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
+                        {sensitivityProjections.map(p => (
+                          <tr key={p.anio} className="hover:bg-slate-50">
+                            <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">{p.anio}</td>
+                            <td className="p-2 text-right border-r border-slate-200 font-bold">{p.estudiantes}</td>
+                            <td className="p-2 text-right border-r border-slate-200">{formatCurrency(p.precio)}</td>
+                            <td className="p-2 text-right border-r border-slate-200 font-bold text-slate-900">{formatCurrency(p.recaudo)}</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-{formatCurrency(p.deduccionCentral)}</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-{formatCurrency(p.gastoOperativo)}</td>
+                            <td className={`p-2 text-right font-bold ${p.margenNeto >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(p.margenNeto)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Signatures block */}
+                <div className="grid grid-cols-2 gap-10 pt-16 text-center text-xs text-slate-800">
+                  <div className="space-y-1">
+                    <div className="w-48 border-t border-black mx-auto"></div>
+                    <strong className="block text-slate-900">Comité de Conciliación de Matrículas</strong>
+                    <span className="text-[10px] text-slate-500 block">UPTC Posgrados</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="w-48 border-t border-black mx-auto"></div>
+                    <strong className="block text-slate-900">Vicerrector Administrativo y Financiero</strong>
+                    <span className="text-[10px] text-slate-500 block">UPTC - VAFI</span>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* AI Advisor Diagnostic Box (Hidden on print) */}
+          <div className="p-5 bg-[#ffcc29]/5 border border-[#ffcc29]/20 rounded-2xl space-y-2 print:hidden">
             <span className="font-bold text-[#ffcc29] text-xs flex items-center gap-1.5">
               <Bot size={15} /> Asesor Financiero del Fondo R31:
             </span>

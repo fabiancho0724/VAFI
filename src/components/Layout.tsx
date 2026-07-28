@@ -18,7 +18,7 @@ export function Layout({ children, currentScreen, onNavigate }: LayoutProps) {
           <div className="flex-1">
             {children}
           </div>
-          <footer className="mt-8 text-center text-[#94a3b8] font-mono text-sm py-4 border-t border-white/10">
+          <footer className="mt-8 text-center text-[#94a3b8] font-mono text-sm py-4 border-t border-white/10 print:hidden">
             ©Fabián L. Cely – VAFI – Universidad Pedagógica y Tecnológica de Colombia
           </footer>
         </main>
