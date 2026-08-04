@@ -80,7 +80,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sensitivity'>('dashboard');
 
   // Sensitivity main tab settings (Entry point is 'variables')
-  const [activeSensSubTab, setActiveSensSubTab] = useState<'variables' | 'scenarios' | 'montecarlo' | 'dscr' | 'multiyear' | 'report'>('variables');
+  const [activeSensSubTab, setActiveSensSubTab] = useState<'variables' | 'scenarios' | 'montecarlo' | 'dscr' | 'multiyear' | 'comparison' | 'report'>('variables');
 
   // Transition year dropdown selection to identify elasticity
   const [elasticityYear, setElasticityYear] = useState<number>(2027);
@@ -95,6 +95,11 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
   // Scenarios bounds
   const [sensPessimisticPct, setSensPessimisticPct] = useState<number>(-15);
   const [sensOptimisticPct, setSensOptimisticPct] = useState<number>(15);
+
+  // SMLMV Flat Fee vs Credits Comparison states
+  const [smlmvIncrease2027, setSmlmvIncrease2027] = useState<number>(6.0);
+  const [smlmvStudentVar, setSmlmvStudentVar] = useState<number>(-2.0);
+  const [smlmvGrowthRate, setSmlmvGrowthRate] = useState<number>(5.0);
 
   // Multi-Year projection controls
   const [numYearsProyectar, setNumYearsProyectar] = useState<number>(10); 
@@ -434,6 +439,83 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       calculatedElasticity
     };
   }, [sensitivityProjections, elasticityYear]);
+
+  // SCENARIO COMPARISON MODULE (SMLMV vs Credits Model)
+  const scenarioComparisonData = useMemo(() => {
+    // Baseline 2026
+    const baseStudents = 5170;
+    const baseRecaudo = 45472060134;
+    const basePrice = baseRecaudo / baseStudents;
+    
+    let lastStudents = baseStudents;
+    let lastPrice = basePrice;
+    let accumulatedDiff = 0;
+    
+    return multiYearProjections.map((p) => {
+      const year = p.anio;
+      let priceIncreaseRatio = 0;
+      let studentBaseRatio = 1 + smlmvStudentVar / 100;
+      
+      if (year === 2027) {
+        // 15% deferred + 2027 smlmv increase
+        priceIncreaseRatio = 1.15 * (1 + smlmvIncrease2027 / 100);
+      } else {
+        // annual growth after 2027
+        priceIncreaseRatio = 1 + smlmvGrowthRate / 100;
+      }
+      
+      const currentPrice = lastPrice * priceIncreaseRatio;
+      const qPriceRatio = Math.pow(priceIncreaseRatio, elasticity);
+      const currentStudents = Math.max(0, Math.round(lastStudents * qPriceRatio * studentBaseRatio));
+      const currentRecaudo = currentStudents * currentPrice;
+      
+      const creditStudents = p.estudiantes;
+      const creditRecaudo = p.recaudo;
+      
+      const diffRecaudoAbs = creditRecaudo - currentRecaudo;
+      const diffRecaudoPct = currentRecaudo > 0 ? (diffRecaudoAbs / currentRecaudo) * 100 : 0;
+      
+      accumulatedDiff += diffRecaudoAbs;
+      
+      const tuitionVariationPct = (priceIncreaseRatio - 1) * 100;
+      const studentDropElasticity = Math.max(0, Math.round(lastStudents * (1 - qPriceRatio)));
+      
+      const item = {
+        anio: year,
+        smlmvPrice: currentPrice,
+        smlmvStudents: currentStudents,
+        smlmvRecaudo: currentRecaudo,
+        creditStudents,
+        creditRecaudo,
+        diffRecaudoAbs,
+        diffRecaudoPct,
+        diffStudents: creditStudents - currentStudents,
+        accumulatedDiff,
+        tuitionVariationPct,
+        studentDropElasticity
+      };
+      
+      lastStudents = currentStudents;
+      lastPrice = currentPrice;
+      
+      return item;
+    });
+  }, [multiYearProjections, smlmvIncrease2027, smlmvStudentVar, smlmvGrowthRate, elasticity]);
+
+  const comparisonInsights = useMemo(() => {
+    const targetData = scenarioComparisonData.find(d => d.anio === elasticityYear) || scenarioComparisonData[0];
+    const totalAccumulatedDiff = scenarioComparisonData[scenarioComparisonData.length - 1]?.accumulatedDiff || 0;
+    
+    const priceVarPct2027 = (1.15 * (1 + smlmvIncrease2027 / 100) - 1) * 100;
+    const isCreditBetter = totalAccumulatedDiff > 0;
+    
+    return {
+      priceVarPct2027,
+      targetData,
+      totalAccumulatedDiff,
+      isCreditBetter
+    };
+  }, [scenarioComparisonData, elasticityYear, smlmvIncrease2027]);
 
   // FULL SENSITIVITY AND ELASTICITY REPORT MODULE
   const posgradSensitivityAnalysis = useMemo(() => {
@@ -1097,6 +1179,16 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
               <Layers size={14} /> 5. Proyección Multivigencia
             </button>
             <button 
+              onClick={() => setActiveSensSubTab('comparison')}
+              className={`pb-2 transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
+                activeSensSubTab === 'comparison' 
+                  ? 'border-[#ffcc29] text-[#ffcc29]' 
+                  : 'border-transparent text-white/55 hover:text-white'
+              }`}
+            >
+              <Activity size={14} /> 6. Comparación de Escenarios
+            </button>
+            <button 
               onClick={() => setActiveSensSubTab('report')}
               className={`pb-2 transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
                 activeSensSubTab === 'report' 
@@ -1104,7 +1196,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   : 'border-transparent text-white/55 hover:text-white'
               }`}
             >
-              <FileText size={14} /> 6. Informe Ejecutivo PDF
+              <FileText size={14} /> 7. Informe Ejecutivo PDF
             </button>
           </div>
 
@@ -2091,7 +2183,308 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
               </div>
             )}
 
-            {/* SUB-TAB 6: INFORME EJECUTIVO COMPLETO (PDF) */}
+            {/* SUB-TAB 6: COMPARACIÓN DE ESCENARIOS */}
+            {activeSensSubTab === 'comparison' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-300 print:hidden font-sans">
+                
+                {/* Left controls column (SMLMV inputs) */}
+                <div className="lg:col-span-4 space-y-6">
+                  
+                  {/* Parameter controls box */}
+                  <div className="bg-[#0f172a] border border-white/10 p-6 rounded-[28px] shadow-2xl space-y-5">
+                    <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+                      <Settings className="text-[#ffcc29] w-5 h-5" />
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">Parámetros Modelo SMLMV</h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Elasticity Price-Demand (shared/linked with main state) */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Elasticidad Precio Demanda (ε)</span>
+                          <strong className="text-[#ffcc29] font-mono">{elasticity.toFixed(2)}</strong>
+                        </div>
+                        <input 
+                          type="range"
+                          min="-2.00"
+                          max="0.00"
+                          step="0.05"
+                          value={elasticity}
+                          onChange={(e) => setElasticity(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                        />
+                        <p className="text-[9px] text-white/40 leading-normal font-mono">Sensibilidad del volumen de inscritos ante incrementos arancelarios.</p>
+                      </div>
+
+                      {/* SMLMV Increase 2027 (%) */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Incremento SMLMV 2027 (%)</span>
+                          <strong className="text-white font-mono">{smlmvIncrease2027.toFixed(1)}%</strong>
+                        </div>
+                        <input 
+                          type="range"
+                          min="4.0"
+                          max="20.0"
+                          step="0.5"
+                          value={smlmvIncrease2027}
+                          onChange={(e) => setSmlmvIncrease2027(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                        />
+                        <p className="text-[9px] text-white/40 leading-normal font-mono">Incremento estimado del salario mínimo para la vigencia 2027.</p>
+                      </div>
+
+                      {/* SMLMV Student growth baseline (%) */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Variación Base Estudiantes (%)</span>
+                          <strong className={`font-mono ${smlmvStudentVar >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                            {smlmvStudentVar > 0 ? '+' : ''}{smlmvStudentVar.toFixed(1)}%
+                          </strong>
+                        </div>
+                        <input 
+                          type="range"
+                          min="-10.0"
+                          max="5.0"
+                          step="0.5"
+                          value={smlmvStudentVar}
+                          onChange={(e) => setSmlmvStudentVar(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                        />
+                        <p className="text-[9px] text-white/40 leading-normal font-mono">Tasa de crecimiento o contracción tendencial de matrícula anual independiente de la tarifa.</p>
+                      </div>
+
+                      {/* SMLMV Growth Rate after 2027 (%) */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Crecimiento SMLMV 2028+ (%)</span>
+                          <strong className="text-white font-mono">{smlmvGrowthRate.toFixed(1)}%</strong>
+                        </div>
+                        <input 
+                          type="range"
+                          min="3.0"
+                          max="12.0"
+                          step="0.5"
+                          value={smlmvGrowthRate}
+                          onChange={(e) => setSmlmvGrowthRate(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                        />
+                        <p className="text-[9px] text-white/40 leading-normal font-mono">Variación porcentual anual del salario mínimo proyectada a largo plazo.</p>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* AI automatic executive report analysis */}
+                  <div className="bg-[#ffcc29]/5 border border-[#ffcc29]/20 p-5 rounded-[28px] space-y-3">
+                    <span className="font-bold text-[#ffcc29] text-xs flex items-center gap-1.5 uppercase tracking-wider font-mono">
+                      <Bot size={15} /> Análisis Ejecutivo de la Transición:
+                    </span>
+                    <div className="text-white/80 text-[11px] leading-relaxed space-y-2.5 font-sans">
+                      <p>
+                        <strong>Impacto Diferido del 15%:</strong> Al liquidar las matrículas bajo el esquema SMLMV en 2027, la UPTC debe reflejar la variación diferida acumulada del año anterior (15%) más la estimación de la vigencia (2027: {smlmvIncrease2027.toFixed(1)}%), induciendo una subida arancelaria agregada del <strong>{comparisonInsights.priceVarPct2027.toFixed(1)}%</strong> en el costo por estudiante.
+                      </p>
+                      <p>
+                        <strong>Pérdida de Demanda Estudiantil:</strong> Ante esta brusca corrección arancelaria y bajo una elasticidad precio de {elasticity.toFixed(2)}, se estima una contracción severa en el número de estudiantes matriculados de 5,170 (2026) a <strong>{comparisonInsights.targetData.smlmvStudents}</strong> para la vigencia {elasticityYear}, lo que representa una contracción adicional en las cohortes.
+                      </p>
+                      <p>
+                        <strong>Beneficio del Modelo por Créditos:</strong> En contraste, el esquema tarifario por créditos permite ajustar el cobro de matrícula al avance curricular real del alumno. El recaudo total proyectado bajo el nuevo modelo por créditos asciende a un acumulado de <strong>{formatCurrency(scenarioComparisonData[scenarioComparisonData.length - 1]?.creditRecaudo)}</strong> en {2026 + numYearsProyectar} frente a los <strong>{formatCurrency(scenarioComparisonData[scenarioComparisonData.length - 1]?.smlmvRecaudo)}</strong> proyectados bajo el modelo del SMLMV rígido.
+                      </p>
+                      <p>
+                        <strong>Conclusión de Sostenibilidad:</strong> La reforma tarifaria por créditos genera un incremento neto acumulado de <strong>{formatCurrency(Math.abs(comparisonInsights.totalAccumulatedDiff))}</strong> (+{((comparisonInsights.totalAccumulatedDiff / (scenarioComparisonData.reduce((acc, d) => acc + d.smlmvRecaudo, 0) || 1)) * 100).toFixed(1)}%) en el Recurso R31, garantizando la viabilidad presupuestaria y reduciendo la deserción académica incentivada por cobros fijos semestrales.
+                      </p>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Right dashboard column (KPIs and Charts) */}
+                <div className="lg:col-span-8 space-y-6">
+                  
+                  {/* KPI Cards Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    
+                    {/* KPI 1: Ingresos SMLMV */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                      <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Ingresos SMLMV ({elasticityYear})</span>
+                      <div className="mt-2">
+                        <div className="text-sm font-bold text-white truncate">{formatCurrencyShort(comparisonInsights.targetData.smlmvRecaudo)}</div>
+                        <span className="text-[9px] text-white/30 block mt-0.5">{comparisonInsights.targetData.smlmvStudents} estudiantes</span>
+                      </div>
+                    </div>
+
+                    {/* KPI 2: Ingresos Créditos */}
+                    <div className="bg-[#0f172a] border border-[#ffcc29]/20 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                      <span className="text-[10px] text-[#ffcc29] uppercase font-bold tracking-wider font-mono">Ingresos Créditos ({elasticityYear})</span>
+                      <div className="mt-2">
+                        <div className="text-sm font-bold text-[#ffcc29] truncate">{formatCurrencyShort(comparisonInsights.targetData.creditRecaudo)}</div>
+                        <span className="text-[9px] text-[#ffcc29]/50 block mt-0.5">{comparisonInsights.targetData.creditStudents} estudiantes</span>
+                      </div>
+                    </div>
+
+                    {/* KPI 3: Diferencia Absoluta */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                      <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Diferencia Neta ({elasticityYear})</span>
+                      <div className="mt-2">
+                        <div className={`text-sm font-bold truncate ${comparisonInsights.targetData.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                          {comparisonInsights.targetData.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrencyShort(comparisonInsights.targetData.diffRecaudoAbs)}
+                        </div>
+                        <span className={`text-[9px] font-bold block mt-0.5 ${comparisonInsights.targetData.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                          {comparisonInsights.targetData.diffRecaudoPct.toFixed(1)}% vs SMLMV
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* KPI 4: Ingreso Promedio por Estudiante */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                      <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Ingreso Promedio / Est.</span>
+                      <div className="mt-2">
+                        <div className="text-xs text-white/70 block truncate">SMLMV: {formatCurrencyShort(comparisonInsights.targetData.smlmvPrice)}</div>
+                        <div className="text-xs text-[#ffcc29] font-bold truncate mt-0.5">Créditos: {formatCurrencyShort(comparisonInsights.targetData.creditRecaudo / (comparisonInsights.targetData.creditStudents || 1))}</div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* 2x2 Charts Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {/* Chart 1: Revenue Comparison (SMLMV vs Credits) */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-5 flex flex-col shadow-xl">
+                      <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-3">1. Comparación de Ingresos Proyectados (Millones COP)</h4>
+                      <div className="h-48" style={{ width: '100%', height: 192, minWidth: 150 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={scenarioComparisonData.map(d => ({
+                            name: d.anio.toString(),
+                            'Ingresos SMLMV (M)': Math.round(d.smlmvRecaudo / 1e6 * 10) / 10,
+                            'Ingresos Créditos (M)': Math.round(d.creditRecaudo / 1e6 * 10) / 10
+                          }))} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="name" stroke="#475569" className="text-[8px] font-mono" />
+                            <YAxis stroke="#475569" className="text-[8px] font-mono" tickFormatter={(v) => `$${v}M`} />
+                            <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px', borderRadius: '8px'}} />
+                            <Legend wrapperStyle={{fontSize: '9px', marginTop: 5}} />
+                            <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.05} strokeWidth={1.5} />
+                            <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#ffcc29" fill="#ffcc29" fillOpacity={0.1} strokeWidth={2} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Chart 2: Student enrollment comparison */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-5 flex flex-col shadow-xl">
+                      <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-3">2. Comparación de Matrículas Proyectadas (Estudiantes)</h4>
+                      <div className="h-48" style={{ width: '100%', height: 192, minWidth: 150 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={scenarioComparisonData.map(d => ({
+                            name: d.anio.toString(),
+                            'Alumnos SMLMV': d.smlmvStudents,
+                            'Alumnos Créditos': d.creditStudents
+                          }))} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="name" stroke="#475569" className="text-[8px] font-mono" />
+                            <YAxis stroke="#475569" className="text-[8px] font-mono" />
+                            <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px', borderRadius: '8px'}} />
+                            <Legend wrapperStyle={{fontSize: '9px', marginTop: 5}} />
+                            <Line type="monotone" dataKey="Alumnos SMLMV" stroke="#94a3b8" strokeWidth={1.5} dot={{r: 2}} />
+                            <Line type="monotone" dataKey="Alumnos Créditos" stroke="#4ade80" strokeWidth={2} dot={{r: 2}} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Chart 3: Percentage Variation */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-5 flex flex-col shadow-xl">
+                      <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-3">3. Variación Porcentual de Ingresos (Créditos vs SMLMV)</h4>
+                      <div className="h-48" style={{ width: '100%', height: 192, minWidth: 150 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={scenarioComparisonData.map(d => ({
+                            name: d.anio.toString(),
+                            'Incremento (%)': Math.round(d.diffRecaudoPct * 10) / 10
+                          }))} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="name" stroke="#475569" className="text-[8px] font-mono" />
+                            <YAxis stroke="#475569" className="text-[8px] font-mono" tickFormatter={(v) => `${v}%`} />
+                            <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px', borderRadius: '8px'}} />
+                            <ReferenceLine y={0} stroke="#475569" />
+                            <Bar dataKey="Incremento (%)" fill="#3b82f6" radius={[2, 2, 0, 0]}>
+                              {scenarioComparisonData.map((entry, idx) => {
+                                const isPos = entry.diffRecaudoAbs >= 0;
+                                return <Cell key={`cell-${idx}`} fill={isPos ? '#4ade80' : '#f43f5e'} />;
+                              })}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Chart 4: Accumulated Gain/Loss */}
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-5 flex flex-col shadow-xl">
+                      <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-3">4. Pérdida o Ganancia Acumulada del R31 (Millones COP)</h4>
+                      <div className="h-48" style={{ width: '100%', height: 192, minWidth: 150 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={scenarioComparisonData.map(d => ({
+                            name: d.anio.toString(),
+                            'Acumulado (M)': Math.round(d.accumulatedDiff / 1e6 * 10) / 10
+                          }))} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="name" stroke="#475569" className="text-[8px] font-mono" />
+                            <YAxis stroke="#475569" className="text-[8px] font-mono" tickFormatter={(v) => `$${v}M`} />
+                            <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px', borderRadius: '8px'}} />
+                            <ReferenceLine y={0} stroke="#475569" />
+                            <Area type="monotone" dataKey="Acumulado (M)" stroke="#4ade80" fill="#4ade80" fillOpacity={0.1} strokeWidth={2} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Scenario comparison detail table */}
+                  <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 shadow-xl">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Tabla Resumen Comparativa: SMLMV vs Créditos Académicos</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/10 bg-white/5 font-bold text-white">
+                            <th className="p-3">Año</th>
+                            <th className="p-3 text-right">Est. SMLMV</th>
+                            <th className="p-3 text-right">Est. Créditos</th>
+                            <th className="p-3 text-right">Recaudo SMLMV</th>
+                            <th className="p-3 text-right">Recaudo Créditos</th>
+                            <th className="p-3 text-right">Var. Matrícula SMLMV</th>
+                            <th className="p-3 text-right">Dif. Recaudo</th>
+                            <th className="p-3 text-right">Dif. (%)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-white/80 font-mono">
+                          {scenarioComparisonData.map(d => (
+                            <tr key={d.anio} className="hover:bg-white/[0.04]">
+                              <td className="p-3 font-sans font-bold text-white">{d.anio}</td>
+                              <td className="p-3 text-right text-slate-400">{d.smlmvStudents}</td>
+                              <td className="p-3 text-right text-[#4ade80] font-bold">{d.creditStudents}</td>
+                              <td className="p-3 text-right text-slate-400">{formatCurrency(d.smlmvRecaudo)}</td>
+                              <td className="p-3 text-right text-[#ffcc29] font-bold">{formatCurrency(d.creditRecaudo)}</td>
+                              <td className="p-3 text-right text-rose-300">+{d.tuitionVariationPct.toFixed(1)}%</td>
+                              <td className={`p-3 text-right font-bold ${d.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                                {d.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrency(d.diffRecaudoAbs)}
+                              </td>
+                              <td className={`p-3 text-right font-bold ${d.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                                {d.diffRecaudoPct.toFixed(1)}%
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* SUB-TAB 7: INFORME EJECUTIVO COMPLETO (PDF) */}
             {activeSensSubTab === 'report' && (
               <div className="space-y-6">
                 
@@ -2316,9 +2709,103 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                     </div>
                   </div>
 
+                  {/* Section 5: Comparación de Esquemas (SMLMV vs Créditos) */}
+                  <div className="space-y-2 text-xs text-slate-800 border-t border-slate-200 pt-4 page-break-before font-sans" style={{ pageBreakBefore: 'always' }}>
+                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">5. Comparación Financiera de Esquemas (SMLMV vs Créditos Académicos)</h3>
+                    <p className="leading-relaxed text-justify">
+                      Soporte técnico y financiero de la transición tarifaria en el Recurso R31. Se contrasta el modelo semestral tradicional basado en el Salario Mínimo Legal Mensual Vigente (SMLMV) —el cual incorpora el incremento diferido del 15% acumulado de la vigencia anterior más la proyección del {smlmvIncrease2027.toFixed(1)}% para el 2027— frente al nuevo modelo modular por créditos académicos:
+                    </p>
+
+                    {/* KPI grid for print */}
+                    <div className="grid grid-cols-4 gap-2 text-center my-2">
+                      <div className="border border-slate-200 p-2 rounded-lg bg-slate-50">
+                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Ingresos SMLMV ({elasticityYear})</span>
+                        <span className="text-xs font-bold text-slate-800 block mt-0.5">{formatCurrencyShort(comparisonInsights.targetData.smlmvRecaudo)}</span>
+                      </div>
+                      <div className="border border-slate-200 p-2 rounded-lg bg-slate-50">
+                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Ingresos Créditos ({elasticityYear})</span>
+                        <span className="text-xs font-bold text-[#eab308] block mt-0.5">{formatCurrencyShort(comparisonInsights.targetData.creditRecaudo)}</span>
+                      </div>
+                      <div className="border border-slate-200 p-2 rounded-lg bg-slate-50">
+                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Diferencia Absoluta</span>
+                        <span className={`text-xs font-bold block mt-0.5 ${comparisonInsights.targetData.diffRecaudoAbs >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          {comparisonInsights.targetData.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrencyShort(comparisonInsights.targetData.diffRecaudoAbs)}
+                        </span>
+                      </div>
+                      <div className="border border-slate-200 p-2 rounded-lg bg-slate-50">
+                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Estudiantes Créditos vs SMLMV</span>
+                        <span className="text-xs font-bold text-slate-800 block mt-0.5">
+                          {comparisonInsights.targetData.creditStudents} vs {comparisonInsights.targetData.smlmvStudents} ({comparisonInsights.targetData.diffStudents > 0 ? '+' : ''}{comparisonInsights.targetData.diffStudents})
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Projections Comparison Table */}
+                    <div className="overflow-x-auto my-2">
+                      <table className="w-full text-left text-[9px] border border-slate-200 border-collapse">
+                        <thead>
+                          <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
+                            <th className="p-1 border-r border-slate-200">Año</th>
+                            <th className="p-1 border-r border-slate-200 text-right">Est. SMLMV</th>
+                            <th className="p-1 border-r border-slate-200 text-right">Est. Créditos</th>
+                            <th className="p-1 border-r border-slate-200 text-right">Ingresos SMLMV</th>
+                            <th className="p-1 border-r border-slate-200 text-right">Ingresos Créditos</th>
+                            <th className="p-1 border-r border-slate-200 text-right">Var. Tarifa SMLMV</th>
+                            <th className="p-1 text-right">Diferencia Recaudo</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
+                          {scenarioComparisonData.slice(0, 5).map(d => (
+                            <tr key={d.anio} className="hover:bg-slate-50">
+                              <td className="p-1 font-sans font-bold border-r border-slate-200 text-slate-900">{d.anio}</td>
+                              <td className="p-1 text-right border-r border-slate-200">{d.smlmvStudents}</td>
+                              <td className="p-1 text-right border-r border-slate-200 font-bold text-slate-900">{d.creditStudents}</td>
+                              <td className="p-1 text-right border-r border-slate-200">{formatCurrency(d.smlmvRecaudo)}</td>
+                              <td className="p-1 text-right border-r border-slate-200 font-bold text-slate-900">{formatCurrency(d.creditRecaudo)}</td>
+                              <td className="p-1 text-right border-r border-slate-200 text-rose-600">+{d.tuitionVariationPct.toFixed(1)}%</td>
+                              <td className={`p-1 text-right font-bold ${d.diffRecaudoAbs >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                {d.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrency(d.diffRecaudoAbs)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Chart in PDF */}
+                    <div className="space-y-1 my-2">
+                      <h4 className="text-[9px] font-bold text-slate-700 uppercase tracking-widest text-center">Comparativa de Ingresos R31 (SMLMV vs Créditos)</h4>
+                      <div className="h-44 w-full border border-slate-200 p-2 rounded-xl bg-slate-50">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={scenarioComparisonData.slice(0, 5).map(d => ({
+                            anio: d.anio.toString(),
+                            'Ingresos SMLMV (M)': Math.round(d.smlmvRecaudo / 1e6 * 10) / 10,
+                            'Ingresos Créditos (M)': Math.round(d.creditRecaudo / 1e6 * 10) / 10
+                          }))} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                            <XAxis dataKey="anio" stroke="#475569" className="text-[8px] font-mono" />
+                            <YAxis stroke="#475569" className="text-[8px] font-mono" tickFormatter={(val) => `$${val}M`} />
+                            <Legend wrapperStyle={{fontSize: '8px'}} />
+                            <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.05} strokeWidth={1.5} />
+                            <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#eab308" fill="#eab308" fillOpacity={0.1} strokeWidth={2} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Insights Summary for print */}
+                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-[9px] leading-relaxed text-slate-700">
+                      <span className="font-bold text-slate-900 block mb-1">Dictamen del Impacto Financiero y Sostenibilidad R31:</span>
+                      <p className="text-justify">
+                        La simulación evidencia que conservar el cobro indexado al SMLMV con incrementos bruscos del <strong>{comparisonInsights.priceVarPct2027.toFixed(1)}%</strong> (derivados de diferir el 15% de la vigencia previa) gatilla la elasticidad precio ($\epsilon = {elasticity.toFixed(2)}$), induciendo una fuerte deserción que contrae la matrícula a <strong>{comparisonInsights.targetData.smlmvStudents}</strong> alumnos. Bajo el nuevo modelo de cobro por créditos académicos (VBCI), aunque el ingreso unitario se adecua flexiblemente, se recupera el volumen de estudiantes matriculados. El beneficio neto incremental acumulado para el fondo de posgrados R31 asciende a <strong>{formatCurrency(comparisonInsights.totalAccumulatedDiff)}</strong> en {2026 + numYearsProyectar}, validando la necesidad inaplazable del cobro por créditos para sostener la solvencia de los programas.
+                      </p>
+                    </div>
+
+                  </div>
+
                   {/* Section 6: Dictamen de Riesgo, Sensibilidad y Justificación de la Reforma */}
                   <div className="space-y-2 text-xs text-slate-800 border-t border-slate-200 pt-4 text-justify leading-relaxed">
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">5. Dictamen de Riesgo, Sensibilidad y Justificación de la Reforma</h3>
+                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">6. Dictamen de Riesgo, Sensibilidad y Justificación de la Reforma</h3>
                     <p>
                       <strong>Evaluación de Riesgo y Sensibilidad del Recurso R31:</strong> El fondo especial de posgrados Recurso R31 constituye uno de los pilares de ingresos propios más importantes en el presupuesto institucional de la UPTC. El análisis financiero revela que este recurso presenta una sensibilidad crítica ante el coeficiente de elasticidad precio de la matrícula (ε = {elasticity.toFixed(2)}) y la deserción estudiantil. Variaciones desproporcionadas en el valor del crédito académico pueden contraer de forma severa el número de inscritos, comprometiendo los flujos de caja proyectados y la cobertura de costos directos e indirectos, situando el ratio de cobertura DSCR en {posgradSensitivityAnalysis.dscrBase.toFixed(2)}x (frente al covenant mínimo exigible de 1.25x). Asimismo, el R31 muestra una vulnerabilidad elevada ante la deducción por estampillas e indirectos de la administración central ({centralDeductionPct}%), la cual ejerce una fuerte presión sobre la caja operativa disponible, limitando el margen de reinversión en docencia, infraestructura y laboratorios del posgrado.
                     </p>
