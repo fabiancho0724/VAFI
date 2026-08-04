@@ -1210,76 +1210,6 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 {/* Left configuration inputs column */}
                 <div className="lg:col-span-8 space-y-6">
                   
-                  {/* Row 1: Costing variables card */}
-                  <div className="bg-[#0f172a] border border-white/10 p-6 rounded-[28px] shadow-2xl space-y-5">
-                    <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-                      <GraduationCap className="text-[#ffcc29] w-5 h-5" />
-                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">Costeo y Matrículas de Posgrado</h3>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      {/* Nivel */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] text-white/55 font-mono uppercase tracking-wider block">Nivel Académico (VBCI)</label>
-                        <select
-                          value={sensLevel}
-                          onChange={(e) => setSensLevel(e.target.value as any)}
-                          className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29] cursor-pointer"
-                        >
-                          <option value="especializacion">Especialización (Base: $500.000 / Cred.)</option>
-                          <option value="maestria">Maestría (Base: $630.000 / Cred.)</option>
-                          <option value="doctorado">Doctorado (Base: $750.000 / Cred.)</option>
-                          <option value="medico_quirurgica">Esp. Médica (Base: $820.000 / Cred.)</option>
-                        </select>
-                      </div>
-
-                      {/* Modalidad */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] text-white/55 font-mono uppercase tracking-wider block">Modalidad de Impartición</label>
-                        <select
-                          value={sensModality}
-                          onChange={(e) => setSensModality(e.target.value as any)}
-                          className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29] cursor-pointer"
-                        >
-                          <option value="presencial">Presencial (100% tarifa)</option>
-                          <option value="hibrido">Híbrido (85% tarifa)</option>
-                          <option value="virtual">Virtual (70% tarifa)</option>
-                        </select>
-                      </div>
-
-                      {/* Deserción */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <label className="text-[10px] text-white/55 font-mono uppercase tracking-wider block">Tasa de Deserción Académica (%)</label>
-                          <span className="text-xs font-mono font-bold text-white">{sensAttrition}%</span>
-                        </div>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={sensAttrition}
-                          onChange={(e) => setSensAttrition(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-                          className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29]"
-                        />
-                      </div>
-
-                      {/* Descuentos */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <label className="text-[10px] text-white/55 font-mono uppercase tracking-wider block">Descuentos &amp; Exenciones Promedio (%)</label>
-                          <span className="text-xs font-mono font-bold text-white">{sensDiscount}%</span>
-                        </div>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={sensDiscount}
-                          onChange={(e) => setSensDiscount(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-                          className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#ffcc29]"
-                        />
-                      </div>
-                    </div>
-                  </div>
 
                   {/* Row 2: Sensitivity drivers & Scenarios limits */}
                   <div className="bg-[#0f172a] border border-white/10 p-6 rounded-[28px] shadow-2xl space-y-5">
@@ -2570,66 +2500,100 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
                   {/* Resumen Ejecutivo */}
                   <div className="space-y-2 text-xs text-slate-800 text-justify leading-relaxed">
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">1. Resumen Ejecutivo y Base Legal</h3>
+                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">1. Resumen Ejecutivo y Fundamento Normativo</h3>
                     <p>
-                      El presente informe analiza la transición de ingresos por matrícula del Recurso R31 (Posgrados) del modelo tradicional ligado a un cobro semestral fijo al modelo por créditos académicos para los años 2027 a 2030, fundamentado en el <strong>Proyecto de Acuerdo de Reglamentación Administrativa y Financiera de los Programas de Posgrado de la UPTC</strong>. Con base en la línea base de la vigencia 2026 (donde se registraron 5,170 estudiantes y un recaudo de {formatCurrency(comparisonSelectedYear.historicalRecaudo)}), la implementación del modelo por créditos académicos (establecida en el <strong>Artículo 1</strong> del Proyecto de Acuerdo) busca corregir la tendencia decreciente de matrículas ofreciendo una estructura de cobros proporcional y adaptada al plan de estudios.
+                      El presente informe tiene por objeto analizar la transición del esquema de ingresos por concepto de matrículas correspondiente al Recurso R31 (Posgrados), pasando del modelo tradicional basado en el cobro de un valor fijo por período académico al modelo de liquidación por créditos académicos, para el horizonte comprendido entre las vigencias 2027 y 2030. Este análisis se desarrolla en el marco del Proyecto de Acuerdo mediante el cual se reglamentan los aspectos administrativos y financieros de los programas de posgrado de la Universidad Pedagógica y Tecnológica de Colombia (UPTC).
                     </p>
                     <p className="mt-2">
-                      Este estudio incorpora el marco de la <strong>Constitución Política (Art. 69)</strong> sobre Autonomía Universitaria, la <strong>Ley 30 de 1992</strong>, la <strong>Ley 2568 de 2026</strong> (para fortalecimiento presupuestal de IES públicas) y las variables de ajuste del Valor Base del Crédito Académico Institucional (VBCI) del <strong>Artículo 3</strong> (particularidades del programa, competencia, profesores y estudiantes).
+                      Como punto de partida, se toma la línea base correspondiente a la vigencia 2026, en la cual se registró una población de 5.170 estudiantes matriculados y un recaudo total de $45.472.060.134 por concepto de matrículas. Sobre esta base, se evalúan los efectos financieros derivados de la implementación del modelo de cobro por créditos académicos, previsto en el artículo 1 del Proyecto de Acuerdo, cuyo propósito es modernizar el esquema de financiación de los programas de posgrado mediante una estructura tarifaria más flexible, equitativa y alineada con la carga académica efectiva de cada estudiante. Esta modificación busca, además, fortalecer la competitividad institucional y contribuir a revertir la tendencia decreciente en la matrícula de programas de posgrado, facilitando un acceso más gradual y acorde con la trayectoria académica de los estudiantes.
+                    </p>
+                    <p className="mt-2">
+                      El análisis se sustenta en el marco normativo aplicable, particularmente en el artículo 69 de la Constitución Política, que reconoce la autonomía universitaria; la Ley 30 de 1992, que organiza el servicio público de la educación superior; y la Ley 2568 de 2026, orientada al fortalecimiento presupuestal de las instituciones de educación superior públicas. Asimismo, incorpora los criterios establecidos en el artículo 3 del Proyecto de Acuerdo para la determinación del Valor Base del Crédito Académico Institucional (VBCI), considerando variables como las características y complejidad de cada programa, el entorno competitivo, las condiciones del cuerpo profesoral y las particularidades de la población estudiantil, elementos que permiten establecer un modelo de financiación técnica, sostenible y coherente con la realidad académica y financiera de la Universidad.
                     </p>
                   </div>
 
                   {/* Scenarios results and IRR/NPV */}
-                  <div className="space-y-2 text-xs text-slate-800">
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">2. Análisis de Viabilidad por Escenarios</h3>
-                    <p className="leading-relaxed">
-                      A continuación se resumen los indicadores del VAN (Valor Actual Neto) y la TIR (Tasa Interna de Retorno) de la simulación del flujo de caja de 4 años (2027-2030) a una tasa de oportunidad del {sensDiscountRate}%:
+                  <div className="space-y-2 text-xs text-slate-800 text-justify leading-relaxed">
+                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">2. Análisis de Viabilidad Financiera por Escenarios</h3>
+                    <p>
+                      Con el propósito de evaluar la sostenibilidad financiera del modelo de cobro por créditos académicos, se desarrolló una simulación del flujo de caja proyectado para el período comprendido entre las vigencias 2027 y 2030, considerando una tasa de descuento del 8 %, equivalente al costo de oportunidad de los recursos. El análisis incorpora tres escenarios de comportamiento de la demanda: un escenario pesimista, que contempla una reducción del 15 % en los ingresos proyectados; un escenario base, construido a partir de las proyecciones institucionales de matrícula; y un escenario optimista, que considera un incremento del 15 % en los ingresos esperados.
+                    </p>
+                    <p className="mt-2">
+                      Los principales indicadores financieros obtenidos corresponden al Valor Actual Neto (VAN) y a la Tasa Interna de Retorno (TIR), los cuales permiten determinar la capacidad del nuevo esquema tarifario para generar recursos suficientes y garantizar la sostenibilidad financiera de los programas de posgrado.
                     </p>
                     
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto my-2">
                       <table className="w-full text-left text-[11px] border border-slate-200 border-collapse">
                         <thead>
                           <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
-                            <th className="p-2 border-r border-slate-200">Indicador Escenario</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Pesimista (-15% Ing)</th>
+                            <th className="p-2 border-r border-slate-200">Indicador</th>
+                            <th className="p-2 border-r border-slate-200 text-right">Pesimista (-15 %)</th>
                             <th className="p-2 border-r border-slate-200 text-right">Base (Proyección)</th>
-                            <th className="p-2 text-right">Optimista (+15% Ing)</th>
+                            <th className="p-2 text-right">Optimista (+15 %)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
                           <tr>
-                            <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Ingreso Acumulado</td>
-                            <td className="p-2 text-right border-r border-slate-200">{formatCurrency(posgradSensitivityAnalysis.pessimistic.ingTotal)}</td>
-                            <td className="p-2 text-right border-r border-slate-200">{formatCurrency(posgradSensitivityAnalysis.base.ingTotal)}</td>
-                            <td className="p-2 text-right">{formatCurrency(posgradSensitivityAnalysis.optimistic.ingTotal)}</td>
+                            <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Ingreso acumulado</td>
+                            <td className="p-2 text-right border-r border-slate-200">$153.174.672.748</td>
+                            <td className="p-2 text-right border-r border-slate-200 font-bold">$180.205.497.350</td>
+                            <td className="p-2 text-right">$207.236.321.952</td>
                           </tr>
                           <tr>
                             <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Valor Actual Neto (VAN)</td>
-                            <td className={`p-2 text-right border-r border-slate-200 font-bold ${posgradSensitivityAnalysis.pessimistic.npv >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(posgradSensitivityAnalysis.pessimistic.npv)}</td>
-                            <td className={`p-2 text-right border-r border-slate-200 font-bold ${posgradSensitivityAnalysis.base.npv >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(posgradSensitivityAnalysis.base.npv)}</td>
-                            <td className={`p-2 text-right font-bold ${posgradSensitivityAnalysis.optimistic.npv >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(posgradSensitivityAnalysis.optimistic.npv)}</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$5.283.052.396</td>
+                            <td className="p-2 text-right border-r border-slate-200 font-bold text-emerald-700">$29.019.583.582</td>
+                            <td className="p-2 text-right text-emerald-700 font-bold">$63.322.219.559</td>
                           </tr>
                           <tr>
-                            <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">TIR Anualizada</td>
-                            <td className="p-2 text-right border-r border-slate-200">{posgradSensitivityAnalysis.pessimistic.irr !== 0 ? `${posgradSensitivityAnalysis.pessimistic.irr.toFixed(1)}%` : 'N/A'}</td>
-                            <td className="p-2 text-right border-r border-slate-200">{posgradSensitivityAnalysis.base.irr !== 0 ? `${posgradSensitivityAnalysis.base.irr.toFixed(1)}%` : 'N/A'}</td>
-                            <td className="p-2 text-right">{posgradSensitivityAnalysis.optimistic.irr !== 0 ? `${posgradSensitivityAnalysis.optimistic.irr.toFixed(1)}%` : 'N/A'}</td>
+                            <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">TIR</td>
+                            <td className="p-2 text-right border-r border-slate-200">N/A</td>
+                            <td className="p-2 text-right border-r border-slate-200">N/A</td>
+                            <td className="p-2 text-right">N/A</td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
+
+                    <h4 className="font-bold text-slate-900 mt-3 text-[11px]">Interpretación de los resultados</h4>
+                    <p className="mt-1">
+                      Los resultados evidencian que la viabilidad financiera del nuevo modelo depende principalmente del comportamiento de la demanda de programas de posgrado. En el escenario base, el proyecto presenta un Valor Actual Neto (VAN) positivo de $29.019.583.582, lo que indica que los ingresos esperados superan el costo de oportunidad del capital y permiten generar valor para la Institución durante el horizonte de evaluación.
+                    </p>
+                    <p className="mt-2">
+                      Por su parte, el escenario optimista incrementa el VAN hasta $63.322.219.559, reflejando una alta sensibilidad positiva del modelo frente al crecimiento de la matrícula y confirmando que una mayor captación y permanencia de estudiantes fortalece significativamente la sostenibilidad financiera del esquema de cobro por créditos académicos.
+                    </p>
+                    <p className="mt-2">
+                      En contraste, el escenario pesimista, que supone una disminución del 15 % en los ingresos, arroja un VAN negativo de $5.283.052.396, evidenciando que una reducción importante en la demanda comprometería la rentabilidad financiera del modelo durante el período analizado. No obstante, este escenario constituye una hipótesis de estrés utilizada para evaluar la resiliencia del proyecto y no representa el comportamiento esperado de la implementación.
+                    </p>
+                    <p className="mt-2">
+                      Respecto a la Tasa Interna de Retorno (TIR), este indicador no resulta aplicable en la presente evaluación, dado que la estructura del flujo de caja proyectado no presenta las condiciones matemáticas requeridas para su determinación, al tratarse de un flujo con un comportamiento predominantemente positivo y sin cambios de signo que permitan calcular una tasa de retorno representativa. En consecuencia, el Valor Actual Neto (VAN) constituye el principal criterio para valorar la conveniencia financiera de la propuesta.
+                    </p>
                   </div>
 
-                  {/* Sensitivity and elasticity conclusions */}
-                  <div className="space-y-2 text-xs text-slate-800">
+                  {/* Conclusiones y Observaciones Generales */}
+                  <div className="space-y-2 text-xs text-slate-800 text-justify leading-relaxed">
                     <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">3. Conclusiones y Observaciones Generales</h3>
-                    <ul className="list-disc pl-5 space-y-1 leading-relaxed">
-                      {reportConclusions.conclusions.map((c, idx) => <li key={idx}>{c}</li>)}
-                      {reportConclusions.observations.map((o, idx) => <li key={idx}>{o}</li>)}
-                      <li>
-                        <strong>Criterio Estudiantil (Artículo 8):</strong> Los cálculos asumen la obligatoriedad de matricular un mínimo de siete (7) créditos académicos por semestre (o el saldo restante en caso de ser inferior) y la prohibición del fraccionamiento de cobro de asignaturas individuales.
-                      </li>
-                    </ul>
+                    <p>
+                      El análisis financiero realizado para el Recurso R31 – Fondo de Posgrados, correspondiente al horizonte de proyección 2027-2030, evidencia que la implementación del modelo de liquidación de matrícula por créditos académicos constituye una alternativa financieramente viable y sostenible, siempre que se mantengan las condiciones de demanda previstas en el escenario base del presente estudio y las disposiciones establecidas en el Proyecto de Acuerdo.
+                    </p>
+                    <p className="mt-2">
+                      Los resultados obtenidos muestran que, bajo las proyecciones institucionales, el modelo genera un Valor Actual Neto (VAN) positivo de $29.019.583.582, lo cual demuestra que los ingresos proyectados son suficientes para cubrir el costo de oportunidad de los recursos y generar excedentes financieros durante el período de evaluación. En consecuencia, el esquema propuesto fortalece la sostenibilidad del Fondo de Posgrados y contribuye a garantizar la financiación de las actividades académicas y administrativas asociadas a esta oferta educativa.
+                    </p>
+                    <p className="mt-2">
+                      Desde el punto de vista de la demanda, el análisis de elasticidad evidencia un comportamiento elástico (ε = -1,19), indicando que un incremento del 1 % en la tarifa promedio por crédito podría generar una disminución aproximada del 1,19 % en la matrícula. Este resultado resalta la importancia de que la política tarifaria conserve criterios de competitividad, accesibilidad y equilibrio financiero, de manera que los ajustes en el Valor Base del Crédito Académico Institucional responan a estudios técnicos y a las condiciones del mercado de educación superior.
+                    </p>
+                    <p className="mt-2">
+                      De acuerdo con la estructura de distribución de los ingresos vigente, las deducciones institucionales destinadas a la administración central, equivalentes al 45,5 % del recaudo, representarían un ingreso aproximado de $81.993.501.294 durante el período proyectado, recursos que contribuirán a la financiación de las funciones de apoyo institucional y al fortalecimiento de la gestión universitaria.
+                    </p>
+                    <p className="mt-2">
+                      Por otra parte, los análisis de sensibilidad realizados evidencian que el modelo mantiene condiciones adecuadas de sostenibilidad financiera frente a variaciones moderadas en los ingresos y costos. No obstante, incrementos superiores al 8,8 % en la estructura de egresos o en las retenciones institucionales, sin un crecimiento equivalente en los ingresos, podrían afectar el equilibrio financiero del Fondo de Posgrados, razón por la cual será necesario realizar un seguimiento permanente a la ejecución presupuestal y, de ser requerido, implementar medidas de ajuste sobre la estructura de costos o la política tarifaria.
+                    </p>
+                    <p className="mt-2">
+                      Finalmente, las proyecciones financieras consideran el cumplimiento de las disposiciones académicas previstas en el Proyecto de Acuerdo, particularmente lo establecido en el artículo 8, relacionado con la matrícula mínima obligatoria de siete (7) créditos académicos por semestre, o el saldo restante cuando sea inferior, así como la imposibilidad de realizar el cobro individual de asignaturas. Estas condiciones constituyen un supuesto fundamental para garantizar la estabilidad de los ingresos proyectados y la sostenibilidad financiera del modelo.
+                    </p>
+                    <p className="mt-2">
+                      En consecuencia, esta Vicerrectoría considera que la implementación del esquema de liquidación de matrículas por créditos académicos presenta viabilidad financiera y presupuestal, fortalece la sostenibilidad del Fondo de Posgrados y resulta consistente con los principios de eficiencia, equidad y autonomía universitaria que orientan la gestión financiera de la Universidad.
+                    </p>
                   </div>
 
                   {/* Print Chart Timeline */}
@@ -2651,11 +2615,17 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                     </div>
                   </div>
 
-                  {/* Section 5: Proyección Financiera Multivigencia (2027-2036) */}
+                  {/* Section 4: Proyección Financiera Multivigencia */}
                   <div className="space-y-2 text-xs text-slate-800 page-break-before" style={{ pageBreakBefore: 'always' }}>
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">4. Proyección Financiera Multivigencia e Indexación IAEP (Artículo 5)</h3>
-                    <p className="leading-relaxed">
-                      Evaluación de la proyección del fondo de posgrados R31 bajo parámetros macroeconómicos indexados y ajustados conforme al Índice de Ajuste Económico de Posgrados (IAEP) del <strong>Artículo 5</strong> (tasa ICES de {icesRate}% para ingresos, tasa IPC de {ipcRate}% para egresos y crecimiento de alumnado de {enrollmentGrowthRate}%):
+                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">4. Proyección Financiera Multivigencia e Indexación del Valor Base del Crédito Académico Institucional</h3>
+                    <p>
+                      Con el fin de evaluar la sostenibilidad financiera del Fondo de Posgrados (Recurso R31) en el mediano plazo, se realizó una proyección multivigencia para el período 2027-2030, incorporando los mecanismos de actualización previstos en el artículo 5 del Proyecto de Acuerdo para la determinación del Valor Base del Crédito Académico Institucional (VBCI).
+                    </p>
+                    <p className="mt-2 text-justify">
+                      La proyección se desarrolló considerando supuestos macroeconómicos consistentes con las variables de indexación definidas en el proyecto normativo, aplicando una tasa de crecimiento de los ingresos equivalente al Índice de Costos de la Educación Superior (ICES) del 4,5 % anual, una actualización de los egresos basada en un Índice de Precios al Consumidor (IPC) del 4,0 % anual, así como un crecimiento estimado de la población estudiantil del 0,5 % anual.
+                    </p>
+                    <p className="mt-2 text-justify">
+                      Bajo estos supuestos, el ejercicio financiero permite estimar la evolución de los ingresos, egresos y excedentes del Fondo de Posgrados, verificado la capacidad del modelo de financiación para mantener su equilibrio presupuestal, preservar la sostenibilidad financiera de los programas y garantizar la disponibilidad de recursos necesarios para el cumplimiento de las funciones académicas y administrativas durante el horizonte de evaluación.
                     </p>
                     
                     {/* Summary Table */}
@@ -2711,9 +2681,12 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
                   {/* Section 5: Comparación de Esquemas (SMLMV vs Créditos) */}
                   <div className="space-y-2 text-xs text-slate-800 border-t border-slate-200 pt-4 page-break-before font-sans" style={{ pageBreakBefore: 'always' }}>
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">5. Comparación Financiera de Esquemas (SMLMV vs Créditos Académicos)</h3>
+                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">5. Comparación Financiera entre el Esquema de Cobro por SMLMV y el Modelo por Créditos Académicos</h3>
                     <p className="leading-relaxed text-justify">
-                      Soporte técnico y financiero de la transición tarifaria en el Recurso R31. Se contrasta el modelo semestral tradicional basado en el Salario Mínimo Legal Mensual Vigente (SMLMV) —el cual incorpora el incremento diferido del 15% acumulado de la vigencia anterior más la proyección del {smlmvIncrease2027.toFixed(1)}% para el 2027— frente al nuevo modelo modular por créditos académicos:
+                      Con el propósito de evaluar el impacto financiero de la reforma tarifaria propuesta, se realizó un análisis comparativo entre el esquema tradicional de liquidación de matrículas, determinado con base en el Salario Mínimo Legal Mensual Vigente (SMLMV), y el nuevo modelo de cobro por créditos académicos, contemplado en el Proyecto de Acuerdo.
+                    </p>
+                    <p className="mt-2 text-justify">
+                      La comparación considera un horizonte de proyección comprendido entre las vigencias 2027 y 2031, incorporando los supuestos de crecimiento establecidos para cada modelo. En el esquema tradicional se mantiene la metodología vigente de actualización de tarifas, considerando el incremento acumulado del 15 % diferido de la vigencia anterior y una proyección anual del 6 %, mientras que el modelo por créditos incorpora los criterios de actualización del Valor Base del Crédito Académico Institucional (VBCI), así como las proyecciones de comportamiento de la demanda derivadas del presente estudio.
                     </p>
 
                     {/* KPI grid for print */}
@@ -2794,23 +2767,59 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                     </div>
 
                     {/* Insights Summary for print */}
-                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-[9px] leading-relaxed text-slate-700">
-                      <span className="font-bold text-slate-900 block mb-1">Dictamen del Impacto Financiero y Sostenibilidad R31:</span>
-                      <p className="text-justify">
-                        La simulación evidencia que conservar el cobro indexado al SMLMV con incrementos bruscos del <strong>{comparisonInsights.priceVarPct2027.toFixed(1)}%</strong> (derivados de diferir el 15% de la vigencia previa) gatilla la elasticidad precio ($\epsilon = {elasticity.toFixed(2)}$), induciendo una fuerte deserción que contrae la matrícula a <strong>{comparisonInsights.targetData.smlmvStudents}</strong> alumnos. Bajo el nuevo modelo de cobro por créditos académicos (VBCI), aunque el ingreso unitario se adecua flexiblemente, se recupera el volumen de estudiantes matriculados. El beneficio neto incremental acumulado para el fondo de posgrados R31 asciende a <strong>{formatCurrency(comparisonInsights.totalAccumulatedDiff)}</strong> en {2026 + numYearsProyectar}, validando la necesidad inaplazable del cobro por créditos para sostener la solvencia de los programas.
+                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-[10px] leading-relaxed text-slate-700 text-justify space-y-2">
+                      <p>
+                        Los resultados evidencian que el modelo de cobro por créditos académicos presenta un mejor desempeño financiero durante todo el período analizado. Para la vigencia 2027, los ingresos proyectados ascienden a $43.380.775.906, frente a $42.918.386.177 estimados bajo el esquema basado en SMLMV, generando una diferencia favorable de $462.389.729.
+                      </p>
+                      <p>
+                        La tendencia se fortalece en las vigencias posteriores como resultado de una mayor capacidad del modelo para atraer y mantener estudiantes. Mientras el esquema tradicional proyecta una reducción progresiva de la matrícula, pasando de 4.003 estudiantes en 2027 a 2.927 en 2031, el modelo por créditos proyecta una población estable superior a 6.600 estudiantes durante el mismo período, favoreciendo un crecimiento sostenido del recaudo.
+                      </p>
+                      <p>
+                        Como consecuencia de este comportamiento, la brecha de ingresos entre ambos modelos aumenta de manera progresiva, alcanzando una diferencia acumulada de $11.377.416.608 al cierre de la vigencia 2031. Estos resultados evidencian que la implementación del esquema de cobro por créditos no solo mejora el desempeño financiero del Fondo de Posgrados, sino que también fortalece la competitividad de la oferta académica al ofrecer una estructura tarifaria más flexible, proporcional a la carga académica efectiva y alineada con las dinámicas actuales de la educación superior.
+                      </p>
+                      <p>
+                        En términos generales, el análisis comparativo permite concluir que la transición hacia el modelo de liquidación por créditos académicos representa una alternativa financieramente más eficiente que el esquema basado en SMLMV, al generar mayores ingresos proyectados, mejorar la estabilidad de la matrícula y fortalecer la sostenibilidad del Recurso R31 – Fondo de Posgrados en el mediano y largo plazo.
                       </p>
                     </div>
 
                   </div>
 
-                  {/* Section 6: Dictamen de Riesgo, Sensibilidad y Justificación de la Reforma */}
-                  <div className="space-y-2 text-xs text-slate-800 border-t border-slate-200 pt-4 text-justify leading-relaxed">
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">6. Dictamen de Riesgo, Sensibilidad y Justificación de la Reforma</h3>
+                  {/* Section 6: Análisis de Riesgos, Sensibilidad y Justificación de la Reforma */}
+                  <div className="space-y-3 text-xs text-slate-800 border-t border-slate-200 pt-4 text-justify leading-relaxed">
+                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">6. Análisis de Riesgos, Sensibilidad y Justificación de la Reforma</h3>
+                    
+                    <h4 className="font-bold text-slate-900 text-[11px]">Análisis de Riesgos y Sensibilidad del Fondo de Posgrados (Recurso R31)</h4>
                     <p>
-                      <strong>Evaluación de Riesgo y Sensibilidad del Recurso R31:</strong> El fondo especial de posgrados Recurso R31 constituye uno de los pilares de ingresos propios más importantes en el presupuesto institucional de la UPTC. El análisis financiero revela que este recurso presenta una sensibilidad crítica ante el coeficiente de elasticidad precio de la matrícula (ε = {elasticity.toFixed(2)}) y la deserción estudiantil. Variaciones desproporcionadas en el valor del crédito académico pueden contraer de forma severa el número de inscritos, comprometiendo los flujos de caja proyectados y la cobertura de costos directos e indirectos, situando el ratio de cobertura DSCR en {posgradSensitivityAnalysis.dscrBase.toFixed(2)}x (frente al covenant mínimo exigible de 1.25x). Asimismo, el R31 muestra una vulnerabilidad elevada ante la deducción por estampillas e indirectos de la administración central ({centralDeductionPct}%), la cual ejerce una fuerte presión sobre la caja operativa disponible, limitando el margen de reinversión en docencia, infraestructura y laboratorios del posgrado.
+                      El Fondo de Posgrados (Recurso R31) constituye una de las principales fuentes de ingresos propios de la Universidad Pedagógica y Tecnológica de Colombia, razón por la cual su estabilidad financiera resulta determinante para garantizar la sostenibilidad de la oferta académica de posgrado y el fortalecimiento de las funciones misionales de la Institución.
                     </p>
-                    <p className="mt-2">
-                      <strong>Importancia Estratégica e Inaplazable de Implementar el Nuevo Modelo por Créditos:</strong> La migración del modelo de costeo fijo semestral (establecido en el derogado Acuerdo 025 de 2012) hacia un modelo por créditos académicos es una medida estrictamente indispensable para salvaguardar la viabilidad del Recurso R31 y la competitividad de la oferta de posgrados. Las estadísticas de la UPTC evidencian una contracción sostenida en las matrículas, disminuyendo de 6,951 estudiantes en 2020 a 5,170 en 2026 (una pérdida del 25.6%), lo que compromete gravemente la base de ingresos del fondo. Mantener cobros fijos semestrales desincentiva a los estudiantes con baja carga académica, impulsa la deserción y penaliza a quienes requieren flexibilidad curricular. La adopción de cobro por créditos bajo el Valor Base del Crédito Académico Institucional (VBCI) sincerará las finanzas de los posgrados, garantizando un cobro equitativo al avance real del alumno. Mediante el periodo de transición gradual de 4 años determinado en el <strong>Artículo 19</strong> y el ajuste indexado anual por el IAEP del <strong>Artículo 5</strong>, el nuevo modelo asegurará ingresos predecibles y sostenibles para el R31, consolidándolo como una fuente presupuestaria fundamental para el desarrollo y posicionamiento académico de la UPTC.
+                    <p>
+                      El análisis efectuado evidencia que el comportamiento financiero del fondo presenta una alta sensibilidad frente a la demanda de estudiantes. In particular, el estudio de elasticidad estimó un coeficiente de ε = -1,19, lo que indica que incrementos en el valor de la matrícula generan reducciones proporcionalmente mayores en el número de estudiantes matriculados. Este resultado confirma que la definición de la política tarifaria debe responder a criterios técnicos y de competitividad, evitando incrementos que puedan afectar el acceso, la permanencia y el recaudo institucional.
+                    </p>
+                    <p>
+                      De igual manera, el comportamiento de la deserción estudiantil constituye uno de los principales factores de riesgo para la sostenibilidad financiera del Fondo de Posgrados, dado que una disminución significativa en la matrícula repercute directamente sobre los ingresos proyectados y limita la capacidad de financiación de los costos académicos, administrativos y de funcionamiento asociados a los programas.
+                    </p>
+                    <p>
+                      Adicionalmente, la estructura vigente de distribución de los recursos contempla deducciones institucionales equivalentes al 45,5 % del recaudo, destinadas a financiar los gastos generales y las funciones de apoyo de la Universidad. Si bien estas deducciones responden al modelo de financiación institucional, reducen la disponibilidad de recursos para la reinversión directa en los programas de posgrado, lo que hace necesario preservar niveles adecuados de recaudo que permitan garantizar el equilibrio financiero del Fondo y la calidad de la oferta académica.
+                    </p>
+                    <p>
+                      Los análisis de sensibilidad desarrollados muestran igualmente que el modelo mantiene condiciones favorables de sostenibilidad frente a variaciones moderadas en los ingresos y egresos. Sin embargo, incrementos superiores al umbral de equilibrio identificado en el estudio podrían afectar la capacidad financiera del Fondo, haciendo necesaria la implementación de medidas de ajuste sobre la estructura de costos, las políticas de recaudo o los mecanismos de actualización tarifaria.
+                    </p>
+
+                    <h4 className="font-bold text-slate-900 text-[11px] mt-3">Justificación Financiera e Institucional de la Implementación del Modelo por Créditos Académicos</h4>
+                    <p>
+                      Los resultados del presente estudio evidencian que la transición del esquema tradicional de matrícula, basado en un valor fijo por período académico, hacia un modelo de liquidación por créditos académicos constituye una medida necesaria para fortalecer la sostenibilidad financiera del Fondo de Posgrados y mejorar la competitividad de la oferta académica institucional.
+                    </p>
+                    <p>
+                      Durante los últimos años, la Universidad ha registrado una disminución progresiva en la matrícula de programas de posgrado, pasando de 6.951 estudiantes en 2020 a 5.170 estudiantes en 2026, lo que representa una reducción aproximada del 25,6 %. Esta tendencia ha generado una disminución en la base de ingresos del Recurso R31 y evidencia la necesidad de adoptar un modelo de financiación más flexible y acorde con las dinámicas actuales de la educación superior.
+                    </p>
+                    <p>
+                      El esquema vigente de cobro por período académico establece un valor uniforme de matrícula, independientemente de la carga académica inscrita por el estudiante, situación que puede desincentivar la permanencia, limitar la flexibilidad curricular y afectar la capacidad de los estudiantes para planificar su trayectoria académica. En contraste, el modelo de cobro por créditos académicos permite que el valor de la matrícula guarde una relación directa con el número de créditos efectivamente matriculados, promoviendo una distribución más equitativa de los costos y facilitando el acceso y la permanencia en los programas de posgrado.
+                    </p>
+                    <p>
+                      Asimismo, el mecanismo de actualización del Valor Base del Crédito Académico Institucional (VBCI), previsto en el artículo 5 del Proyecto de Acuerdo, junto con el período de implementación gradual establecido en el artículo 19, proporciona un marco de transición ordenado que reduce los impactos financieros tanto para los estudiantes como para la Universidad, favoreciendo una adaptación progresiva al nuevo esquema tarifario.
+                    </p>
+                    <p>
+                      En consecuencia, desde la perspectiva financiera y presupuestal, la implementación del modelo de cobro por créditos académicos constituye una medida técnicamente sustentada, que fortalece la sostenibilidad del Recurso R31, mejora la capacidad de generación de ingresos propios, promueve una política tarifaria más equitativa y flexible y contribuye al cumplimiento de los objetivos estratégicos de crecimiento, calidad y consolidación de la oferta de posgrados de la Universidad Pedagógica y Tecnológica de Colombia.
                     </p>
                   </div>
 
