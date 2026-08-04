@@ -82,7 +82,7 @@ interface SavedScenario {
   attritionPct: number;
   discountPct: number;
   hasCoordinator: boolean;
-  coordinatorCategory: UPTCRateCategory;
+  coordinatorCategory: UPTCRateCategory | 'doc_coordinador';
   hasSupportStaff: boolean;
   supportStaffCategory: UPTCRateCategory;
   courses: Asignatura[];
@@ -123,6 +123,20 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
   const [anioInicio, setAnioInicio] = useState<number>(2026);
   const [minStudents, setMinStudents] = useState<number>(15);
 
+  // VBCI Factor states (Art. 3)
+  const [cohorte, setCohorte] = useState<string>("15-24");
+  const [docentesType, setDocentesType] = useState<string>("Mixta");
+  const [tipoPrograma, setTipoPrograma] = useState<string>("Profundización");
+  const [complejidad, setComplejidad] = useState<string>("Media");
+  const [competitividad, setCompetitividad] = useState<string>("Media");
+  const [prioridad, setPrioridad] = useState<string>("Normal");
+  const [creditosSemestre, setCreditosSemestre] = useState<number>(12);
+
+  // Special Liquidations states (Art. 8, 9, 10)
+  const [specialTGCount, setSpecialTGCount] = useState<number>(0);
+  const [specialSustCount, setSpecialSustCount] = useState<number>(0);
+  const [specialTesis50PctCount, setSpecialTesis50PctCount] = useState<number>(0);
+
   // Config state
   const [level, setLevel] = useState<'doctorado' | 'maestria' | 'especializacion' | 'medico_quirurgica'>('maestria');
   const [modality, setModality] = useState<'presencial' | 'hibrido' | 'virtual'>('presencial');
@@ -131,7 +145,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
   
   // Staff configuration
   const [hasCoordinator, setHasCoordinator] = useState<boolean>(true);
-  const [coordinatorCategory, setCoordinatorCategory] = useState<UPTCRateCategory>("prof_apoyo");
+  const [coordinatorCategory, setCoordinatorCategory] = useState<UPTCRateCategory | 'doc_coordinador'>("prof_apoyo");
   const [hasSupportStaff, setHasSupportStaff] = useState<boolean>(true);
   const [supportStaffCategory, setSupportStaffCategory] = useState<UPTCRateCategory>("adm_grado_14");
 
@@ -214,16 +228,62 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
   ]);
   const [customQuestion, setCustomQuestion] = useState<string>("");
 
-  // Base values mapping
+  // Base VBCI Calculations according to UPTC Article 3 & factors formula
+  const VBCIFactors = useMemo(() => {
+    const factores = {
+      cohorte: { ">40": 0.90, "25-40": 0.95, "15-24": 1.0, "10-14": 1.10, "<10": 1.25 },
+      docentes: { "Mayoría planta": 0.95, "Mixta": 1.0, "Mayoría cátedra": 1.10 },
+      nivel: { "especializacion": 0.95, "maestria": 1.0, "doctorado": 1.35, "medico_quirurgica": 1.15 },
+      tipoPrograma: { "Profundización": 1.0, "Mixto": 1.08, "Investigación": 1.15 },
+      complejidad: { "Baja": 1.0, "Media": 1.10, "Alta": 1.25 },
+      competitividad: { "Alta": 0.90, "Media": 1.0, "Baja": 1.10 },
+      prioridad: { "Alta": 0.90, "Normal": 1.0, "Baja": 1.10 }
+    };
+
+    const Fe = factores.cohorte[cohorte as keyof typeof factores.cohorte] || 1;
+    const Fd = factores.docentes[docentesType as keyof typeof factores.docentes] || 1;
+    const Fn = factores.nivel[level as keyof typeof factores.nivel] || 1;
+    const Fp = factores.tipoPrograma[tipoPrograma as keyof typeof factores.tipoPrograma] || 1;
+    const Fcomp = factores.complejidad[complejidad as keyof typeof factores.complejidad] || 1;
+    const Fc = factores.competitividad[competitividad as keyof typeof factores.competitividad] || 1;
+    const Fest = factores.prioridad[prioridad as keyof typeof factores.prioridad] || 1;
+
+    const w = { e: 0.20, d: 0.15, n: 0.20, p: 0.10, comp: 0.15, c: 0.10, est: 0.10 };
+
+    const A = (
+      w.e * (Fe - 1) +
+      w.d * (Fd - 1) +
+      w.n * (Fn - 1) +
+      w.p * (Fp - 1) +
+      w.comp * (Fcomp - 1) +
+      w.c * (Fc - 1) +
+      w.est * (Fest - 1)
+    );
+
+    // Baseline tuition in SMLMV based on level:
+    // Especializacion: 6.0 SMLMV, Maestria: 8.5 SMLMV, Doctorado: 12.0 SMLMV, Medico Quirurgica: 10.0 SMLMV
+    let baseSmlmvTuition = 8.5;
+    if (level === 'especializacion') baseSmlmvTuition = 6.0;
+    else if (level === 'doctorado') baseSmlmvTuition = 12.0;
+    else if (level === 'medico_quirurgica') baseSmlmvTuition = 10.0;
+
+    const smlmvValue = 1300000; // 2026 Base SMLMV
+    const V_base = smlmvValue * baseSmlmvTuition;
+    const matriculaAjustada = V_base * (1 + A);
+    const calculatedCreditVal = (matriculaAjustada / creditosSemestre);
+
+    return {
+      A,
+      V_base,
+      matriculaAjustada,
+      calculatedCreditVal,
+      Fe, Fd, Fn, Fp, Fcomp, Fc, Fest
+    };
+  }, [cohorte, docentesType, level, tipoPrograma, complejidad, competitividad, prioridad, creditosSemestre]);
+
   const baseCreditValue = useMemo(() => {
-    switch (level) {
-      case 'doctorado': return 900000;
-      case 'maestria': return 630000;
-      case 'especializacion': return 450000;
-      case 'medico_quirurgica': return 500000; // default for medical specialties
-      default: return 450000;
-    }
-  }, [level]);
+    return VBCIFactors.calculatedCreditVal;
+  }, [VBCIFactors]);
 
   // Inscripcion is exactly 20% of a base Especializacion credit
   const valorInscripcion = useMemo(() => {
@@ -316,8 +376,24 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         totalActiveStudents += activeCohortStudents[i][t];
       }
 
-      // Gross tuition income
-      const totalGrossIncome = totalActiveStudents * creditRate * programCreditsPerSemester;
+      // Gross tuition income from normal students
+      let totalGrossIncome = totalActiveStudents * creditRate * programCreditsPerSemester;
+
+      // Special liquidations (Articles 9 and 10 of Draft Agreement)
+      let specialIncome = 0;
+      if (level === 'maestria') {
+        const tgRevenue = specialTGCount * creditRate * 4;
+        const sustRevenue = specialSustCount * creditRate * 2;
+        specialIncome = tgRevenue + sustRevenue;
+      } else if (level === 'doctorado') {
+        // Under Art. 10a, thesis credits have 50% discount when accompaniment is only with the director. We assume 8 credits of thesis per semester.
+        const thesisCredits = Math.min(8, programCreditsPerSemester || 8);
+        const tesis50Revenue = specialTesis50PctCount * (creditRate * 0.50) * thesisCredits;
+        const sustRevenue = specialSustCount * creditRate * 2;
+        specialIncome = tesis50Revenue + sustRevenue;
+      }
+      
+      totalGrossIncome += specialIncome;
 
       // Discounts counts capping
       const maxDiscountsStudents = Math.max(0, totalActiveStudents);
@@ -343,9 +419,10 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       const totalDeductions = deductionCentral + deductionResearch + deductionMesi;
       const functioningTuitionIncome = totalNetIncome - totalDeductions;
 
-      // Other Income (Inscripción = 20% crédito Especialización, Grado = 1.0 SMMLV)
-      const currentInscriptionFee = valorInscripcion * (getUPTCRate('valor_punto', currentYear) / getUPTCRate('valor_punto', 2026));
-      const currentGraduationFee = getUPTCRate('valor_punto', currentYear) * 100; 
+      // Other Income (Inscripción = 20% Especialización base, Grado = 1 crédito Especialización base, Reingreso = 20% Especialización base)
+      const baseEspPresCredit = 450000;
+      const currentInscriptionFee = (baseEspPresCredit * 0.20) * (getUPTCRate('valor_punto', currentYear) / getUPTCRate('valor_punto', 2026));
+      const currentGraduationFee = (baseEspPresCredit * 1.0) * (getUPTCRate('valor_punto', currentYear) / getUPTCRate('valor_punto', 2026));
       
       const applicationIncome = sem.aspirantesCount * currentInscriptionFee;
       const graduationIncome = sem.graduandosCount * currentGraduationFee;
@@ -940,10 +1017,10 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                     onChange={(e) => setLevel(e.target.value as any)}
                     className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
                   >
-                    <option value="especializacion">Especialización (Base: $450.000 / Cred.)</option>
-                    <option value="medico_quirurgica">Especialidad Médico-Quirúrgica (Base: $500.000 / Cred.)</option>
-                    <option value="maestria">Maestría (Base: $630.000 / Cred.)</option>
-                    <option value="doctorado">Doctorado (Base: $900.000 / Cred.)</option>
+                    <option value="especializacion">Especialización (Base: 6.0 SMLMV)</option>
+                    <option value="medico_quirurgica">Especialidad Médico-Quirúrgica (Base: 10.0 SMLMV)</option>
+                    <option value="maestria">Maestría (Base: 8.5 SMLMV)</option>
+                    <option value="doctorado">Doctorado (Base: 12.0 SMLMV)</option>
                   </select>
                 </div>
 
@@ -984,6 +1061,208 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* VBCI Factor Adjustments */}
+            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5 flex items-center gap-1.5 font-sans">
+                <Compass className="text-[#ffcc29] w-4 h-4" /> Factores VBCI (Art. 3)
+              </h3>
+              <p className="text-[10px] text-white/50 leading-relaxed font-sans">
+                Ajuste de matrícula según las características de operación y de mercado del programa.
+              </p>
+
+              <div className="space-y-3">
+                {/* Cohorte size factor */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Tamaño de Cohorte (Fe)</label>
+                  <select 
+                    value={cohorte} 
+                    onChange={(e) => setCohorte(e.target.value)}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                  >
+                    <option value=">40">&gt;40 (0.90x)</option>
+                    <option value="25-40">25-40 (0.95x)</option>
+                    <option value="15-24">15-24 (1.00x)</option>
+                    <option value="10-14">10-14 (1.10x)</option>
+                    <option value="<10">&lt;10 (1.25x)</option>
+                  </select>
+                </div>
+
+                {/* Docentes factor */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Estructura Docente (Fd)</label>
+                  <select 
+                    value={docentesType} 
+                    onChange={(e) => setDocentesType(e.target.value)}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                  >
+                    <option value="Mayoría planta">Mayoría Planta (0.95x)</option>
+                    <option value="Mixta">Mixta (1.00x)</option>
+                    <option value="Mayoría cátedra">Mayoría Cátedra (1.10x)</option>
+                  </select>
+                </div>
+
+                {/* Tipo de programa factor */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Orientación del Programa (Fp)</label>
+                  <select 
+                    value={tipoPrograma} 
+                    onChange={(e) => setTipoPrograma(e.target.value)}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                  >
+                    <option value="Profundización">Profundización (1.00x)</option>
+                    <option value="Mixto">Mixto (1.08x)</option>
+                    <option value="Investigación">Investigación (1.15x)</option>
+                  </select>
+                </div>
+
+                {/* Complejidad factor */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Complejidad Académica (Fcomp)</label>
+                  <select 
+                    value={complejidad} 
+                    onChange={(e) => setComplejidad(e.target.value)}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                  >
+                    <option value="Baja">Baja (1.00x)</option>
+                    <option value="Media">Media (1.10x)</option>
+                    <option value="Alta">Alta (1.25x)</option>
+                  </select>
+                </div>
+
+                {/* Competitividad factor */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Competitividad de Oferta (Fc)</label>
+                  <select 
+                    value={competitividad} 
+                    onChange={(e) => setCompetitividad(e.target.value)}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                  >
+                    <option value="Alta">Alta (0.90x)</option>
+                    <option value="Media">Media (1.00x)</option>
+                    <option value="Baja">Baja (1.10x)</option>
+                  </select>
+                </div>
+
+                {/* Prioridad factor */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Prioridad Institucional (Fest)</label>
+                  <select 
+                    value={prioridad} 
+                    onChange={(e) => setPrioridad(e.target.value)}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                  >
+                    <option value="Alta">Alta (0.90x)</option>
+                    <option value="Normal">Normal (1.00x)</option>
+                    <option value="Baja">Baja (1.10x)</option>
+                  </select>
+                </div>
+
+                {/* Creditos del semestre */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Créditos del Semestre ({creditosSemestre})</label>
+                  <input 
+                    type="range"
+                    min="7"
+                    max="20"
+                    step="1"
+                    value={creditosSemestre}
+                    onChange={(e) => setCreditosSemestre(parseInt(e.target.value))}
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                  />
+                  <p className="text-[9px] text-white/35 font-mono leading-none mt-1">Límite mínimo institucional de 7 créditos (Art. 8).</p>
+                </div>
+
+                {/* Cost values summary card */}
+                <div className="bg-white/5 border border-white/5 rounded-xl p-3 space-y-1.5 font-mono text-[10px]">
+                  <div className="flex justify-between">
+                    <span className="text-white/40">Tarifa Base (SMLMV):</span>
+                    <span className="text-white font-bold">{VBCIFactors.V_base / 1300000} SMLMV</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/40">Ajuste Factor (A):</span>
+                    <span className={`font-bold ${VBCIFactors.A >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>
+                      {VBCIFactors.A >= 0 ? '+' : ''}{(VBCIFactors.A * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/40">Matrícula Semestre:</span>
+                    <span className="text-[#ffcc29] font-bold">${Math.round(VBCIFactors.matriculaAjustada).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-white/5 pt-1 mt-1 text-[11px]">
+                    <span className="text-white/40">Crédito Proyectado:</span>
+                    <span className="text-[#4ade80] font-bold">${Math.round(calculatedCreditValue).toLocaleString()}</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Casos Especiales de Liquidación */}
+            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5 flex items-center gap-1.5 font-sans">
+                <Wallet className="text-[#ffcc29] w-4 h-4" /> Casos Especiales (Art. 8-11)
+              </h3>
+              <p className="text-[10px] text-white/55 leading-normal">
+                Simula ingresos por estudiantes en regímenes transitorios o liquidaciones reducidas.
+              </p>
+
+              <div className="space-y-3">
+                {level === 'maestria' && (
+                  <>
+                    <div>
+                      <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Est. sólo Trabajo de Grado (4 cr.)</label>
+                      <input 
+                        type="number"
+                        min="0"
+                        value={specialTGCount}
+                        onChange={(e) => setSpecialTGCount(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Est. sólo Sustentación (2 cr.)</label>
+                      <input 
+                        type="number"
+                        min="0"
+                        value={specialSustCount}
+                        onChange={(e) => setSpecialSustCount(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white font-mono"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {level === 'doctorado' && (
+                  <>
+                    <div>
+                      <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Est. Tesis Acompañamiento (50% Tarifa)</label>
+                      <input 
+                        type="number"
+                        min="0"
+                        value={specialTesis50PctCount}
+                        onChange={(e) => setSpecialTesis50PctCount(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Est. sólo Sustentación de Tesis (2 cr.)</label>
+                      <input 
+                        type="number"
+                        min="0"
+                        value={specialSustCount}
+                        onChange={(e) => setSpecialSustCount(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white font-mono"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {(level !== 'maestria' && level !== 'doctorado') && (
+                  <p className="text-[10px] text-white/35 font-mono leading-tight">No aplica liquidaciones especiales (Art. 9 y 10) para el nivel actual ({level}).</p>
+                )}
               </div>
             </div>
 
@@ -1675,6 +1954,41 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                     <strong>${Math.round(aggregatedTotals.totalSupportStaffCost / 1e6)}M</strong>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Curva de Sensibilidad */}
+            <div className="md:col-span-2 glass-card rounded-2xl border border-white/10 p-5 bg-white/5">
+              <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Activity className="text-[#ffcc29] w-4 h-4" /> Curva de Sensibilidad Financiera (Margen vs. Matrícula)
+              </h4>
+              <p className="text-[10px] text-white/50 mb-4 leading-normal">
+                Estudio de sensibilidad del balance acumulado de las cohortes (M COP) en función de la matrícula de alumnos nuevos por periodo.
+              </p>
+              <div className="h-64" style={{ width: '100%', height: 240, minWidth: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={sensitivityChartData} margin={{ top: 10, right: 10, left: -20, bottom: 15 }}>
+                    <defs>
+                      <linearGradient id="colorMargin" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#4ade80" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#4ade80" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#fb7185" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#fb7185" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="cohortSize" stroke="rgba(255,255,255,0.4)" fontSize={9} label={{ value: 'Alumnos por cohorte', position: 'insideBottom', offset: -5, fill: 'rgba(255,255,255,0.4)', fontSize: 9 }} />
+                    <YAxis stroke="rgba(255,255,255,0.4)" fontSize={9} unit="M" />
+                    <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                    <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                    <Area type="monotone" dataKey="Ingresos de Operación" stroke="#4ade80" fillOpacity={1} fill="url(#colorMargin)" name="Ingresos (M COP)" />
+                    <Area type="monotone" dataKey="Gastos y Costos" stroke="#fb7185" fillOpacity={1} fill="url(#colorExpenses)" name="Gastos (M COP)" />
+                    <Line type="monotone" dataKey="Margen Final (M)" stroke="#ffcc29" strokeWidth={2} name="Margen Neto (M COP)" dot={{ r: 3 }} />
+                    <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="3 3" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
 

@@ -108,7 +108,7 @@ export function AssistantScreen() {
     try {
       // Exclude greeting and format history
       const history = currentMessages
-        .filter(m => m.id !== 'greeting' && m.role !== 'system')
+        .filter(m => m.id !== 'greeting' && (m.role as string) !== 'system')
         .map(m => ({ role: m.role, content: m.content }));
 
       const response = await fetch('/api/chat', {
