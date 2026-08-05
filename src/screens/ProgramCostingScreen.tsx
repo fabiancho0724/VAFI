@@ -6,7 +6,8 @@ import {
 import { 
   Filter, DollarSign, Activity, TrendingUp, RefreshCw, Compass,
   Layers, Wallet, HelpCircle, AlertTriangle, ShieldCheck, ArrowRight, 
-  Download, Search, CheckCircle, Info, Users, GraduationCap, Percent, BookOpen, Settings, Save, Trash2, Printer, Plus, Bot, Send
+  Download, Search, CheckCircle, Info, Users, GraduationCap, Percent, BookOpen, Settings, Save, Trash2, Printer, Plus, Bot, Send,
+  FileText
 } from 'lucide-react';
 
 // Official UPTC Cost Tables (2025-2029) from the document
@@ -115,6 +116,10 @@ function getUPTCRate(category: UPTCRateCategory, year: number): number {
   }
   return baseVal;
 }
+
+const formatCurrency = (val: number) => {
+  return '$' + Math.round(val).toLocaleString('es-CO');
+};
 
 export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   // Program Metadata
@@ -930,7 +935,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
           { id: 'pensum', label: '2. Pensum y Docentes Asignados', icon: BookOpen },
           { id: 'staff', label: '3. Administrativos y Apoyo', icon: Wallet },
           { id: 'report', label: '4. Presupuesto General', icon: Activity },
-          { id: 'assistant', label: '5. Asistente IA Financiero', icon: Bot }
+          { id: 'assistant', label: '5. Informe de Viabilidad', icon: FileText }
         ].map(t => (
           <button
             key={t.id}
@@ -2053,87 +2058,233 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
       {/* TAB 5: AI Assistant Tab */}
       {activeSubTab === 'assistant' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
-          
-          {/* Preset Prompts Panel (Left) */}
-          <div className="lg:col-span-1 space-y-4">
-            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-3.5">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">
-                Preguntas Frecuentes de Costeo
+        <div className="space-y-6">
+          {/* Export and Print Action Bar (Hidden on Print) */}
+          <div className="flex justify-end gap-3 print:hidden">
+            <button 
+              onClick={() => window.print()} 
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#ffcc29] hover:bg-[#ffcc29]/90 text-black font-bold rounded-xl text-xs transition-all cursor-pointer"
+            >
+              <Printer size={14} /> Descargar Informe en PDF / Imprimir
+            </button>
+          </div>
+
+          {/* Printable Report Wrapper */}
+          <div className="bg-white/5 border border-white/10 rounded-[28px] p-6 md:p-10 space-y-8 bg-white/[0.01] print:bg-white print:border-none print:p-0 print:text-black">
+            
+            {/* Header Block */}
+            <div className="border-b-2 border-white/10 pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:border-black print:text-black">
+              <div>
+                <span className="text-[10px] font-mono font-bold text-[#ffcc29] uppercase tracking-wider print:text-black">
+                  Universidad Pedagógica y Tecnológica de Colombia
+                </span>
+                <h2 className="text-2xl font-display font-bold text-white mt-1 print:text-black">
+                  INFORME DE VIABILIDAD Y RESULTADOS FINANCIEROS
+                </h2>
+                <p className="text-xs text-white/60 font-sans mt-0.5 print:text-black/60">
+                  Estudio de Viabilidad Académica y Financiera para la creación de programas de Posgrado (R31)
+                </p>
+              </div>
+              <div className="text-left md:text-right">
+                <span className="text-[9px] font-mono text-white/40 block print:text-black/40">Fecha de Generación:</span>
+                <strong className="text-xs font-mono text-white print:text-black">{new Date().toLocaleDateString()}</strong>
+              </div>
+            </div>
+
+            {/* Metadata Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5 bg-white/5 p-5 rounded-2xl border border-white/5 print:bg-black/5 print:border-black/10 print:text-black">
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Facultad</span>
+                <strong className="text-xs text-white print:text-black">{facultad}</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Programa Académico</span>
+                <strong className="text-xs text-white print:text-black">{programa} ({level.toUpperCase()})</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Modalidad</span>
+                <strong className="text-xs text-white print:text-black capitalize">{modality}</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Matrícula Mínima</span>
+                <strong className="text-xs text-white print:text-black font-mono">{minStudents} alumnos</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Año de Inicio</span>
+                <strong className="text-xs text-white print:text-black font-mono">{anioInicio}</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Créditos de la Malla</span>
+                <strong className="text-xs text-white print:text-black font-mono">{courses.reduce((sum, c) => sum + c.creditos, 0)} cr.</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Estudiantes Proyectados</span>
+                <strong className="text-xs text-white print:text-black font-mono">{semesters.reduce((sum, s) => sum + s.newCohortStudents, 0)} alumnos (Total)</strong>
+              </div>
+              <div>
+                <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Deserción Promedio</span>
+                <strong className="text-xs text-white print:text-black font-mono">{attritionPct}%</strong>
+              </div>
+            </div>
+
+            {/* Results Grid */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2 print:text-black print:border-black/20">
+                Resumen de Viabilidad Financiera Acumulada
               </h3>
               
-              <div className="flex flex-col gap-2">
-                {[
-                  "¿Cómo alcanzar el punto de equilibrio?",
-                  "Analizar la viabilidad y el margen del programa",
-                  "¿Qué pasa si asigno docentes categoría doctorado?",
-                  "Explicar la retención del 45.5% de la UPTC"
-                ].map((prompt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleAskQuestion(prompt)}
-                    className="w-full text-left p-3 bg-white/5 hover:bg-white/10 text-white border border-white/5 rounded-xl text-xs font-semibold font-sans cursor-pointer transition-all"
-                  >
-                    {prompt}
-                  </button>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {/* Ingreso Card */}
+                <div className="border border-white/10 p-5 rounded-2xl bg-white/5 space-y-1 print:border-black/20 print:bg-slate-50 print:text-black">
+                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Ingresos Totales (Recaudo + Otros)</span>
+                  <strong className="text-lg font-bold text-[#ffcc29] block print:text-black">
+                    {formatCurrency(aggregatedTotals.totalGrossIncome + calculatedSemesters.reduce((sum, s) => sum + s.totalOtherIncome, 0))}
+                  </strong>
+                  <span className="text-[9px] text-white/30 block print:text-black/40">
+                    Neto UPTC disponible: {formatCurrency(aggregatedTotals.totalFunctioningIncome)}
+                  </span>
+                </div>
+
+                {/* Egresos Card */}
+                <div className="border border-white/10 p-5 rounded-2xl bg-white/5 space-y-1 print:border-black/20 print:bg-slate-50 print:text-black">
+                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Egresos Totales del Programa</span>
+                  <strong className="text-lg font-bold text-rose-400 block print:text-black">
+                    -{formatCurrency(aggregatedTotals.totalExpenses)}
+                  </strong>
+                  <span className="text-[9px] text-white/30 block print:text-black/40">
+                    Personal: {formatCurrency(aggregatedTotals.totalStaffCosts)} | Ops: {formatCurrency(aggregatedTotals.totalOperatingCosts)}
+                  </span>
+                </div>
+
+                {/* Balance Card */}
+                <div className="border border-white/10 p-5 rounded-2xl bg-white/5 space-y-1 print:border-black/20 print:bg-slate-50 print:text-black">
+                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Excedente / Balance de Caja</span>
+                  <strong className={`text-lg font-bold block ${aggregatedTotals.totalBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'} print:text-black`}>
+                    {formatCurrency(aggregatedTotals.totalBalance)}
+                  </strong>
+                  <span className="text-[9px] text-white/30 block print:text-black/40">
+                    Margen neto: {((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="p-4.5 bg-[#ffcc29]/5 border border-[#ffcc29]/20 rounded-2xl text-xs space-y-2">
-              <span className="font-bold text-[#ffcc29] flex items-center gap-1.5"><Info size={14} /> Asesor Curricular:</span>
-              <p className="text-white/70 leading-relaxed text-[11px]">
-                El Asistente analiza en tiempo real todas las variables locales (estudiantes mínimos, asignaturas, tipo de docente cátedra) y provee diagnósticos económicos instantáneos.
-              </p>
-            </div>
-          </div>
-
-          {/* Interactive Chat Console (Right) */}
-          <div className="lg:col-span-2">
-            <div className="glass-card rounded-2xl border border-white/10 bg-white/5 h-[480px] flex flex-col justify-between overflow-hidden">
+            {/* Dictamen Block */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2 print:text-black print:border-black/20">
+                Dictamen Técnico y Conclusión de Viabilidad
+              </h3>
               
-              {/* Chat messages viewport */}
-              <div className="flex-1 p-5 overflow-y-auto space-y-4">
-                {chatMessages.map((msg, idx) => (
-                  <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed font-sans ${
-                      msg.sender === 'user' 
-                        ? 'bg-[#ffcc29] text-black font-bold rounded-tr-none' 
-                        : 'bg-white/10 text-white rounded-tl-none border border-white/5'
-                    }`}>
-                      {msg.sender === 'bot' && (
-                        <div className="flex items-center gap-1.5 text-[#ffcc29] font-mono text-[9px] uppercase tracking-wider mb-1 font-bold">
-                          <Bot size={13} /> Asistente IA Costeo
-                        </div>
-                      )}
-                      {msg.text}
-                    </div>
+              {/* Status Banner */}
+              <div className={`p-5 rounded-2xl flex flex-col md:flex-row gap-4 items-start md:items-center ${
+                aggregatedTotals.totalBalance <= 0 
+                  ? 'bg-rose-500/10 border border-rose-500/30 text-rose-300 print:bg-rose-100 print:border-rose-400 print:text-black' 
+                  : !aggregatedTotals.isBalanced
+                  ? 'bg-amber-500/10 border border-amber-500/30 text-amber-300 print:bg-amber-100 print:border-amber-400 print:text-black'
+                  : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 print:bg-emerald-100 print:border-emerald-400 print:text-black'
+              }`}>
+                <div className="shrink-0">
+                  <div className={`px-4 py-2 text-xs font-bold tracking-widest uppercase rounded-xl border ${
+                    aggregatedTotals.totalBalance <= 0 
+                      ? 'bg-rose-500 text-white border-rose-600' 
+                      : !aggregatedTotals.isBalanced
+                      ? 'bg-amber-500 text-black border-amber-600 font-bold'
+                      : 'bg-emerald-500 text-black border-emerald-600 font-bold'
+                  }`}>
+                    {aggregatedTotals.totalBalance <= 0 
+                      ? 'NO VIABLE' 
+                      : !aggregatedTotals.isBalanced
+                      ? 'VIABLE CONDICIONADO'
+                      : 'VIABLE'}
                   </div>
-                ))}
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono uppercase tracking-wider opacity-60">Conclusión de Viabilidad Financiera</span>
+                  <p className="text-xs font-sans leading-relaxed text-justify">
+                    {aggregatedTotals.totalBalance <= 0 ? (
+                      `Evaluadas las proyecciones y costos detallados, el programa se dictamina como NO VIABLE en su estructura actual. Las proyecciones muestran un déficit operativo acumulado de ${formatCurrency(aggregatedTotals.totalBalance)} (margen del ${((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%). Los ingresos de funcionamiento no son suficientes para cubrir los egresos fijos y variables del programa (costos docentes, coordinación y personal de apoyo), debido principalmente a una baja cohorte de estudiantes o una tarifa de crédito académico subóptima. Se requiere reestructurar la malla curricular, incrementar la matrícula mínima de estudiantes o proponer una tarifa de matrícula por crédito superior para asegurar la sostenibilidad del programa.`
+                    ) : !aggregatedTotals.isBalanced ? (
+                      `Tras el análisis técnico-financiero, el programa es dictaminado como VIABLE CONDICIONADO. Si bien el balance neto acumulado es superavitario con un excedente de ${formatCurrency(aggregatedTotals.totalBalance)} (margen del ${((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%), se detectan alertas en la planeación: existen semestres individuales con saldos operativos negativos o la matrícula propuesta está por debajo del umbral de estudiantes requerido en periodos específicos. Se recomienda realizar ajustes en la estructura de asignación docente, revisar la tarifa del crédito académico o garantizar un aforo mínimo mayor para mitigar el riesgo de iliquidez temporal.`
+                    ) : (
+                      `Tras realizar la simulación del flujo de caja del programa, se dictamina que el proyecto curricular es financieramente VIABLE. Los ingresos netos de funcionamiento cubren la totalidad de los costos de personal docente y de apoyo, así como los gastos operativos directos, generando un excedente acumulado de ${formatCurrency(aggregatedTotals.totalBalance)} (margen neto de ${((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%). El programa cumple con las matrículas mínimas de ${minStudents} estudiantes y no presenta déficit operativo en ninguna de las cohortes simuladas.`
+                    )}
+                  </p>
+                </div>
               </div>
 
-              {/* Chat Input Bar */}
-              <div className="p-4 border-t border-white/5 bg-[#0f172a]/60 flex gap-2">
-                <input 
-                  type="text"
-                  placeholder="Escriba su consulta financiera..."
-                  value={customQuestion}
-                  onChange={(e) => setCustomQuestion(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAskQuestion()}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-[#ffcc29]"
-                />
-                <button
-                  onClick={() => handleAskQuestion()}
-                  disabled={!customQuestion.trim()}
-                  className="p-3 bg-[#ffcc29] hover:bg-[#ffcc29]/90 disabled:opacity-50 text-black rounded-xl transition-all cursor-pointer"
-                >
-                  <Send size={15} />
-                </button>
+              {/* Advisory Details */}
+              <div className="bg-white/5 border border-white/5 p-5 rounded-2xl text-xs space-y-2 leading-relaxed text-white/70 text-justify print:bg-slate-50 print:border-black/10 print:text-black">
+                <span className="font-bold text-white block print:text-black">Recomendaciones y Criterios Regulatorios UPTC:</span>
+                <ul className="list-disc pl-5 space-y-1.5 text-[11px]">
+                  <li>
+                    <strong>Derechos de Matrícula e Indexación (Artículo 3):</strong> La tarifa base del programa de posgrado por crédito se ha ajustado conforme a los factores de cohorte, profesores, orientación y competitividad del Proyecto de Acuerdo. Es importante revisar semestralmente el ajuste del VBCI si varía la cohorte.
+                  </li>
+                  <li>
+                    <strong>Deducción Central (45.5%):</strong> Se recuerda que del recaudo bruto de matrículas, un 40% se destina a la administración central de la UPTC, un 5% a investigaciones y un 0.5% a control interno (MESI), restando un 54.5% para el fondo propio de funcionamiento del programa.
+                  </li>
+                  <li>
+                    <strong>Carga Académica Mínima (Artículo 8):</strong> Los cálculos asumen la matrícula mínima de 7 créditos por semestre por estudiante. La oferta de asignaturas debe planificarse de forma compacta para optimizar las horas de docencia directa a contratar.
+                  </li>
+                </ul>
               </div>
-
             </div>
-          </div>
 
+            {/* Semester breakdown printable table */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2 print:text-black print:border-black/20">
+                Desglose Semestral de Flujos Financieros
+              </h3>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[11px] border border-white/10 border-collapse print:border-black/20">
+                  <thead>
+                    <tr className="bg-white/5 text-white font-bold border-b border-white/10 print:bg-black/5 print:text-black print:border-black/20">
+                      <th className="p-3">Semestre</th>
+                      <th className="p-3 text-right">Alumnos</th>
+                      <th className="p-3 text-right">Ingreso Bruto</th>
+                      <th className="p-3 text-right">Deducción UPTC</th>
+                      <th className="p-3 text-right">Ingreso Disponible</th>
+                      <th className="p-3 text-right">Gastos Personal</th>
+                      <th className="p-3 text-right">Gastos Ops</th>
+                      <th className="p-3 text-right">Excedente Neto</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-white/80 print:divide-black/10 print:text-black">
+                    {calculatedSemesters.map(s => (
+                      <tr key={s.semesterLabel} className="hover:bg-white/[0.01]">
+                        <td className="p-3 font-semibold text-white print:text-black">{s.semesterLabel}</td>
+                        <td className="p-3 text-right font-mono">{s.activeStudents}</td>
+                        <td className="p-3 text-right font-mono">{formatCurrency(s.grossIncome)}</td>
+                        <td className="p-3 text-right font-mono text-rose-400">-{formatCurrency(s.totalDeductions)}</td>
+                        <td className="p-3 text-right font-mono text-emerald-400">{formatCurrency(s.totalFunctioningIncome)}</td>
+                        <td className="p-3 text-right font-mono">-{formatCurrency(s.totalStaffCosts)}</td>
+                        <td className="p-3 text-right font-mono">-{formatCurrency(s.totalOperatingCosts)}</td>
+                        <td className={`p-3 text-right font-mono font-bold ${s.budgetBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'} print:text-black`}>
+                          {formatCurrency(s.budgetBalance)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Signature Block */}
+            <div className="flex justify-between pt-16 text-center text-xs text-white/80 print:text-black">
+              <div className="space-y-1">
+                <div className="w-56 border-t border-white/40 mx-auto print:border-black"></div>
+                <strong className="block text-white print:text-black">Coordinador del Programa</strong>
+                <span className="text-[10px] text-white/50 block print:text-black/50">Responsable de Planeación Curricular</span>
+              </div>
+              <div className="space-y-1">
+                <div className="w-56 border-t border-white/40 mx-auto print:border-black"></div>
+                <strong className="block text-white print:text-black">Vicerrector Administrativo y Financiero</strong>
+                <span className="text-[10px] text-white/50 block print:text-black/50">UPTC - VAFI</span>
+              </div>
+            </div>
+
+          </div>
         </div>
       )}
 
