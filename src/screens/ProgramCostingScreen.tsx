@@ -121,6 +121,32 @@ const formatCurrency = (val: number) => {
   return '$' + Math.round(val).toLocaleString('es-CO');
 };
 
+function calculateIRR(cashFlows: number[], guess = 0.1): number {
+  const maxIterations = 1000;
+  const precision = 1e-6;
+  let rate = guess;
+  
+  const hasNegative = cashFlows.some(f => f < 0);
+  const hasPositive = cashFlows.some(f => f > 0);
+  if (!hasNegative || !hasPositive) return 0;
+
+  for (let i = 0; i < maxIterations; i++) {
+    let npv = 0;
+    let dNpv = 0;
+    for (let t = 0; t < cashFlows.length; t++) {
+      npv += cashFlows[t] / Math.pow(1 + rate, t);
+      dNpv -= t * cashFlows[t] / Math.pow(1 + rate, t + 1);
+    }
+    if (Math.abs(dNpv) < 1e-12) break;
+    const nextRate = rate - npv / dNpv;
+    if (Math.abs(nextRate - rate) < precision) {
+      return nextRate;
+    }
+    rate = nextRate;
+  }
+  return 0;
+}
+
 export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   // Program Metadata
   const [facultad, setFacultad] = useState<string>("Facultad de Ciencias Económicas y Administrativas");
@@ -156,6 +182,16 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
   // Financial base constants
   const [parafiscalFactor, setParafiscalFactor] = useState<number>(37.03); 
+
+  // Variables Macroeconómicas e Inversión (IAEP)
+  const [macroIPC, setMacroIPC] = useState<number>(4.0);
+  const [macroICES, setMacroICES] = useState<number>(4.5);
+  const [macroSMLMV, setMacroSMLMV] = useState<number>(5.0);
+  const [w_IPC, setW_IPC] = useState<number>(0.3);
+  const [w_ICES, setW_ICES] = useState<number>(0.5);
+  const [w_SMLMV, setW_SMLMV] = useState<number>(0.2);
+  const [equipmentsValue, setEquipmentsValue] = useState<number>(45000000);
+  const [depreciationYears, setDepreciationYears] = useState<number>(5);
 
   // Administrator manual override controls
   const [isAdminOverride, setIsAdminOverride] = useState<boolean>(false);
@@ -233,7 +269,13 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
   ]);
   const [customQuestion, setCustomQuestion] = useState<string>("");
 
-  // Base VBCI Calculations according to UPTC Article 3 & factors formula
+  // IAEP Dynamic Calculation
+  const IAEP = useMemo(() => {
+    const calculated = (w_IPC * macroIPC) + (w_ICES * macroICES) + (w_SMLMV * macroSMLMV);
+    return Math.max(macroIPC, calculated); // Floor restriction: IAEP never below IPC
+  }, [macroIPC, macroICES, macroSMLMV, w_IPC, w_ICES, w_SMLMV]);
+
+  // Base VBCI Calculations according to UPTC CP/C/E/P formula
   const VBCIFactors = useMemo(() => {
     const factores = {
       cohorte: { ">40": 0.90, "25-40": 0.95, "15-24": 1.0, "10-14": 1.10, "<10": 1.25 },
@@ -253,18 +295,9 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     const Fc = factores.competitividad[competitividad as keyof typeof factores.competitividad] || 1;
     const Fest = factores.prioridad[prioridad as keyof typeof factores.prioridad] || 1;
 
-    const w = { e: 0.20, d: 0.15, n: 0.20, p: 0.10, comp: 0.15, c: 0.10, est: 0.10 };
-
-    const A = (
-      w.e * (Fe - 1) +
-      w.d * (Fd - 1) +
-      w.n * (Fn - 1) +
-      w.p * (Fp - 1) +
-      w.comp * (Fcomp - 1) +
-      w.c * (Fc - 1) +
-      w.est * (Fest - 1)
-    );
-
+    // SMLMV 2026 fijado en $1.750.905 (Decreto 1469 de 2025)
+    const smlmvValue = 1750905;
+    
     // Baseline tuition in SMLMV based on level:
     // Especializacion: 6.0 SMLMV, Maestria: 8.5 SMLMV, Doctorado: 12.0 SMLMV, Medico Quirurgica: 10.0 SMLMV
     let baseSmlmvTuition = 8.5;
@@ -272,16 +305,42 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     else if (level === 'doctorado') baseSmlmvTuition = 12.0;
     else if (level === 'medico_quirurgica') baseSmlmvTuition = 10.0;
 
-    const smlmvValue = 1300000; // 2026 Base SMLMV
     const V_base = smlmvValue * baseSmlmvTuition;
-    const matriculaAjustada = V_base * (1 + A);
-    const calculatedCreditVal = (matriculaAjustada / creditosSemestre);
+    
+    // VBCI: definido técnicamente como el promedio institucional del costo del crédito menos un factor de ajuste del 10%
+    const VBCI = (V_base / creditosSemestre) * 0.9;
+    
+    // CP (20% - complexity), C (20% - competitiveness), E (30% - cohort), P (30% - teachers)
+    const CP = Fcomp;
+    const C_val = Fc;
+    const E_val = Fe;
+    const P_val = Fd;
+    
+    // Weighted factor inside parenthesis
+    const A = (0.20 * CP + 0.20 * C_val + 0.30 * E_val + 0.30 * P_val);
+    
+    // VCAP base (before modality multiplier)
+    const baseCreditVal = VBCI * A;
+    
+    // Safety Limits: 0.8x VBCI and 2.5x VBCI
+    const minLimit = 0.8 * VBCI;
+    const maxLimit = 2.5 * VBCI;
+    const isUnderLimit = baseCreditVal < minLimit;
+    const isOverLimit = baseCreditVal > maxLimit;
+    
+    const calculatedCreditVal = Math.max(minLimit, Math.min(maxLimit, baseCreditVal));
+    const matriculaAjustada = calculatedCreditVal * creditosSemestre;
 
     return {
-      A,
+      A: A - 1, // adjustment relative to 1.0 for display
       V_base,
+      VBCI,
       matriculaAjustada,
       calculatedCreditVal,
+      isUnderLimit,
+      isOverLimit,
+      minLimit,
+      maxLimit,
       Fe, Fd, Fn, Fp, Fcomp, Fc, Fest
     };
   }, [cohorte, docentesType, level, tipoPrograma, complejidad, competitividad, prioridad, creditosSemestre]);
@@ -290,16 +349,28 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     return VBCIFactors.calculatedCreditVal;
   }, [VBCIFactors]);
 
-  // Inscripcion is exactly 20% of a base Especializacion credit
-  const valorInscripcion = useMemo(() => {
-    return 450000 * 0.20; 
+  // VBCI base of a standard presencial specialization (6.0 SMLMV, 12 credits, 90% adjustment)
+  const baseEspPresVBCI = useMemo(() => {
+    const smlmvValue = 1750905; // 2026 Base SMLMV
+    const V_base_esp = smlmvValue * 6.0;
+    return (V_base_esp / 12) * 0.9;
   }, []);
+
+  // Inscripcion is exactly 20% of VBCI de especialización presencial
+  const valorInscripcion = useMemo(() => {
+    return baseEspPresVBCI * 0.20; 
+  }, [baseEspPresVBCI]);
+
+  // Derechos de Grado is exactly 1.0 credit of VBCI de especialización presencial
+  const valorGrado = useMemo(() => {
+    return baseEspPresVBCI * 1.0;
+  }, [baseEspPresVBCI]);
 
   const modalityMultiplier = useMemo(() => {
     switch (modality) {
       case 'presencial': return 1.0;
-      case 'hibrido': return 0.85;
-      case 'virtual': return 0.70;
+      case 'hibrido': return 0.92;
+      case 'virtual': return 0.85;
       default: return 1.0;
     }
   }, [modality]);
@@ -330,6 +401,19 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     if (minStudents < 1) errors.push("El número mínimo de estudiantes debe ser al menos 1.");
     if (isAdminOverride && customCreditValue <= 0) errors.push("El valor del crédito personalizado debe ser mayor a 0.");
     
+    // Safety limits for VCAP: 0.8x VBCI to 2.5x VBCI
+    if (VBCIFactors.isUnderLimit) {
+      errors.push(`El VCAP calculado (${formatCurrency(VBCIFactors.calculatedCreditVal)}) está por debajo del límite mínimo de seguridad de 0.8x VBCI (${formatCurrency(VBCIFactors.minLimit)}).`);
+    }
+    if (VBCIFactors.isOverLimit) {
+      errors.push(`El VCAP calculado (${formatCurrency(VBCIFactors.calculatedCreditVal)}) supera el límite máximo de seguridad de 2.5x VBCI (${formatCurrency(VBCIFactors.maxLimit)}).`);
+    }
+
+    // Weight sum validation for IAEP
+    if (Math.abs(w_IPC + w_ICES + w_SMLMV - 1) > 0.001) {
+      errors.push(`La sumatoria de las ponderaciones asignadas a las variables macroeconómicas de indexación (IAEP) debe ser exactamente igual a 1.0 (Actual: ${(w_IPC + w_ICES + w_SMLMV).toFixed(2)}).`);
+    }
+
     // Check semester credit load minimum limit of 7 credits
     semesters.forEach((sem, idx) => {
       const semCredits = semesterCreditsMap.get(idx + 1) || 0;
@@ -373,7 +457,10 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       const smmlv = getUPTCRate('adm_grado_14', anioInicio + Math.floor(t / 2)); 
       const currentYear = anioInicio + Math.floor(t / 2);
       
-      const creditRate = finalCreditValue * (getUPTCRate('valor_punto', currentYear) / getUPTCRate('valor_punto', 2026)); 
+      // Indexación anual compuesta mediante el IAEP (Año 1 = base, Año 2+ = indexación acumulada)
+      const yearsFromStart = currentYear - anioInicio;
+      const iaepMultiplier = Math.pow(1 + IAEP / 100, yearsFromStart);
+      const creditRate = finalCreditValue * iaepMultiplier; 
       const programCreditsPerSemester = semesterCreditsMap.get(t + 1) || 0;
       
       let totalActiveStudents = 0;
@@ -424,10 +511,9 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       const totalDeductions = deductionCentral + deductionResearch + deductionMesi;
       const functioningTuitionIncome = totalNetIncome - totalDeductions;
 
-      // Other Income (Inscripción = 20% Especialización base, Grado = 1 crédito Especialización base, Reingreso = 20% Especialización base)
-      const baseEspPresCredit = 450000;
-      const currentInscriptionFee = (baseEspPresCredit * 0.20) * (getUPTCRate('valor_punto', currentYear) / getUPTCRate('valor_punto', 2026));
-      const currentGraduationFee = (baseEspPresCredit * 1.0) * (getUPTCRate('valor_punto', currentYear) / getUPTCRate('valor_punto', 2026));
+      // Other Income indexed by IAEP (Inscripción = 20% Especialización base, Grado = 1 crédito Especialización base)
+      const currentInscriptionFee = valorInscripcion * iaepMultiplier;
+      const currentGraduationFee = valorGrado * iaepMultiplier;
       
       const applicationIncome = sem.aspirantesCount * currentInscriptionFee;
       const graduationIncome = sem.graduandosCount * currentGraduationFee;
@@ -466,8 +552,9 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
       const totalStaffCosts = semesterTeachersCost + coordinatorCost + supportStaffCost;
 
-      // Goods & Services Breakdown sum
-      const totalOperatingCosts = sem.goodsMaterials + sem.goodsTravel + sem.goodsSoftware + sem.goodsLogistics + sem.goodsOther;
+      // Depreciación de Activos (reposición de laboratorios y equipos)
+      const semesterDepreciation = depreciationYears > 0 ? (equipmentsValue / depreciationYears) / 2 : 0;
+      const totalOperatingCosts = sem.goodsMaterials + sem.goodsTravel + sem.goodsSoftware + sem.goodsLogistics + sem.goodsOther + semesterDepreciation;
 
       const totalExpenses = totalStaffCosts + totalOperatingCosts;
       const budgetBalance = totalFunctioningIncome - totalExpenses;
@@ -493,10 +580,11 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
         totalStaffCosts,
         totalOperatingCosts,
         totalExpenses,
-        budgetBalance
+        budgetBalance,
+        depreciation: semesterDepreciation
       };
     });
-  }, [semesters, level, attritionPct, finalCreditValue, courses, semesterCreditsMap, hasCoordinator, coordinatorCategory, hasSupportStaff, supportStaffCategory, parafiscalFactor, valorInscripcion, anioInicio]);
+  }, [semesters, level, attritionPct, finalCreditValue, courses, semesterCreditsMap, hasCoordinator, coordinatorCategory, hasSupportStaff, supportStaffCategory, parafiscalFactor, valorInscripcion, valorGrado, anioInicio, IAEP, equipmentsValue, depreciationYears]);
 
   // Aggregated summaries
   const aggregatedTotals = useMemo(() => {
@@ -540,17 +628,33 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
     });
 
     const numCohortes = semesters.filter(s => s.newCohortStudents > 0).length;
-    const netCostsToCoverTotal = Math.max(0, totalExpenses + totalDeductions - (calculatedSemesters.reduce((sum, s) => sum + s.totalOtherIncome, 0)));
-    const averageCreditRate = calculatedSemesters.reduce((sum, s) => sum + s.creditRate, 0) / 6;
-    const averageDiscountMultiplier = 1 - discountPct / 100;
     const totalActiveNewStudents = semesters.reduce((sum, s) => sum + s.newCohortStudents, 0);
-
-    const denomCredits = averageCreditRate * averageDiscountMultiplier * totalActiveNewStudents;
-    const breakEvenCredits = denomCredits > 0 ? Math.ceil(netCostsToCoverTotal / (averageCreditRate * averageDiscountMultiplier * (totalActiveStudentSemesters / (numCohortes || 1)))) : 0;
-    
     const programTotalCredits = courses.reduce((sum, c) => sum + c.creditos, 0);
-    const denomStudents = averageCreditRate * averageDiscountMultiplier * (programTotalCredits / 6) * (totalActiveStudentSemesters / (totalActiveNewStudents || 1));
-    const breakEvenStudents = denomStudents > 0 ? Math.ceil(netCostsToCoverTotal / (averageCreditRate * averageDiscountMultiplier * (programTotalCredits / 6))) : 0;
+
+    // VCAP = finalCreditValue
+    // Deducciones = 0.455
+    // Punto de Equilibrio (Créditos) = Costos Totales / (VCAP * (1 - Descuentos/100) * (1 - Deducciones))
+    const netCreditIncomeRate = finalCreditValue * (1 - discountPct / 100) * (1 - 0.455);
+    const breakEvenCredits = netCreditIncomeRate > 0 ? Math.ceil(totalExpenses / netCreditIncomeRate) : 0;
+    
+    // Punto de Equilibrio (Estudiantes) = Costos Totales / Ingreso Neto por Estudiante
+    // Ingreso Neto por Estudiante = netCreditIncomeRate * creditosSemestre * 6 (duracion promedio del proyecto es de 6 semestres in simulation)
+    const netStudentIncomeRate = netCreditIncomeRate * creditosSemestre * 6;
+    const breakEvenStudents = netStudentIncomeRate > 0 ? Math.ceil(totalExpenses / (netCreditIncomeRate * (totalActiveStudentSemesters / (totalActiveNewStudents || 1)))) : 0;
+
+    // Margen de Seguridad = (Créditos Proyectados - Créditos Mínimos) / Créditos Proyectados
+    const creditosProyectados = totalActiveStudentSemesters * creditosSemestre;
+    const margenSeguridad = creditosProyectados > 0 ? (creditosProyectados - breakEvenCredits) / creditosProyectados : 0;
+
+    // IRR (TIR) Calculation
+    // projectFlows = [-equipmentsValue, ...semesterBalances]
+    // where semesterBalances are budgetBalance + depreciation (to get cash flows)
+    const projectFlows = [
+      -Math.max(10000000, equipmentsValue), 
+      ...calculatedSemesters.map(s => s.budgetBalance + (s.depreciation || 0))
+    ];
+    const semestralIRR = calculateIRR(projectFlows);
+    const annualIRR = semestralIRR > 0 ? (Math.pow(1 + semestralIRR, 2) - 1) : 0;
 
     let meetsMinStudentsEnrollment = true;
     semesters.forEach(s => {
@@ -577,11 +681,13 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
       totalActiveStudentSemesters,
       breakEvenCredits: Math.max(0, breakEvenCredits),
       breakEvenStudents: Math.max(0, breakEvenStudents),
+      margenSeguridad,
+      annualIRR,
       totalActiveNewStudents,
       programTotalCredits,
       meetsMinStudentsEnrollment
     };
-  }, [calculatedSemesters, semesters, discountPct, courses, minStudents, validationErrors]);
+  }, [calculatedSemesters, semesters, discountPct, courses, minStudents, validationErrors, finalCreditValue, creditosSemestre, equipmentsValue]);
 
   // Update semester inputs
   const handleUpdateSemester = (index: number, fields: Partial<SemesterData>) => {
@@ -1268,6 +1374,134 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                 {(level !== 'maestria' && level !== 'doctorado') && (
                   <p className="text-[10px] text-white/35 font-mono leading-tight">No aplica liquidaciones especiales (Art. 9 y 10) para el nivel actual ({level}).</p>
                 )}
+              </div>
+            </div>
+
+            {/* Variables Macroeconómicas, Inversión y Depreciación */}
+            <div className="glass-card rounded-2xl border border-white/10 p-6 bg-white/5 space-y-4">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2.5 flex items-center gap-1.5 font-sans">
+                <TrendingUp className="text-[#ffcc29] w-4 h-4" /> Parámetros Macro e Inversión
+              </h3>
+              <p className="text-[10px] text-white/50 leading-relaxed font-sans">
+                Parámetros de indexación compuesta (IAEP) y costos de reposición de activos.
+              </p>
+
+              <div className="space-y-3">
+                {/* IPC */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">IPC Anual Proyectado (%)</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    min="0"
+                    value={macroIPC} 
+                    onChange={(e) => setMacroIPC(Math.max(0, parseFloat(e.target.value) || 0))}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white font-mono"
+                  />
+                </div>
+
+                {/* ICES */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">ICES Anual Proyectado (%)</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    min="0"
+                    value={macroICES} 
+                    onChange={(e) => setMacroICES(Math.max(0, parseFloat(e.target.value) || 0))}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white font-mono"
+                  />
+                </div>
+
+                {/* Var SMLMV */}
+                <div>
+                  <label className="block text-[9px] font-mono text-white/55 uppercase tracking-wider mb-1">Var. SMLMV Anual (%)</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    min="0"
+                    value={macroSMLMV} 
+                    onChange={(e) => setMacroSMLMV(Math.max(0, parseFloat(e.target.value) || 0))}
+                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white font-mono"
+                  />
+                </div>
+
+                {/* Weights Grid */}
+                <div className="border border-white/5 p-3 rounded-xl bg-white/[0.02] space-y-2">
+                  <span className="block text-[8px] font-mono text-white/40 uppercase tracking-widest">Ponderaciones IAEP (Suma = 1)</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[8px] text-white/50 mb-0.5 font-mono">w_IPC</label>
+                      <input 
+                        type="number" 
+                        step="0.05"
+                        min="0"
+                        max="1"
+                        value={w_IPC} 
+                        onChange={(e) => setW_IPC(Math.max(0, parseFloat(e.target.value) || 0))}
+                        className="w-full bg-[#0f172a] border border-white/10 rounded-lg p-1 text-[10px] text-white font-mono text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[8px] text-white/50 mb-0.5 font-mono">w_ICES</label>
+                      <input 
+                        type="number" 
+                        step="0.05"
+                        min="0"
+                        max="1"
+                        value={w_ICES} 
+                        onChange={(e) => setW_ICES(Math.max(0, parseFloat(e.target.value) || 0))}
+                        className="w-full bg-[#0f172a] border border-white/10 rounded-lg p-1 text-[10px] text-white font-mono text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[8px] text-white/50 mb-0.5 font-mono">w_SMLMV</label>
+                      <input 
+                        type="number" 
+                        step="0.05"
+                        min="0"
+                        max="1"
+                        value={w_SMLMV} 
+                        onChange={(e) => setW_SMLMV(Math.max(0, parseFloat(e.target.value) || 0))}
+                        className="w-full bg-[#0f172a] border border-white/10 rounded-lg p-1 text-[10px] text-white font-mono text-center"
+                      />
+                    </div>
+                  </div>
+                  {Math.abs(w_IPC + w_ICES + w_SMLMV - 1) > 0.001 && (
+                    <p className="text-[8px] text-rose-400 font-mono leading-tight">⚠️ La suma de pesos debe ser exactamente 1.0 (Actual: {(w_IPC + w_ICES + w_SMLMV).toFixed(2)})</p>
+                  )}
+                  <p className="text-[9px] text-[#4ade80] font-mono leading-none pt-1">
+                    IAEP Calculado: {IAEP.toFixed(2)}% {Math.abs(IAEP - macroIPC) < 0.001 && IAEP !== (w_IPC * macroIPC + w_ICES * macroICES + w_SMLMV * macroSMLMV) ? '(Piso IPC)' : ''}
+                  </p>
+                </div>
+
+                {/* Investment & Depreciation */}
+                <div className="border border-white/5 p-3 rounded-xl bg-white/[0.02] space-y-2">
+                  <span className="block text-[8px] font-mono text-white/40 uppercase tracking-widest">Activos y Reposición</span>
+                  <div>
+                    <label className="block text-[8px] text-white/50 mb-0.5 font-mono">Inversión Equipos (COP)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={equipmentsValue} 
+                      onChange={(e) => setEquipmentsValue(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[8px] text-white/50 mb-0.5 font-mono">Años de Depreciación</label>
+                    <input 
+                      type="number" 
+                      min="1"
+                      value={depreciationYears} 
+                      onChange={(e) => setDepreciationYears(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-full bg-[#0f172a] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white font-mono"
+                    />
+                  </div>
+                  <p className="text-[8px] text-white/40 font-mono leading-normal">
+                    Depreciación semestral: {formatCurrency((equipmentsValue / depreciationYears) / 2)}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -2117,7 +2351,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                 <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Créditos de la Malla</span>
                 <strong className="text-xs text-white print:text-black font-mono">{courses.reduce((sum, c) => sum + c.creditos, 0)} cr.</strong>
               </div>
-              <div>
+<div>
                 <span className="text-[9px] font-mono text-white/40 uppercase block print:text-black/50">Estudiantes Proyectados</span>
                 <strong className="text-xs text-white print:text-black font-mono">{semesters.reduce((sum, s) => sum + s.newCohortStudents, 0)} alumnos (Total)</strong>
               </div>
@@ -2130,40 +2364,73 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
             {/* Results Grid */}
             <div className="space-y-4">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2 print:text-black print:border-black/20">
-                Resumen de Viabilidad Financiera Acumulada
+                Resumen de Viabilidad Financiera Acumulada y Sostenibilidad
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {/* Ingreso Card */}
                 <div className="border border-white/10 p-5 rounded-2xl bg-white/5 space-y-1 print:border-black/20 print:bg-slate-50 print:text-black">
-                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Ingresos Totales (Recaudo + Otros)</span>
+                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Ingreso Neto Funcionamiento (54.5% + Aranceles)</span>
                   <strong className="text-lg font-bold text-[#ffcc29] block print:text-black">
-                    {formatCurrency(aggregatedTotals.totalGrossIncome + calculatedSemesters.reduce((sum, s) => sum + s.totalOtherIncome, 0))}
+                    {formatCurrency(aggregatedTotals.totalFunctioningIncome)}
                   </strong>
                   <span className="text-[9px] text-white/30 block print:text-black/40">
-                    Neto UPTC disponible: {formatCurrency(aggregatedTotals.totalFunctioningIncome)}
+                    Recaudo Bruto de Matrículas: {formatCurrency(aggregatedTotals.totalGrossIncome)}
                   </span>
                 </div>
 
                 {/* Egresos Card */}
                 <div className="border border-white/10 p-5 rounded-2xl bg-white/5 space-y-1 print:border-black/20 print:bg-slate-50 print:text-black">
-                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Egresos Totales del Programa</span>
+                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Egresos Totales (Incluye Depreciación)</span>
                   <strong className="text-lg font-bold text-rose-400 block print:text-black">
                     -{formatCurrency(aggregatedTotals.totalExpenses)}
                   </strong>
                   <span className="text-[9px] text-white/30 block print:text-black/40">
-                    Personal: {formatCurrency(aggregatedTotals.totalStaffCosts)} | Ops: {formatCurrency(aggregatedTotals.totalOperatingCosts)}
+                    Personal: {formatCurrency(aggregatedTotals.totalStaffCosts)} | Ops y Reposición: {formatCurrency(aggregatedTotals.totalOperatingCosts)}
                   </span>
                 </div>
 
                 {/* Balance Card */}
                 <div className="border border-white/10 p-5 rounded-2xl bg-white/5 space-y-1 print:border-black/20 print:bg-slate-50 print:text-black">
-                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Excedente / Balance de Caja</span>
+                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Excedente Neto Proyectado</span>
                   <strong className={`text-lg font-bold block ${aggregatedTotals.totalBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'} print:text-black`}>
                     {formatCurrency(aggregatedTotals.totalBalance)}
                   </strong>
                   <span className="text-[9px] text-white/30 block print:text-black/40">
-                    Margen neto: {((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%
+                    Margen neto de caja: {((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%
+                  </span>
+                </div>
+
+                {/* PE Card */}
+                <div className="border border-white/10 p-5 rounded-2xl bg-white/5 space-y-1 print:border-black/20 print:bg-slate-50 print:text-black">
+                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Punto de Equilibrio Requerido</span>
+                  <strong className="text-lg font-bold text-sky-400 block print:text-black">
+                    {aggregatedTotals.breakEvenStudents} Estudiantes
+                  </strong>
+                  <span className="text-[9px] text-white/30 block print:text-black/40">
+                    Equivalente a: {aggregatedTotals.breakEvenCredits.toLocaleString()} créditos académicos
+                  </span>
+                </div>
+
+                {/* Margen Seguridad Card */}
+                <div className="border border-white/10 p-5 rounded-2xl bg-white/5 space-y-1 print:border-black/20 print:bg-slate-50 print:text-black">
+                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Margen de Seguridad (Target &gt; 15%)</span>
+                  <strong className={`text-lg font-bold block ${aggregatedTotals.margenSeguridad * 100 > 15 ? 'text-emerald-400' : 'text-amber-400'} print:text-black`}>
+                    {(aggregatedTotals.margenSeguridad * 100).toFixed(1)}%
+                  </strong>
+                  <span className="text-[9px] text-white/30 block print:text-black/40">
+                    Créditos Simulados vs PE: {(aggregatedTotals.totalActiveStudentSemesters * creditosSemestre).toLocaleString()} cr.
+                  </span>
+                </div>
+
+                {/* TIR Card */}
+                <div className="border border-white/10 p-5 rounded-2xl bg-white/5 space-y-1 print:border-black/20 print:bg-slate-50 print:text-black">
+                  <span className="text-[10px] text-white/50 uppercase font-mono block print:text-black/50">Tasa Interna de Retorno (Target 41%)</span>
+                  <strong className={`text-lg font-bold block ${aggregatedTotals.annualIRR * 100 >= 41 ? 'text-emerald-400' : 'text-amber-400'} print:text-black`}>
+                    {(aggregatedTotals.annualIRR * 100).toFixed(1)}%
+                  </strong>
+                  <span className="text-[9px] text-white/30 block print:text-black/40">
+                    Retorno del proyecto a 6 semestres (Compuesto Anual)
                   </span>
                 </div>
               </div>
@@ -2177,24 +2444,24 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
               
               {/* Status Banner */}
               <div className={`p-5 rounded-2xl flex flex-col md:flex-row gap-4 items-start md:items-center ${
-                aggregatedTotals.totalBalance <= 0 
+                (aggregatedTotals.totalBalance <= 0 || VBCIFactors.isUnderLimit || VBCIFactors.isOverLimit)
                   ? 'bg-rose-500/10 border border-rose-500/30 text-rose-300 print:bg-rose-100 print:border-rose-400 print:text-black' 
-                  : !aggregatedTotals.isBalanced
+                  : (aggregatedTotals.annualIRR * 100 <= 41 || aggregatedTotals.margenSeguridad * 100 <= 15)
                   ? 'bg-amber-500/10 border border-amber-500/30 text-amber-300 print:bg-amber-100 print:border-amber-400 print:text-black'
                   : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 print:bg-emerald-100 print:border-emerald-400 print:text-black'
               }`}>
                 <div className="shrink-0">
                   <div className={`px-4 py-2 text-xs font-bold tracking-widest uppercase rounded-xl border ${
-                    aggregatedTotals.totalBalance <= 0 
+                    (aggregatedTotals.totalBalance <= 0 || VBCIFactors.isUnderLimit || VBCIFactors.isOverLimit)
                       ? 'bg-rose-500 text-white border-rose-600' 
-                      : !aggregatedTotals.isBalanced
+                      : (aggregatedTotals.annualIRR * 100 <= 41 || aggregatedTotals.margenSeguridad * 100 <= 15)
                       ? 'bg-amber-500 text-black border-amber-600 font-bold'
                       : 'bg-emerald-500 text-black border-emerald-600 font-bold'
                   }`}>
-                    {aggregatedTotals.totalBalance <= 0 
+                    {(aggregatedTotals.totalBalance <= 0 || VBCIFactors.isUnderLimit || VBCIFactors.isOverLimit)
                       ? 'NO VIABLE' 
-                      : !aggregatedTotals.isBalanced
-                      ? 'VIABLE CONDICIONADO'
+                      : (aggregatedTotals.annualIRR * 100 <= 41 || aggregatedTotals.margenSeguridad * 100 <= 15)
+                      ? 'VIABLE CON AJUSTES'
                       : 'VIABLE'}
                   </div>
                 </div>
@@ -2202,12 +2469,12 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                 <div className="space-y-1">
                   <span className="text-[10px] font-mono uppercase tracking-wider opacity-60">Conclusión de Viabilidad Financiera</span>
                   <p className="text-xs font-sans leading-relaxed text-justify">
-                    {aggregatedTotals.totalBalance <= 0 ? (
-                      `Evaluadas las proyecciones y costos detallados, el programa se dictamina como NO VIABLE en su estructura actual. Las proyecciones muestran un déficit operativo acumulado de ${formatCurrency(aggregatedTotals.totalBalance)} (margen del ${((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%). Los ingresos de funcionamiento no son suficientes para cubrir los egresos fijos y variables del programa (costos docentes, coordinación y personal de apoyo), debido principalmente a una baja cohorte de estudiantes o una tarifa de crédito académico subóptima. Se requiere reestructurar la malla curricular, incrementar la matrícula mínima de estudiantes o proponer una tarifa de matrícula por crédito superior para asegurar la sostenibilidad del programa.`
-                    ) : !aggregatedTotals.isBalanced ? (
-                      `Tras el análisis técnico-financiero, el programa es dictaminado como VIABLE CONDICIONADO. Si bien el balance neto acumulado es superavitario con un excedente de ${formatCurrency(aggregatedTotals.totalBalance)} (margen del ${((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%), se detectan alertas en la planeación: existen semestres individuales con saldos operativos negativos o la matrícula propuesta está por debajo del umbral de estudiantes requerido en periodos específicos. Se recomienda realizar ajustes en la estructura de asignación docente, revisar la tarifa del crédito académico o garantizar un aforo mínimo mayor para mitigar el riesgo de iliquidez temporal.`
+                    {(aggregatedTotals.totalBalance <= 0 || VBCIFactors.isUnderLimit || VBCIFactors.isOverLimit) ? (
+                      `El programa se dictamina como NO VIABLE (🔴) para su apertura académica. El balance neto acumulado es deficitario (${formatCurrency(aggregatedTotals.totalBalance)}) o se han violado los límites de seguridad legal del valor del crédito académico VCAP (${formatCurrency(finalCreditValue)} contra un rango de seguridad de ${formatCurrency(VBCIFactors.minLimit)} a ${formatCurrency(VBCIFactors.maxLimit)}). Se requiere de manera inmediata una reestructuración de la estructura de egresos directos, reducir las horas de docencia asignada o replantear el aforo mínimo de estudiantes.`
+                    ) : (aggregatedTotals.annualIRR * 100 <= 41 || aggregatedTotals.margenSeguridad * 100 <= 15) ? (
+                      `El programa se dictamina como VIABLE CON AJUSTES (🟡). Si bien se registra superávit acumulado de caja por ${formatCurrency(aggregatedTotals.totalBalance)}, el proyecto curricular no alcanza los umbrales de seguridad de la estrategia de sostenibilidad (rentabilidad TIR proyectada del ${(aggregatedTotals.annualIRR * 100).toFixed(1)}% frente al target del 41.0%, o margen de seguridad de la matrícula del ${(aggregatedTotals.margenSeguridad * 100).toFixed(1)}% frente al target del 15.0%). Existe riesgo latente de déficit operativo ante desviaciones mínimas en el número de alumnos nuevos matriculados.`
                     ) : (
-                      `Tras realizar la simulación del flujo de caja del programa, se dictamina que el proyecto curricular es financieramente VIABLE. Los ingresos netos de funcionamiento cubren la totalidad de los costos de personal docente y de apoyo, así como los gastos operativos directos, generando un excedente acumulado de ${formatCurrency(aggregatedTotals.totalBalance)} (margen neto de ${((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%). El programa cumple con las matrículas mínimas de ${minStudents} estudiantes y no presenta déficit operativo en ninguna de las cohortes simuladas.`
+                      `El programa se dictamina como financieramente VIABLE (🟢). El proyecto satisface a plenitud los estándares técnicos de sostenibilidad de la UPTC, generando un excedente de caja acumulado de ${formatCurrency(aggregatedTotals.totalBalance)} (margen neto de funcionamiento del ${((aggregatedTotals.totalBalance / (aggregatedTotals.totalFunctioningIncome || 1)) * 100).toFixed(1)}%). La rentabilidad del proyecto (TIR del ${(aggregatedTotals.annualIRR * 100).toFixed(1)}%) supera la tasa de retorno objetivo del 41.0% y el margen de seguridad de matrícula (${(aggregatedTotals.margenSeguridad * 100).toFixed(1)}%) es superior al 15.0%, lo cual certifica la solvencia del programa.`
                     )}
                   </p>
                 </div>
@@ -2218,13 +2485,16 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                 <span className="font-bold text-white block print:text-black">Recomendaciones y Criterios Regulatorios UPTC:</span>
                 <ul className="list-disc pl-5 space-y-1.5 text-[11px]">
                   <li>
-                    <strong>Derechos de Matrícula e Indexación (Artículo 3):</strong> La tarifa base del programa de posgrado por crédito se ha ajustado conforme a los factores de cohorte, profesores, orientación y competitividad del Proyecto de Acuerdo. Es importante revisar semestralmente el ajuste del VBCI si varía la cohorte.
+                    <strong>Indexación Compuesta (IAEP):</strong> A partir del Año 2 de vigencia del programa, la tarifa por crédito académico se actualiza anualmente de forma compuesta según el Índice de Ajuste Económico de Posgrados (IAEP), el cual se ha fijado en <strong>{IAEP.toFixed(2)}%</strong> (ponderación de IPC, ICES e incremento de SMLMV) con restricción legal de piso IPC.
                   </li>
                   <li>
-                    <strong>Deducción Central (45.5%):</strong> Se recuerda que del recaudo bruto de matrículas, un 40% se destina a la administración central de la UPTC, un 5% a investigaciones y un 0.5% a control interno (MESI), restando un 54.5% para el fondo propio de funcionamiento del programa.
+                    <strong>Límites de Seguridad VBCI (Art. 3):</strong> El valor del crédito (VCAP) de <strong>{formatCurrency(finalCreditValue)}</strong> se encuentra dentro del rango institucional permitido de {formatCurrency(VBCIFactors.minLimit)} (0.8x VBCI) a {formatCurrency(VBCIFactors.maxLimit)} (2.5x VBCI).
                   </li>
                   <li>
-                    <strong>Carga Académica Mínima (Artículo 8):</strong> Los cálculos asumen la matrícula mínima de 7 créditos por semestre por estudiante. La oferta de asignaturas debe planificarse de forma compacta para optimizar las horas de docencia directa a contratar.
+                    <strong>Depreciación de Activos (Art. 4):</strong> Se incorporó un costo de reposición semestral de <strong>{formatCurrency((equipmentsValue / depreciationYears) / 2)}</strong> correspondiente a la amortización de equipos y laboratorios valorados en {formatCurrency(equipmentsValue)}, asegurando la suficiencia financiera de largo plazo del programa.
+                  </li>
+                  <li>
+                    <strong>Deducción Institucional (45.5%):</strong> Un 40% se transfiere a la Administración Central de la UPTC, un 5% a Fomento de Investigaciones y un 0.5% a Aseguramiento de Calidad (MESI). El programa retiene un 54.5% del recaudo neto de matrículas.
                   </li>
                 </ul>
               </div>
@@ -2244,22 +2514,24 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
                       <th className="p-3 text-right">Alumnos</th>
                       <th className="p-3 text-right">Ingreso Bruto</th>
                       <th className="p-3 text-right">Deducción UPTC</th>
-                      <th className="p-3 text-right">Ingreso Disponible</th>
-                      <th className="p-3 text-right">Gastos Personal</th>
-                      <th className="p-3 text-right">Gastos Ops</th>
-                      <th className="p-3 text-right">Excedente Neto</th>
+                      <th className="p-3 text-right">Neto disponible</th>
+                      <th className="p-3 text-right">Costo Personal</th>
+                      <th className="p-3 text-right">Operativos</th>
+                      <th className="p-3 text-right">Depreciación</th>
+                      <th className="p-3 text-right">Excedente Sem.</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5 text-white/80 print:divide-black/10 print:text-black">
-                    {calculatedSemesters.map(s => (
-                      <tr key={s.semesterLabel} className="hover:bg-white/[0.01]">
+                  <tbody>
+                    {calculatedSemesters.map((s, index) => (
+                      <tr key={index} className="border-b border-white/5 hover:bg-white/[0.02] print:border-black/10 print:text-black">
                         <td className="p-3 font-semibold text-white print:text-black">{s.semesterLabel}</td>
                         <td className="p-3 text-right font-mono">{s.activeStudents}</td>
                         <td className="p-3 text-right font-mono">{formatCurrency(s.grossIncome)}</td>
                         <td className="p-3 text-right font-mono text-rose-400">-{formatCurrency(s.totalDeductions)}</td>
                         <td className="p-3 text-right font-mono text-emerald-400">{formatCurrency(s.totalFunctioningIncome)}</td>
                         <td className="p-3 text-right font-mono">-{formatCurrency(s.totalStaffCosts)}</td>
-                        <td className="p-3 text-right font-mono">-{formatCurrency(s.totalOperatingCosts)}</td>
+                        <td className="p-3 text-right font-mono">-{formatCurrency(s.totalOperatingCosts - (s.depreciation || 0))}</td>
+                        <td className="p-3 text-right font-mono text-amber-300">-{formatCurrency(s.depreciation || 0)}</td>
                         <td className={`p-3 text-right font-mono font-bold ${s.budgetBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'} print:text-black`}>
                           {formatCurrency(s.budgetBalance)}
                         </td>
@@ -2270,17 +2542,32 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
               </div>
             </div>
 
-            {/* Signature Block */}
-            <div className="flex justify-between pt-16 text-center text-xs text-white/80 print:text-black">
+            {/* Signature Block - 5 Signatures as requested */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 pt-16 text-center text-[10px] text-white/80 print:text-black print:pt-20">
               <div className="space-y-1">
-                <div className="w-56 border-t border-white/40 mx-auto print:border-black"></div>
-                <strong className="block text-white print:text-black">Coordinador del Programa</strong>
-                <span className="text-[10px] text-white/50 block print:text-black/50">Responsable de Planeación Curricular</span>
+                <div className="w-24 border-t border-white/40 mx-auto print:border-black"></div>
+                <strong className="block text-white print:text-black">Formulador del Programa</strong>
+                <span className="text-[8px] text-white/55 block print:text-black/55 font-sans">Responsable Técnico</span>
               </div>
               <div className="space-y-1">
-                <div className="w-56 border-t border-white/40 mx-auto print:border-black"></div>
-                <strong className="block text-white print:text-black">Vicerrector Administrativo y Financiero</strong>
-                <span className="text-[10px] text-white/50 block print:text-black/50">UPTC - VAFI</span>
+                <div className="w-24 border-t border-white/40 mx-auto print:border-black"></div>
+                <strong className="block text-white print:text-black">Dpto. de Posgrados</strong>
+                <span className="text-[8px] text-white/55 block print:text-black/55 font-sans">Aval Académico</span>
+              </div>
+              <div className="space-y-1">
+                <div className="w-24 border-t border-white/40 mx-auto print:border-black"></div>
+                <strong className="block text-white print:text-black">Dirección de Planeación</strong>
+                <span className="text-[8px] text-white/55 block print:text-black/55 font-sans">Coherencia Institucional</span>
+              </div>
+              <div className="space-y-1">
+                <div className="w-24 border-t border-white/40 mx-auto print:border-black"></div>
+                <strong className="block text-white print:text-black">Vicerrectoría Adm. y Financiera</strong>
+                <span className="text-[8px] text-white/55 block print:text-black/55 font-sans font-bold">UPTC - VAFI</span>
+              </div>
+              <div className="space-y-1 col-span-2 md:col-span-1">
+                <div className="w-24 border-t border-white/40 mx-auto print:border-black"></div>
+                <strong className="block text-white print:text-black">Dirección Jurídica</strong>
+                <span className="text-[8px] text-white/55 block print:text-black/55 font-sans font-mono">Legalidad y Acuerdos</span>
               </div>
             </div>
 
