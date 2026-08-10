@@ -1,187 +1,194 @@
 Unidad;Concepto;Recurso;Tipo de Ingreso;Valor inicial;Valor aforo;Total recaudo;Fecha inicial;Fecha final;Tipo de Recurso
-01 - ADMINISTRATIVA Y FINANCIERA;Aportes para Funcionamiento;10.0-Aportes Nacion - Funcionamiento;Aportes de la Nación;3.14782E+11;3.14782E+11;1.57184E+11;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Aportes funcionamiento;10.0-Aportes Nacion - Funcionamiento;Aportes de la Nación;0;545944007.9;545944007.9;1/01/2026;30/06/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Aportes;10.0-Aportes Nacion - Funcionamiento;Aportes de la Nación;0;0;11038169644;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - PIC Convencional;10.1-Aportes Nación - PIC Convencional;Aportes de la Nación;0;1967656093;1967656093;1/01/2026;30/06/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - PIC Territorial;10.2-Aportes Nación - PIC Territorial;Aportes de la Nación;0;936477783.6;936477783.6;1/01/2026;30/06/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Matrículas Pregrado-Política de Gratuidad;10.5-Aportes Nación - Política de gratuidad;Aportes de la Nación;20708427143;20708427143;1395938900;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia;12-Estampillas Otras Universidades;Aportes de la Nación;5706455422;5706455422;7265094590;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - Estampilla Pro UNAL y demas universidades;12-Estampillas Otras Universidades;Aportes de la Nación;0;0;9500547.76;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Estampilla Prounal;12-Estampillas Otras Universidades;Aportes de la Nación;0;9991479040;9991479040;1/01/2026;30/06/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Excedentes Cooperativas Art.142, Ley 1819 del 2016;13-Cooperativas;Aportes de la Nación;2126284735;2126284735;1534765063;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del Balance - Cooperativas;13-Cooperativas;Aportes de la Nación;0;1887697;1887697;1/01/2026;30/06/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Matrículas Pregrado FSE;14-Matriculas FSE;Aportes de la Nación;18737327483;18737327483;0;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Matrículas FSE;14-Matriculas FSE;Aportes de la Nación;0;888183454.3;888183454.3;1/01/2026;30/06/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Aportes para Inversion;16.0-Aportes inversion;Aportes de la Nación;7728720060;7728720060;7740281271;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - CREE;16.0-Aportes inversion;Aportes de la Nación;0;0;419504.91;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Aportes inversion;16.0-Aportes inversion;Aportes de la Nación;0;5148400892;5148400892;1/01/2026;30/06/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Plan Fomento a Bienestar (mejoramiento condiciones de bienestar);16.1-Plan fomento a Bienestar (mejoramiento condiciones de  bienestar);;0;1407480044;0;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Devolucion de descuento por votacion;17-Devolucion descuento electoral;Aportes de la Nación;5447536009;5447536009;2770457175;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Articulo 87 CESU;18-Articulo 87 CESU;Aportes de la Nación;427778274;427778274;1035929640;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Certificaciones y constancias;20-Propios;Recursos Propios;54390954;54390954;31692050;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Inscripciones ;20-Propios;Recursos Propios;316506993;316506993;1423296000;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Derechos de grado;20-Propios;Recursos Propios;451761696;451761696;562585440;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Matrículas;20-Propios;Recursos Propios;5525977978;5525977978;3105465122;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;Recursos Propios;4231617827;4231617827;1942313111;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Sanciones administrativas;20-Propios;Recursos Propios;22586143;22586143;16121550;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;"Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua";20-Propios;Recursos Propios;4173694824;4173694824;2075073429;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;"Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing";20-Propios;Recursos Propios;235081376;235081376;118531608.4;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;"Minerales; electricidad, gas y agua";20-Propios;Recursos Propios;129404752;129404752;61452873.34;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Productos metálicos, maquinaria y equipo;20-Propios;Recursos Propios;5025174;5025174;6302590;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - Propios;20-Propios;Recursos Propios;1822006660;1822006660;1439332440;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Propios;20-Propios;Recursos Propios;0;1579085708;1579085708;1/01/2026;30/06/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;Recursos Propios;331465375;331465375;127919153;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Servicios Públicos;20-Propios;Recursos Propios;0;0;10533812;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Propios;20-Propios;Recursos Propios;0;0;13845388;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Pregrado - Inscripciones ;20-Propios;Recursos Propios;0;0;11554400;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Pregrado - Matrículas;20-Propios;Recursos Propios;0;0;1808300;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;Recursos Propios;0;0;1451000;1/01/2026;30/06/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Pregrado - Matrículas;20-Propios;Recursos Propios;0;25044900;25044900;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Pregrado - Matrículas;20-Propios;Recursos Propios;0;11310600;17773800;1/01/2026;30/06/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Pregrado - Matrículas;20-Propios;Recursos Propios;0;0;4473300;1/01/2026;30/06/2026;Recursos UPTC
-09 - INGENIERIA;Pregrado - Matrículas;20-Propios;Recursos Propios;0;94437340.8;152068530;1/01/2026;30/06/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Pregrado - Matrículas;20-Propios;Recursos Propios;0;43357500;43895900;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Pregrado - Matrículas;20-Propios;Recursos Propios;0;38874617;53081900;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Pregrado - Matrículas;20-Propios;Recursos Propios;0;39540000;43043000;1/01/2026;30/06/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Pregrado - Inscripciones ;20-Propios;Recursos Propios;0;0;7615400;1/01/2026;30/06/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;Recursos Propios;0;0;360000;1/01/2026;30/06/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Pregrado - Inscripciones ;20-Propios;Recursos Propios;0;0;4989400;1/01/2026;30/06/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Pregrado - Matrículas;20-Propios;Recursos Propios;0;0;1593800;1/01/2026;30/06/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;Recursos Propios;0;0;2576000;1/01/2026;30/06/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Sanciones administrativas;20-Propios;Recursos Propios;0;0;557200;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Devolución IVA - Instituciones de Educación Superior;21-Devolucion IVA;Recursos Propios;4587997825;4587997825;3241897463;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Devolucion IVA;21-Devolucion IVA;Recursos Propios;0;953393273;953393273;1/01/2026;30/06/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;0;0;12379600;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;0;0;3883193;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;212479362;212479362;121500300;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;372975795;372975795;64086000;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;10485147378;10527470904;4324473441;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;14917592;14917592;32047600;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Recursos del balance - Posgrados;31-Posgrados;Extensión y Posgrados;0;179478068;179478068;1/01/2026;30/06/2026;Recursos del Balance
-05 - CIENCIAS BASICAS;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;30612465;30612465;38667600;1/01/2026;30/06/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;41215292;41215292;11381500;1/01/2026;30/06/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;1408521574;1408521574;761312096;1/01/2026;30/06/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;1273178;1273178;3287500;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;111276000;111276000;44701100;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;218394000;218394000;21274600;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;5018300000;5018300000;2420207258;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0;0;10771500;1/01/2026;30/06/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;21238620;21238620;6827600;1/01/2026;30/06/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;33309900;33309900;1751000;1/01/2026;30/06/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;2205929622;2206189622;960554875;1/01/2026;30/06/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0;0;885500;1/01/2026;30/06/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;44900440;44900440;38730400;1/01/2026;30/06/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;129301900;129301900;48152500;1/01/2026;30/06/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;2008442150;2008442150;1172450174;1/01/2026;30/06/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;2342000;2342000;5922200;1/01/2026;30/06/2026;Recursos UPTC
-09 - INGENIERIA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;0;0;84729600;1/01/2026;30/06/2026;Recursos UPTC
-09 - INGENIERIA;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;0;0;45788600;1/01/2026;30/06/2026;Recursos UPTC
-09 - INGENIERIA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;7974390060;8136426419;3904976897;1/01/2026;30/06/2026;Recursos UPTC
-09 - INGENIERIA;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0;0;25361500;1/01/2026;30/06/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;4612000;4612000;2152500;1/01/2026;30/06/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;7686900;7686900;0;1/01/2026;30/06/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;364581200;364581200;121502738;1/01/2026;30/06/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;1000000;1000000;2425500;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;90602928;90602928;49900100;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;205081160;205081160;13307400;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;3406788528;3406788528;1603543783;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;9540000;9540000;6648600;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;105525765;105525765;41144800;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;208353425;208353425;101558000;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;4945268530;4956301314;2145368868;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0;0;9487000;1/01/2026;30/06/2026;Recursos UPTC
-14 - SECCIONAL CHIQUINQUIRA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;4441320;4441320;1537500;1/01/2026;30/06/2026;Recursos UPTC
-14 - SECCIONAL CHIQUINQUIRA;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;11103300;11103300;0;1/01/2026;30/06/2026;Recursos UPTC
-14 - SECCIONAL CHIQUINQUIRA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;194307750;194307750;0;1/01/2026;30/06/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;138200000;138200000;74569100;1/01/2026;30/06/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;238000000;238000000;90788900;1/01/2026;30/06/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;5202000000;5369355119;3243942530;1/01/2026;30/06/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0;0;12380500;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Extension;32-Extension;Extensión y Posgrados;0;0;2368072145;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Extension;32-Extension;Extensión y Posgrados;0;0;6250000;1/01/2026;30/06/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Extension;32-Extension;Extensión y Posgrados;10000000;46690000;49078960;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Extension;32-Extension;Extensión y Posgrados;0;0;71400000;1/01/2026;30/06/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Extension;32-Extension;Extensión y Posgrados;0;0;450000;1/01/2026;30/06/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Extension;32-Extension;Extensión y Posgrados;810500000;810500000;53570450;1/01/2026;30/06/2026;Recursos UPTC
-09 - INGENIERIA;Extension;32-Extension;Extensión y Posgrados;1575000000;1635316860;34238830;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Extension;32-Extension;Extensión y Posgrados;21050000;21050000;18994388;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Extension;32-Extension;Extensión y Posgrados;460000000;480000000;221438041;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Agricultura, silvicultura y productos de la pesca;32-Extension;Extensión y Posgrados;650000000;650000000;0;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Extension;32-Extension;Extensión y Posgrados;15000000;15000000;43399717;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Agricultura, silvicultura y productos de la pesca;32-Extension;Extensión y Posgrados;0;0;215790230;1/01/2026;30/06/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Extension;32-Extension;Extensión y Posgrados;0;0;21128000;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;537500000;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;3041262435;8166091514;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;0;49152090.72;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;6000000;6000000;1/01/2026;30/06/2026;Recursos del Balance
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;4301415000;7423479611;7612500;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;6500000;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;49471850;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;5674059937;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;49500000;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;6500000;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;6500000;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;6250000;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;6250000;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;49439100;49439100;1/01/2026;30/06/2026;Recursos del Balance
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;220000000;220631149;48500000;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;20000000;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;27000000;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;20000000;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;20000000;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;34000000;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;19800000;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;30000000;1/01/2026;30/06/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;8419461.66;8419461.66;1/01/2026;30/06/2026;Recursos del Balance
-07 - CIENCIAS DE LA SALUD;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;100000000;118040000;0;1/01/2026;30/06/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;1000000000;1518207975;0;1/01/2026;30/06/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;7331637.85;7331637.85;1/01/2026;30/06/2026;Recursos del Balance
-09 - INGENIERIA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;337750000;1/01/2026;30/06/2026;Recursos UPTC
-09 - INGENIERIA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;50607918.5;1/01/2026;30/06/2026;Recursos UPTC
-09 - INGENIERIA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;4800000000;6994320740;0;1/01/2026;30/06/2026;Recursos UPTC
-09 - INGENIERIA;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;0;0;1/01/2026;30/06/2026;Recursos del Balance
-10 - DERECHO Y CIENCIAS SOCIALES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;250000000;250000000;0;1/01/2026;30/06/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;22537438.83;22537438.83;1/01/2026;30/06/2026;Recursos del Balance
-12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;47532087;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;825000000;825000000;71346827.08;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;25650000;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;12000000;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;192348000;1/01/2026;30/06/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;13358706.47;13358706.47;1/01/2026;30/06/2026;Recursos del Balance
-13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;469841460;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;113893750;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;233677514;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;3000000000;5363568891;0;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;663804100;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;0;180431;1/01/2026;30/06/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;31371587.82;31371587.82;1/01/2026;30/06/2026;Recursos del Balance
-02 - INVESTIGACION Y EXTENSION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;18000000;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;29600000;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;16000000000;16000000000;5312648275;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Investigacion;33-Convenios con derechos;Extensión y Posgrados;0;0;1201590000;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;0;2979210;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0;7450551.58;7450551.58;1/01/2026;30/06/2026;Recursos del Balance
-15 - SEDE REGIONAL AGUAZUL;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;278555210;0;1/01/2026;30/06/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0;0;58820000;1/01/2026;30/06/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;Extensión y Posgrados;0;136861637;136861637;1/01/2026;30/06/2026;Recursos del Balance
-04 - CIENCIAS DE LA EDUCACION;Convenios sin derechos económicos;34-Convenios sin derechos;Extensión y Posgrados;628035382;628135382;0;1/01/2026;30/06/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;Extensión y Posgrados;0;491023700.2;491023700.2;1/01/2026;30/06/2026;Recursos del Balance
-12 - SECCIONAL DUITAMA;Convenios sin derechos económicos;34-Convenios sin derechos;Extensión y Posgrados;0;39840000;0;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Convenios sin derechos económicos;34-Convenios sin derechos;Extensión y Posgrados;0;0;2200000;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Convenios sin derechos económicos;34-Convenios sin derechos;Extensión y Posgrados;4984000000;4984000000;0;1/01/2026;30/06/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;Extensión y Posgrados;0;1288231239;1288231239;1/01/2026;30/06/2026;Recursos del Balance
-04 - CIENCIAS DE LA EDUCACION;Educación continuada;35-Educacion continuada;Extensión y Posgrados;150000000;150000000;44100000;1/01/2026;30/06/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Educación continuada;35-Educacion continuada;Extensión y Posgrados;61000000;61000000;420240;46023;46203;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Educación continuada;35-Educacion continuada;Extensión y Posgrados;69000000;69000000;4800000;46023;46203;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Educación continuada;35-Educacion continuada;Extensión y Posgrados;100000000;100000000;176042705;46023;46203;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Educación continuada;35-Educacion continuada;Extensión y Posgrados;4000000;4000000;0;46023;46203;Recursos UPTC
-09 - INGENIERIA;Educación continuada;35-Educacion continuada;Extensión y Posgrados;117000000;117000000;4375000;46023;46203;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Educación continuada;35-Educacion continuada;Extensión y Posgrados;20000000;25640000;71534000;46023;46203;Recursos UPTC
-12 - SECCIONAL DUITAMA;Educación continuada;35-Educacion continuada;Extensión y Posgrados;255500000;255500000;70227000;46023;46203;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Educación continuada;35-Educacion continuada;Extensión y Posgrados;142000000;142000000;96770000;46023;46203;Recursos UPTC
-14 - SECCIONAL CHIQUINQUIRA;Educación continuada;35-Educacion continuada;Extensión y Posgrados;43000000;43000000;6103000;46023;46203;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Educación continuada;35-Educacion continuada;Extensión y Posgrados;860000000;860000000;550331530;46023;46203;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Educación continuada;35-Educacion continuada;Extensión y Posgrados;535000000;535000000;264534635;46023;46203;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Educación continuada;35-Educacion continuada;Extensión y Posgrados;30000000;30000000;11442000;46023;46203;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Estampilla pro Universidad Pedagógica y Tecnológica de Colombia;40-Estampilla UPTC;Estampilla Pro UPTC;4206444980;5737263195;2618519983;46023;46203;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Estampilla UPTC;40-Estampilla UPTC;Estampilla Pro UPTC;0;1880006027;1880006027;46023;46203;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Aportes para Funcionamiento;10.0-Aportes Nacion - Funcionamiento;Aportes de la Nación;314782000000.0;314782000000.0;184000000000.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Aportes funcionamiento;10.0-Aportes Nacion - Funcionamiento;Aportes de la Nación;0.0;545944007.9;545944007.9;1/01/2026;31/07/2026;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Aportes;10.0-Aportes Nacion - Funcionamiento;Aportes de la Nación;0.0;0.0;11038169644.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - PIC Convencional;10.1-Aportes Nación - PIC Convencional;Aportes de la Nación;0.0;1967656093.0;1967656093.0;1/01/2026;31/07/2026;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - PIC Territorial;10.2-Aportes Nación - PIC Territorial;Aportes de la Nación;0.0;936477783.6;936477783.6;1/01/2026;31/07/2026;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Matrículas Pregrado-Política de Gratuidad;10.5-Aportes Nación - Política de gratuidad;Aportes de la Nación;20708427143.0;20708427143.0;7019746120.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia;12-Estampillas Otras Universidades;Aportes de la Nación;5706455422.0;7265094590.0;7265094590.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - Estampilla Pro UNAL y demas universidades;12-Estampillas Otras Universidades;Aportes de la Nación;0.0;0.0;11966301.16;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Estampilla Prounal;12-Estampillas Otras Universidades;Aportes de la Nación;0.0;9991479040.0;9991479040.0;1/01/2026;31/07/2026;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Excedentes Cooperativas Art.142, Ley 1819 del 2016;13-Cooperativas;Aportes de la Nación;2126284735.0;2126284735.0;1534765063.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del Balance - Cooperativas;13-Cooperativas;Aportes de la Nación;0.0;1887697.0;1887697.0;1/01/2026;31/07/2026;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Matrículas Pregrado FSE;14-Matriculas FSE;Aportes de la Nación;18737327483.0;18737327483.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Matrículas FSE;14-Matriculas FSE;Aportes de la Nación;0.0;888183454.3;888183454.3;1/01/2026;31/07/2026;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Aportes para Inversion;16.0-Aportes inversion;Aportes de la Nación;7728720060.0;13736522221.0;7740281271.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - CREE;16.0-Aportes inversion;Aportes de la Nación;0.0;0.0;503416.94;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Aportes inversion;16.0-Aportes inversion;Aportes de la Nación;0.0;5148400892.0;5148400892.0;1/01/2026;31/07/2026;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Plan Fomento a Bienestar (mejoramiento condiciones de bienestar);16.1-Plan fomento a Bienestar (mejoramiento condiciones de  bienestar);Aportes de la Nación;0.0;1407480044.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Devolucion de descuento por votacion;17-Devolucion descuento electoral;Aportes de la Nación;5447536009.0;5447536009.0;3249301630.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Articulo 87 CESU;18-Articulo 87 CESU;Aportes de la Nación;427778274.0;427778274.0;1214979208.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Certificaciones y constancias;20-Propios;Recursos Propios;54390954.0;54390954.0;38799050.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Inscripciones ;20-Propios;Recursos Propios;316506993.0;316506993.0;1463473800.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Derechos de grado;20-Propios;Recursos Propios;451761696.0;451761696.0;653451540.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Matrículas;20-Propios;Recursos Propios;5525977978.0;5525977978.0;3257504933.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;Recursos Propios;4231617827.0;4231617827.0;2737099886.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Sanciones administrativas;20-Propios;Recursos Propios;22586143.0;22586143.0;21154850.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;"Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua";20-Propios;Recursos Propios;4173694824.0;4173694824.0;2090075579.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;"Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing";20-Propios;Recursos Propios;235081376.0;235081376.0;137953044.9;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;"Minerales; electricidad, gas y agua";20-Propios;Recursos Propios;129404752.0;129404752.0;75598779.34;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Productos metálicos, maquinaria y equipo;20-Propios;Recursos Propios;5025174.0;5025174.0;6887590.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - Propios;20-Propios;Recursos Propios;1822006660.0;1822006660.0;1725201000.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Propios;20-Propios;Recursos Propios;0.0;1579085708.0;1579085708.0;1/01/2026;31/07/2026;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;Recursos Propios;331465375.0;331465375.0;125936121.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Servicios Públicos;20-Propios;Recursos Propios;0.0;0.0;10533812.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Propios;20-Propios;Recursos Propios;0.0;0.0;13845388.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Pregrado - Inscripciones ;20-Propios;Recursos Propios;0.0;0.0;11554400.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Pregrado - Matrículas;20-Propios;Recursos Propios;0.0;0.0;2525510.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;Recursos Propios;0.0;0.0;3148500.0;1/01/2026;31/07/2026;Recursos UPTC
+05 - CIENCIAS BASICAS;Pregrado - Matrículas;20-Propios;Recursos Propios;0.0;25044900.0;25044900.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Pregrado - Matrículas;20-Propios;Recursos Propios;0.0;11310600.0;17773800.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Pregrado - Matrículas;20-Propios;Recursos Propios;0.0;0.0;4473300.0;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Pregrado - Matrículas;20-Propios;Recursos Propios;0.0;94437340.8;152068530.0;1/01/2026;31/07/2026;Recursos UPTC
+10 - DERECHO Y CIENCIAS SOCIALES;Pregrado - Matrículas;20-Propios;Recursos Propios;0.0;43357500.0;43895900.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Pregrado - Matrículas;20-Propios;Recursos Propios;0.0;38874617.0;53081900.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Pregrado - Matrículas;20-Propios;Recursos Propios;0.0;39540000.0;43043000.0;1/01/2026;31/07/2026;Recursos UPTC
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Pregrado - Inscripciones ;20-Propios;Recursos Propios;0.0;0.0;7615400.0;1/01/2026;31/07/2026;Recursos UPTC
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;Recursos Propios;0.0;0.0;836000.0;1/01/2026;31/07/2026;Recursos UPTC
+15 - SEDE REGIONAL AGUAZUL;Pregrado - Inscripciones ;20-Propios;Recursos Propios;0.0;0.0;4989400.0;1/01/2026;31/07/2026;Recursos UPTC
+15 - SEDE REGIONAL AGUAZUL;Pregrado - Matrículas;20-Propios;Recursos Propios;0.0;0.0;3321030.0;1/01/2026;31/07/2026;Recursos UPTC
+15 - SEDE REGIONAL AGUAZUL;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;Recursos Propios;0.0;0.0;5523000.0;1/01/2026;31/07/2026;Recursos UPTC
+15 - SEDE REGIONAL AGUAZUL;Sanciones administrativas;20-Propios;Recursos Propios;0.0;0.0;777700.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Devolución IVA - Instituciones de Educación Superior;21-Devolucion IVA;Recursos Propios;4587997825.0;4587997825.0;4672202857.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Devolucion IVA;21-Devolucion IVA;Recursos Propios;0.0;953393273.0;953393273.0;1/01/2026;31/07/2026;Recursos del Balance
+01 - ADMINISTRATIVA Y FINANCIERA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;0.0;0.0;12379600.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;0.0;0.0;6301886.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;212479362.0;212479362.0;121807800.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;372975795.0;372975795.0;162141900.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;10485147378.0;10527470904.0;6216407959.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;14917592.0;14917592.0;44592100.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Recursos del balance - Posgrados;31-Posgrados;Extensión y Posgrados;0.0;179478068.0;179478068.0;1/01/2026;31/07/2026;Recursos del Balance
+05 - CIENCIAS BASICAS;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;30612465.0;30612465.0;38667600.0;1/01/2026;31/07/2026;Recursos UPTC
+05 - CIENCIAS BASICAS;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;41215292.0;41215292.0;23638500.0;1/01/2026;31/07/2026;Recursos UPTC
+05 - CIENCIAS BASICAS;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;1408521574.0;1408521574.0;1169256172.0;1/01/2026;31/07/2026;Recursos UPTC
+05 - CIENCIAS BASICAS;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;1273178.0;1273178.0;6259000.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;111276000.0;111276000.0;45008600.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;218394000.0;218394000.0;155488700.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;5018300000.0;5018300000.0;3132170272.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0.0;0.0;15218000.0;1/01/2026;31/07/2026;Recursos UPTC
+07 - CIENCIAS DE LA SALUD;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;21238620.0;21238620.0;6827600.0;1/01/2026;31/07/2026;Recursos UPTC
+07 - CIENCIAS DE LA SALUD;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;33309900.0;33309900.0;13132500.0;1/01/2026;31/07/2026;Recursos UPTC
+07 - CIENCIAS DE LA SALUD;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;2205929622.0;2206189622.0;1601383858.0;1/01/2026;31/07/2026;Recursos UPTC
+07 - CIENCIAS DE LA SALUD;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0.0;0.0;1879500.0;1/01/2026;31/07/2026;Recursos UPTC
+07 - CIENCIAS DE LA SALUD;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;Extensión y Posgrados;0.0;0.0;25000.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;44900440.0;44900440.0;38730400.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;129301900.0;129301900.0;77044000.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;2008442150.0;2008442150.0;1568878538.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;2342000.0;2342000.0;7409200.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;Extensión y Posgrados;0.0;0.0;17762500.0;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;0.0;0.0;85344600.0;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;0.0;0.0;148222100.0;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;7974390060.0;8136426419.0;5466735714.0;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0.0;0.0;32199000.0;1/01/2026;31/07/2026;Recursos UPTC
+10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;4612000.0;4612000.0;2152500.0;1/01/2026;31/07/2026;Recursos UPTC
+10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;7686900.0;7686900.0;4377500.0;1/01/2026;31/07/2026;Recursos UPTC
+10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;364581200.0;364581200.0;190695338.0;1/01/2026;31/07/2026;Recursos UPTC
+10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;1000000.0;1000000.0;2901000.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;90602928.0;90602928.0;49900100.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;205081160.0;205081160.0;88863000.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;3406788528.0;3406788528.0;2008642005.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;9540000.0;9540000.0;10967600.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;105525765.0;105525765.0;41452300.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;208353425.0;208353425.0;103309000.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;4945268530.0;4956301314.0;2850238767.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0.0;0.0;14313000.0;1/01/2026;31/07/2026;Recursos UPTC
+14 - SECCIONAL CHIQUINQUIRA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;4441320.0;4441320.0;1537500.0;1/01/2026;31/07/2026;Recursos UPTC
+14 - SECCIONAL CHIQUINQUIRA;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;11103300.0;11103300.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+14 - SECCIONAL CHIQUINQUIRA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;194307750.0;194307750.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+14 - SECCIONAL CHIQUINQUIRA;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0.0;0.0;307500.0;1/01/2026;31/07/2026;Recursos UPTC
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Inscripciones ;31-Posgrados;Extensión y Posgrados;138200000.0;138200000.0;74569100.0;1/01/2026;31/07/2026;Recursos UPTC
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Derechos de grado;31-Posgrados;Extensión y Posgrados;238000000.0;238000000.0;165206400.0;1/01/2026;31/07/2026;Recursos UPTC
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Matrículas;31-Posgrados;Extensión y Posgrados;5202000000.0;5369355119.0;4378795856.0;1/01/2026;31/07/2026;Recursos UPTC
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;Extensión y Posgrados;0.0;0.0;19500000.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;Extensión y Posgrados;0.0;0.0;20500000.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Extension;32-Extension;Extensión y Posgrados;0.0;0.0;2548873752.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Extension;32-Extension;Extensión y Posgrados;0.0;0.0;6250000.0;1/01/2026;31/07/2026;Recursos UPTC
+05 - CIENCIAS BASICAS;Extension;32-Extension;Extensión y Posgrados;10000000.0;46690000.0;56775144.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Extension;32-Extension;Extensión y Posgrados;0.0;0.0;76200000.0;1/01/2026;31/07/2026;Recursos UPTC
+07 - CIENCIAS DE LA SALUD;Extension;32-Extension;Extensión y Posgrados;0.0;0.0;450000.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Extension;32-Extension;Extensión y Posgrados;810500000.0;823714759.4;75185450.0;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Extension;32-Extension;Extensión y Posgrados;1575000000.0;1635316860.0;34754710.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Extension;32-Extension;Extensión y Posgrados;21050000.0;21050000.0;27244388.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Extension;32-Extension;Extensión y Posgrados;460000000.0;480000000.0;254804380.0;1/01/2026;31/07/2026;Recursos UPTC
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Extension;32-Extension;Extensión y Posgrados;0.0;0.0;1598876.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Agricultura, silvicultura y productos de la pesca;32-Extension;Extensión y Posgrados;650000000.0;650000000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Extension;32-Extension;Extensión y Posgrados;15000000.0;15000000.0;24280717.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Agricultura, silvicultura y productos de la pesca;32-Extension;Extensión y Posgrados;0.0;0.0;272053183.6;1/01/2026;31/07/2026;Recursos UPTC
+15 - SEDE REGIONAL AGUAZUL;Extension;32-Extension;Extensión y Posgrados;0.0;0.0;25576000.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;3041262435.0;8702826283.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;537500000.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;57743765.2;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;6000000.0;6000000.0;1/01/2026;31/07/2026;Recursos del Balance
+04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;4301415000.0;11002883271.0;7612500.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;6250000.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;6250000.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;6500000.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;6500000.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;49500000.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;5674059937.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;49471850.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;6500000.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;49439100.0;49439100.0;1/01/2026;31/07/2026;Recursos del Balance
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;19800000.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;20000000.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;30000000.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;20000000.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;27000000.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;20000000.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;34000000.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;220000000.0;220631149.0;48500000.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;10025999.71;10025999.71;1/01/2026;31/07/2026;Recursos del Balance
+07 - CIENCIAS DE LA SALUD;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;100000000.0;118040000.0;20400000.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;1000000000.0;1518807975.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;7331637.85;7331637.85;1/01/2026;31/07/2026;Recursos del Balance
+09 - INGENIERIA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;337750000.0;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;4800000000.0;7052942545.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;50607918.5;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;7589269.0;7589269.0;1/01/2026;31/07/2026;Recursos del Balance
+10 - DERECHO Y CIENCIAS SOCIALES;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;250000000.0;250000000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+10 - DERECHO Y CIENCIAS SOCIALES;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;22537438.83;22537438.83;1/01/2026;31/07/2026;Recursos del Balance
+12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;12000000.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;192348000.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;825000000.0;825000000.0;71346827.08;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;25650000.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;47532087.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;13358706.47;13358706.47;1/01/2026;31/07/2026;Recursos del Balance
+13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;113893750.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;233677514.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;469841460.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;663804100.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;3000000000.0;5627817063.0;150871644.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;201525.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;35745120.82;35745120.82;1/01/2026;31/07/2026;Recursos del Balance
+02 - INVESTIGACION Y EXTENSION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;16000000000.0;16000000000.0;12134184377.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;18000000.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;29600000.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Investigacion;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;1342657000.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;2979210.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensión y Posgrados;0.0;7450551.58;7450551.58;1/01/2026;31/07/2026;Recursos del Balance
+15 - SEDE REGIONAL AGUAZUL;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;278555210.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+15 - SEDE REGIONAL AGUAZUL;Convenios con derechos económicos;33-Convenios con derechos;Extensión y Posgrados;0.0;0.0;58820000.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Convenios sin derechos económicos;34-Convenios sin derechos;Extensión y Posgrados;0.0;0.0;24250000.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;Extensión y Posgrados;0.0;136861637.0;136861637.0;1/01/2026;31/07/2026;Recursos del Balance
+04 - CIENCIAS DE LA EDUCACION;Convenios sin derechos económicos;34-Convenios sin derechos;Extensión y Posgrados;628035382.0;628135382.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+04 - CIENCIAS DE LA EDUCACION;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;Extensión y Posgrados;0.0;491023700.2;491023700.2;1/01/2026;31/07/2026;Recursos del Balance
+12 - SECCIONAL DUITAMA;Convenios sin derechos económicos;34-Convenios sin derechos;Extensión y Posgrados;0.0;39840000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Convenios sin derechos económicos;34-Convenios sin derechos;Extensión y Posgrados;0.0;0.0;2200000.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Convenios sin derechos económicos;34-Convenios sin derechos;Extensión y Posgrados;4984000000.0;4984000000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;Extensión y Posgrados;0.0;1810609128.0;1810609128.0;1/01/2026;31/07/2026;Recursos del Balance
+04 - CIENCIAS DE LA EDUCACION;Educación continuada;35-Educacion continuada;Extensión y Posgrados;150000000.0;150000000.0;44100000.0;1/01/2026;31/07/2026;Recursos UPTC
+05 - CIENCIAS BASICAS;Educación continuada;35-Educacion continuada;Extensión y Posgrados;61000000.0;61000000.0;420240.0;1/01/2026;31/07/2026;Recursos UPTC
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Educación continuada;35-Educacion continuada;Extensión y Posgrados;69000000.0;69000000.0;4800000.0;1/01/2026;31/07/2026;Recursos UPTC
+07 - CIENCIAS DE LA SALUD;Educación continuada;35-Educacion continuada;Extensión y Posgrados;100000000.0;179719581.0;182042705.0;1/01/2026;31/07/2026;Recursos UPTC
+08 - CIENCIAS AGROPECUARIAS;Educación continuada;35-Educacion continuada;Extensión y Posgrados;4000000.0;4000000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
+09 - INGENIERIA;Educación continuada;35-Educacion continuada;Extensión y Posgrados;117000000.0;117000000.0;4375000.0;1/01/2026;31/07/2026;Recursos UPTC
+10 - DERECHO Y CIENCIAS SOCIALES;Educación continuada;35-Educacion continuada;Extensión y Posgrados;20000000.0;58290500.0;71534000.0;1/01/2026;31/07/2026;Recursos UPTC
+12 - SECCIONAL DUITAMA;Educación continuada;35-Educacion continuada;Extensión y Posgrados;255500000.0;255500000.0;83504000.0;1/01/2026;31/07/2026;Recursos UPTC
+13 - SECCIONAL SOGAMOSO;Educación continuada;35-Educacion continuada;Extensión y Posgrados;142000000.0;169000000.0;112664000.0;1/01/2026;31/07/2026;Recursos UPTC
+14 - SECCIONAL CHIQUINQUIRA;Educación continuada;35-Educacion continuada;Extensión y Posgrados;43000000.0;43000000.0;6103000.0;1/01/2026;31/07/2026;Recursos UPTC
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Educación continuada;35-Educacion continuada;Extensión y Posgrados;860000000.0;860000000.0;1098041919.0;1/01/2026;31/07/2026;Recursos UPTC
+02 - INVESTIGACION Y EXTENSION;Educación continuada;35-Educacion continuada;Extensión y Posgrados;535000000.0;535000000.0;324330619.0;1/01/2026;31/07/2026;Recursos UPTC
+15 - SEDE REGIONAL AGUAZUL;Educación continuada;35-Educacion continuada;Extensión y Posgrados;30000000.0;30000000.0;12079000.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Estampilla pro Universidad Pedagógica y Tecnológica de Colombia;40-Estampilla UPTC;Estampilla Pro UPTC;4206444980.0;5737263195.0;3057171181.0;1/01/2026;31/07/2026;Recursos UPTC
+01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Estampilla UPTC;40-Estampilla UPTC;Estampilla Pro UPTC;0.0;1880006027.0;1880006027.0;1/01/2026;31/07/2026;Recursos del Balance
+;;;;;;;;;

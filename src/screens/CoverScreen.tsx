@@ -165,7 +165,7 @@ export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void })
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full md:w-auto shrink-0 md:border-l border-white/5 md:pl-8">
               <div className="bg-white/5 px-4 py-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-mono block">Recaudo Real</span>
-                <span className="text-xl font-bold font-mono text-[#4ade80]">$295.835,6M</span>
+                <span className="text-xl font-bold font-mono text-[#4ade80]">$337.135,1M</span>
               </div>
               <div className="bg-white/5 px-4 py-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-mono block">Compromisos</span>

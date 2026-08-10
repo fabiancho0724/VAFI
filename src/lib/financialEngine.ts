@@ -154,10 +154,10 @@ export function calculateProjections({
   });
 
   // Target values:
-  // Ene-Jul target (Real execution) = $295,835.64M
+  // Ene-Jul target (Real execution) = $337,135.15M
   // Base for Ago-Dic projection
-  const targetEneJulTotal = 295835.63916238 * 1e6;
-  const targetAgoDicTotal = 234800.0 * 1e6;
+  const targetEneJulTotal = 337135.14515498 * 1e6;
+  const targetAgoDicTotal = 205696.88 * 1e6;
   const targetFullYearTotal = targetEneJulTotal + targetAgoDicTotal;
 
   const scalingFactorAgoDic = rawProjectedAgoDicTotal > 0 ? targetAgoDicTotal / rawProjectedAgoDicTotal : 1;
@@ -422,7 +422,7 @@ export function calculateProjections({
     });
   }
 
-  const targetEneJulIng = 295835.63916238 * 1e6;
+  const targetEneJulIng = 337135.14515498 * 1e6;
   const targetEneJulComp = 276110.9 * 1e6;
   const targetEneJulPago = 205394.3 * 1e6;
 

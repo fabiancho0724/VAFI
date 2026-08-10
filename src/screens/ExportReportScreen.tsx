@@ -185,20 +185,20 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
                A continuación, se presenta el análisis comparativo entre el aforo y el recaudo, clasificado por tipo de recurso, con corte al <strong>31 de julio</strong>.
              </p>
              <p className="text-gray-800 text-justify mb-4">
-               El recaudo total de la Universidad Pedagógica y Tecnológica de Colombia asciende a <strong>${ingresosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong>, lo que representa una ejecución del <strong>37,8 %</strong> frente al presupuesto aforado de <strong>$526.515,1 millones</strong>.
+               El recaudo total de la Universidad Pedagógica y Tecnológica de Colombia asciende a <strong>${ingresosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong>, lo que representa una ejecución del <strong>62,1 %</strong> frente al presupuesto aforado de <strong>$542.832,0 millones</strong>.
              </p>
              <p className="text-gray-800 text-justify mb-4">
-               Del total recaudado, <strong>$25.958,7 millones</strong> corresponden a recursos del balance, el <strong>13%</strong> del ingreso.
+               Del total recaudado, los ingresos se distribuyen estratégicamente entre aportes del Estado, rentas propias y fondos de extensión y posgrados:
              </p>
              
              <div className="flex flex-col sm:flex-row gap-6 mt-6 items-center">
                 <div className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded text-sm text-gray-700 w-full">
                    <ul className="list-disc pl-5 space-y-2">
-                     <li><strong>Aportes de la Nación:</strong> $125.518,3 M (72,4% del total de ingresos)</li>
-                     <li><strong>Matrículas Pregrado y Otras Rentas:</strong> $9.200,1 M</li>
-                     <li><strong>Posgrados, Convenios y Extensión:</strong> $36.931,0 M</li>
-                     <li><strong>Estampilla Pro UPTC:</strong> $1.605,1 M</li>
-                     <li><strong>Recursos del balance:</strong> $25.958,7 M</li>
+                     <li><strong>Aportes de la Nación (Funcionamiento y Gratuidad):</strong> $205.457,7 M (60,9% del total)</li>
+                     <li><strong>Posgrados, Convenios y Extensión:</strong> $67.236,3 M (19,9% del total)</li>
+                     <li><strong>Estampillas y Devoluciones (IVA / Votación):</strong> $27.831,3 M (8,3% del total)</li>
+                     <li><strong>Recursos Propios (Rentas y Servicios):</strong> $14.316,3 M (4,2% del total)</li>
+                     <li><strong>Aportes para Inversión:</strong> $12.889,2 M (3,8% del total)</li>
                    </ul>
                 </div>
                 <div className="w-full sm:w-64 h-48">
