@@ -423,8 +423,8 @@ export function calculateProjections({
   }
 
   const targetEneJulIng = 337135.14515498 * 1e6;
-  const targetEneJulComp = 276110.9 * 1e6;
-  const targetEneJulPago = 205394.3 * 1e6;
+  const targetEneJulComp = 312078.09712108 * 1e6;
+  const targetEneJulPago = 246751.61880889 * 1e6;
 
   const factorEneJulIng = (filterRecurso === 'Todos' && rawEneJulIng > 0) ? (targetEneJulIng / rawEneJulIng) : 1;
   const factorEneJulComp = (filterRecurso === 'Todos' && rawEneJulGasComp > 0) ? (targetEneJulComp / rawEneJulGasComp) : 1;

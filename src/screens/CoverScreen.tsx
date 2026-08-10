@@ -169,11 +169,11 @@ export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void })
               </div>
               <div className="bg-white/5 px-4 py-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-mono block">Compromisos</span>
-                <span className="text-xl font-bold font-mono text-[#f43f5e]">$276.110,9M</span>
+                <span className="text-xl font-bold font-mono text-[#f43f5e]">$312.078,1M</span>
               </div>
               <div className="bg-white/5 px-4 py-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-mono block">Pago Efectivo</span>
-                <span className="text-xl font-bold font-mono text-[#38bdf8]">$205.394,3M</span>
+                <span className="text-xl font-bold font-mono text-[#38bdf8]">$246.751,6M</span>
               </div>
             </div>
           </div>

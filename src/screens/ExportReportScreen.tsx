@@ -224,7 +224,7 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
                Con corte al <strong>31 de julio</strong> y conforme a lo establecido en el Catálogo Presupuestal No. 14, que define la estructura del gasto, se incluyen los gastos de personal (2.1.1), los gastos de funcionamiento (2.1.2) y los gastos de inversión (2.3), entre otros conceptos.
              </p>
              <p className="text-gray-800 text-justify mb-4">
-               El pago efectivo alcanza un valor total de <strong>${gastosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong> frente a una apropiación total de <strong>$526.515,1 millones</strong>. Se observa que la mayor participación corresponde a los gastos de personal, con <strong>$82.530,2 millones</strong>. Es importante mencionar de igual manera que a la fecha de corte de este informe el compromiso de los gastos de la universidad corresponde a <strong>$199.818,9 millones</strong>.
+               El pago efectivo alcanza un valor total de <strong>${gastosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong> frente a una apropiación total de <strong>$542.832,0 millones</strong>. Se observa que la mayor participación corresponde a los gastos de personal, con <strong>$146.943,8 millones</strong>. Es importante mencionar de igual manera que a la fecha de corte de este informe el compromiso de los gastos de la universidad corresponde a <strong>$312.078,1 millones</strong>.
              </p>
              
              <div className="h-64 mt-6">
