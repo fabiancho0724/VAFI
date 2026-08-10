@@ -11,12 +11,12 @@ export interface FinancialData {
 }
 
 export const loadFinancialData = async () => {
-  // URLs updated with the exact paths specified by the user
+  // URLs pointing directly to local public/data databases
   const urls = {
-    ingresos: 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingresos.csv',
-    gastos: 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Gastos.csv',
-    ingresoMensual2026: 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%202026.csv',
-    nomina: 'https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Nomina.csv'
+    ingresos: '/data/Ingresos.csv',
+    gastos: '/data/Gastos.csv',
+    ingresoMensual2026: '/data/Ingreso%20Mensual%202026.csv',
+    nomina: '/data/Nomina.csv'
   };
 
   const [ingresosRaw, gastosRaw, ingresoMensualRaw] = await Promise.all([
@@ -103,9 +103,9 @@ export const normalizeData = (ingresosRaw: any[], gastosRaw: any[], ingresoMensu
   }
 
   // Simulated Gastos Mensuales (distributing total proportionally for now until we have real monthly expenses)
-  const totalGastoMensualProp = gastosTotales / 6; // As of Jun (6 months)
+  const totalGastoMensualProp = gastosTotales / 7; // As of Jul (7 months)
   flujoMensual.forEach((mes, idx) => {
-     if (idx < 6) {
+     if (idx < 7) {
        mes.gasto = totalGastoMensualProp;
      }
   });

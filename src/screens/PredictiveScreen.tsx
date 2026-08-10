@@ -152,7 +152,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         
         await Promise.all(years.map(async (year) => {
           try {
-            const rows = await fetchAndParseCSV(`https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingreso%20Mensual%20${year}.csv`);
+            const rows = await fetchAndParseCSV(`/data/Ingreso%20Mensual%20${year}.csv`);
             if (rows && rows.length > 0) {
               loadedData[year] = rows;
             }
@@ -163,7 +163,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         
         // Fetch cumulative incomes (Ingresos.csv)
         try {
-          const cumulativeIncomes = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingresos.csv');
+          const cumulativeIncomes = await fetchAndParseCSV('/data/Ingresos.csv');
           if (cumulativeIncomes && cumulativeIncomes.length > 0) {
             setRawCumulativeIncomes(cumulativeIncomes);
           }
@@ -834,20 +834,20 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const semesterTotals = useMemo(() => {
     if (!financialData || !financialData.simulatedFlow) {
       return {
-        eneJunIng: 0, julDicIng: 0,
-        eneJunComp: 0, julDicComp: 0,
-        eneJunPago: 0, julDicPago: 0
+        eneJulIng: 0, agoDicIng: 0,
+        eneJulComp: 0, agoDicComp: 0,
+        eneJulPago: 0, agoDicPago: 0
       };
     }
-    const eneJun = financialData.simulatedFlow.slice(0, 6);
-    const julDic = financialData.simulatedFlow.slice(6, 12);
+    const eneJul = financialData.simulatedFlow.slice(0, 7);
+    const agoDic = financialData.simulatedFlow.slice(7, 12);
     return {
-      eneJunIng: eneJun.reduce((sum, m) => sum + m.ingresos, 0),
-      julDicIng: julDic.reduce((sum, m) => sum + m.ingresos, 0),
-      eneJunComp: eneJun.reduce((sum, m) => sum + m.gastosComp, 0),
-      julDicComp: julDic.reduce((sum, m) => sum + m.gastosComp, 0),
-      eneJunPago: eneJun.reduce((sum, m) => sum + m.gastosPago, 0),
-      julDicPago: julDic.reduce((sum, m) => sum + m.gastosPago, 0)
+      eneJulIng: eneJul.reduce((sum, m) => sum + m.ingresos, 0),
+      agoDicIng: agoDic.reduce((sum, m) => sum + m.ingresos, 0),
+      eneJulComp: eneJul.reduce((sum, m) => sum + m.gastosComp, 0),
+      agoDicComp: agoDic.reduce((sum, m) => sum + m.gastosComp, 0),
+      eneJulPago: eneJul.reduce((sum, m) => sum + m.gastosPago, 0),
+      agoDicPago: agoDic.reduce((sum, m) => sum + m.gastosPago, 0)
     };
   }, [financialData]);
 
@@ -949,12 +949,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </div>
               <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
                 <div className="flex justify-between">
-                  <span>CORTE A JUN 30 (REAL)</span>
-                  <span className="text-white font-bold">${semesterTotals.eneJunIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  <span>CORTE A JUL 31 (REAL)</span>
+                  <span className="text-white font-bold">${semesterTotals.eneJulIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>PROYECCIÓN JUL-DIC</span>
-                  <span className="text-[#ffcc29] font-bold">${semesterTotals.julDicIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  <span>PROYECCIÓN AGO-DIC</span>
+                  <span className="text-[#ffcc29] font-bold">${semesterTotals.agoDicIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
               </div>
             </div>
@@ -968,12 +968,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </div>
               <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
                 <div className="flex justify-between">
-                  <span>CORTE A JUN 30 (REAL)</span>
-                  <span className="text-white font-bold">${semesterTotals.eneJunComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  <span>CORTE A JUL 31 (REAL)</span>
+                  <span className="text-white font-bold">${semesterTotals.eneJulComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>PROYECCIÓN JUL-DIC</span>
-                  <span className="text-[#f43f5e] font-bold">${semesterTotals.julDicComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  <span>PROYECCIÓN AGO-DIC</span>
+                  <span className="text-[#f43f5e] font-bold">${semesterTotals.agoDicComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
               </div>
             </div>
@@ -987,12 +987,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </div>
               <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
                 <div className="flex justify-between">
-                  <span>CORTE A JUN 30 (REAL)</span>
-                  <span className="text-white font-bold">${semesterTotals.eneJunPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  <span>CORTE A JUL 31 (REAL)</span>
+                  <span className="text-white font-bold">${semesterTotals.eneJulPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>PROYECCIÓN JUL-DIC</span>
-                  <span className="text-[#4ade80] font-bold">${semesterTotals.julDicPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  <span>PROYECCIÓN AGO-DIC</span>
+                  <span className="text-[#4ade80] font-bold">${semesterTotals.agoDicPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
               </div>
             </div>
@@ -1510,8 +1510,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           {/* Header & Controls */}
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
-              <h3 className="text-xl font-display font-medium text-white">Simulador de Escenarios Financieros (Julio - Diciembre)</h3>
-              <p className="text-xs text-on-surface-variant mt-1">Los meses de Ene-Jun se mantienen fijos para asegurar fidelidad contable.</p>
+              <h3 className="text-xl font-display font-medium text-white">Simulador de Escenarios Financieros (Agosto - Diciembre)</h3>
+              <p className="text-xs text-on-surface-variant mt-1">Los meses de Ene-Jul se mantienen fijos para asegurar fidelidad contable.</p>
             </div>
             
             <div className="flex items-center gap-3">

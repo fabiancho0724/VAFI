@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 
-const URL_MATRICULAS = 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/5fd78e804688cdca1509f82da5f766b232d62c98/Resumen%20Posgrados.csv';
-const URL_INGRESOS = 'https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/5fd78e804688cdca1509f82da5f766b232d62c98/Resumen%20Posgrados%20ingresos.csv';
+const URL_MATRICULAS = '/data/Resumen%20Posgrados.csv';
+const URL_INGRESOS = '/data/Resumen%20Posgrados%20ingresos.csv';
 
 const DONUT_COLORS = ['#ffcc29', '#4ade80', '#3b82f6', '#c084fc', '#f43f5e', '#7bd0ff'];
 const BAR_COLORS = ['#4ade80', '#7bd0ff', '#c084fc', '#ffcc29', '#f43f5e'];

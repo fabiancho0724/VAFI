@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 const data = [
   { name: 'Mayo', ejecutado: 120, proyectado: 120, ideal: 100 },
   { name: 'Junio', ejecutado: 135, proyectado: 130, ideal: 110 },
-  { name: 'Julio', ejecutado: null, proyectado: 145, ideal: 120 },
+  { name: 'Julio', ejecutado: 142, proyectado: 145, ideal: 120 },
   { name: 'Agosto', ejecutado: null, proyectado: 130, ideal: 130 },
   { name: 'Septiembre', ejecutado: null, proyectado: 160, ideal: 140 },
   { name: 'Octubre', ejecutado: null, proyectado: 155, ideal: 150 },

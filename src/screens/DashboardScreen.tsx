@@ -110,9 +110,9 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
   useEffect(() => {
     async function loadData() {
       try {
-        const ingresosData = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Ingresos.csv');
-        const gastosData = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Gastos.csv');
-        const nominaData = await fetchAndParseCSV('https://raw.githubusercontent.com/fabiancho0724/Nomina/7d0f179b8bbcd3d327235c8e7fe2a4f757424794/Nomina.csv');
+        const ingresosData = await fetchAndParseCSV('/data/Ingresos.csv');
+        const gastosData = await fetchAndParseCSV('/data/Gastos.csv');
+        const nominaData = await fetchAndParseCSV('/data/Nomina.csv');
         
         processData(ingresosData, gastosData, nominaData);
       } catch (err: any) {
@@ -336,7 +336,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
           <p className="text-primary-container text-xs uppercase tracking-widest font-bold mb-1">UPTC - VAFI</p>
-          <h2 className="text-[32px] md:text-4xl font-bold font-display text-white">Consolidado Financiero - Corte 30 de Junio</h2>
+          <h2 className="text-[32px] md:text-4xl font-bold font-display text-white">Consolidado Financiero - Corte 31 de Julio</h2>
         </div>
         <div className="flex gap-3 items-center">
           <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3 py-2 hover:bg-white/10 transition-colors">
@@ -1144,7 +1144,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
                
                <div className="flex flex-wrap gap-2 items-center">
                   <span className="text-xs text-on-surface-variant font-mono uppercase tracking-widest mr-2">Período:</span>
-                  {['Todos', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'].map(mes => {
+                  {['Todos', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio'].map(mes => {
                      const isActive = nominaPeriodoFiltro.includes(mes) || (mes !== 'Todos' && nominaPeriodoFiltro.includes('Todos'));
                      return (
                        <button

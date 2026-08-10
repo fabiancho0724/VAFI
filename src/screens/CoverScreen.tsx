@@ -156,7 +156,7 @@ export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void })
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
               <span className="inline-flex items-center gap-1.5 bg-[#ffcc29]/10 text-[#ffcc29] px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-widest mb-2">
-                Corte Real 30 de Junio
+                Corte Real 31 de Julio
               </span>
               <h3 className="text-lg font-bold text-white tracking-tight">Ejecución Consolidada Actual</h3>
               <p className="text-xs text-on-surface-variant mt-1">Línea base registrada y auditada de la vigencia actual.</p>
@@ -165,7 +165,7 @@ export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void })
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full md:w-auto shrink-0 md:border-l border-white/5 md:pl-8">
               <div className="bg-white/5 px-4 py-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-mono block">Recaudo Real</span>
-                <span className="text-xl font-bold font-mono text-[#4ade80]">$282.995,4M</span>
+                <span className="text-xl font-bold font-mono text-[#4ade80]">$295.835,6M</span>
               </div>
               <div className="bg-white/5 px-4 py-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-mono block">Compromisos</span>
@@ -319,7 +319,7 @@ export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void })
 
                 <div className="bg-white/5 p-4 rounded-lg border border-white/5 text-white/90 font-sans leading-relaxed text-xs">
                   <span className="text-[9px] text-purple-400 uppercase font-bold font-mono block mb-1">RESPUESTA IA</span>
-                  El recurso **32-Extensión** presenta un presupuesto inicial (Aforado) de **$87.508,6M** con un recaudo actual a Junio de **$36.931,0M** (38.0%). Se estima que la proyección lineal Jul-Dic alcanzará **$43.080,0M** adicionales para un consolidado anual de **$80.011,0M**.
+                  El recurso **32-Extensión** presenta un presupuesto inicial (Aforado) de **$87.508,6M** con un recaudo actual a Julio de **$40.320,0M** (46.1%). Se estima que la proyección lineal Ago-Dic alcanzará **$39.691,0M** adicionales para un consolidado anual de **$80.011,0M**.
                 </div>
               </div>
             </div>

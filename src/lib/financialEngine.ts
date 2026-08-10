@@ -122,46 +122,45 @@ export function calculateProjections({
     });
   }
 
-  // Adjust 2026 Ene-Jun monthly incomes to match cumulative 'Total recaudo' from Ingresos.csv
+  // Adjust 2026 Ene-Jul monthly incomes to match cumulative 'Total recaudo' from Ingresos.csv
   RESOURCES_LIST.forEach(r => {
-    const targetEneJun = recaudoByResource[r];
-    if (targetEneJun > 0) {
-      const currentEneJun = incomesByYearRes[2026][r].slice(0, 6).reduce((a,b)=>a+b, 0);
-      if (currentEneJun > 0) {
-        const factor = targetEneJun / currentEneJun;
-        for (let i = 0; i < 6; i++) {
+    const targetEneJul = recaudoByResource[r];
+    if (targetEneJul > 0) {
+      const currentEneJul = incomesByYearRes[2026][r].slice(0, 7).reduce((a,b)=>a+b, 0);
+      if (currentEneJul > 0) {
+        const factor = targetEneJul / currentEneJul;
+        for (let i = 0; i < 7; i++) {
           incomesByYearRes[2026][r][i] *= factor;
         }
       } else {
         // Fallback: distribute evenly
-        for (let i = 0; i < 6; i++) {
-          incomesByYearRes[2026][r][i] = targetEneJun / 6;
+        for (let i = 0; i < 7; i++) {
+          incomesByYearRes[2026][r][i] = targetEneJul / 7;
         }
       }
     }
   });
 
-  // Calculate projected baseline totals for Jul-Dic (months 7-12) to calculate scaling factor
-  let rawProjectedJulDicTotal = 0;
+  // Calculate projected baseline totals for Ago-Dic (months 8-12) to calculate scaling factor
+  let rawProjectedAgoDicTotal = 0;
   RESOURCES_LIST.forEach(r => {
-    for (let i = 6; i < 12; i++) {
+    for (let i = 7; i < 12; i++) {
       let histSum = 0, histCount = 0;
       if (incomesByYearRes[2023][r][i] > 0) { histSum += incomesByYearRes[2023][r][i]; histCount++; }
       if (incomesByYearRes[2024][r][i] > 0) { histSum += incomesByYearRes[2024][r][i]; histCount++; }
       if (incomesByYearRes[2025][r][i] > 0) { histSum += incomesByYearRes[2025][r][i]; histCount++; }
-      rawProjectedJulDicTotal += (histCount > 0 ? histSum / histCount : 0) * 1.05;
+      rawProjectedAgoDicTotal += (histCount > 0 ? histSum / histCount : 0) * 1.05;
     }
   });
 
-  // User Target values:
-  // Ene-Jun target (Real execution) = $282,995.35M (includes $26.134M balance resources)
-  // Base for Jul-Dic projection = $256,861.30M (excluding balance resources)
-  // Full Year target (Baseline) = $282,995.35M + $256,861.30M = $539,856.65M
-  const targetEneJunTotal = 282995.35257092 * 1e6;
-  const targetJulDicTotal = 256861.3 * 1e6;
-  const targetFullYearTotal = targetEneJunTotal + targetJulDicTotal;
+  // Target values:
+  // Ene-Jul target (Real execution) = $295,835.64M
+  // Base for Ago-Dic projection
+  const targetEneJulTotal = 295835.63916238 * 1e6;
+  const targetAgoDicTotal = 234800.0 * 1e6;
+  const targetFullYearTotal = targetEneJulTotal + targetAgoDicTotal;
 
-  const scalingFactorJulDic = rawProjectedJulDicTotal > 0 ? targetJulDicTotal / rawProjectedJulDicTotal : 1;
+  const scalingFactorAgoDic = rawProjectedAgoDicTotal > 0 ? targetAgoDicTotal / rawProjectedAgoDicTotal : 1;
 
   // 2. Process Expenses from rawHistoricalGastos
   rawHistoricalGastos.forEach(row => {
@@ -189,8 +188,8 @@ export function calculateProjections({
       const is2026RealIng = incomesByYearRes[2026][r].reduce((a,b)=>a+b, 0) > 0;
       const is2026RealGas = (expensesCompByYearRes[2026][r].reduce((a,b)=>a+b, 0) + expensesPagoByYearRes[2026][r].reduce((a,b)=>a+b, 0)) > 0;
 
-      const useRealIng = i < 6 && is2026RealIng;
-      const useRealGas = i < 6 && is2026RealGas;
+      const useRealIng = i < 7 && is2026RealIng;
+      const useRealGas = i < 7 && is2026RealGas;
 
       if (useRealIng) {
         totIng += incomesByYearRes[2026][r][i];
@@ -199,7 +198,7 @@ export function calculateProjections({
         if (incomesByYearRes[2023][r][i] > 0) { histSum += incomesByYearRes[2023][r][i]; histCount++; }
         if (incomesByYearRes[2024][r][i] > 0) { histSum += incomesByYearRes[2024][r][i]; histCount++; }
         if (incomesByYearRes[2025][r][i] > 0) { histSum += incomesByYearRes[2025][r][i]; histCount++; }
-        totIng += (histCount > 0 ? histSum / histCount : 0) * 1.05 * scalingFactorJulDic;
+        totIng += (histCount > 0 ? histSum / histCount : 0) * 1.05 * scalingFactorAgoDic;
       }
 
       if (useRealGas) {
@@ -291,8 +290,8 @@ export function calculateProjections({
       const is2026RealIng = incomesByYearRes[2026][r].reduce((a,b)=>a+b, 0) > 0;
       const is2026RealGas = (expensesCompByYearRes[2026][r].reduce((a,b)=>a+b, 0) + expensesPagoByYearRes[2026][r].reduce((a,b)=>a+b, 0)) > 0;
 
-      const useRealIng = i < 6 && is2026RealIng;
-      const useRealGas = i < 6 && is2026RealGas;
+      const useRealIng = i < 7 && is2026RealIng;
+      const useRealGas = i < 7 && is2026RealGas;
 
       // Base Incomes
       let ingBaseVal = 0;
@@ -303,7 +302,7 @@ export function calculateProjections({
         if (incomesByYearRes[2023][r][i] > 0) { histSum += incomesByYearRes[2023][r][i]; histCount++; }
         if (incomesByYearRes[2024][r][i] > 0) { histSum += incomesByYearRes[2024][r][i]; histCount++; }
         if (incomesByYearRes[2025][r][i] > 0) { histSum += incomesByYearRes[2025][r][i]; histCount++; }
-        ingBaseVal = (histCount > 0 ? histSum / histCount : 0) * 1.05 * scalingFactorJulDic;
+        ingBaseVal = (histCount > 0 ? histSum / histCount : 0) * 1.05 * scalingFactorAgoDic;
       }
 
       // Base Expenses
@@ -331,9 +330,9 @@ export function calculateProjections({
       monthlySimGasPagoByRes[r][i] = gasBasePagoVal * (1 + gasMod);
     });
 
-    // Apply global or weighted type modifiers (only for projected Jul-Dic)
-    const isJulDic = i >= 6;
-    if (isJulDic && expenseAdjustMode === 'category') {
+    // Apply global or weighted type modifiers (only for projected Ago-Dic)
+    const isAgoDic = i >= 7;
+    if (isAgoDic && expenseAdjustMode === 'category') {
       RESOURCES_LIST.forEach(r => {
         const weights = resCategoryWeights[r];
         const personalMod = (simGasByType["Personal"] || 0) / 100;
@@ -409,29 +408,27 @@ export function calculateProjections({
   let totalSimGasPago = 0;
 
   let accumComp = 0;
-  let accumPago = 0;
+  let accumPago = 0;  // Calculate Ene-Jul scaling factors to match target real numbers when no filter is applied
+  let rawEneJulIng = 0;
+  let rawEneJulGasComp = 0;
+  let rawEneJulGasPago = 0;
 
-  // Calculate Ene-Jun scaling factors to match target real numbers when no filter is applied
-  let rawEneJunIng = 0;
-  let rawEneJunGasComp = 0;
-  let rawEneJunGasPago = 0;
-
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 7; i++) {
     RESOURCES_LIST.forEach(r => {
       if (filterRecurso !== 'Todos' && r !== filterRecurso) return;
-      rawEneJunIng += monthlySimIngByRes[r][i];
-      rawEneJunGasComp += monthlySimGasCompByRes[r][i];
-      rawEneJunGasPago += monthlySimGasPagoByRes[r][i];
+      rawEneJulIng += monthlySimIngByRes[r][i];
+      rawEneJulGasComp += monthlySimGasCompByRes[r][i];
+      rawEneJulGasPago += monthlySimGasPagoByRes[r][i];
     });
   }
 
-  const targetEneJunIng = 282995.35257092 * 1e6;
-  const targetEneJunComp = 276110.9 * 1e6;
-  const targetEneJunPago = 205394.3 * 1e6;
+  const targetEneJulIng = 295835.63916238 * 1e6;
+  const targetEneJulComp = 276110.9 * 1e6;
+  const targetEneJulPago = 205394.3 * 1e6;
 
-  const factorEneJunIng = (filterRecurso === 'Todos' && rawEneJunIng > 0) ? (targetEneJunIng / rawEneJunIng) : 1;
-  const factorEneJunComp = (filterRecurso === 'Todos' && rawEneJunGasComp > 0) ? (targetEneJunComp / rawEneJunGasComp) : 1;
-  const factorEneJunPago = (filterRecurso === 'Todos' && rawEneJunGasPago > 0) ? (targetEneJunPago / rawEneJunGasPago) : 1;
+  const factorEneJulIng = (filterRecurso === 'Todos' && rawEneJulIng > 0) ? (targetEneJulIng / rawEneJulIng) : 1;
+  const factorEneJulComp = (filterRecurso === 'Todos' && rawEneJulGasComp > 0) ? (targetEneJulComp / rawEneJulGasComp) : 1;
+  const factorEneJulPago = (filterRecurso === 'Todos' && rawEneJulGasPago > 0) ? (targetEneJulPago / rawEneJulGasPago) : 1;
 
   for (let i = 0; i < 12; i++) {
     let mBaseIng = 0;
@@ -454,14 +451,14 @@ export function calculateProjections({
       mSimGasPago += monthlySimGasPagoByRes[r][i];
     });
 
-    if (i < 6) {
-      mBaseIng *= factorEneJunIng;
-      mBaseGasComp *= factorEneJunComp;
-      mBaseGasPago *= factorEneJunPago;
+    if (i < 7) {
+      mBaseIng *= factorEneJulIng;
+      mBaseGasComp *= factorEneJulComp;
+      mBaseGasPago *= factorEneJulPago;
 
-      mSimIng *= factorEneJunIng;
-      mSimGasComp *= factorEneJunComp;
-      mSimGasPago *= factorEneJunPago;
+      mSimIng *= factorEneJulIng;
+      mSimGasComp *= factorEneJulComp;
+      mSimGasPago *= factorEneJulPago;
     }
 
     totalBaseIng += mBaseIng;
