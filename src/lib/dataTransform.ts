@@ -56,17 +56,18 @@ export const normalizeData = (ingresosRaw: any[], gastosRaw: any[], ingresoMensu
   // Normalize Gastos
   if (gastosRaw && gastosRaw.length > 0) {
     const keys = Object.keys(gastosRaw[0]);
-    // As seen in Gastos, "Tipo de gasto" contains the Recurso, "Código recurso" contains the type
-    // We will just search by content to be safe.
+    const pagoCol = keys.find(k => k.toLowerCase().includes('pago') && k.toLowerCase().includes('valor')) || keys[keys.length - 1];
+    const recCol = keys.find(k => k.toLowerCase() === 'tipo de gasto') || keys[6];
+    const tipoCol = keys.find(k => k.toLowerCase().includes('código recurso') || k.toLowerCase().includes('codigo recurso') || k.toLowerCase().includes('cã³digo recurso') || k.toLowerCase().includes('cdigo recurso')) || keys[7];
     
     gastosRaw.forEach(row => {
-      const pago = parseFloat(String(row[keys[keys.length - 1]] || row['Valor pago']).replace(/[^0-9.-]+/g, '')) || 0;
+      const pago = parseFloat(String(row[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0;
       gastosTotales += pago;
 
-      let recursoText = String(row['Tipo de gasto'] || row[keys[7]] || '');
+      let recursoText = String(row[recCol] || '');
       let recursoId = recursoText.split('-')[0].trim();
       
-      let tipoText = String(row['Código recurso'] || row[keys[8]] || '');
+      let tipoText = String(row[tipoCol] || '');
       let tipoNormalizado = 'Otros Gastos';
       if (tipoText.includes('2.1.1')) tipoNormalizado = 'Gastos de Personal';
       else if (tipoText.includes('2.1.2')) tipoNormalizado = 'Gastos de Funcionamiento';

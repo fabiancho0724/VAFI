@@ -70,18 +70,17 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
     const gasGroups: any[] = [];
     if (gas && gas.length > 0) {
       const firstRowKeys = Object.keys(gas[0]);
-      if (firstRowKeys.length >= 12) {
-        const pagoCol = firstRowKeys[11];
-        const catCol = firstRowKeys[7]; // Tipo gasto
-        pagoTotal = gas.reduce((sum, r) => sum + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
-        
-        const tipos = Array.from(new Set(gas.map(r => r[catCol]))).filter(Boolean);
-        const colors = ['#ffcc29', '#7bd0ff', '#d0bcff', '#ff5b5b', '#4ade80'];
-        tipos.forEach((tipo, i) => {
-           const val = gas.filter(r => r[catCol] === tipo).reduce((s, r) => s + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
-           gasGroups.push({ name: tipo, pago: val, fill: colors[i % colors.length] });
-        });
-      }
+      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago') && k.toLowerCase().includes('valor')) || firstRowKeys[10] || 'Valor pago';
+      const catCol = firstRowKeys.find(k => k.toLowerCase().includes('código recurso') || k.toLowerCase().includes('codigo recurso') || k.toLowerCase().includes('cã³digo recurso') || k.toLowerCase().includes('cdigo recurso')) || firstRowKeys[7] || 'Código recurso';
+      
+      pagoTotal = gas.reduce((sum, r) => sum + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+      
+      const tipos = Array.from(new Set(gas.map(r => r[catCol]))).filter(Boolean);
+      const colors = ['#ffcc29', '#7bd0ff', '#d0bcff', '#ff5b5b', '#4ade80'];
+      tipos.forEach((tipo, i) => {
+         const val = gas.filter(r => r[catCol] === tipo).reduce((s, r) => s + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         gasGroups.push({ name: tipo, pago: val, fill: colors[i % colors.length] });
+      });
     }
 
     const nomGroups: any[] = [];

@@ -180,90 +180,84 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
     }
     
     if (filteredGastos && filteredGastos.length > 0) {
-      const gasNumCol = getNumericColumn(filteredGastos) || 'valor';
-      const gasCatCol = getCategoryColumn(filteredGastos) || 'concepto';
-      gasSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(row[gasNumCol]) || 0), 0);
-      setGastosGroups(groupAndSum(filteredGastos, gasCatCol, gasNumCol));
-
       const firstRowKeys = Object.keys(filteredGastos[0]);
-      if (firstRowKeys.length >= 12) {
-        const compCol = firstRowKeys[10]; // index 10 for col K
-        const pagoCol = firstRowKeys[11]; // index 11 for col L
-        const apropCol = firstRowKeys[10]; // fallback
-        const catCol9 = firstRowKeys[8];  // index 8 for col I ("Código recurso") -> Tipo de Gasto
-        const catCol10 = firstRowKeys[7]; // index 7 for col H ("Tipo de gasto")   -> Resource name
+      
+      const compCol = firstRowKeys.find(k => k.toLowerCase().includes('compromiso') && k.toLowerCase().includes('valor')) || firstRowKeys[9] || 'Valor compromiso';
+      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago') && k.toLowerCase().includes('valor')) || firstRowKeys[10] || 'Valor pago';
+      const catCol9 = firstRowKeys.find(k => k.toLowerCase().includes('código recurso') || k.toLowerCase().includes('codigo recurso') || k.toLowerCase().includes('cã³digo recurso') || k.toLowerCase().includes('cdigo recurso')) || firstRowKeys[7] || 'Código recurso';
+      const catCol10 = firstRowKeys.find(k => k.toLowerCase() === 'tipo de gasto') || firstRowKeys[6] || 'Tipo de gasto';
+      const catCol2 = firstRowKeys.find(k => k.toLowerCase() === 'referencia') || firstRowKeys[2] || 'Referencia';
+      const catCol3 = firstRowKeys.find(k => k.toLowerCase() === 'operacion' || k.toLowerCase() === 'operación') || firstRowKeys[3] || 'Operacion';
 
-        const compSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(row[compCol]) || 0), 0);
-        const pagoSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(row[pagoCol]) || 0), 0);
-        
-        if (compSum > 0) setGastosComprometido(compSum / 1e6);
-        if (pagoSum > 0) setGastosPagado(pagoSum / 1e6);
+      const compSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(String(row[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0);
+      const pagoSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(String(row[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0);
+      
+      setGastosComprometido(compSum / 1e6);
+      setGastosPagado(pagoSum / 1e6);
+      gasSum = pagoSum;
 
-        // create custom group by col 10 (Recursos), summing pagoCol (Pagado)
-        setGastosRecursosGroups(groupAndSum(filteredGastos, catCol10, pagoCol).sort((a: any, b: any) => b.value - a.value));
-        
-        // custom grouping for categorisation from col 9
-        setGastosGroups(groupAndSum(filteredGastos, catCol9, pagoCol).sort((a: any, b: any) => b.value - a.value));
+      // create custom group by col 10 (Recursos), summing pagoCol (Pagado)
+      setGastosRecursosGroups(groupAndSum(filteredGastos, catCol10, pagoCol).sort((a: any, b: any) => b.value - a.value));
+      
+      // custom grouping for categorisation from col 9
+      setGastosGroups(groupAndSum(filteredGastos, catCol9, pagoCol).sort((a: any, b: any) => b.value - a.value));
 
-        // Group by Tipo de Gasto (Clasificacion)
-        const gTipos = Array.from(new Set(filteredGastos.map(r => r[catCol9]))).filter(Boolean);
-        const parsedGastoTiposGroups = gTipos.map(tipo => {
-           const rows = filteredGastos.filter(r => r[catCol9] === tipo);
-           const tComp = rows.reduce((acc, r) => acc + (parseFloat(r[compCol]) || 0), 0) / 1e6;
-           const tPago = rows.reduce((acc, r) => acc + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
-           
-           const recursosKeys = Array.from(new Set(rows.map(r => r[catCol10]))).filter(Boolean);
-           const recursosItems = recursosKeys.map(rec => {
-               const recRows = rows.filter(r => r[catCol10] === rec);
-               const rComp = recRows.reduce((acc, r) => acc + (parseFloat(r[compCol]) || 0), 0) / 1e6;
-               const rPago = recRows.reduce((acc, r) => acc + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
-               return { name: rec, compromiso: rComp, pago: rPago };
-           }).sort((a, b) => b.pago - a.pago);
+      // Group by Tipo de Gasto (Clasificacion)
+      const gTipos = Array.from(new Set(filteredGastos.map(r => r[catCol9]))).filter(Boolean);
+      const parsedGastoTiposGroups = gTipos.map(tipo => {
+         const rows = filteredGastos.filter(r => r[catCol9] === tipo);
+         const tComp = rows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         const tPago = rows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         
+         const recursosKeys = Array.from(new Set(rows.map(r => r[catCol10]))).filter(Boolean);
+         const recursosItems = recursosKeys.map(rec => {
+             const recRows = rows.filter(r => r[catCol10] === rec);
+             const rComp = recRows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             const rPago = recRows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             return { name: rec, compromiso: rComp, pago: rPago };
+         }).sort((a, b) => b.pago - a.pago);
 
-           return { 
-               name: tipo, 
-               compromiso: tComp, 
-               pago: tPago, 
-               recursos: recursosItems 
-           };
-        }).sort((a,b) => b.pago - a.pago);
-        setGastosTiposGroups(parsedGastoTiposGroups);
+         return { 
+             name: tipo, 
+             compromiso: tComp, 
+             pago: tPago, 
+             recursos: recursosItems 
+         };
+      }).sort((a,b) => b.pago - a.pago);
+      setGastosTiposGroups(parsedGastoTiposGroups);
 
-        // Group by Referencia (col 2)
-        const catCol2 = firstRowKeys[2];
-        const gRef = Array.from(new Set(filteredGastos.map(r => r[catCol2]))).filter(Boolean);
-        const parsedGastoReferenciasGroups = gRef.map(ref => {
-           const rows = filteredGastos.filter(r => r[catCol2] === ref);
-           const tComp = rows.reduce((acc, r) => acc + (parseFloat(r[compCol]) || 0), 0) / 1e6;
-           const tPago = rows.reduce((acc, r) => acc + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
-           
-           const recursosKeys = Array.from(new Set(rows.map(r => r[catCol10]))).filter(Boolean);
-           const recursosItems = recursosKeys.map(rec => {
-               const recRows = rows.filter(r => r[catCol10] === rec);
-               const rComp = recRows.reduce((acc, r) => acc + (parseFloat(r[compCol]) || 0), 0) / 1e6;
-               const rPago = recRows.reduce((acc, r) => acc + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
-               return { name: rec, compromiso: rComp, pago: rPago };
-           }).sort((a, b) => b.pago - a.pago);
+      // Group by Referencia (col 2)
+      const gRef = Array.from(new Set(filteredGastos.map(r => r[catCol2]))).filter(Boolean);
+      const parsedGastoReferenciasGroups = gRef.map(ref => {
+         const rows = filteredGastos.filter(r => r[catCol2] === ref);
+         const tComp = rows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         const tPago = rows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         
+         const recursosKeys = Array.from(new Set(rows.map(r => r[catCol10]))).filter(Boolean);
+         const recursosItems = recursosKeys.map(rec => {
+             const recRows = rows.filter(r => r[catCol10] === rec);
+             const rComp = recRows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             const rPago = recRows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             return { name: rec, compromiso: rComp, pago: rPago };
+         }).sort((a, b) => b.pago - a.pago);
 
-           const catCol3 = firstRowKeys[3]; // Operacion
-           const operacionesKeys = Array.from(new Set(rows.map(r => r[catCol3]))).filter(Boolean);
-           const operacionesItems = operacionesKeys.map(op => {
-               const opRows = rows.filter(r => r[catCol3] === op);
-               const oComp = opRows.reduce((acc, r) => acc + (parseFloat(r[compCol]) || 0), 0) / 1e6;
-               const oPago = opRows.reduce((acc, r) => acc + (parseFloat(r[pagoCol]) || 0), 0) / 1e6;
-               return { name: op, compromiso: oComp, pago: oPago };
-           }).sort((a, b) => b.pago - a.pago);
+         const operacionesKeys = Array.from(new Set(rows.map(r => r[catCol3]))).filter(Boolean);
+         const operacionesItems = operacionesKeys.map(op => {
+             const opRows = rows.filter(r => r[catCol3] === op);
+             const oComp = opRows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             const oPago = opRows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             return { name: op, compromiso: oComp, pago: oPago };
+         }).sort((a, b) => b.pago - a.pago);
 
-           return { 
-               name: ref, 
-               compromiso: tComp, 
-               pago: tPago, 
-               recursos: recursosItems,
-               operaciones: operacionesItems
-           };
-        }).sort((a,b) => b.pago - a.pago);
-        setGastosReferenciasGroups(parsedGastoReferenciasGroups);
-      }
+         return { 
+             name: ref, 
+             compromiso: tComp, 
+             pago: tPago, 
+             recursos: recursosItems,
+             operaciones: operacionesItems
+         };
+      }).sort((a,b) => b.pago - a.pago);
+      setGastosReferenciasGroups(parsedGastoReferenciasGroups);
     }
     
     if (nominaData && nominaData.length > 0) {
