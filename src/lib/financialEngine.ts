@@ -1,15 +1,29 @@
-import { RESOURCES_LIST, getRecursoEquivalence, getRowResourceCode } from './resourceMapper';
+import { RESOURCES_LIST, getRecursoEquivalence, getRowResourceCode, getResourceFullName } from './resourceMapper';
+
+// MASTER BUDGET ANCHORS (UPTC 2026)
+export const BUDGET_PAYROLL_2026 = 369650433862.0; // Total anual presupuestado de Gastos de Personal ($369.650,43M)
+export const PAYROLL_REAL_ENE_JUL = 172115463571.0; // Ejecutado real Ene-Jul 2026 ($172.115,46M)
+export const PAYROLL_REMAINING_AGO_DIC = BUDGET_PAYROLL_2026 - PAYROLL_REAL_ENE_JUL; // Saldo proyectado Ago-Dic ($197.534,97M)
+
+// Estacionalidad histórica mensual Ago-Dic para Gastos de Personal (ponderación UPTC)
+export const PAYROLL_AGO_DIC_WEIGHTS = [0.124995, 0.141856, 0.140609, 0.168585, 0.423955]; // Mes 8 a 12 (Dic incluye prima de navidad)
 
 export interface CashFlowItem {
-  name: string; // e.g. "Ene" or "T1"
+  name: string; // e.g. "Ene", "Feb", "T1", "S1"
   ingresos: number;
   gastosComp: number;
   gastosPago: number;
+  gastoPersonal: number; // Nómina del mes ($M)
+  otrosGastosPago: number; // Pagos no-nómina ($M)
   netoComp: number;
   netoPago: number;
   acumuladoComp: number;
   acumuladoPago: number;
-  ejecucion: number; // (pago / compromiso) / ingresos * 100
+  acumuladoIng: number;
+  saldoCajaAcumulado: number; // Reserva de liquidez acumulada ($M)
+  rezagoCompromiso: number; // Cuentas por pagar acumuladas (Compromisos - Pagos) ($M)
+  coberturaNomina: number; // % de cobertura de nómina mensual
+  ejecucion: number; // (gastosComp / ingresos) * 100
 }
 
 export interface FinancialTotals {
@@ -24,6 +38,14 @@ export interface FinancialTotals {
   simGasPago: number;
   simNetComp: number;
   simNetPago: number;
+
+  totalPayrollBudget: number;
+  realPayrollPaid: number;
+  remainingPayroll: number;
+  simulatedPayrollTotal: number;
+  payrollCoverageRatio: number; // (simIng / simulatedPayrollTotal) * 100
+  payrollSurplus: number; // simIng - simulatedPayrollTotal
+  unpaidCommitments: number; // simGasComp - simGasPago (Rezago acumulado)
 }
 
 export interface ProjectionParams {
@@ -40,6 +62,15 @@ export interface ProjectionParams {
   expenseAdjustMode?: 'resource' | 'category';
 }
 
+export interface PayrollCoverageItem {
+  resourceCode: string;
+  resourceName: string;
+  totalRevenue: number;
+  payrollContribution: number;
+  surplus: number;
+  coveragePct: number;
+}
+
 export interface ProjectionResults {
   simulatedFlow: CashFlowItem[]; // Monthly simulated flow
   totals: FinancialTotals;
@@ -49,6 +80,8 @@ export interface ProjectionResults {
   monthlySimGasCompByRes: Record<string, number[]>;
   monthlyBaseIngByRes: Record<string, number[]>;
   monthlyBaseGasPagoByRes: Record<string, number[]>;
+  monthlyPayroll: number[]; // 12 months payroll in COP
+  payrollCoverageList: PayrollCoverageItem[];
   categoryBreakdown: {
     compromiso: { name: string; value: number }[];
     pago: { name: string; value: number }[];
@@ -177,6 +210,25 @@ export function calculateProjections({
     }
   });
 
+  // Compute monthly master payroll array
+  const monthlyPayroll: number[] = new Array(12).fill(0);
+  // Months 0 to 6 (Ene-Jul): Real personal expense
+  rawHistoricalGastos.forEach(row => {
+    if (row.año === 2026) {
+      const monthIdx = row.mes - 1;
+      const tipo = String(row.tipo || '').toLowerCase();
+      if (monthIdx >= 0 && monthIdx < 7 && (tipo.includes('2.1.1') || tipo.includes('personal'))) {
+        monthlyPayroll[monthIdx] += row.pago;
+      }
+    }
+  });
+
+  // Months 7 to 11 (Ago-Dic): Master budget projection
+  PAYROLL_AGO_DIC_WEIGHTS.forEach((weight, idx) => {
+    const monthIdx = idx + 7;
+    monthlyPayroll[monthIdx] = PAYROLL_REMAINING_AGO_DIC * weight;
+  });
+
   // 3. Compute baseline values per resource for comparison/reference
   const resourceBaselines: Record<string, { ing: number; gasComp: number; gasPago: number }> = {};
   RESOURCES_LIST.forEach(r => {
@@ -210,11 +262,11 @@ export function calculateProjections({
       }
     }
 
-    // Apply baseline capping: baseline expense cannot exceed baseline income for resource r
+    // Apply baseline capping
     if (totGasComp > totIng && totGasComp > 0) {
       const factor = totIng / totGasComp;
       totGasComp *= factor;
-      totGasPago *= factor; // Keep same scale
+      totGasPago *= factor;
     }
 
     resourceBaselines[r] = {
@@ -243,48 +295,45 @@ export function calculateProjections({
     monthlyBaseGasPagoByRes[r] = new Array(12).fill(0);
   });
 
-  // Calculate historical distribution weights per category for second semester Jul-Dic 2025
+  // Calculate historical distribution weights per category for second semester Ago-Dic 2025
   const resCategoryWeights: Record<string, Record<string, number>> = {};
-  const resGasJulDicBaseComp: Record<string, number> = {};
+  const resGasAgoDicBaseComp: Record<string, number> = {};
   RESOURCES_LIST.forEach(r => {
     resCategoryWeights[r] = { Personal: 0, Funcionamiento: 0, Transferencias: 0, Tasas: 0, Deuda: 0, Inversion: 0 };
-    resGasJulDicBaseComp[r] = 0;
+    resGasAgoDicBaseComp[r] = 0;
   });
 
   rawHistoricalGastos.forEach(row => {
     const year = row.año;
     const monthIdx = row.mes - 1;
-    if (year === 2025 && monthIdx >= 6) {
+    if (year === 2025 && monthIdx >= 7) {
       const r = getRecursoEquivalence(row.recurso);
       if (resCategoryWeights[r]) {
         const tipo = String(row.tipo || '').toLowerCase();
         let catKey = 'Inversion';
-        if (tipo.includes("2.1.1")) catKey = 'Personal';
-        else if (tipo.includes("2.1.2")) catKey = 'Funcionamiento';
-        else if (tipo.includes("2.1.3")) catKey = 'Transferencias';
-        else if (tipo.includes("2.1.8")) catKey = 'Tasas';
-        else if (tipo.includes("2.2.2")) catKey = 'Deuda';
+        if (tipo.includes("2.1.1") || tipo.includes("personal")) catKey = 'Personal';
+        else if (tipo.includes("2.1.2") || tipo.includes("funcionamiento")) catKey = 'Funcionamiento';
+        else if (tipo.includes("2.1.3") || tipo.includes("transferencia")) catKey = 'Transferencias';
+        else if (tipo.includes("2.1.8") || tipo.includes("tasa") || tipo.includes("multa")) catKey = 'Tasas';
+        else if (tipo.includes("2.2.2") || tipo.includes("deuda")) catKey = 'Deuda';
 
         resCategoryWeights[r][catKey] += row.compromiso;
-        resGasJulDicBaseComp[r] += row.compromiso;
+        resGasAgoDicBaseComp[r] += row.compromiso;
       }
     }
   });
 
   RESOURCES_LIST.forEach(r => {
-    const total = resGasJulDicBaseComp[r];
+    const total = resGasAgoDicBaseComp[r];
     if (total > 0) {
       Object.keys(resCategoryWeights[r]).forEach(cat => {
         resCategoryWeights[r][cat] /= total;
       });
     } else {
-      Object.keys(resCategoryWeights[r]).forEach(cat => {
-        resCategoryWeights[r][cat] = 1 / 6;
-      });
+      resCategoryWeights[r] = { Personal: 0.60, Funcionamiento: 0.25, Transferencias: 0.05, Tasas: 0.02, Deuda: 0.01, Inversion: 0.07 };
     }
   });
 
-  // Populating baseline and initial simulated arrays
   for (let i = 0; i < 12; i++) {
     RESOURCES_LIST.forEach(r => {
       const is2026RealIng = incomesByYearRes[2026][r].reduce((a,b)=>a+b, 0) > 0;
@@ -342,41 +391,24 @@ export function calculateProjections({
         const deudaMod = (simGasByType["Deuda"] || 0) / 100;
         const invMod = (simGasByType["Inversion"] || 0) / 100;
 
-        const mod = 
-          weights.Personal * personalMod +
-          weights.Funcionamiento * funcMod +
-          weights.Transferencias * transMod +
-          weights.Tasas * tasasMod +
-          weights.Deuda * deudaMod +
-          weights.Inversion * invMod;
+        const effectiveGasCompMod = 
+          (weights.Personal * personalMod) +
+          (weights.Funcionamiento * funcMod) +
+          (weights.Transferencias * transMod) +
+          (weights.Tasas * tasasMod) +
+          (weights.Deuda * deudaMod) +
+          (weights.Inversion * invMod);
 
-        monthlySimGasCompByRes[r][i] = monthlyBaseGasCompByRes[r][i] * (1 + mod);
-        monthlySimGasPagoByRes[r][i] = monthlyBaseGasPagoByRes[r][i] * (1 + mod);
+        const effectiveGasPagoMod = effectiveGasCompMod;
+
+        monthlySimGasCompByRes[r][i] = monthlyBaseGasCompByRes[r][i] * (1 + effectiveGasCompMod);
+        monthlySimGasPagoByRes[r][i] = monthlyBaseGasPagoByRes[r][i] * (1 + effectiveGasPagoMod);
       });
     }
   }
 
-  // Enforce budget caps: annual simulated/baseline expenses cannot exceed simulated/baseline income per resource!
+  // 5. Capping rule: Monthly simulated expenses cannot exceed monthly simulated income per resource
   RESOURCES_LIST.forEach(r => {
-    // 1. Enforce on Baselines
-    const totBaseIng = monthlyBaseIngByRes[r].reduce((a,b)=>a+b, 0);
-    const totBaseGasComp = monthlyBaseGasCompByRes[r].reduce((a,b)=>a+b, 0);
-    const totBaseGasPago = monthlyBaseGasPagoByRes[r].reduce((a,b)=>a+b, 0);
-
-    if (totBaseGasComp > totBaseIng && totBaseGasComp > 0) {
-      const factorComp = totBaseIng / totBaseGasComp;
-      for (let i = 0; i < 12; i++) {
-        monthlyBaseGasCompByRes[r][i] *= factorComp;
-      }
-    }
-    if (totBaseGasPago > totBaseIng && totBaseGasPago > 0) {
-      const factorPago = totBaseIng / totBaseGasPago;
-      for (let i = 0; i < 12; i++) {
-        monthlyBaseGasPagoByRes[r][i] *= factorPago;
-      }
-    }
-
-    // 2. Enforce on Simulated
     const totSimIng = monthlySimIngByRes[r].reduce((a,b)=>a+b, 0);
     const totSimGasComp = monthlySimGasCompByRes[r].reduce((a,b)=>a+b, 0);
     const totSimGasPago = monthlySimGasPagoByRes[r].reduce((a,b)=>a+b, 0);
@@ -387,6 +419,7 @@ export function calculateProjections({
         monthlySimGasCompByRes[r][i] *= factorComp;
       }
     }
+
     if (totSimGasPago > totSimIng && totSimGasPago > 0) {
       const factorPago = totSimIng / totSimGasPago;
       for (let i = 0; i < 12; i++) {
@@ -395,9 +428,9 @@ export function calculateProjections({
     }
   });
 
-  // 5. Aggregate final monthly cash flow structures
-  const MONTHS_STR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  // 6. Assemble overall consolidated cash flow
   const simulatedFlow: CashFlowItem[] = [];
+  const MONTHS_STR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
   let totalBaseIng = 0;
   let totalBaseGasComp = 0;
@@ -408,7 +441,10 @@ export function calculateProjections({
   let totalSimGasPago = 0;
 
   let accumComp = 0;
-  let accumPago = 0;  // Calculate Ene-Jul scaling factors to match target real numbers when no filter is applied
+  let accumPago = 0;
+  let accumIng = 0;
+
+  // Calculate Ene-Jul scaling factors to match target real numbers when no filter is applied
   let rawEneJulIng = 0;
   let rawEneJulGasComp = 0;
   let rawEneJulGasPago = 0;
@@ -469,9 +505,16 @@ export function calculateProjections({
     totalSimGasComp += mSimGasComp;
     totalSimGasPago += mSimGasPago;
 
+    accumIng += mSimIng;
     accumComp += (mSimIng - mSimGasComp);
     accumPago += (mSimIng - mSimGasPago);
 
+    const mPayrollVal = monthlyPayroll[i] / 1e6;
+    const mSimPagoM = mSimGasPago / 1e6;
+    const mOtrosGastos = Math.max(0, mSimPagoM - mPayrollVal);
+    const mSaldoCajaAcum = (accumIng - totalSimGasPago) / 1e6;
+    const mRezagoCompromiso = Math.max(0, (totalSimGasComp - totalSimGasPago) / 1e6);
+    const mCobNomina = mPayrollVal > 0 ? ((mSimIng / 1e6) / mPayrollVal) * 100 : 100;
     const execPct = mSimIng > 0 ? (mSimGasComp / mSimIng) * 100 : 0;
 
     simulatedFlow.push({
@@ -479,75 +522,45 @@ export function calculateProjections({
       ingresos: parseFloat((mSimIng / 1e6).toFixed(1)),
       gastosComp: parseFloat((mSimGasComp / 1e6).toFixed(1)),
       gastosPago: parseFloat((mSimGasPago / 1e6).toFixed(1)),
+      gastoPersonal: parseFloat(mPayrollVal.toFixed(1)),
+      otrosGastosPago: parseFloat(mOtrosGastos.toFixed(1)),
       netoComp: parseFloat(((mSimIng - mSimGasComp) / 1e6).toFixed(1)),
       netoPago: parseFloat(((mSimIng - mSimGasPago) / 1e6).toFixed(1)),
       acumuladoComp: parseFloat((accumComp / 1e6).toFixed(1)),
       acumuladoPago: parseFloat((accumPago / 1e6).toFixed(1)),
+      acumuladoIng: parseFloat((accumIng / 1e6).toFixed(1)),
+      saldoCajaAcumulado: parseFloat(mSaldoCajaAcum.toFixed(1)),
+      rezagoCompromiso: parseFloat(mRezagoCompromiso.toFixed(1)),
+      coberturaNomina: parseFloat(mCobNomina.toFixed(1)),
       ejecucion: parseFloat(execPct.toFixed(2))
     });
   }
 
-  // Enforce business rules:
-  // 1. Total payments CANNOT exceed total incomes: totalSimGasPago <= totalSimIng
-  // 2. Total payments should not be lower than total commitments by more than $20,000M: totalSimGasPago >= totalSimGasComp - 20000 * 1e6
-  // Rule #1 is a hard limit.
+  // 7. Calculate Category breakdown and Payroll Coverage matrix
+  const catComp: Record<string, number> = {
+    personal: 0,
+    funcionamiento: 0,
+    transferencias: 0,
+    tasas: 0,
+    deuda: 0,
+    inversion: 0
+  };
+  const catPago: Record<string, number> = {
+    personal: 0,
+    funcionamiento: 0,
+    transferencias: 0,
+    tasas: 0,
+    deuda: 0,
+    inversion: 0
+  };
 
-  let targetSimGasPago = totalSimGasPago;
-  const maxDifference = 20000 * 1e6; // $20,000M
-  
-  // Rule 2: try to make payments at least totalComp - 20,000M
-  if (totalSimGasComp - targetSimGasPago > maxDifference) {
-    targetSimGasPago = totalSimGasComp - maxDifference;
-  }
-  
-  // Rule 1: hard ceiling (payments can NEVER exceed total incomes)
-  if (targetSimGasPago > totalSimIng) {
-    targetSimGasPago = totalSimIng;
-  }
-
-  // Apply adjustment to the second semester
-  if (Math.abs(targetSimGasPago - totalSimGasPago) > 1e-3) {
-    const adjustmentVal = targetSimGasPago - totalSimGasPago;
-    
-    // Sum simulated payments for months 6 to 11 (second semester)
-    let secondSemesterPagoSum = 0;
-    for (let i = 6; i < 12; i++) {
-      secondSemesterPagoSum += simulatedFlow[i].gastosPago * 1e6;
-    }
-    
-    if (secondSemesterPagoSum > 0) {
-      const factor = (secondSemesterPagoSum + adjustmentVal) / secondSemesterPagoSum;
-      for (let i = 6; i < 12; i++) {
-        simulatedFlow[i].gastosPago = parseFloat((simulatedFlow[i].gastosPago * factor).toFixed(1));
-        // Recompute net and execution
-        const ing = simulatedFlow[i].ingresos;
-        const comp = simulatedFlow[i].gastosComp;
-        const pago = simulatedFlow[i].gastosPago;
-        simulatedFlow[i].netoPago = parseFloat((ing - pago).toFixed(1));
-      }
-      
-      // Update totalSimGasPago to our adjusted target
-      totalSimGasPago = targetSimGasPago;
-      
-      // Re-calculate running accumulated values
-      let runningAccumPago = 0;
-      for (let i = 0; i < 12; i++) {
-        const ing = simulatedFlow[i].ingresos;
-        const pago = simulatedFlow[i].gastosPago;
-        runningAccumPago += (ing - pago);
-        simulatedFlow[i].acumuladoPago = parseFloat(runningAccumPago.toFixed(1));
-      }
-    }
-  }
-
-  // 6. Category breakdown aligned with capped outputs
-  const catComp = { personal: 0, funcionamiento: 0, transferencias: 0, tasas: 0, deuda: 0, inversion: 0 };
-  const catPago = { personal: 0, funcionamiento: 0, transferencias: 0, tasas: 0, deuda: 0, inversion: 0 };
+  // Fixed total simulated payroll = BUDGET_PAYROLL_2026 (adjusted with slider if Personal slider used)
+  const personalSlider = simGasByType["Personal"] || 0;
+  const simulatedPayrollTotal = (PAYROLL_REAL_ENE_JUL + PAYROLL_REMAINING_AGO_DIC * (1 + personalSlider / 100)) / 1e6;
 
   rawHistoricalGastos.forEach(row => {
-    if (filterUnidad !== 'Todos' && row.dependencia !== filterUnidad) return;
     const recMapped = getRecursoEquivalence(row.recurso);
-    if (!expensesCompByYearRes[2026][recMapped]) return; // Guard
+    if (!expensesCompByYearRes[2026][recMapped]) return;
     if (filterRecurso !== 'Todos' && recMapped !== filterRecurso) return;
 
     const monthIdx = row.mes - 1;
@@ -556,70 +569,85 @@ export function calculateProjections({
     const year = row.año;
     if (year !== 2026 && year !== 2025) return;
 
-    // Prevent duplication: only include first semester 2026 (Ene-Jun) and second semester 2025 (Jul-Dic)
-    if (year === 2026 && monthIdx >= 6) return;
-    if (year === 2025 && monthIdx < 6) return;
+    if (year === 2026 && monthIdx >= 7) return;
+    if (year === 2025 && monthIdx < 7) return;
 
     const is2026RealGas = (expensesCompByYearRes[2026][recMapped].reduce((a,b)=>a+b, 0) + expensesPagoByYearRes[2026][recMapped].reduce((a,b)=>a+b, 0)) > 0;
-    const useRealGas = monthIdx < 6 && is2026RealGas;
+    const useRealGas = monthIdx < 7 && is2026RealGas;
 
-    // Apply baseline and capping scale factor to category values
-    const baselineMultiplier = (year === 2026 && monthIdx < 6) ? 1 : 1.05;
+    const baselineMultiplier = (year === 2026 && monthIdx < 7) ? 1 : 1.05;
     const scaleResourceFactor = (useRealGas || expenseAdjustMode === 'category') ? 1 : (1 + (simGasByResource[recMapped] || 0) / 100);
     
     let scaleTypeFactor = 1;
     const tipo = String(row.tipo || '').toLowerCase();
-    if (monthIdx >= 6 && expenseAdjustMode === 'category') {
-      if (tipo.includes("personal")) scaleTypeFactor = (1 + (simGasByType["Personal"] || 0) / 100);
-      else if (tipo.includes("funcionamiento")) scaleTypeFactor = (1 + (simGasByType["Funcionamiento"] || 0) / 100);
-      else if (tipo.includes("transferencia")) scaleTypeFactor = (1 + (simGasByType["Transferencias"] || 0) / 100);
-      else if (tipo.includes("tasa") || tipo.includes("multa")) scaleTypeFactor = (1 + (simGasByType["Tasas"] || 0) / 100);
-      else if (tipo.includes("deuda") || tipo.includes("servicio")) scaleTypeFactor = (1 + (simGasByType["Deuda"] || 0) / 100);
+    if (monthIdx >= 7 && expenseAdjustMode === 'category') {
+      if (tipo.includes("personal") || tipo.includes("2.1.1")) scaleTypeFactor = (1 + (simGasByType["Personal"] || 0) / 100);
+      else if (tipo.includes("funcionamiento") || tipo.includes("2.1.2")) scaleTypeFactor = (1 + (simGasByType["Funcionamiento"] || 0) / 100);
+      else if (tipo.includes("transferencia") || tipo.includes("2.1.3")) scaleTypeFactor = (1 + (simGasByType["Transferencias"] || 0) / 100);
+      else if (tipo.includes("tasa") || tipo.includes("multa") || tipo.includes("2.1.8")) scaleTypeFactor = (1 + (simGasByType["Tasas"] || 0) / 100);
+      else if (tipo.includes("deuda") || tipo.includes("2.2.2")) scaleTypeFactor = (1 + (simGasByType["Deuda"] || 0) / 100);
       else scaleTypeFactor = (1 + (simGasByType["Inversion"] || 0) / 100);
     }
 
-    // Capping scale factor
-    let capFactorComp = 1;
-    let capFactorPago = 1;
-    const totSimIng = monthlySimIngByRes[recMapped].reduce((a,b)=>a+b, 0);
-    const totSimGasComp = monthlySimGasCompByRes[recMapped].reduce((a,b)=>a+b, 0);
-    const totSimGasPago = monthlySimGasPagoByRes[recMapped].reduce((a,b)=>a+b, 0);
+    const compVal = row.compromiso * baselineMultiplier * scaleResourceFactor * scaleTypeFactor;
+    const pagoVal = row.pago * baselineMultiplier * scaleResourceFactor * scaleTypeFactor;
 
-    if (totSimGasComp > totSimIng && totSimGasComp > 0) capFactorComp = totSimIng / totSimGasComp;
-    if (totSimGasPago > totSimIng && totSimGasPago > 0) capFactorPago = totSimIng / totSimGasPago;
-
-    const compVal = row.compromiso * baselineMultiplier * scaleResourceFactor * scaleTypeFactor * capFactorComp;
-    const pagoVal = row.pago * baselineMultiplier * scaleResourceFactor * scaleTypeFactor * capFactorPago;
-
-    if (tipo.includes("2.1.1")) {
+    if (tipo.includes("2.1.1") || tipo.includes("personal")) {
       catComp.personal += compVal; catPago.personal += pagoVal;
-    } else if (tipo.includes("2.1.2")) {
+    } else if (tipo.includes("2.1.2") || tipo.includes("funcionamiento")) {
       catComp.funcionamiento += compVal; catPago.funcionamiento += pagoVal;
-    } else if (tipo.includes("2.1.3")) {
+    } else if (tipo.includes("2.1.3") || tipo.includes("transferencia")) {
       catComp.transferencias += compVal; catPago.transferencias += pagoVal;
-    } else if (tipo.includes("2.1.8")) {
+    } else if (tipo.includes("2.1.8") || tipo.includes("tasa")) {
       catComp.tasas += compVal; catPago.tasas += pagoVal;
-    } else if (tipo.includes("2.2.2")) {
+    } else if (tipo.includes("2.2.2") || tipo.includes("deuda")) {
       catComp.deuda += compVal; catPago.deuda += pagoVal;
     } else {
       catComp.inversion += compVal; catPago.inversion += pagoVal;
     }
   });
 
-  // Align catPago breakdown to the adjusted totalSimGasPago if shortfall adjustment happened
-  const sumCatPago = Object.values(catPago).reduce((a,b)=>a+b, 0);
-  if (sumCatPago > 0 && Math.abs(sumCatPago - totalSimGasPago) > 1e-3) {
-    const catPagoFactor = totalSimGasPago / sumCatPago;
-    catPago.personal *= catPagoFactor;
-    catPago.funcionamiento *= catPagoFactor;
-    catPago.transferencias *= catPagoFactor;
-    catPago.tasas *= catPagoFactor;
-    catPago.deuda *= catPagoFactor;
-    catPago.inversion *= catPagoFactor;
-  }
+  // Ensure Personal total aligns with Master Budget Anchor
+  catComp.personal = simulatedPayrollTotal * 1e6;
+  catPago.personal = simulatedPayrollTotal * 1e6;
 
-  const simulatedTotalsComp = Object.values(catComp).reduce((a,b)=>a+b, 0) / 1e6;
-  const simulatedTotalsPago = Object.values(catPago).reduce((a,b)=>a+b, 0) / 1e6;
+  // Build Payroll Coverage by Resource List
+  const payrollCoverageList: PayrollCoverageItem[] = [];
+  const totalSimIngM = totalSimIng / 1e6;
+  
+  RESOURCES_LIST.forEach(r => {
+    const rTotalIngM = monthlySimIngByRes[r].reduce((a,b)=>a+b, 0) / 1e6;
+    if (rTotalIngM > 0) {
+      // Primary funding from Aportes Nacion (10.0, 10.1, 10.2, 10.5), Matrículas (14, 20, 31), etc.
+      let payrollShareWeight = 0.65; // default 65% of revenue allocated to payroll
+      if (r.startsWith('10.0')) payrollShareWeight = 0.95;
+      else if (r.startsWith('10.5')) payrollShareWeight = 0.75;
+      else if (r.startsWith('31')) payrollShareWeight = 0.50;
+      else if (r.startsWith('20')) payrollShareWeight = 0.40;
+
+      const payrollContrib = Math.min(rTotalIngM * payrollShareWeight, simulatedPayrollTotal);
+      const surplus = rTotalIngM - payrollContrib;
+      const coveragePct = (payrollContrib / simulatedPayrollTotal) * 100;
+
+      payrollCoverageList.push({
+        resourceCode: r,
+        resourceName: getResourceFullName(r),
+        totalRevenue: parseFloat(rTotalIngM.toFixed(1)),
+        payrollContribution: parseFloat(payrollContrib.toFixed(1)),
+        surplus: parseFloat(surplus.toFixed(1)),
+        coveragePct: parseFloat(coveragePct.toFixed(1))
+      });
+    }
+  });
+
+  payrollCoverageList.sort((a,b) => b.totalRevenue - a.totalRevenue);
+
+  const totalPayrollBudgetM = BUDGET_PAYROLL_2026 / 1e6;
+  const realPayrollPaidM = PAYROLL_REAL_ENE_JUL / 1e6;
+  const remainingPayrollM = PAYROLL_REMAINING_AGO_DIC / 1e6;
+  const payrollCoverageRatio = simulatedPayrollTotal > 0 ? (totalSimIngM / simulatedPayrollTotal) * 100 : 0;
+  const payrollSurplus = totalSimIngM - simulatedPayrollTotal;
+  const unpaidCommitments = (totalSimGasComp - totalSimGasPago) / 1e6;
 
   return {
     simulatedFlow,
@@ -634,7 +662,15 @@ export function calculateProjections({
       simGasComp: totalSimGasComp / 1e6,
       simGasPago: totalSimGasPago / 1e6,
       simNetComp: (totalSimIng - totalSimGasComp) / 1e6,
-      simNetPago: (totalSimIng - totalSimGasPago) / 1e6
+      simNetPago: (totalSimIng - totalSimGasPago) / 1e6,
+
+      totalPayrollBudget: totalPayrollBudgetM,
+      realPayrollPaid: realPayrollPaidM,
+      remainingPayroll: remainingPayrollM,
+      simulatedPayrollTotal,
+      payrollCoverageRatio: parseFloat(payrollCoverageRatio.toFixed(1)),
+      payrollSurplus: parseFloat(payrollSurplus.toFixed(1)),
+      unpaidCommitments: parseFloat(unpaidCommitments.toFixed(1))
     },
     resourceBaselines,
     monthlySimIngByRes,
@@ -642,6 +678,8 @@ export function calculateProjections({
     monthlySimGasCompByRes,
     monthlyBaseIngByRes,
     monthlyBaseGasPagoByRes,
+    monthlyPayroll,
+    payrollCoverageList,
     categoryBreakdown: {
       compromiso: [
         { name: 'Gastos de Personal (2.1.1)', value: parseFloat((catComp.personal / 1e6).toFixed(1)) },
@@ -667,13 +705,15 @@ export function aggregateFlow(monthlyFlow: CashFlowItem[], granularity: 'monthly
   if (granularity === 'monthly') return monthlyFlow;
 
   const aggregated: CashFlowItem[] = [];
-  let ingSum = 0, compSum = 0, pagoSum = 0;
+  let ingSum = 0, compSum = 0, pagoSum = 0, personalSum = 0, otrosSum = 0;
   let currentGroup = "";
 
   monthlyFlow.forEach((item, idx) => {
     ingSum += item.ingresos;
     compSum += item.gastosComp;
     pagoSum += item.gastosPago;
+    personalSum += item.gastoPersonal;
+    otrosSum += item.otrosGastosPago;
 
     let isEnd = false;
     if (granularity === 'quarterly') {
@@ -691,18 +731,25 @@ export function aggregateFlow(monthlyFlow: CashFlowItem[], granularity: 'monthly
 
     if (isEnd) {
       const execPct = ingSum > 0 ? (compSum / ingSum) * 100 : 0;
+      const cobPct = personalSum > 0 ? (ingSum / personalSum) * 100 : 100;
       aggregated.push({
         name: currentGroup,
         ingresos: parseFloat(ingSum.toFixed(1)),
         gastosComp: parseFloat(compSum.toFixed(1)),
         gastosPago: parseFloat(pagoSum.toFixed(1)),
+        gastoPersonal: parseFloat(personalSum.toFixed(1)),
+        otrosGastosPago: parseFloat(otrosSum.toFixed(1)),
         netoComp: parseFloat((ingSum - compSum).toFixed(1)),
         netoPago: parseFloat((ingSum - pagoSum).toFixed(1)),
         acumuladoComp: item.acumuladoComp,
         acumuladoPago: item.acumuladoPago,
+        acumuladoIng: item.acumuladoIng,
+        saldoCajaAcumulado: item.saldoCajaAcumulado,
+        rezagoCompromiso: item.rezagoCompromiso,
+        coberturaNomina: parseFloat(cobPct.toFixed(1)),
         ejecucion: parseFloat(execPct.toFixed(2))
       });
-      ingSum = 0; compSum = 0; pagoSum = 0;
+      ingSum = 0; compSum = 0; pagoSum = 0; personalSum = 0; otrosSum = 0;
     }
   });
 
