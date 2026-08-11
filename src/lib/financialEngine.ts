@@ -351,8 +351,8 @@ export function calculateProjections({
         gasBasePagoVal = expensesPagoByYearRes[2026][r][i];
       } else {
         gasBaseCompVal = expensesCompByYearRes[2025][r][i] * 1.05;
-        // Payments in Ago-Dic accelerate to close commitments near 100%
-        gasBasePagoVal = gasBaseCompVal * 0.992;
+        // Payments in Ago-Dic accelerate with +5% increment
+        gasBasePagoVal = gasBaseCompVal * 0.992 * 1.05;
       }
 
       monthlyBaseIngByRes[r][i] = ingBaseVal;
@@ -482,10 +482,10 @@ export function calculateProjections({
       mSimGasComp *= factorEneJulComp;
       mSimGasPago *= factorEneJulPago;
     } else {
-      // In months 7 to 11 (Ago-Dic), accelerate payments so total payments reach ~99.0% - 99.5% of commitments
+      // In months 7 to 11 (Ago-Dic), accelerate payments with +5% increment
       const remainingCompMonth = mSimGasComp;
-      mSimGasPago = remainingCompMonth * 0.992;
-      mBaseGasPago = mBaseGasComp * 0.992;
+      mSimGasPago = remainingCompMonth * 0.992 * 1.05;
+      mBaseGasPago = mBaseGasComp * 0.992 * 1.05;
     }
 
     totalBaseIng += mBaseIng;
@@ -582,10 +582,10 @@ export function calculateProjections({
     }
 
     const compVal = row.compromiso * baselineMultiplier * scaleResourceFactor * scaleTypeFactor;
-    // Pagos in Ago-Dic execute near 100% of commitments
+    // Pagos in Ago-Dic with +5% increment
     const pagoVal = monthIdx < 7 
       ? (row.pago * baselineMultiplier * scaleResourceFactor * scaleTypeFactor)
-      : (compVal * 0.992);
+      : (compVal * 0.992 * 1.05);
 
     if (tipo.includes("2.1.1") || tipo.includes("personal")) {
       catComp.personal += compVal; catPago.personal += pagoVal;
