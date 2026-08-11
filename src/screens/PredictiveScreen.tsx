@@ -64,7 +64,7 @@ const AI_ING_SUGGESTIONS: Record<string, { val: number; rationale: string }> = {
 const AI_GAS_CATEGORY_SUGGESTIONS: Record<string, { val: number; rationale: string }> = {
   'Personal': { val: 0.0, rationale: 'Techo oficial fijado en $369.650M; las primas y cesantías de diciembre ya están contempladas en el saldo proyectado.' },
   'Funcionamiento': { val: 3.5, rationale: 'Cubre la indexación y facturación de servicios públicos fijos de fin de año y contratos continuos de vigilancia y aseo en diciembre.' },
-  'Inversion': { val: 4.0, rationale: 'Aceleración requerida para recibir y liquidar actas de obra, laboratorios y proyectos POAI antes del cierre fiscal.' },
+  'Inversion': { val: 4.0, rationale: 'Aceleración de actas POAI considerando la restricción histórica estructural de ejecución (máx. 70%).' },
   'Transferencias': { val: 0.0, rationale: 'Ejecución al 99.9% en Ene-Jul; gasto residual sin presiones de sobrecosto.' },
   'Tasas': { val: 0.0, rationale: 'Obligaciones tributarias y contribuciones regulatorias al día.' },
   'Deuda': { val: 0.0, rationale: 'Sin pasivos bancarios en amortización durante 2026.' }
@@ -245,24 +245,33 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     };
   }, [financialData]);
 
-  // Simulated Expense Analysis Groups for Tab 2
+  // Dynamic Harmonized Simulated Gastos Groups for Tab 2
   const simulatedGastosGroups = useMemo(() => {
-    const multPersonal = 1 + (simGasByType['Personal'] || 0) / 100;
-    const multFunc = 1 + (simGasByType['Funcionamiento'] || 0) / 100;
-    const multInv = 1 + (simGasByType['Inversion'] || 0) / 100;
-    const multTransf = 1 + (simGasByType['Transferencias'] || 0) / 100;
-    const multTasas = 1 + (simGasByType['Tasas'] || 0) / 100;
+    const cComp = financialData.catComp || { personal: 369650.43, funcionamiento: 124447.13, inversion: 19687.14, transferencias: 5090.33, tasas: 3908.35, deuda: 0 };
+    const cPago = financialData.catPago || { personal: 369650.43, funcionamiento: 124447.13, inversion: 13347.88, transferencias: 5090.33, tasas: 3908.35, deuda: 0 };
+
+    // Ratio scale factors for resources
+    const multPersonal = cComp.personal > 0 ? cComp.personal / 369650.43 : 1;
+    const multFunc = cComp.funcionamiento > 0 ? cComp.funcionamiento / 124447.13 : 1;
+    const multInv = cComp.inversion > 0 ? cComp.inversion / 19687.14 : 1;
+    const multTransf = cComp.transferencias > 0 ? cComp.transferencias / 5090.33 : 1;
+    const multTasas = cComp.tasas > 0 ? cComp.tasas / 3908.35 : 1;
+
+    // Inversión pago bounded by <= 70% of compromiso
+    const invComp = cComp.inversion;
+    const invPago = Math.min(invComp * 0.70, cPago.inversion);
 
     return [
       {
         id: 'G-211',
         name: 'Gastos de Personal',
         tipoCode: '2.1.1',
-        compromiso: 369650.43 * multPersonal,
-        pago: 369650.43 * multPersonal,
+        compromiso: cComp.personal,
+        pago: cPago.personal,
         colorClass: 'from-secondary to-secondary/70',
         baseColor: '#d0bcff',
         fill: '#4ade80',
+        isCapped: false,
         recursos: [
           { name: '10.0 Aportes Nación - Funcionamiento', compromiso: 362148.2 * multPersonal, pago: 362148.2 * multPersonal },
           { name: '10.5 Política de Gratuidad', compromiso: 6539.3 * multPersonal, pago: 6539.3 * multPersonal },
@@ -275,11 +284,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         id: 'G-212',
         name: 'Gastos de Funcionamiento',
         tipoCode: '2.1.2',
-        compromiso: 124447.13 * multFunc,
-        pago: 124447.13 * multFunc,
+        compromiso: cComp.funcionamiento,
+        pago: cPago.funcionamiento,
         colorClass: 'from-[#ffcc29] to-[#ffcc29]/70',
         baseColor: '#ffcc29',
         fill: '#ffcc29',
+        isCapped: false,
         recursos: [
           { name: '10.0 Aportes Nación - Funcionamiento', compromiso: 44370.2 * multFunc, pago: 44370.2 * multFunc },
           { name: '33 Convenios con derechos', compromiso: 29896.8 * multFunc, pago: 29896.8 * multFunc },
@@ -300,26 +310,28 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         id: 'G-230',
         name: 'Gastos de Inversión',
         tipoCode: '2.3',
-        compromiso: 19687.14 * multInv,
-        pago: 19687.14 * multInv,
+        compromiso: invComp,
+        pago: invPago,
         colorClass: 'from-[#7bd0ff] to-[#7bd0ff]/70',
         baseColor: '#7bd0ff',
         fill: '#38bdf8',
+        isCapped: true,
         recursos: [
-          { name: '12 Estampillas Otras Universidades', compromiso: 8769.8 * multInv, pago: 8769.8 * multInv },
-          { name: '16.0 Aportes Inversión Nacional', compromiso: 7462.8 * multInv, pago: 7462.8 * multInv },
-          { name: '40 Estampilla PRO-UPTC', compromiso: 3454.5 * multInv, pago: 3454.5 * multInv }
+          { name: '12 Estampillas Otras Universidades', compromiso: 8769.8 * multInv, pago: (8769.8 * multInv) * (invPago / invComp) },
+          { name: '16.0 Aportes Inversión Nacional', compromiso: 7462.8 * multInv, pago: (7462.8 * multInv) * (invPago / invComp) },
+          { name: '40 Estampilla PRO-UPTC', compromiso: 3454.5 * multInv, pago: (3454.5 * multInv) * (invPago / invComp) }
         ]
       },
       {
         id: 'G-213',
         name: 'Transferencias Corrientes',
         tipoCode: '2.1.3',
-        compromiso: 5090.33 * multTransf,
-        pago: 5090.33 * multTransf,
+        compromiso: cComp.transferencias,
+        pago: cPago.transferencias,
         colorClass: 'from-[#c084fc] to-[#c084fc]/70',
         baseColor: '#c084fc',
         fill: '#c084fc',
+        isCapped: false,
         recursos: [
           { name: '33 Convenios con derechos', compromiso: 3335.5 * multTransf, pago: 3335.5 * multTransf },
           { name: '34 Convenios sin derechos', compromiso: 1067.3 * multTransf, pago: 1067.3 * multTransf },
@@ -333,11 +345,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         id: 'G-218',
         name: 'Tasas, Multas y Contribuciones',
         tipoCode: '2.1.8',
-        compromiso: 3908.35 * multTasas,
-        pago: 3908.35 * multTasas,
+        compromiso: cComp.tasas,
+        pago: cPago.tasas,
         colorClass: 'from-[#f43f5e] to-[#f43f5e]/70',
         baseColor: '#f43f5e',
         fill: '#f43f5e',
+        isCapped: false,
         recursos: [
           { name: '10.0 Aportes Nación', compromiso: 2470.1 * multTasas, pago: 2470.1 * multTasas },
           { name: '10.5 Gratuidad', compromiso: 1134.3 * multTasas, pago: 1134.3 * multTasas },
@@ -349,18 +362,23 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         id: 'G-222',
         name: 'Servicio de la Deuda',
         tipoCode: '2.2.2',
-        compromiso: 0,
-        pago: 0,
+        compromiso: cComp.deuda,
+        pago: cPago.deuda,
         colorClass: 'from-[#94a3b8] to-[#94a3b8]/70',
         baseColor: '#94a3b8',
         fill: '#94a3b8',
+        isCapped: false,
         recursos: []
       }
     ];
-  }, [simGasByType]);
+  }, [financialData.catComp, financialData.catPago]);
 
   // Expense Categories Master Profiles
   const expenseTypeProfiles = useMemo(() => {
+    const invComp = financialData.catComp?.inversion || 19687.14;
+    const invPago = Math.min(invComp * 0.70, financialData.catPago?.inversion || 13347.88);
+    const invEjecPct = invComp > 0 ? (invPago / invComp) * 100 : 0;
+
     const profiles = [
       {
         id: '2.1.1',
@@ -405,22 +423,22 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {
         id: '2.3',
         name: 'Gastos de Inversión (Proyectos y Desarrollo)',
-        badge: 'DESARROLLO INSTITUCIONAL & INFRAESTRUCTURA',
+        badge: 'DESARROLLO INSTITUCIONAL (TOPE HISTÓRICO ≤70%)',
         badgeColor: 'bg-[#d0bcff]/20 text-[#d0bcff] border-[#d0bcff]/30',
         subtitle: 'Laboratorios, dotación tecnológica, adecuaciones físicas y proyectos de investigación.',
         officialBudgetCOP: '$15.813.730.427 COP ($15.813,7M Comprometido)',
         realPaidM: 6345.51,
         realPct: 32.23,
-        projectedM: 13341.63,
-        projectedPct: 67.77,
-        projectedLabel: '67.8% (Avance de actas y liquidación POAI)',
-        totalBudgetM: 19687.14,
-        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 19687.14) * 100 : 0,
-        surplusM: financialData.totals.simIng - 19687.14,
+        projectedM: invPago - 6345.51,
+        projectedPct: ((invPago - 6345.51) / invComp) * 100,
+        projectedLabel: `${invEjecPct.toFixed(1)}% Ejecución (Acotado ≤70%)`,
+        totalBudgetM: invComp,
+        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / invComp) * 100 : 0,
+        surplusM: financialData.totals.simIng - invComp,
         progressRealColor: '#d0bcff',
         progressProjColor: '#38bdf8',
         borderGradient: 'from-[#d0bcff] via-[#38bdf8] to-[#4ade80]',
-        note: 'Proyectos aprobados en POAI; el desembolso depende del cumplimiento de cronogramas técnicos.'
+        note: 'Históricamente la ejecución de inversión no supera el 70% por tiempos de contratación y actas.'
       },
       {
         id: '2.1.3',
@@ -1183,7 +1201,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                         Sugerencia Inteligente IA (Cierre Fiscal y Servicios)
                       </p>
                       <p className="text-[11px] text-white/70 mt-0.5">
-                        Mantiene nómina al techo ($369.650M) y provisiona servicios fijos e inversión en diciembre.
+                        Mantiene nómina al techo ($369.650M) y provisiona servicios fijos e inversión acotada (≤70%).
                       </p>
                     </div>
                   </div>
@@ -1217,7 +1235,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   {[
                     { id: 'Personal', label: 'Gastos de Personal (2.1.1)', desc: 'Techo fijado en $369.650M. Modifica contingencias salariales.', color: '#4ade80' },
                     { id: 'Funcionamiento', label: 'Gastos de Funcionamiento (2.1.2)', desc: 'Servicios públicos, mantenimiento y compras operativas.', color: '#7bd0ff' },
-                    { id: 'Inversion', label: 'Gastos de Inversión (2.3)', desc: 'Infraestructura, laboratorios e inversión académica.', color: '#d0bcff' },
+                    { id: 'Inversion', label: 'Gastos de Inversión (2.3)', desc: 'Infraestructura y laboratorios. Acotado históricamente al ≤70%.', color: '#d0bcff' },
                     { id: 'Transferencias', label: 'Transferencias Corrientes (2.1.3)', desc: 'Subsidios y convenios interinstitucionales.', color: '#ffcc29' },
                     { id: 'Tasas', label: 'Tasas y Multas (2.1.8)', desc: 'Impuestos y tasas regulatorias.', color: '#f43f5e' },
                     { id: 'Deuda', label: 'Servicios de la Deuda (2.2.2)', desc: 'Amortización e intereses bancarios.', color: '#fb7185' }
@@ -1395,7 +1413,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
           {/* Secondary KPI Cards */}
           {(() => {
-            const pctEjec = financialData.totals.simIng > 0 ? (financialData.totals.simGasComp / financialData.totals.simIng) * 100 : 0;
+            // Execution % strictly calculated as Pago / Compromiso
+            const pctEjecGasto = financialData.totals.simGasComp > 0 ? (financialData.totals.simGasPago / financialData.totals.simGasComp) * 100 : 0;
             const disponibleVal = financialData.totals.simIng - financialData.totals.simGasComp;
             const saldoPagoVal = financialData.totals.simGasComp - financialData.totals.simGasPago;
 
@@ -1404,16 +1423,16 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
                   <div className="absolute top-0 left-0 w-full h-1 bg-[#ffcc29]"></div>
                   <div>
-                    <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Porcentaje de Ejecución Presupuestal</h4>
-                    <p className="text-3xl font-display font-bold text-[#ffcc29]">{pctEjec.toFixed(1)}%</p>
+                    <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Porcentaje de Ejecución de Pago</h4>
+                    <p className="text-3xl font-display font-bold text-[#ffcc29]">{pctEjecGasto.toFixed(1)}%</p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-white/5">
                     <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-[#ffcc29]" style={{ width: `${Math.min(100, pctEjec)}%` }}></div>
+                      <div className="h-full rounded-full bg-[#ffcc29]" style={{ width: `${Math.min(100, pctEjecGasto)}%` }}></div>
                     </div>
                     <div className="flex justify-between items-center mt-2 text-[10px] font-mono text-on-surface-variant">
-                      <span>COMPROMISOS / INGRESOS</span>
-                      <span className="text-[#4ade80] font-bold">Equilibrado</span>
+                      <span>PAGOS / COMPROMISOS</span>
+                      <span className="text-[#4ade80] font-bold">Tasa de Giro</span>
                     </div>
                   </div>
                 </div>
@@ -1462,7 +1481,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     <th className="p-4 text-right">Real Ene-Jul (7 Meses)</th>
                     <th className="p-4 text-right">Proyectado Ago-Dic (5 Meses)</th>
                     <th className="p-4 text-right">Consolidado Anual 2026</th>
-                    <th className="p-4 text-right">% Participación Real</th>
+                    <th className="p-4 text-right">% Ejecución (Pago / Comp)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -1471,28 +1490,28 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     <td className="p-4 text-right text-[#4ade80]">${semesterTotals.eneJulIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
                     <td className="p-4 text-right text-[#ffcc29]">${semesterTotals.agoDicIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
                     <td className="p-4 text-right font-bold text-white">${financialData.totals.simIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
-                    <td className="p-4 text-right font-bold">{((semesterTotals.eneJulIng / financialData.totals.simIng) * 100).toFixed(1)}%</td>
+                    <td className="p-4 text-right font-bold">{financialData.totals.simIng > 0 ? ((financialData.totals.simGasPago / financialData.totals.simIng) * 100).toFixed(1) : '0.0'}%</td>
                   </tr>
                   <tr>
                     <td className="p-4 font-bold text-white">Gastos de Personal (Nómina Maestro)</td>
                     <td className="p-4 text-right text-[#4ade80]">${semesterTotals.eneJulNomina.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
                     <td className="p-4 text-right text-[#ffcc29]">${semesterTotals.agoDicNomina.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
                     <td className="p-4 text-right font-bold text-[#38bdf8]">${financialData.totals.simulatedPayrollTotal.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
-                    <td className="p-4 text-right font-bold">{((semesterTotals.eneJulNomina / financialData.totals.simulatedPayrollTotal) * 100).toFixed(1)}%</td>
+                    <td className="p-4 text-right font-bold">100.0%</td>
                   </tr>
                   <tr>
                     <td className="p-4 font-bold text-white">Compromisos Totales</td>
                     <td className="p-4 text-right text-[#f43f5e]">${semesterTotals.eneJulComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
                     <td className="p-4 text-right text-[#f43f5e]">${semesterTotals.agoDicComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
                     <td className="p-4 text-right font-bold text-white">${financialData.totals.simGasComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
-                    <td className="p-4 text-right font-bold">{((semesterTotals.eneJulComp / financialData.totals.simGasComp) * 100).toFixed(1)}%</td>
+                    <td className="p-4 text-right font-bold">100.0%</td>
                   </tr>
                   <tr>
                     <td className="p-4 font-bold text-white">Pagos Efectivos</td>
                     <td className="p-4 text-right text-[#38bdf8]">${semesterTotals.eneJulPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
                     <td className="p-4 text-right text-[#ffcc29]">${semesterTotals.agoDicPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
                     <td className="p-4 text-right font-bold text-white">${financialData.totals.simGasPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
-                    <td className="p-4 text-right font-bold">{((semesterTotals.eneJulPago / financialData.totals.simGasPago) * 100).toFixed(1)}%</td>
+                    <td className="p-4 text-right font-bold">{financialData.totals.simGasComp > 0 ? ((financialData.totals.simGasPago / financialData.totals.simGasComp) * 100).toFixed(1) : '0.0'}%</td>
                   </tr>
                 </tbody>
               </table>
@@ -1500,7 +1519,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           </div>
 
           {/* ========================================================================= */}
-          {/* ANÁLISIS DE GASTOS (ESCENARIO SIMULADO) - COMO EN EL TABLERO */}
+          {/* ANÁLISIS DE GASTOS (ESCENARIO SIMULADO) - CONGRUENCIA TOTAL & INVERSIÓN <= 70% */}
           {/* ========================================================================= */}
           <div className="pt-6 border-t border-white/10 space-y-8">
             
@@ -1512,12 +1531,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   Análisis de Gastos (Escenario Simulado 2026)
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Desglose de compromisos, giros efectivos y recursos de financiamiento calculados bajo el escenario proyectado actual.
+                  Desglose dinámico de compromisos y pagos efectivos. En todos los rubros la ejecución se calcula como <strong className="text-white font-mono">Pago Efectivo / Compromiso</strong>. Inversión acotada al ≤70% histórico.
                 </p>
               </div>
 
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-2xl font-mono text-xs">
-                <span className="text-on-surface-variant">TOTAL SIMULADO:</span>
+                <span className="text-on-surface-variant">TOTAL GIRO SIMULADO:</span>
                 <span className="text-[#4ade80] font-bold">${financialData.totals.simGasPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
               </div>
             </div>
@@ -1526,7 +1545,9 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {simulatedGastosGroups.map((gasto, idx) => {
                 const isExpanded = expandedSimGastoCard === gasto.id;
-                const pct = gasto.compromiso > 0 ? ((gasto.pago / gasto.compromiso) * 100).toFixed(1) + '%' : '0%';
+                // Execution strictly calculated as Pago / Compromiso
+                const pctNum = gasto.compromiso > 0 ? (gasto.pago / gasto.compromiso) * 100 : 0;
+                const pctStr = pctNum.toFixed(1) + '%';
                 
                 return (
                   <div key={gasto.id} className="glass-card rounded-[24px] p-6 flex flex-col relative overflow-hidden transition-all duration-300 border border-white/10 bg-surface/50 shadow-xl">
@@ -1541,7 +1562,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                             </span>
                             <h4 className="text-xl font-display font-bold text-white truncate" title={gasto.name}>{gasto.name}</h4>
                           </div>
-                          <p className="text-[10px] text-on-surface-variant font-mono tracking-widest uppercase mb-6">Agrupación Presupuestal Simulada</p>
+                          
+                          <div className="flex items-center gap-2 mb-4">
+                            <p className="text-[10px] text-on-surface-variant font-mono tracking-widest uppercase">Agrupación Presupuestal</p>
+                            {gasto.isCapped && (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#38bdf8]/10 text-[#38bdf8] border border-[#38bdf8]/30">
+                                Tope Histórico ≤70%
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         <div className="space-y-4">
@@ -1567,13 +1596,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                               stroke="currentColor" 
                               strokeWidth="12" 
                               strokeDasharray="301" 
-                              strokeDashoffset={301 - (301 * Math.min(100, parseFloat(pct || '0')) / 100)} 
+                              strokeDashoffset={301 - (301 * Math.min(100, pctNum) / 100)} 
                               style={{ color: gasto.baseColor }}
                             />
                           </svg>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-xl font-bold text-white">{pct}</span>
-                            <span className="text-[9px] font-mono text-on-surface-variant">GIRO</span>
+                            <span className="text-xl font-bold text-white">{pctStr}</span>
+                            <span className="text-[8px] font-mono text-on-surface-variant uppercase">PAGO / COMP</span>
                           </div>
                         </div>
 
@@ -1608,14 +1637,19 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                               <span className="flex-1">Fuente / Recurso</span>
                               <span className="w-24 text-right">Compromiso</span>
                               <span className="w-24 text-right">Pago Proyectado</span>
+                              <span className="w-20 text-right">Ejecución</span>
                             </div>
-                            {gasto.recursos.map((rec: any, recIdx: number) => (
-                              <div key={recIdx} className="flex justify-between items-center bg-white/5 hover:bg-white/10 transition-colors px-4 py-3 rounded-xl w-full">
-                                <span className="text-xs text-white truncate flex-1 mr-4" title={rec.name}>{String(rec.name || '')}</span>
-                                <span className="text-xs font-mono text-on-surface-variant w-24 text-right">${rec.compromiso.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
-                                <span className="text-xs font-bold text-[#38bdf8] w-24 text-right">${rec.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
-                              </div>
-                            ))}
+                            {gasto.recursos.map((rec: any, recIdx: number) => {
+                              const rPct = rec.compromiso > 0 ? (rec.pago / rec.compromiso) * 100 : 0;
+                              return (
+                                <div key={recIdx} className="flex justify-between items-center bg-white/5 hover:bg-white/10 transition-colors px-4 py-3 rounded-xl w-full">
+                                  <span className="text-xs text-white truncate flex-1 mr-4" title={rec.name}>{String(rec.name || '')}</span>
+                                  <span className="text-xs font-mono text-on-surface-variant w-24 text-right">${rec.compromiso.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                                  <span className="text-xs font-bold text-[#38bdf8] w-24 text-right">${rec.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                                  <span className="text-xs font-mono text-[#4ade80] w-20 text-right font-bold">{rPct.toFixed(1)}%</span>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>

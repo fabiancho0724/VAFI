@@ -82,6 +82,8 @@ export interface ProjectionResults {
   monthlyBaseGasPagoByRes: Record<string, number[]>;
   monthlyPayroll: number[]; // 12 months payroll in COP
   payrollCoverageList: PayrollCoverageItem[];
+  catComp: Record<string, number>;
+  catPago: Record<string, number>;
   categoryBreakdown: {
     compromiso: { name: string; value: number }[];
     pago: { name: string; value: number }[];
@@ -606,7 +608,10 @@ export function calculateProjections({
     } else if (tipo.includes("2.2.2") || tipo.includes("deuda")) {
       catComp.deuda += compVal; catPago.deuda += pagoVal;
     } else {
-      catComp.inversion += compVal; catPago.inversion += pagoVal;
+      // Inversión (2.3): Pagos proyectados se acotan históricamente a máximo el 70% de los compromisos
+      const invPagoBounded = monthIdx < 7 ? pagoVal : (compVal * 0.678);
+      catComp.inversion += compVal; 
+      catPago.inversion += invPagoBounded;
     }
   });
 
@@ -684,6 +689,22 @@ export function calculateProjections({
     monthlyBaseGasPagoByRes,
     monthlyPayroll,
     payrollCoverageList,
+    catComp: {
+      personal: catComp.personal / 1e6,
+      funcionamiento: catComp.funcionamiento / 1e6,
+      inversion: catComp.inversion / 1e6,
+      transferencias: catComp.transferencias / 1e6,
+      tasas: catComp.tasas / 1e6,
+      deuda: catComp.deuda / 1e6
+    },
+    catPago: {
+      personal: catPago.personal / 1e6,
+      funcionamiento: catPago.funcionamiento / 1e6,
+      inversion: Math.min(catComp.inversion * 0.70 / 1e6, catPago.inversion / 1e6),
+      transferencias: catPago.transferencias / 1e6,
+      tasas: catPago.tasas / 1e6,
+      deuda: catPago.deuda / 1e6
+    },
     categoryBreakdown: {
       compromiso: [
         { name: 'Gastos de Personal (2.1.1)', value: parseFloat((catComp.personal / 1e6).toFixed(1)) },
