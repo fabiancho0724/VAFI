@@ -9,7 +9,8 @@ import {
   Compass, ChevronRight, PieChart as PieChartIcon, Table, CheckSquare,
   AlertTriangle, ShieldAlert, Gauge, TrendingDown, Target, ShieldCheck,
   ChevronUp, ChevronDown, Wallet, Users, Sliders, ArrowUpRight, ArrowDownRight,
-  Sparkles, CheckCircle2, Zap, BarChart2, Award, Landmark, Bot, Lightbulb, Info
+  Sparkles, CheckCircle2, Zap, BarChart2, Award, Landmark, Bot, Lightbulb, Info,
+  LayoutList, CheckCircle
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { 
@@ -80,6 +81,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   // Monitor Expense Type Selector
   const [selectedMonitorExpenseType, setSelectedMonitorExpenseType] = useState<string>('2.1.1');
+
+  // Simulated Gastos Analysis in Tab 2 State
+  const [expandedSimGastoCard, setExpandedSimGastoCard] = useState<string | null>(null);
+  const [expandedSimPieGroup, setExpandedSimPieGroup] = useState<string | null>(null);
+  const [simActiveIndex, setSimActiveIndex] = useState<number | undefined>(undefined);
 
   // Sensitivity analysis settings
   const [sensResource, setSensResource] = useState<string>('Todos');
@@ -238,6 +244,120 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       agoDicNomina: agoDic.reduce((sum, m) => sum + m.gastoPersonal, 0)
     };
   }, [financialData]);
+
+  // Simulated Expense Analysis Groups for Tab 2
+  const simulatedGastosGroups = useMemo(() => {
+    const multPersonal = 1 + (simGasByType['Personal'] || 0) / 100;
+    const multFunc = 1 + (simGasByType['Funcionamiento'] || 0) / 100;
+    const multInv = 1 + (simGasByType['Inversion'] || 0) / 100;
+    const multTransf = 1 + (simGasByType['Transferencias'] || 0) / 100;
+    const multTasas = 1 + (simGasByType['Tasas'] || 0) / 100;
+
+    return [
+      {
+        id: 'G-211',
+        name: 'Gastos de Personal',
+        tipoCode: '2.1.1',
+        compromiso: 369650.43 * multPersonal,
+        pago: 369650.43 * multPersonal,
+        colorClass: 'from-secondary to-secondary/70',
+        baseColor: '#d0bcff',
+        fill: '#4ade80',
+        recursos: [
+          { name: '10.0 Aportes Nación - Funcionamiento', compromiso: 362148.2 * multPersonal, pago: 362148.2 * multPersonal },
+          { name: '10.5 Política de Gratuidad', compromiso: 6539.3 * multPersonal, pago: 6539.3 * multPersonal },
+          { name: '20 Recursos Propios', compromiso: 639.5 * multPersonal, pago: 639.5 * multPersonal },
+          { name: '17 Descuento Electoral', compromiso: 207.3 * multPersonal, pago: 207.3 * multPersonal },
+          { name: '14 Matrículas FSE', compromiso: 116.1 * multPersonal, pago: 116.1 * multPersonal }
+        ]
+      },
+      {
+        id: 'G-212',
+        name: 'Gastos de Funcionamiento',
+        tipoCode: '2.1.2',
+        compromiso: 124447.13 * multFunc,
+        pago: 124447.13 * multFunc,
+        colorClass: 'from-[#ffcc29] to-[#ffcc29]/70',
+        baseColor: '#ffcc29',
+        fill: '#ffcc29',
+        recursos: [
+          { name: '10.0 Aportes Nación - Funcionamiento', compromiso: 44370.2 * multFunc, pago: 44370.2 * multFunc },
+          { name: '33 Convenios con derechos', compromiso: 29896.8 * multFunc, pago: 29896.8 * multFunc },
+          { name: '14 Matrículas FSE', compromiso: 16465.1 * multFunc, pago: 16465.1 * multFunc },
+          { name: '31 Posgrados', compromiso: 16014.7 * multFunc, pago: 16014.7 * multFunc },
+          { name: '20 Recursos Propios', compromiso: 8949.7 * multFunc, pago: 8949.7 * multFunc },
+          { name: '34 Convenios sin derechos', compromiso: 2146.1 * multFunc, pago: 2146.1 * multFunc },
+          { name: '10.5 Política de Gratuidad', compromiso: 1942.4 * multFunc, pago: 1942.4 * multFunc },
+          { name: '32 Extensión y Educación', compromiso: 1801.7 * multFunc, pago: 1801.7 * multFunc },
+          { name: '35 Educación Continuada', compromiso: 965.7 * multFunc, pago: 965.7 * multFunc },
+          { name: '21 Devolución IVA', compromiso: 682.8 * multFunc, pago: 682.8 * multFunc },
+          { name: '10.1 PIC Convencional', compromiso: 665.3 * multFunc, pago: 665.3 * multFunc },
+          { name: '13 Cooperativas', compromiso: 432.3 * multFunc, pago: 432.3 * multFunc },
+          { name: '10.2 PIC Territorial', compromiso: 44.5 * multFunc, pago: 44.5 * multFunc }
+        ]
+      },
+      {
+        id: 'G-230',
+        name: 'Gastos de Inversión',
+        tipoCode: '2.3',
+        compromiso: 19687.14 * multInv,
+        pago: 19687.14 * multInv,
+        colorClass: 'from-[#7bd0ff] to-[#7bd0ff]/70',
+        baseColor: '#7bd0ff',
+        fill: '#38bdf8',
+        recursos: [
+          { name: '12 Estampillas Otras Universidades', compromiso: 8769.8 * multInv, pago: 8769.8 * multInv },
+          { name: '16.0 Aportes Inversión Nacional', compromiso: 7462.8 * multInv, pago: 7462.8 * multInv },
+          { name: '40 Estampilla PRO-UPTC', compromiso: 3454.5 * multInv, pago: 3454.5 * multInv }
+        ]
+      },
+      {
+        id: 'G-213',
+        name: 'Transferencias Corrientes',
+        tipoCode: '2.1.3',
+        compromiso: 5090.33 * multTransf,
+        pago: 5090.33 * multTransf,
+        colorClass: 'from-[#c084fc] to-[#c084fc]/70',
+        baseColor: '#c084fc',
+        fill: '#c084fc',
+        recursos: [
+          { name: '33 Convenios con derechos', compromiso: 3335.5 * multTransf, pago: 3335.5 * multTransf },
+          { name: '34 Convenios sin derechos', compromiso: 1067.3 * multTransf, pago: 1067.3 * multTransf },
+          { name: '10.0 Aportes Nación', compromiso: 212.4 * multTransf, pago: 212.4 * multTransf },
+          { name: '14 Matrículas FSE', compromiso: 198.2 * multTransf, pago: 198.2 * multTransf },
+          { name: '20 Recursos Propios', compromiso: 158.8 * multTransf, pago: 158.8 * multTransf },
+          { name: '31 Posgrados', compromiso: 109.4 * multTransf, pago: 109.4 * multTransf }
+        ]
+      },
+      {
+        id: 'G-218',
+        name: 'Tasas, Multas y Contribuciones',
+        tipoCode: '2.1.8',
+        compromiso: 3908.35 * multTasas,
+        pago: 3908.35 * multTasas,
+        colorClass: 'from-[#f43f5e] to-[#f43f5e]/70',
+        baseColor: '#f43f5e',
+        fill: '#f43f5e',
+        recursos: [
+          { name: '10.0 Aportes Nación', compromiso: 2470.1 * multTasas, pago: 2470.1 * multTasas },
+          { name: '10.5 Gratuidad', compromiso: 1134.3 * multTasas, pago: 1134.3 * multTasas },
+          { name: '14 Matrículas FSE', compromiso: 259.3 * multTasas, pago: 259.3 * multTasas },
+          { name: '20 Recursos Propios', compromiso: 39.8 * multTasas, pago: 39.8 * multTasas }
+        ]
+      },
+      {
+        id: 'G-222',
+        name: 'Servicio de la Deuda',
+        tipoCode: '2.2.2',
+        compromiso: 0,
+        pago: 0,
+        colorClass: 'from-[#94a3b8] to-[#94a3b8]/70',
+        baseColor: '#94a3b8',
+        fill: '#94a3b8',
+        recursos: []
+      }
+    ];
+  }, [simGasByType]);
 
   // Expense Categories Master Profiles
   const expenseTypeProfiles = useMemo(() => {
@@ -1378,6 +1498,256 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </table>
             </div>
           </div>
+
+          {/* ========================================================================= */}
+          {/* ANÁLISIS DE GASTOS (ESCENARIO SIMULADO) - COMO EN EL TABLERO */}
+          {/* ========================================================================= */}
+          <div className="pt-6 border-t border-white/10 space-y-8">
+            
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-2xl font-display text-white flex items-center gap-2.5 font-bold">
+                  <Wallet className="text-[#38bdf8]" size={24} />
+                  Análisis de Gastos (Escenario Simulado 2026)
+                </h3>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Desglose de compromisos, giros efectivos y recursos de financiamiento calculados bajo el escenario proyectado actual.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-2xl font-mono text-xs">
+                <span className="text-on-surface-variant">TOTAL SIMULADO:</span>
+                <span className="text-[#4ade80] font-bold">${financialData.totals.simGasPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+              </div>
+            </div>
+
+            {/* Category Cards Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {simulatedGastosGroups.map((gasto, idx) => {
+                const isExpanded = expandedSimGastoCard === gasto.id;
+                const pct = gasto.compromiso > 0 ? ((gasto.pago / gasto.compromiso) * 100).toFixed(1) + '%' : '0%';
+                
+                return (
+                  <div key={gasto.id} className="glass-card rounded-[24px] p-6 flex flex-col relative overflow-hidden transition-all duration-300 border border-white/10 bg-surface/50 shadow-xl">
+                    <div className={`absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b ${gasto.colorClass}`}></div>
+                    
+                    <div className="flex flex-col md:flex-row gap-6">
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-white/10 text-white">
+                              {gasto.tipoCode}
+                            </span>
+                            <h4 className="text-xl font-display font-bold text-white truncate" title={gasto.name}>{gasto.name}</h4>
+                          </div>
+                          <p className="text-[10px] text-on-surface-variant font-mono tracking-widest uppercase mb-6">Agrupación Presupuestal Simulada</p>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <span className="text-xs text-on-surface-variant block mb-1">Total Compromiso Simulado</span>
+                            <span className="text-2xl font-bold font-mono text-white">${gasto.compromiso.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-on-surface-variant block mb-1">Pago Efectivo Simulado</span>
+                            <span className="text-3xl font-display font-bold text-[#38bdf8]">${gasto.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-full md:w-56 flex flex-col items-center justify-center shrink-0 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
+                        <div className="relative w-28 h-28 flex items-center justify-center mb-4">
+                          <svg className="w-full h-full -rotate-90">
+                            <circle cx="56" cy="56" r="48" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                            <circle 
+                              className="progress-ring-circle" 
+                              cx="56" cy="56" r="48" 
+                              fill="transparent" 
+                              stroke="currentColor" 
+                              strokeWidth="12" 
+                              strokeDasharray="301" 
+                              strokeDashoffset={301 - (301 * Math.min(100, parseFloat(pct || '0')) / 100)} 
+                              style={{ color: gasto.baseColor }}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-xl font-bold text-white">{pct}</span>
+                            <span className="text-[9px] font-mono text-on-surface-variant">GIRO</span>
+                          </div>
+                        </div>
+
+                        <div className="w-full space-y-2">
+                          {gasto.recursos.slice(0, 2).map((item: any, rIdx: number) => (
+                            <div key={rIdx} className="bg-white/5 px-3 py-2 rounded-lg flex justify-between items-center w-full">
+                              <span className="text-[10px] text-on-surface-variant uppercase truncate mr-2" title={item.name}>{String(item.name || '')}</span>
+                              <span className="text-xs font-bold text-white whitespace-nowrap">${item.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Contributing Resources List */}
+                    {gasto.recursos && gasto.recursos.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-white/10 w-full">
+                        <button 
+                          onClick={() => setExpandedSimGastoCard(isExpanded ? null : gasto.id)}
+                          className="w-full flex items-center justify-center gap-2 text-xs font-mono text-on-surface-variant hover:text-white transition-colors bg-white/5 hover:bg-white/10 py-2 rounded-xl"
+                        >
+                          {isExpanded ? (
+                            <><ChevronUp size={16} /> Ocultar Recursos de Financiamiento</>
+                          ) : (
+                            <><ChevronDown size={16} /> Ver Fuentes de Financiamiento ({gasto.recursos.length})</>
+                          )}
+                        </button>
+                        
+                        {isExpanded && (
+                          <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar animate-in slide-in-from-top-2 duration-200">
+                            <div className="flex justify-between items-center px-4 py-2 text-[10px] font-mono text-on-surface-variant/70 uppercase">
+                              <span className="flex-1">Fuente / Recurso</span>
+                              <span className="w-24 text-right">Compromiso</span>
+                              <span className="w-24 text-right">Pago Proyectado</span>
+                            </div>
+                            {gasto.recursos.map((rec: any, recIdx: number) => (
+                              <div key={recIdx} className="flex justify-between items-center bg-white/5 hover:bg-white/10 transition-colors px-4 py-3 rounded-xl w-full">
+                                <span className="text-xs text-white truncate flex-1 mr-4" title={rec.name}>{String(rec.name || '')}</span>
+                                <span className="text-xs font-mono text-on-surface-variant w-24 text-right">${rec.compromiso.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                                <span className="text-xs font-bold text-[#38bdf8] w-24 text-right">${rec.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Interactive Donut Chart: Peso de Gastos por Tipo (Simulado 2026) */}
+            <div className="w-full">
+              <div className="w-full min-h-[500px] glass-card rounded-[32px] p-8 md:p-12 border border-white/10 bg-[#1a1a1a] relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#ffcc29] via-[#38bdf8] to-[#4ade80]"></div>
+                <h3 className="text-3xl font-display font-medium text-white mb-2 text-center uppercase tracking-wider">
+                  Peso de Gastos por Tipo (Escenario Simulado 2026)
+                </h3>
+                <p className="text-sm font-mono text-on-surface-variant text-center mb-10 mt-4">
+                  Selecciona una categoría para explorar el desglose de recursos y porcentaje de participación simulada.
+                </p>
+                
+                {(() => {
+                  const pieData = simulatedGastosGroups.filter(g => g.pago > 0).map((g, idx) => ({
+                    id: g.id,
+                    name: g.name,
+                    value: g.pago,
+                    compromiso: g.compromiso,
+                    pct: financialData.totals.simGasPago > 0 ? (g.pago / financialData.totals.simGasPago) * 100 : 0,
+                    recursos: g.recursos || [],
+                    fill: g.fill || COLORS[idx % COLORS.length]
+                  }));
+                  
+                  const activeItem = expandedSimPieGroup ? pieData.find(d => d.name === expandedSimPieGroup) : null;
+                  const totalPagoSim = pieData.reduce((acc, curr) => acc + curr.value, 0);
+
+                  return (
+                    <div className={`grid grid-cols-1 ${expandedSimPieGroup ? 'lg:grid-cols-2' : ''} gap-12 transition-all duration-500 items-center`}>
+                      <div className="h-[400px] w-full cursor-pointer relative flex items-center justify-center">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={pieData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={0}
+                              outerRadius={expandedSimPieGroup ? 140 : 180}
+                              paddingAngle={2}
+                              dataKey="value"
+                              stroke="none"
+                              onClick={(data) => setExpandedSimPieGroup(data.name === expandedSimPieGroup ? null : data.name)}
+                              onMouseEnter={(_, index) => setSimActiveIndex(index)}
+                              onMouseLeave={() => setSimActiveIndex(undefined)}
+                            >
+                              {pieData.map((entry, index) => (
+                                <Cell 
+                                  key={`sim-cell-${index}`} 
+                                  fill={entry.fill} 
+                                  className="transition-all duration-300 hover:brightness-110"
+                                  style={{
+                                    filter: simActiveIndex === index || expandedSimPieGroup === entry.name ? `drop-shadow(0px 10px 20px ${entry.fill}80)` : 'drop-shadow(0px 4px 8px rgba(0,0,0,0.5))',
+                                    opacity: expandedSimPieGroup && expandedSimPieGroup !== entry.name ? 0.3 : 1,
+                                    transform: simActiveIndex === index ? 'scale(1.05)' : 'scale(1)',
+                                    transformOrigin: 'center'
+                                  }}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value: number, name: string) => [`$${value.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill (${((value/totalPagoSim)*100).toFixed(1)}%)`, name]}
+                              contentStyle={{ backgroundColor: 'rgba(20,20,20,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', backdropFilter: 'blur(10px)' }}
+                              itemStyle={{ color: '#fff', fontSize: '13px', fontFamily: 'Inter', fontWeight: 'bold' }}
+                              wrapperStyle={{ zIndex: 100 }}
+                            />
+                            <Legend 
+                              verticalAlign="bottom" 
+                              height={36} 
+                              iconType="circle" 
+                              wrapperStyle={{ fontSize: '13px', fontFamily: 'JetBrains Mono', color: '#cac4d0', paddingTop: '20px' }}
+                              onClick={(e) => setExpandedSimPieGroup(e.value === expandedSimPieGroup ? null : e.value)}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Details Sidebar for Selected Expense Group */}
+                      {expandedSimPieGroup && activeItem && (
+                        <div className="h-full flex flex-col justify-center animate-in slide-in-from-right-8 fade-in duration-500">
+                          <div className="border-l-4 pl-6 py-2 mb-6" style={{ borderColor: activeItem.fill }}>
+                            <h4 className="text-3xl font-display font-bold text-white mb-2">{activeItem.name}</h4>
+                            <p className="text-2xl font-mono" style={{ color: activeItem.fill }}>
+                              ${activeItem.value.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-base font-sans text-on-surface-variant text-white/70">millones proyectados</span>
+                            </p>
+                            <p className="text-xs text-on-surface-variant mt-3 mb-6 bg-white/5 py-1.5 px-4 rounded-full inline-block font-medium">
+                              Representa el <strong className="text-white">{((activeItem.value / totalPagoSim) * 100).toFixed(1)}%</strong> del gasto total simulado
+                            </p>
+                          </div>
+
+                          <div className="bg-white/5 rounded-3xl p-6 border border-white/5 max-h-[300px] overflow-y-auto custom-scrollbar shadow-inner">
+                            <h5 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-4">Fuentes de Financiamiento del Rubro</h5>
+                            {activeItem.recursos && activeItem.recursos.length > 0 ? (
+                              <div className="space-y-3">
+                                {[...activeItem.recursos].sort((a: any, b: any) => b.pago - a.pago).map((rec: any, idx: number) => {
+                                  const pct = activeItem.value > 0 ? (rec.pago / activeItem.value) * 100 : 0;
+                                  return (
+                                    <div key={idx} className="flex flex-col gap-1.5">
+                                      <div className="flex justify-between items-end text-xs">
+                                        <span className="text-white/90 font-medium truncate flex-1 pr-4" title={rec.name}>{String(rec.name || '')}</span>
+                                        <div className="text-right font-mono">
+                                          <span className="font-bold text-white whitespace-nowrap block">${rec.pago.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                                          <span className="text-[10px] text-on-surface-variant">{pct.toFixed(1)}%</span>
+                                        </div>
+                                      </div>
+                                      <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: activeItem.fill }}></div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-on-surface-variant flex items-center justify-center h-20 opacity-50 font-mono">Sin recursos asignados</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+          </div>
+
         </div>
       )}
 
