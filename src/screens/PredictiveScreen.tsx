@@ -9,7 +9,7 @@ import {
   Compass, ChevronRight, PieChart as PieChartIcon, Table, CheckSquare,
   AlertTriangle, ShieldAlert, Gauge, TrendingDown, Target, ShieldCheck,
   ChevronUp, ChevronDown, Wallet, Users, Sliders, ArrowUpRight, ArrowDownRight,
-  Sparkles, CheckCircle2, Zap, BarChart2, Award, Landmark
+  Sparkles, CheckCircle2, Zap, BarChart2, Award, Landmark, Bot, Lightbulb, Info
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { 
@@ -48,6 +48,26 @@ function calculateIRR(flows: number[]) {
 }
 
 const COLORS = ['#ffcc29', '#4ade80', '#38bdf8', '#c084fc', '#f43f5e', '#7bd0ff', '#fb7185', '#a78bfa'];
+
+// AI Suggested values and contextual rationale
+const AI_ING_SUGGESTIONS: Record<string, { val: number; rationale: string }> = {
+  '10.0': { val: 2.0, rationale: 'Indexación de Ley 30 (IPC + Puntos) y transferencias de MinEducación programadas para fin de año.' },
+  '10.5': { val: 4.0, rationale: 'Desembolsos de proyectos de infraestructura y fortalecimiento institucional en el último trimestre.' },
+  '20': { val: -1.5, rationale: 'Menor flujo de derechos de grado y trámites intersemestrales durante los últimos meses de la vigencia.' },
+  '31': { val: 3.5, rationale: 'Apertura de nuevas cohortes de posgrado semestrales y recaudos de convenios de extensión en Q4.' },
+  '28': { val: 5.0, rationale: 'Pico estacional por retenciones de estampillas sobre contratación pública regional al cierre de año.' },
+  '16': { val: 0.0, rationale: 'Comportamiento estable en rendimientos financieros y sin nuevas contrataciones de crédito.' },
+  '10.1': { val: 2.5, rationale: 'Liquidación y actas de cierre de convenios interadministrativos suscritos con entidades territoriales.' }
+};
+
+const AI_GAS_CATEGORY_SUGGESTIONS: Record<string, { val: number; rationale: string }> = {
+  'Personal': { val: 0.0, rationale: 'Techo oficial fijado en $369.650M; las primas y cesantías de diciembre ya están contempladas en el saldo proyectado.' },
+  'Funcionamiento': { val: 3.5, rationale: 'Cubre la indexación y facturación de servicios públicos fijos de fin de año y contratos continuos de vigilancia y aseo en diciembre.' },
+  'Inversion': { val: 4.0, rationale: 'Aceleración requerida para recibir y liquidar actas de obra, laboratorios y proyectos POAI antes del cierre fiscal.' },
+  'Transferencias': { val: 0.0, rationale: 'Ejecución al 99.9% en Ene-Jul; gasto residual sin presiones de sobrecosto.' },
+  'Tasas': { val: 0.0, rationale: 'Obligaciones tributarias y contribuciones regulatorias al día.' },
+  'Deuda': { val: 0.0, rationale: 'Sin pasivos bancarios en amortización durante 2026.' }
+};
 
 export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
@@ -253,14 +273,14 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         realPct: 47.65,
         projectedM: 65147.07,
         projectedPct: 52.35,
-        projectedLabel: '52.4% (Giros ritmo contractual +5% +$6.500M)',
+        projectedLabel: '52.4% (Giros ritmo contractual + servicios dic)',
         totalBudgetM: 124447.13,
         coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 124447.13) * 100 : 0,
         surplusM: financialData.totals.simIng - 124447.13,
         progressRealColor: '#38bdf8',
         progressProjColor: '#a78bfa',
         borderGradient: 'from-[#38bdf8] via-[#a78bfa] to-[#ffcc29]',
-        note: 'Los compromisos no aumentan significativamente en Ago-Dic; los giros se liquidan progresivamente.'
+        note: 'Incluye servicios públicos fijos y gastos de funcionamiento operativo en diciembre.'
       },
       {
         id: '2.3',
@@ -273,7 +293,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         realPct: 32.23,
         projectedM: 13341.63,
         projectedPct: 67.77,
-        projectedLabel: '67.8% (Avance de actas +5% +$3.400M)',
+        projectedLabel: '67.8% (Avance de actas y liquidación POAI)',
         totalBudgetM: 19687.14,
         coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 19687.14) * 100 : 0,
         surplusM: financialData.totals.simIng - 19687.14,
@@ -405,6 +425,31 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     setTimeout(() => {
       setShowSaveSuccess(false);
     }, 3000);
+  };
+
+  // 1-Click AI Suggestions Applicator for Incomes
+  const applyAIIngcomeSuggestions = () => {
+    const newIng = { ...simIngByResource };
+    RESOURCES_LIST.forEach(r => {
+      if (AI_ING_SUGGESTIONS[r]) {
+        newIng[r] = AI_ING_SUGGESTIONS[r].val;
+      }
+    });
+    setSimIngByResource(newIng);
+  };
+
+  // 1-Click AI Suggestions Applicator for Expenses
+  const applyAIExpenseSuggestions = () => {
+    setExpenseAdjustMode('category');
+    const newGasType = {
+      Personal: AI_GAS_CATEGORY_SUGGESTIONS.Personal.val,
+      Funcionamiento: AI_GAS_CATEGORY_SUGGESTIONS.Funcionamiento.val,
+      Inversion: AI_GAS_CATEGORY_SUGGESTIONS.Inversion.val,
+      Transferencias: AI_GAS_CATEGORY_SUGGESTIONS.Transferencias.val,
+      Tasas: AI_GAS_CATEGORY_SUGGESTIONS.Tasas.val,
+      Deuda: AI_GAS_CATEGORY_SUGGESTIONS.Deuda.val
+    };
+    setSimGasByType(newGasType);
   };
 
   // Quick Preset Scenarios
@@ -624,7 +669,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     // 9. Dedicated Effective Payment Sensitivity (Vigencia 2026)
     const baseTotalIng = financialData.totals.simIng;
     const realPaidEneJul = 246751.62;
-    const projectedPaidAgoDic = 281723.38; // includes +5% and +$10.000M
+    const projectedPaidAgoDic = 281723.38;
     const baseTotalPagos = realPaidEneJul + projectedPaidAgoDic;
     const cashSurplus = baseTotalIng - baseTotalPagos;
     const maxPaymentShockPct = projectedPaidAgoDic > 0 ? (cashSurplus / projectedPaidAgoDic) * 100 : 0;
@@ -886,22 +931,48 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           )}
 
-          {/* Sliders Grid: Incomes & Expenses */}
+          {/* Sliders Grid: Incomes & Expenses with AI Suggestion Modules */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            {/* Income resource modifiers */}
+            {/* Income resource modifiers with AI Insight Banner */}
             <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col gap-6">
-              <div className="flex justify-between items-center pb-4 border-b border-white/5">
-                <h4 className="text-sm font-bold text-[#ffcc29] uppercase tracking-widest flex items-center gap-2">
-                  <TrendingUp size={16} /> Variación de Ingresos por Recurso
-                </h4>
-                <span className="text-[10px] font-mono text-on-surface-variant">Ago - Dic 2026</span>
+              
+              <div className="flex flex-col gap-3 pb-4 border-b border-white/5">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-bold text-[#ffcc29] uppercase tracking-widest flex items-center gap-2">
+                    <TrendingUp size={16} /> Variación de Ingresos por Recurso
+                  </h4>
+                  <span className="text-[10px] font-mono text-on-surface-variant">Ago - Dic 2026</span>
+                </div>
+
+                {/* AI Suggestions Executive Banner for Incomes */}
+                <div className="p-3.5 bg-[#ffcc29]/10 border border-[#ffcc29]/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <Bot className="text-[#ffcc29] shrink-0 mt-0.5" size={18} />
+                    <div>
+                      <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                        Sugerencia Inteligente IA (Comportamiento Histórico)
+                      </p>
+                      <p className="text-[11px] text-white/70 mt-0.5">
+                        Calibración estacional basada en matrículas del 2do semestre, Ley 30 y retenciones de fin de año.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={applyAIIngcomeSuggestions}
+                    className="px-3 py-1.5 bg-[#ffcc29] text-black font-mono font-bold text-[11px] rounded-xl hover:bg-[#ffcc29]/90 transition shrink-0 flex items-center gap-1.5 shadow-md"
+                  >
+                    <Sparkles size={13} /> Aplicar Sugerencias IA
+                  </button>
+                </div>
               </div>
+
               <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                 {RESOURCES_LIST.map(r => {
                   const val = simIngByResource[r] || 0;
                   const baseVal = financialData.resourceBaselines[r]?.ing || 0;
                   const simVal = baseVal * (1 + val / 100);
+                  const aiInfo = AI_ING_SUGGESTIONS[r];
 
                   return (
                     <div key={r} className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3 hover:border-white/20 transition-all">
@@ -916,6 +987,17 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                           {val >= 0 ? '+' : ''}{val.toFixed(1)}%
                         </span>
                       </div>
+
+                      {/* AI Insight Badge and Rationale for this resource */}
+                      {aiInfo && (
+                        <div className="p-2.5 bg-black/30 border border-white/5 rounded-xl text-[10px] text-on-surface-variant flex items-start gap-2">
+                          <Lightbulb size={13} className="text-[#ffcc29] shrink-0 mt-0.5" />
+                          <div>
+                            <span className="text-[#ffcc29] font-bold font-mono mr-1.5">Sugerido IA: {aiInfo.val >= 0 ? '+' : ''}{aiInfo.val}%</span>
+                            <span>{aiInfo.rationale}</span>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-on-surface-variant">
                         <div>
@@ -963,10 +1045,36 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </div>
             </div>
 
-            {/* Expense resource modifiers */}
+            {/* Expense resource modifiers with AI Insight Banner */}
             <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col gap-6">
-              <div className="flex flex-col gap-2.5 pb-4 border-b border-white/5">
-                <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider block">Ajuste de Egresos:</span>
+              
+              <div className="flex flex-col gap-3 pb-4 border-b border-white/5">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider block">Ajuste de Egresos:</span>
+                  <span className="text-[10px] font-mono text-on-surface-variant">Ago - Dic 2026</span>
+                </div>
+
+                {/* AI Suggestions Executive Banner for Expenses */}
+                <div className="p-3.5 bg-[#38bdf8]/10 border border-[#38bdf8]/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <Bot className="text-[#38bdf8] shrink-0 mt-0.5" size={18} />
+                    <div>
+                      <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                        Sugerencia Inteligente IA (Cierre Fiscal y Servicios)
+                      </p>
+                      <p className="text-[11px] text-white/70 mt-0.5">
+                        Mantiene nómina al techo ($369.650M) y provisiona servicios fijos e inversión en diciembre.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={applyAIExpenseSuggestions}
+                    className="px-3 py-1.5 bg-[#38bdf8] text-black font-mono font-bold text-[11px] rounded-xl hover:bg-[#38bdf8]/90 transition shrink-0 flex items-center gap-1.5 shadow-md"
+                  >
+                    <Sparkles size={13} /> Aplicar Sugerencias IA
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2 bg-black/40 border border-white/10 p-1 rounded-xl">
                   <button
                     onClick={() => setExpenseAdjustMode('category')}
@@ -995,6 +1103,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     { id: 'Deuda', label: 'Servicios de la Deuda (2.2.2)', desc: 'Amortización e intereses bancarios.', color: '#fb7185' }
                   ].map(c => {
                     const val = simGasByType[c.id] || 0;
+                    const aiInfo = AI_GAS_CATEGORY_SUGGESTIONS[c.id];
+
                     return (
                       <div key={c.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3 hover:border-white/20 transition-all">
                         <div className="flex justify-between items-start">
@@ -1006,6 +1116,17 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                             {val >= 0 ? '+' : ''}{val.toFixed(1)}%
                           </span>
                         </div>
+
+                        {/* AI Insight Badge and Rationale for this Expense Category */}
+                        {aiInfo && (
+                          <div className="p-2.5 bg-black/30 border border-white/5 rounded-xl text-[10px] text-on-surface-variant flex items-start gap-2">
+                            <Lightbulb size={13} className="text-[#38bdf8] shrink-0 mt-0.5" />
+                            <div>
+                              <span className="text-[#38bdf8] font-bold font-mono mr-1.5">Sugerido IA: {aiInfo.val >= 0 ? '+' : ''}{aiInfo.val}%</span>
+                              <span>{aiInfo.rationale}</span>
+                            </div>
+                          </div>
+                        )}
 
                         <div className="flex items-center gap-4 pt-1">
                           <input 
@@ -1132,7 +1253,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </div>
             </div>
 
-            {/* Payments Card */}
+            {/* Payments Card (Clean Title without parenthesis) */}
             <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 left-0 w-full h-1 bg-[#4ade80]"></div>
               <div>
@@ -1145,7 +1266,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   <span className="text-white font-bold">${semesterTotals.eneJulPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>PROYECCIÓN AGO-DIC (+5% +$10.000M)</span>
+                  <span>PROYECCIÓN AGO-DIC</span>
                   <span className="text-[#4ade80] font-bold">${semesterTotals.agoDicPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
               </div>

@@ -486,6 +486,14 @@ export function calculateProjections({
       const remainingCompMonth = mSimGasComp;
       mSimGasPago = (remainingCompMonth * 0.992 * 1.05) + (2000 * 1e6);
       mBaseGasPago = (mBaseGasComp * 0.992 * 1.05) + (2000 * 1e6);
+
+      // In December (month 11), ensure fixed operating functioning expenses (utilities, security, ongoing ops ~$11.245M) are explicitly added to payroll
+      if (i === 11) {
+        const decPayroll = monthlyPayroll[11];
+        const fixedOperatingDec = 11245.31 * 1e6; // $11.245,31M servicios públicos y operación fija
+        mSimGasPago = Math.max(mSimGasPago, decPayroll + fixedOperatingDec);
+        mBaseGasPago = Math.max(mBaseGasPago, decPayroll + fixedOperatingDec);
+      }
     }
 
     totalBaseIng += mBaseIng;
