@@ -21,7 +21,7 @@ export interface CashFlowItem {
   acumuladoPago: number;
   acumuladoIng: number;
   saldoCajaAcumulado: number; // Reserva de liquidez acumulada ($M)
-  rezagoCompromiso: number; // Cuentas por pagar acumuladas (Compromisos - Pagos) ($M)
+  rezagoCompromiso: number; // Cuentas por pagar acumuladas si compromisos > ingresos ($M)
   coberturaNomina: number; // % de cobertura de nómina mensual
   ejecucion: number; // (gastosComp / ingresos) * 100
 }
@@ -45,7 +45,7 @@ export interface FinancialTotals {
   simulatedPayrollTotal: number;
   payrollCoverageRatio: number; // (simIng / simulatedPayrollTotal) * 100
   payrollSurplus: number; // simIng - simulatedPayrollTotal
-  unpaidCommitments: number; // simGasComp - simGasPago (Rezago acumulado)
+  unpaidCommitments: number; // Cuentas por pagar a siguiente vigencia: Math.max(0, simGasComp - simIng)
 }
 
 export interface ProjectionParams {
@@ -166,7 +166,6 @@ export function calculateProjections({
           incomesByYearRes[2026][r][i] *= factor;
         }
       } else {
-        // Fallback: distribute evenly
         for (let i = 0; i < 7; i++) {
           incomesByYearRes[2026][r][i] = targetEneJul / 7;
         }
@@ -186,13 +185,8 @@ export function calculateProjections({
     }
   });
 
-  // Target values:
-  // Ene-Jul target (Real execution) = $337,135.15M
-  // Base for Ago-Dic projection
   const targetEneJulTotal = 337135.14515498 * 1e6;
   const targetAgoDicTotal = 205696.88 * 1e6;
-  const targetFullYearTotal = targetEneJulTotal + targetAgoDicTotal;
-
   const scalingFactorAgoDic = rawProjectedAgoDicTotal > 0 ? targetAgoDicTotal / rawProjectedAgoDicTotal : 1;
 
   // 2. Process Expenses from rawHistoricalGastos
@@ -212,7 +206,6 @@ export function calculateProjections({
 
   // Compute monthly master payroll array
   const monthlyPayroll: number[] = new Array(12).fill(0);
-  // Months 0 to 6 (Ene-Jul): Real personal expense
   rawHistoricalGastos.forEach(row => {
     if (row.año === 2026) {
       const monthIdx = row.mes - 1;
@@ -223,13 +216,12 @@ export function calculateProjections({
     }
   });
 
-  // Months 7 to 11 (Ago-Dic): Master budget projection
   PAYROLL_AGO_DIC_WEIGHTS.forEach((weight, idx) => {
     const monthIdx = idx + 7;
     monthlyPayroll[monthIdx] = PAYROLL_REMAINING_AGO_DIC * weight;
   });
 
-  // 3. Compute baseline values per resource for comparison/reference
+  // 3. Compute baseline values per resource
   const resourceBaselines: Record<string, { ing: number; gasComp: number; gasPago: number }> = {};
   RESOURCES_LIST.forEach(r => {
     let totIng = 0;
@@ -258,11 +250,11 @@ export function calculateProjections({
         totGasPago += expensesPagoByYearRes[2026][r][i];
       } else {
         totGasComp += expensesCompByYearRes[2025][r][i] * 1.05;
-        totGasPago += expensesPagoByYearRes[2025][r][i] * 1.05;
+        // In baseline for Ago-Dic, payments accelerate close to 100% of commitments
+        totGasPago += expensesCompByYearRes[2025][r][i] * 1.05 * 0.99;
       }
     }
 
-    // Apply baseline capping
     if (totGasComp > totIng && totGasComp > 0) {
       const factor = totIng / totGasComp;
       totGasComp *= factor;
@@ -276,7 +268,7 @@ export function calculateProjections({
     };
   });
 
-  // 4. Calculate simulated cash flows (Resource and Category level)
+  // 4. Calculate simulated cash flows
   const monthlySimIngByRes: Record<string, number[]> = {};
   const monthlySimGasCompByRes: Record<string, number[]> = {};
   const monthlySimGasPagoByRes: Record<string, number[]> = {};
@@ -295,7 +287,6 @@ export function calculateProjections({
     monthlyBaseGasPagoByRes[r] = new Array(12).fill(0);
   });
 
-  // Calculate historical distribution weights per category for second semester Ago-Dic 2025
   const resCategoryWeights: Record<string, Record<string, number>> = {};
   const resGasAgoDicBaseComp: Record<string, number> = {};
   RESOURCES_LIST.forEach(r => {
@@ -342,7 +333,6 @@ export function calculateProjections({
       const useRealIng = i < 7 && is2026RealIng;
       const useRealGas = i < 7 && is2026RealGas;
 
-      // Base Incomes
       let ingBaseVal = 0;
       if (useRealIng) {
         ingBaseVal = incomesByYearRes[2026][r][i];
@@ -354,7 +344,6 @@ export function calculateProjections({
         ingBaseVal = (histCount > 0 ? histSum / histCount : 0) * 1.05 * scalingFactorAgoDic;
       }
 
-      // Base Expenses
       let gasBaseCompVal = 0;
       let gasBasePagoVal = 0;
       if (useRealGas) {
@@ -362,15 +351,14 @@ export function calculateProjections({
         gasBasePagoVal = expensesPagoByYearRes[2026][r][i];
       } else {
         gasBaseCompVal = expensesCompByYearRes[2025][r][i] * 1.05;
-        gasBasePagoVal = expensesPagoByYearRes[2025][r][i] * 1.05;
+        // Payments in Ago-Dic accelerate to close commitments near 100%
+        gasBasePagoVal = gasBaseCompVal * 0.992;
       }
 
-      // Save baseline
       monthlyBaseIngByRes[r][i] = ingBaseVal;
       monthlyBaseGasCompByRes[r][i] = gasBaseCompVal;
       monthlyBaseGasPagoByRes[r][i] = gasBasePagoVal;
 
-      // Save simulated (apply resource sliders)
       const ingMod = useRealIng ? 0 : (simIngByResource[r] || 0) / 100;
       const gasMod = (useRealGas || expenseAdjustMode === 'category') ? 0 : (simGasByResource[r] || 0) / 100;
 
@@ -379,7 +367,6 @@ export function calculateProjections({
       monthlySimGasPagoByRes[r][i] = gasBasePagoVal * (1 + gasMod);
     });
 
-    // Apply global or weighted type modifiers (only for projected Ago-Dic)
     const isAgoDic = i >= 7;
     if (isAgoDic && expenseAdjustMode === 'category') {
       RESOURCES_LIST.forEach(r => {
@@ -444,7 +431,6 @@ export function calculateProjections({
   let accumPago = 0;
   let accumIng = 0;
 
-  // Calculate Ene-Jul scaling factors to match target real numbers when no filter is applied
   let rawEneJulIng = 0;
   let rawEneJulGasComp = 0;
   let rawEneJulGasPago = 0;
@@ -495,6 +481,11 @@ export function calculateProjections({
       mSimIng *= factorEneJulIng;
       mSimGasComp *= factorEneJulComp;
       mSimGasPago *= factorEneJulPago;
+    } else {
+      // In months 7 to 11 (Ago-Dic), accelerate payments so total payments reach ~99.0% - 99.5% of commitments
+      const remainingCompMonth = mSimGasComp;
+      mSimGasPago = remainingCompMonth * 0.992;
+      mBaseGasPago = mBaseGasComp * 0.992;
     }
 
     totalBaseIng += mBaseIng;
@@ -513,7 +504,9 @@ export function calculateProjections({
     const mSimPagoM = mSimGasPago / 1e6;
     const mOtrosGastos = Math.max(0, mSimPagoM - mPayrollVal);
     const mSaldoCajaAcum = (accumIng - totalSimGasPago) / 1e6;
-    const mRezagoCompromiso = Math.max(0, (totalSimGasComp - totalSimGasPago) / 1e6);
+    
+    // Cuentas por pagar acumuladas solo si compromisos superan ingresos
+    const mRezagoCompromiso = Math.max(0, (totalSimGasComp - totalSimIng) / 1e6);
     const mCobNomina = mPayrollVal > 0 ? ((mSimIng / 1e6) / mPayrollVal) * 100 : 100;
     const execPct = mSimIng > 0 ? (mSimGasComp / mSimIng) * 100 : 0;
 
@@ -536,7 +529,7 @@ export function calculateProjections({
     });
   }
 
-  // 7. Calculate Category breakdown and Payroll Coverage matrix
+  // 7. Category breakdown
   const catComp: Record<string, number> = {
     personal: 0,
     funcionamiento: 0,
@@ -554,7 +547,6 @@ export function calculateProjections({
     inversion: 0
   };
 
-  // Fixed total simulated payroll = BUDGET_PAYROLL_2026 (adjusted with slider if Personal slider used)
   const personalSlider = simGasByType["Personal"] || 0;
   const simulatedPayrollTotal = (PAYROLL_REAL_ENE_JUL + PAYROLL_REMAINING_AGO_DIC * (1 + personalSlider / 100)) / 1e6;
 
@@ -590,7 +582,10 @@ export function calculateProjections({
     }
 
     const compVal = row.compromiso * baselineMultiplier * scaleResourceFactor * scaleTypeFactor;
-    const pagoVal = row.pago * baselineMultiplier * scaleResourceFactor * scaleTypeFactor;
+    // Pagos in Ago-Dic execute near 100% of commitments
+    const pagoVal = monthIdx < 7 
+      ? (row.pago * baselineMultiplier * scaleResourceFactor * scaleTypeFactor)
+      : (compVal * 0.992);
 
     if (tipo.includes("2.1.1") || tipo.includes("personal")) {
       catComp.personal += compVal; catPago.personal += pagoVal;
@@ -618,8 +613,7 @@ export function calculateProjections({
   RESOURCES_LIST.forEach(r => {
     const rTotalIngM = monthlySimIngByRes[r].reduce((a,b)=>a+b, 0) / 1e6;
     if (rTotalIngM > 0) {
-      // Primary funding from Aportes Nacion (10.0, 10.1, 10.2, 10.5), Matrículas (14, 20, 31), etc.
-      let payrollShareWeight = 0.65; // default 65% of revenue allocated to payroll
+      let payrollShareWeight = 0.65;
       if (r.startsWith('10.0')) payrollShareWeight = 0.95;
       else if (r.startsWith('10.5')) payrollShareWeight = 0.75;
       else if (r.startsWith('31')) payrollShareWeight = 0.50;
@@ -647,7 +641,9 @@ export function calculateProjections({
   const remainingPayrollM = PAYROLL_REMAINING_AGO_DIC / 1e6;
   const payrollCoverageRatio = simulatedPayrollTotal > 0 ? (totalSimIngM / simulatedPayrollTotal) * 100 : 0;
   const payrollSurplus = totalSimIngM - simulatedPayrollTotal;
-  const unpaidCommitments = (totalSimGasComp - totalSimGasPago) / 1e6;
+  
+  // Cuentas por Pagar (Rezago de Giro para siguiente año): SOLO si compromisos > ingresos
+  const unpaidCommitments = Math.max(0, (totalSimGasComp - totalSimIng) / 1e6);
 
   return {
     simulatedFlow,
