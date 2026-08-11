@@ -1156,17 +1156,17 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </div>
 
                 <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
-                  <div className={`absolute top-0 left-0 w-full h-1 ${cuentasPagarVal > 0 ? 'bg-[#f43f5e]' : 'bg-[#4ade80]'}`}></div>
+                  <div className="absolute top-0 left-0 w-full h-1 bg-[#7bd0ff]"></div>
                   <div>
-                    <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Cuentas por Pagar (Exceso para Sig. Vigencia)</h4>
-                    <p className={`text-3xl font-display font-bold ${cuentasPagarVal > 0 ? 'text-[#f43f5e]' : 'text-[#4ade80]'}`}>
-                      ${cuentasPagarVal.toLocaleString('es-CO', {maximumFractionDigits:1})}M
+                    <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Saldo Pago</h4>
+                    <p className="text-3xl font-display font-bold text-[#7bd0ff]">
+                      ${(financialData.totals.simGasComp - financialData.totals.simGasPago).toLocaleString('es-CO', {maximumFractionDigits:1})}M
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-white/5 flex justify-between text-[10px] font-mono text-on-surface-variant">
-                    <span>COMPROMISOS SIN RESPALDO</span>
-                    <span className={`font-bold uppercase ${cuentasPagarVal > 0 ? 'text-[#f43f5e]' : 'text-[#4ade80]'}`}>
-                      {cuentasPagarVal === 0 ? 'Sin Rezago (100% Cubierto)' : 'Pasa a Sig. Vigencia'}
+                    <span>COMPROMISOS - PAGOS</span>
+                    <span className="text-[#7bd0ff] font-bold uppercase">
+                      {(financialData.totals.simGasComp - financialData.totals.simGasPago) > 0 ? 'Pendiente de Giro' : 'Liquidado 100%'}
                     </span>
                   </div>
                 </div>

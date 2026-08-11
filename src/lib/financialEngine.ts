@@ -642,8 +642,8 @@ export function calculateProjections({
   const payrollCoverageRatio = simulatedPayrollTotal > 0 ? (totalSimIngM / simulatedPayrollTotal) * 100 : 0;
   const payrollSurplus = totalSimIngM - simulatedPayrollTotal;
   
-  // Cuentas por Pagar (Rezago de Giro para siguiente año): SOLO si compromisos > ingresos
-  const unpaidCommitments = Math.max(0, (totalSimGasComp - totalSimIng) / 1e6);
+  // Saldo Pago: Compromisos Totales (Vigencia 2026) menos Pagos Efectivos (Vigencia 2026)
+  const unpaidCommitments = (totalSimGasComp - totalSimGasPago) / 1e6;
 
   return {
     simulatedFlow,
