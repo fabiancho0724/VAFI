@@ -482,10 +482,10 @@ export function calculateProjections({
       mSimGasComp *= factorEneJulComp;
       mSimGasPago *= factorEneJulPago;
     } else {
-      // In months 7 to 11 (Ago-Dic), accelerate payments with +5% increment
+      // In months 7 to 11 (Ago-Dic), accelerate payments with +5% increment + $10.000M ($2.000M/month)
       const remainingCompMonth = mSimGasComp;
-      mSimGasPago = remainingCompMonth * 0.992 * 1.05;
-      mBaseGasPago = mBaseGasComp * 0.992 * 1.05;
+      mSimGasPago = (remainingCompMonth * 0.992 * 1.05) + (2000 * 1e6);
+      mBaseGasPago = (mBaseGasComp * 0.992 * 1.05) + (2000 * 1e6);
     }
 
     totalBaseIng += mBaseIng;

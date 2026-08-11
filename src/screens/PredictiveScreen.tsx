@@ -9,7 +9,7 @@ import {
   Compass, ChevronRight, PieChart as PieChartIcon, Table, CheckSquare,
   AlertTriangle, ShieldAlert, Gauge, TrendingDown, Target, ShieldCheck,
   ChevronUp, ChevronDown, Wallet, Users, Sliders, ArrowUpRight, ArrowDownRight,
-  Sparkles, CheckCircle2, Zap, BarChart2, Award
+  Sparkles, CheckCircle2, Zap, BarChart2, Award, Landmark
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { 
@@ -221,16 +221,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   // Expense Categories Master Profiles
   const expenseTypeProfiles = useMemo(() => {
-    const catCompMap: Record<string, number> = {};
-    const catPagoMap: Record<string, number> = {};
-
-    financialData.categoryBreakdown.compromiso.forEach(c => {
-      catCompMap[c.name] = c.value;
-    });
-    financialData.categoryBreakdown.pago.forEach(c => {
-      catPagoMap[c.name] = c.value;
-    });
-
     const profiles = [
       {
         id: '2.1.1',
@@ -260,13 +250,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         subtitle: 'Servicios públicos, mantenimiento de infraestructura, licencias y adquisiciones.',
         officialBudgetCOP: '$115.154.410.862 COP ($115.154,4M Comprometido)',
         realPaidM: 59300.06,
-        realPct: 50.27,
-        projectedM: 58647.07,
-        projectedPct: 49.73,
-        projectedLabel: '49.7% (Giros según ritmo contractual +5%)',
-        totalBudgetM: 117947.13,
-        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 117947.13) * 100 : 0,
-        surplusM: financialData.totals.simIng - 117947.13,
+        realPct: 47.65,
+        projectedM: 65147.07,
+        projectedPct: 52.35,
+        projectedLabel: '52.4% (Giros ritmo contractual +5% +$6.500M)',
+        totalBudgetM: 124447.13,
+        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 124447.13) * 100 : 0,
+        surplusM: financialData.totals.simIng - 124447.13,
         progressRealColor: '#38bdf8',
         progressProjColor: '#a78bfa',
         borderGradient: 'from-[#38bdf8] via-[#a78bfa] to-[#ffcc29]',
@@ -280,13 +270,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         subtitle: 'Laboratorios, dotación tecnológica, adecuaciones físicas y proyectos de investigación.',
         officialBudgetCOP: '$15.813.730.427 COP ($15.813,7M Comprometido)',
         realPaidM: 6345.51,
-        realPct: 38.96,
-        projectedM: 9941.63,
-        projectedPct: 61.04,
-        projectedLabel: '61.0% (Avance de actas de liquidación +5%)',
-        totalBudgetM: 16287.14,
-        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 16287.14) * 100 : 0,
-        surplusM: financialData.totals.simIng - 16287.14,
+        realPct: 32.23,
+        projectedM: 13341.63,
+        projectedPct: 67.77,
+        projectedLabel: '67.8% (Avance de actas +5% +$3.400M)',
+        totalBudgetM: 19687.14,
+        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 19687.14) * 100 : 0,
+        surplusM: financialData.totals.simIng - 19687.14,
         progressRealColor: '#d0bcff',
         progressProjColor: '#38bdf8',
         borderGradient: 'from-[#d0bcff] via-[#38bdf8] to-[#4ade80]',
@@ -300,13 +290,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         subtitle: 'Aportes a fondos, subsidios estudiantiles, convenios y compromisos intersectoriales.',
         officialBudgetCOP: '$5.087.172.573 COP ($5.087,2M Comprometido)',
         realPaidM: 5083.89,
-        realPct: 99.93,
-        projectedM: 3.44,
-        projectedPct: 0.07,
+        realPct: 99.87,
+        projectedM: 6.44,
+        projectedPct: 0.13,
         projectedLabel: '0.1% (Giro casi 100% completado)',
-        totalBudgetM: 5087.33,
-        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 5087.33) * 100 : 0,
-        surplusM: financialData.totals.simIng - 5087.33,
+        totalBudgetM: 5090.33,
+        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 5090.33) * 100 : 0,
+        surplusM: financialData.totals.simIng - 5090.33,
         progressRealColor: '#4ade80',
         progressProjColor: '#ffcc29',
         borderGradient: 'from-[#4ade80] via-[#ffcc29] to-[#38bdf8]',
@@ -320,13 +310,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         subtitle: 'Impuestos locales, tasas ambientales, estampillas y pagos regulatorios de ley.',
         officialBudgetCOP: '$3.907.319.688 COP ($3.907,3M Comprometido)',
         realPaidM: 3906.69,
-        realPct: 99.98,
-        projectedM: 0.66,
-        projectedPct: 0.02,
-        projectedLabel: '0.02% (Liquidado al día)',
-        totalBudgetM: 3907.35,
-        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 3907.35) * 100 : 0,
-        surplusM: financialData.totals.simIng - 3907.35,
+        realPct: 99.96,
+        projectedM: 1.66,
+        projectedPct: 0.04,
+        projectedLabel: '0.04% (Liquidado al día)',
+        totalBudgetM: 3908.35,
+        coveragePct: financialData.totals.simIng > 0 ? (financialData.totals.simIng / 3908.35) * 100 : 0,
+        surplusM: financialData.totals.simIng - 3908.35,
         progressRealColor: '#4ade80',
         progressProjColor: '#f43f5e',
         borderGradient: 'from-[#f43f5e] via-[#4ade80] to-[#ffcc29]',
@@ -450,7 +440,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     setSimGasByType(newGasType);
   };
 
-  // Full Sensitivity, Monte Carlo, Elasticity & Model Efficacy Analysis
+  // Full Sensitivity, Monte Carlo, Elasticity, Payment Sensitivity & Model Efficacy Analysis
   const sensitivityAnalysis = useMemo(() => {
     if (!financialData || !financialData.monthlySimIngByRes || !financialData.monthlySimGasPagoByRes) {
       return {
@@ -469,6 +459,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         ruptureValue: 0,
         dscr1DData: [],
         dscrTornado: [],
+        paymentSensitivity: {
+          basePayments: 528475.0,
+          cashSurplus: 14357.0,
+          maxPaymentShockPct: 5.09,
+          maxPaymentShockM: 14357.0,
+          scenarios: []
+        },
         modelEfficacy: { mape: 3.42, r2: 0.968, historicalAccuracy: 96.58, status: 'Óptima' }
       };
     }
@@ -529,8 +526,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     // 5. Monte Carlo Simulation (1,000 runs)
     const mcNpvList: number[] = [];
     for (let iter = 0; iter < 1000; iter++) {
-      const randIng = 1 + (Math.random() - 0.5) * 2 * 0.18; // Uniform +- 18%
-      const randGas = 1 + (Math.random() - 0.5) * 2 * 0.12; // Uniform +- 12%
+      const randIng = 1 + (Math.random() - 0.5) * 2 * 0.18;
+      const randGas = 1 + (Math.random() - 0.5) * 2 * 0.12;
       const randFlows = baseIngArray.map((ing, i) => (ing * randIng) - (baseGasArray[i] * randGas));
       const randNPV = calculateNPV(randFlows, sensDiscountRate);
       mcNpvList.push(randNPV);
@@ -554,7 +551,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       };
     });
 
-    // 6. Tornado Chart Calculation (Impact of each resource on total NPV)
+    // 6. Tornado Chart Calculation
     const totalBaseFlows = new Array(12).fill(0).map((_, i) => 
       RESOURCES_LIST.reduce((sum, res) => 
         sum + (financialData.monthlySimIngByRes[res]?.[i] || 0) / 1e6 - (financialData.monthlySimGasPagoByRes[res]?.[i] || 0) / 1e6
@@ -624,6 +621,38 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       };
     }).sort((a, b) => b.rangeWidth - a.rangeWidth).slice(0, 8);
 
+    // 9. Dedicated Effective Payment Sensitivity (Vigencia 2026)
+    const baseTotalIng = financialData.totals.simIng;
+    const realPaidEneJul = 246751.62;
+    const projectedPaidAgoDic = 281723.38; // includes +5% and +$10.000M
+    const baseTotalPagos = realPaidEneJul + projectedPaidAgoDic;
+    const cashSurplus = baseTotalIng - baseTotalPagos;
+    const maxPaymentShockPct = projectedPaidAgoDic > 0 ? (cashSurplus / projectedPaidAgoDic) * 100 : 0;
+
+    const paymentScenarios = [-10, -5, 0, 5, 10, 15].map(v => {
+      const simAgoDic = projectedPaidAgoDic * (1 + v / 100);
+      const simPagosTotal = realPaidEneJul + simAgoDic;
+      const simSaldoCaja = baseTotalIng - simPagosTotal;
+      const cobertura = (baseTotalIng / simPagosTotal) * 100;
+      let status = 'Equilibrio Óptimo';
+      let statusColor = 'text-[#4ade80]';
+      if (v === -10) { status = 'Superávit Holgado'; statusColor = 'text-[#38bdf8]'; }
+      else if (v === -5) { status = 'Superávit Favorable'; statusColor = 'text-[#4ade80]'; }
+      else if (v === 5) { status = 'Límite de Tesorería'; statusColor = 'text-[#ffcc29]'; }
+      else if (v === 10) { status = 'Déficit de Caja'; statusColor = 'text-[#f43f5e]'; }
+      else if (v === 15) { status = 'Estrés de Liquidez Severo'; statusColor = 'text-red-500 font-bold'; }
+
+      return {
+        label: `${v >= 0 ? '+' : ''}${v}%`,
+        varVal: v,
+        pagosTotal: parseFloat(simPagosTotal.toFixed(1)),
+        saldoCaja: parseFloat(simSaldoCaja.toFixed(1)),
+        cobertura: parseFloat(cobertura.toFixed(1)),
+        status,
+        statusColor
+      };
+    });
+
     return {
       pessimistic: { npv: pesNPV, irr: pesIRR, flowSum: pesFlowSum, ingTotal: pesIngTotal, flows: pesFlows },
       base: { npv: baseNPV, irr: baseIRR, flowSum: baseFlowSum, ingTotal: baseIngTotal, flows: baseFlows },
@@ -640,6 +669,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       ruptureValue,
       dscr1DData,
       dscrTornado,
+      paymentSensitivity: {
+        basePayments: baseTotalPagos,
+        cashSurplus,
+        maxPaymentShockPct,
+        maxPaymentShockM: cashSurplus,
+        scenarios: paymentScenarios
+      },
       modelEfficacy: {
         mape: 3.42,
         r2: 0.968,
@@ -705,7 +741,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         </div>
       </div>
 
-      {/* Tabs Navigation (5 Reorganized Clean Tabs - Tab 6 Removed) */}
+      {/* Tabs Navigation (5 Reorganized Clean Tabs) */}
       <div className="flex border-b border-white/10 mb-8 overflow-x-auto gap-2">
         {[
           { id: 'simulator', label: '1. Simular Escenarios', icon: Sliders },
@@ -1109,7 +1145,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   <span className="text-white font-bold">${semesterTotals.eneJulPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>PROYECCIÓN AGO-DIC</span>
+                  <span>PROYECCIÓN AGO-DIC (+5% +$10.000M)</span>
                   <span className="text-[#4ade80] font-bold">${semesterTotals.agoDicPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
                 </div>
               </div>
@@ -1120,7 +1156,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           {(() => {
             const pctEjec = financialData.totals.simIng > 0 ? (financialData.totals.simGasComp / financialData.totals.simIng) * 100 : 0;
             const disponibleVal = financialData.totals.simIng - financialData.totals.simGasComp;
-            const cuentasPagarVal = financialData.totals.unpaidCommitments;
+            const saldoPagoVal = financialData.totals.simGasComp - financialData.totals.simGasPago;
 
             return (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1160,13 +1196,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   <div>
                     <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Saldo Pago</h4>
                     <p className="text-3xl font-display font-bold text-[#7bd0ff]">
-                      ${(financialData.totals.simGasComp - financialData.totals.simGasPago).toLocaleString('es-CO', {maximumFractionDigits:1})}M
+                      ${saldoPagoVal.toLocaleString('es-CO', {maximumFractionDigits:1})}M
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-white/5 flex justify-between text-[10px] font-mono text-on-surface-variant">
                     <span>COMPROMISOS - PAGOS</span>
                     <span className="text-[#7bd0ff] font-bold uppercase">
-                      {(financialData.totals.simGasComp - financialData.totals.simGasPago) > 0 ? 'Pendiente de Giro' : 'Liquidado 100%'}
+                      {saldoPagoVal > 0 ? 'Pendiente de Giro' : 'Liquidado 100%'}
                     </span>
                   </div>
                 </div>
@@ -1480,7 +1516,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 5: SENSIBILIDAD, RIESGO & EFICACIA DEL MODELO (RESTORED COMPLETE SUITE) */}
+      {/* TAB 5: SENSIBILIDAD, RIESGO & EFICACIA DEL MODELO */}
       {/* ========================================================================= */}
       {activeTab === 'sensitivity' && (
         <div className="space-y-8 animate-in fade-in duration-300">
@@ -1512,6 +1548,88 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   <span className="text-base font-mono font-bold text-[#ffcc29]">{sensitivityAnalysis.modelEfficacy.historicalAccuracy}%</span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* DEDICATED SECTION: Sensibilidad de Pagos Efectivos & Exigibilidad de Caja */}
+          <div className="glass-card rounded-[32px] p-8 border border-white/10 bg-gradient-to-r from-[#0f172a] via-surface to-[#0f172a] shadow-2xl">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-white/10">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Landmark className="text-[#38bdf8]" size={20} />
+                  <h4 className="text-xl font-display font-bold text-white">Estudio de Sensibilidad de Pagos Efectivos (Vigencia 2026)</h4>
+                </div>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Evaluación de estrés y tolerancia de caja ante variaciones en los giros efectivos proyectados para el cierre de vigencia.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl">
+                  <span className="text-[9px] font-mono text-on-surface-variant uppercase block">Pagos Base 2026</span>
+                  <span className="text-base font-mono font-bold text-[#ffcc29]">${sensitivityAnalysis.paymentSensitivity.basePayments.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                </div>
+                <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl">
+                  <span className="text-[9px] font-mono text-on-surface-variant uppercase block">Excedente Caja Libre</span>
+                  <span className="text-base font-mono font-bold text-[#4ade80]">+${sensitivityAnalysis.paymentSensitivity.cashSurplus.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                </div>
+                <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl">
+                  <span className="text-[9px] font-mono text-on-surface-variant uppercase block">Tolerancia Máx. Giros</span>
+                  <span className="text-base font-mono font-bold text-[#38bdf8]">+{sensitivityAnalysis.paymentSensitivity.maxPaymentShockPct.toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Sensitivity Chart & Stress Table */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+              
+              {/* Payment Shock Chart */}
+              <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                <h5 className="text-xs font-mono font-bold text-[#ffcc29] uppercase tracking-wider mb-3">Curva de Saldo Final de Caja vs Incremento en Pagos</h5>
+                <div className="w-full h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={sensitivityAnalysis.paymentSensitivity.scenarios}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="label" stroke="#cac4d0" tick={{fontSize: 10}} />
+                      <YAxis stroke="#cac4d0" tick={{fontSize: 10}} />
+                      <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
+                      <Legend />
+                      <Bar dataKey="saldoCaja" name="Saldo Final de Caja ($M)" fill="#38bdf8" radius={[4, 4, 0, 0]} />
+                      <Line type="monotone" dataKey="pagosTotal" name="Pagos Totales ($M)" stroke="#ffcc29" strokeWidth={2} yAxisId={0} />
+                      <ReferenceLine y={0} stroke="#f43f5e" strokeDasharray="4 4" label={{ value: 'Límite de Déficit ($0M)', fill: '#f43f5e', fontSize: 10 }} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Payment Stress Scenarios Table */}
+              <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead>
+                    <tr className="bg-white/10 text-[#ffcc29] uppercase">
+                      <th className="p-3">Escenario Shock</th>
+                      <th className="p-3 text-right">Pagos Totales</th>
+                      <th className="p-3 text-right">Saldo Caja</th>
+                      <th className="p-3 text-right">Cobertura</th>
+                      <th className="p-3 text-right">Diagnóstico</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {sensitivityAnalysis.paymentSensitivity.scenarios.map((sc, idx) => (
+                      <tr key={idx} className="hover:bg-white/5">
+                        <td className="p-3 font-bold text-white">{sc.label}</td>
+                        <td className="p-3 text-right text-[#ffcc29]">${sc.pagosTotal.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
+                        <td className={`p-3 text-right font-bold ${sc.saldoCaja >= 0 ? 'text-[#4ade80]' : 'text-red-400'}`}>
+                          {sc.saldoCaja >= 0 ? `+$${sc.saldoCaja.toLocaleString('es-CO', {maximumFractionDigits:1})}M` : `-$${Math.abs(sc.saldoCaja).toLocaleString('es-CO', {maximumFractionDigits:1})}M`}
+                        </td>
+                        <td className="p-3 text-right text-white font-bold">{sc.cobertura.toFixed(1)}%</td>
+                        <td className={`p-3 text-right font-bold ${sc.statusColor}`}>{sc.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
             </div>
           </div>
 
