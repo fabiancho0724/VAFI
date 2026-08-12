@@ -12,7 +12,7 @@ import {
   Sparkles, CheckCircle2, Zap, BarChart2, Award, Landmark, Bot, Lightbulb, Info,
   LayoutList, CheckCircle, Lock, Unlock, Check, ToggleLeft, ToggleRight,
   FileSpreadsheet, ArrowRight, XCircle, AlertCircle, HelpCircle, Shield,
-  Building, SlidersHorizontal, Flame
+  Building, SlidersHorizontal, Flame, Scale
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { 
@@ -84,9 +84,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   // General Sensitivity Dashboard Filter State (Tab 2)
   const [sensFilterType, setSensFilterType] = useState<'ALL' | 'INGRESO' | 'GASTO' | 'HIGH_RISK'>('ALL');
-
-  // Simulated Gastos Analysis in Tab 5 State
-  const [expandedSimGastoCard, setExpandedSimGastoCard] = useState<string | null>(null);
 
   // Variable Projection Selection State (Rule 2: strictly project what is selected)
   const [selectedProjectedUnits, setSelectedProjectedUnits] = useState<string[]>(() => {
@@ -404,6 +401,102 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     ];
   }, [financialData.catComp, financialData.catPago]);
 
+  // 3 SIMULATED EQUILIBRIUM SECTIONS DATA (Consolidated, by Source, and by Expenditure Type)
+  const simulatedEquilibrio = useMemo(() => {
+    const totIng = financialData.totals.simIng;
+    const totComp = financialData.totals.simGasComp;
+    const totPago = financialData.totals.simGasPago;
+
+    // 1. Consolidated Equilibrium
+    const compExecPct = totIng > 0 ? (totComp / totIng) * 100 : 0;
+    const pagoExecPct = totIng > 0 ? (totPago / totIng) * 100 : 0;
+    const dispComp = totIng - totComp;
+    const dispPago = totIng - totPago;
+
+    // 2. Equilibrium by Source (Recursos Nación vs Recursos Propios / UPTC)
+    const nacionCodes = ['10', '10.1', '10.2', '10.5', '16', '17', '18'];
+    let nacionIng = 0, nacionComp = 0, nacionPago = 0;
+    let propiosIng = 0, propiosComp = 0, propiosPago = 0;
+
+    financialData.traceabilityMatrix.forEach(item => {
+      if (nacionCodes.includes(item.resourceCode)) {
+        nacionIng += item.projectedIncome;
+        nacionComp += item.totalCompromiso;
+        nacionPago += item.totalPago;
+      } else {
+        propiosIng += item.projectedIncome;
+        propiosComp += item.totalCompromiso;
+        propiosPago += item.totalPago;
+      }
+    });
+
+    const nacionDispPago = nacionIng - nacionPago;
+    const nacionPagoPct = nacionIng > 0 ? (nacionPago / nacionIng) * 100 : 0;
+
+    const propiosDispPago = propiosIng - propiosPago;
+    const propiosPagoPct = propiosIng > 0 ? (propiosPago / propiosIng) * 100 : 0;
+
+    // 3. Equilibrium by Expenditure Destination (Funcionamiento & Nómina vs Inversión)
+    const funcIng = totIng * 0.85;
+    const funcComp = (financialData.catComp?.personal || 0) + (financialData.catComp?.funcionamiento || 0) + (financialData.catComp?.transferencias || 0) + (financialData.catComp?.tasas || 0);
+    const funcPago = (financialData.catPago?.personal || 0) + (financialData.catPago?.funcionamiento || 0) + (financialData.catPago?.transferencias || 0) + (financialData.catPago?.tasas || 0);
+    const funcDisp = funcIng - funcPago;
+    const funcPagoPct = funcIng > 0 ? (funcPago / funcIng) * 100 : 0;
+
+    const invIng = totIng * 0.15;
+    const invComp = financialData.catComp?.inversion || 0;
+    const invPago = financialData.catPago?.inversion || 0;
+    const invDisp = invIng - invPago;
+    const invPagoPct = invIng > 0 ? (invPago / invIng) * 100 : 0;
+
+    // Target Master Appropriation ($560.000M)
+    const initialAppropriationTarget = 560000.0;
+    const recaudoMetaPct = initialAppropriationTarget > 0 ? (totIng / initialAppropriationTarget) * 100 : 0;
+    const giroSobreCompPct = totComp > 0 ? (totPago / totComp) * 100 : 0;
+
+    return {
+      global: {
+        totIng,
+        totComp,
+        totPago,
+        compExecPct,
+        pagoExecPct,
+        dispComp,
+        dispPago
+      },
+      fuentes: {
+        nacionIng,
+        nacionComp,
+        nacionPago,
+        nacionPagoPct,
+        nacionDispPago,
+        propiosIng,
+        propiosComp,
+        propiosPago,
+        propiosPagoPct,
+        propiosDispPago
+      },
+      destinacion: {
+        funcIng,
+        funcComp,
+        funcPago,
+        funcPagoPct,
+        funcDisp,
+        invIng,
+        invComp,
+        invPago,
+        invPagoPct,
+        invDisp
+      },
+      hero: {
+        initialAppropriationTarget,
+        recaudoMetaPct,
+        giroSobreCompPct,
+        rezagoGiro: totComp - totPago
+      }
+    };
+  }, [financialData]);
+
   const handleResetSimulator = () => {
     const initIng: Record<string, number> = {};
     const initGas: Record<string, number> = {};
@@ -491,7 +584,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           <p className="text-[#ffcc29] text-xs uppercase tracking-widest font-bold mb-1">UPTC - Supervisión Financiera, Modelación & Control Presupuestal</p>
           <h2 className="text-3xl md:text-4xl font-bold font-display text-white">Proyección Financiera</h2>
           <p className="text-xs text-on-surface-variant mt-1">
-            Motor auditado de proyección estricta, trazabilidad de fuentes, control de nómina ($369.650M) y sensibilidad integral de ingresos y gastos.
+            Tablero de equilibrio presupuestal simulado, trazabilidad de fuentes, control de nómina ($369.650M) y sensibilidad integral.
           </p>
         </div>
         
@@ -538,7 +631,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       <div className="flex border-b border-white/10 mb-6 overflow-x-auto gap-2">
         {[
           { id: 'simulator', label: '1. Simular Escenarios', icon: Sliders },
-          { id: 'kpi', label: '2. Control Financiero & Sensibilidad General', icon: Activity },
+          { id: 'kpi', label: '2. Tablero de Equilibrio Simulado & Sensibilidad', icon: Activity },
           { id: 'traceability', label: '3. Trazabilidad de Recursos & Gastos', icon: FileSpreadsheet },
           { id: 'flow', label: '4. Flujo de Caja & Liquidez', icon: Table },
           { id: 'gastos', label: '5. Análisis de Gastos', icon: Wallet },
@@ -619,12 +712,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 1: SIMULAR ESCENARIOS (STRICT PROJECTION WITH UNIT SELECTION) */}
+      {/* TAB 1: SIMULAR ESCENARIOS */}
       {/* ========================================================================= */}
       {activeTab === 'simulator' && (
         <div className="space-y-8 animate-in fade-in duration-300">
           
-          {/* SELECTION CONTROL PANEL (RULE 2: UNITS + RESOURCES + EXPENSE TYPES) */}
+          {/* SELECTION CONTROL PANEL */}
           <div className="glass-card rounded-[28px] p-6 border border-white/10 bg-surface/50 relative overflow-hidden shadow-2xl space-y-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-white/10">
               <div>
@@ -827,12 +920,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           )}
 
-          {/* Sliders Grid: Incomes & Expenses with AI Suggestions */}
+          {/* Sliders Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
             {/* Income resource modifiers */}
             <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col gap-6">
-              
               <div className="flex flex-col gap-3 pb-4 border-b border-white/5">
                 <div className="flex justify-between items-center">
                   <h4 className="text-sm font-bold text-[#ffcc29] uppercase tracking-widest flex items-center gap-2">
@@ -948,7 +1039,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
             {/* Expense category modifiers */}
             <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 flex flex-col gap-6">
-              
               <div className="flex flex-col gap-3 pb-4 border-b border-white/5">
                 <div className="flex justify-between items-center">
                   <h4 className="text-sm font-bold text-[#38bdf8] uppercase tracking-widest flex items-center gap-2">
@@ -1043,12 +1133,260 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: CONTROL FINANCIERO & SENSIBILIDAD GENERAL DE INGRESOS Y GASTOS */}
+      {/* TAB 2: TABLERO DE EQUILIBRIO PRESUPUESTAL SIMULADO & SENSIBILIDAD GENERAL */}
       {/* ========================================================================= */}
       {activeTab === 'kpi' && (
         <div className="space-y-8 animate-in fade-in duration-300">
           
-          {/* 1. MANDATORY PAYROLL GOAL $369.650.433.862 COP AUDIT BOX */}
+          {/* 1. SECCIÓN PRINCIPAL: EQUILIBRIO PRESUPUESTAL SIMULADO (IDÉNTICO AL TABLERO PERO CON VALORES SIMULADOS) */}
+          <div className="glass-card rounded-[32px] p-8 border border-white/10 glow-primary relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#ffcc29] via-[#38bdf8] to-[#4ade80]"></div>
+            
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Scale className="text-[#ffcc29]" size={24} />
+                  <h3 className="text-2xl font-display font-bold text-white">Equilibrio Presupuestal Consolidado (Escenario Simulado)</h3>
+                </div>
+                <p className="text-on-surface-variant text-xs mt-1">
+                  Relación entre recaudo proyectado total, compromisos y pagos efectivos simulados de la vigencia.
+                </p>
+              </div>
+              
+              <div className="bg-white/5 rounded-2xl p-5 border border-white/10 text-center min-w-[260px] shadow-lg">
+                <span className="text-[10px] text-[#ffcc29] uppercase tracking-widest font-bold block mb-1">Recaudo Total Proyectado</span>
+                <span className="text-3xl md:text-4xl font-display font-bold text-white">
+                  ${simulatedEquilibrio.global.totIng.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm font-sans text-on-surface-variant font-normal">mill</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Relación con Compromisos */}
+              <div className="bg-surface/50 rounded-2xl p-6 border border-white/5 flex flex-col justify-between shadow-inner">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <span className="text-xs text-[#c084fc] uppercase tracking-widest font-bold flex items-center gap-2 mb-1">
+                      <span className="w-2 h-2 rounded-full bg-[#c084fc]"></span>
+                      Frente al Compromiso Simulado
+                    </span>
+                    <span className="text-2xl font-bold font-mono text-white">
+                      ${simulatedEquilibrio.global.totComp.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-normal text-on-surface-variant">mill</span>
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-on-surface-variant block mb-0.5">Ejecución Comp.</span>
+                    <span className="text-xl font-mono font-bold text-white">{simulatedEquilibrio.global.compExecPct.toFixed(1)}%</span>
+                  </div>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="w-full h-3 bg-white/10 rounded-full mb-4 overflow-hidden flex">
+                  <div 
+                    className="h-full bg-[#c084fc] rounded-full transition-all duration-500" 
+                    style={{ width: `${Math.min(100, simulatedEquilibrio.global.compExecPct)}%` }}
+                  ></div>
+                </div>
+                
+                <div className="pt-3 border-t border-white/5 flex justify-between items-center text-xs font-mono">
+                  <span className="text-on-surface-variant">Valor Disponible (Comprometido)</span>
+                  <span className={`font-bold px-3 py-1 rounded-lg ${simulatedEquilibrio.global.dispComp >= 0 ? "text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/30" : "text-[#ff5b5b] bg-[#ff5b5b]/10 border border-[#ff5b5b]/30"}`}>
+                    ${simulatedEquilibrio.global.dispComp.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill
+                  </span>
+                </div>
+              </div>
+
+              {/* Relación con Pagos */}
+              <div className="bg-surface/50 rounded-2xl p-6 border border-white/5 flex flex-col justify-between shadow-inner">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <span className="text-xs text-[#ffcc29] uppercase tracking-widest font-bold flex items-center gap-2 mb-1">
+                      <span className="w-2 h-2 rounded-full bg-[#ffcc29]"></span>
+                      Frente al Pago Efectivo Simulado
+                    </span>
+                    <span className="text-2xl font-bold font-mono text-white">
+                      ${simulatedEquilibrio.global.totPago.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-xs font-normal text-on-surface-variant">mill</span>
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-on-surface-variant block mb-0.5">Ejecución Giro</span>
+                    <span className="text-xl font-mono font-bold text-white">{simulatedEquilibrio.global.pagoExecPct.toFixed(1)}%</span>
+                  </div>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="w-full h-3 bg-white/10 rounded-full mb-4 overflow-hidden flex">
+                  <div 
+                    className="h-full bg-[#ffcc29] rounded-full transition-all duration-500" 
+                    style={{ width: `${Math.min(100, simulatedEquilibrio.global.pagoExecPct)}%` }}
+                  ></div>
+                </div>
+                
+                <div className="pt-3 border-t border-white/5 flex justify-between items-center text-xs font-mono">
+                  <span className="text-on-surface-variant">Valor Disponible en Caja (Giro)</span>
+                  <span className={`font-bold px-3 py-1 rounded-lg ${simulatedEquilibrio.global.dispPago >= 0 ? "text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/30" : "text-[#ff5b5b] bg-[#ff5b5b]/10 border border-[#ff5b5b]/30"}`}>
+                    ${simulatedEquilibrio.global.dispPago.toLocaleString('es-CO', {maximumFractionDigits: 1})} mill
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. DOS EQUILIBRIOS ESPECÍFICOS: POR FUENTES Y POR DESTINACIÓN */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Equilibrio por Fuentes: Recursos Nación vs Recursos Propios */}
+            <div className="glass-card rounded-[28px] p-6 border border-white/10 flex flex-col justify-between space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <DollarSign size={18} className="text-[#4ade80]" />
+                  <h4 className="text-sm font-bold font-display text-white uppercase tracking-wider">Equilibrio Presupuestal por Fuentes</h4>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-white/70">Nación vs Propios</span>
+              </div>
+
+              <div className="space-y-4">
+                {/* Aportes Nación */}
+                <div className="bg-white/5 p-4 rounded-2xl space-y-2 border border-white/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-white">Aportes Estatutarios Nación</span>
+                    <span className="text-xs font-mono font-bold text-[#4ade80]">${simulatedEquilibrio.fuentes.nacionIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] font-mono text-on-surface-variant">
+                    <span>Giro Efectivo: ${simulatedEquilibrio.fuentes.nacionPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M ({simulatedEquilibrio.fuentes.nacionPagoPct.toFixed(1)}%)</span>
+                    <span className="text-[#38bdf8] font-bold">Disponible: +${simulatedEquilibrio.fuentes.nacionDispPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#4ade80] rounded-full" style={{ width: `${Math.min(100, simulatedEquilibrio.fuentes.nacionPagoPct)}%` }}></div>
+                  </div>
+                </div>
+
+                {/* Recursos Propios */}
+                <div className="bg-white/5 p-4 rounded-2xl space-y-2 border border-white/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-white">Recursos Propios & UPTC</span>
+                    <span className="text-xs font-mono font-bold text-[#ffcc29]">${simulatedEquilibrio.fuentes.propiosIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] font-mono text-on-surface-variant">
+                    <span>Giro Efectivo: ${simulatedEquilibrio.fuentes.propiosPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M ({simulatedEquilibrio.fuentes.propiosPagoPct.toFixed(1)}%)</span>
+                    <span className="text-[#38bdf8] font-bold">Disponible: +${simulatedEquilibrio.fuentes.propiosDispPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#ffcc29] rounded-full" style={{ width: `${Math.min(100, simulatedEquilibrio.fuentes.propiosPagoPct)}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Equilibrio por Destinación: Funcionamiento vs Inversión */}
+            <div className="glass-card rounded-[28px] p-6 border border-white/10 flex flex-col justify-between space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <Layers size={18} className="text-[#38bdf8]" />
+                  <h4 className="text-sm font-bold font-display text-white uppercase tracking-wider">Equilibrio Presupuestal por Destinación</h4>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-white/70">Funcionamiento vs Inversión</span>
+              </div>
+
+              <div className="space-y-4">
+                {/* Funcionamiento y Personal */}
+                <div className="bg-white/5 p-4 rounded-2xl space-y-2 border border-white/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-white">Gastos de Personal & Funcionamiento</span>
+                    <span className="text-xs font-mono font-bold text-[#38bdf8]">${simulatedEquilibrio.destinacion.funcPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] font-mono text-on-surface-variant">
+                    <span>Compromiso: ${simulatedEquilibrio.destinacion.funcComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                    <span className="text-[#4ade80] font-bold">Saldo de Caja: +${simulatedEquilibrio.destinacion.funcDisp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#38bdf8] rounded-full" style={{ width: `${Math.min(100, simulatedEquilibrio.destinacion.funcPagoPct)}%` }}></div>
+                  </div>
+                </div>
+
+                {/* Inversión */}
+                <div className="bg-white/5 p-4 rounded-2xl space-y-2 border border-white/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-white">Gastos de Inversión (Tope ≤70%)</span>
+                    <span className="text-xs font-mono font-bold text-[#c084fc]">${simulatedEquilibrio.destinacion.invPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] font-mono text-on-surface-variant">
+                    <span>Compromiso: ${simulatedEquilibrio.destinacion.invComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M (Tope 70%)</span>
+                    <span className="text-[#4ade80] font-bold">Saldo Inversión: +${simulatedEquilibrio.destinacion.invDisp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                  </div>
+                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#c084fc] rounded-full" style={{ width: `${Math.min(100, simulatedEquilibrio.destinacion.invPagoPct)}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* 3. HERO STATS CON ANILLOS SVG DE META Y GIRO */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Meta de Apropiación Inicial ($560.000M) */}
+            <div className="glass-card rounded-[32px] p-6 lg:p-8 flex flex-col sm:flex-row items-center gap-6 border border-white/10 bg-surface/50">
+              <div className="relative w-36 h-36 flex items-center justify-center shrink-0">
+                <svg className="w-full h-full -rotate-90">
+                  <circle cx="72" cy="72" r="60" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
+                  <circle 
+                    className="progress-ring-circle" 
+                    cx="72" cy="72" r="60" 
+                    fill="transparent" 
+                    stroke="#ffcc29" 
+                    strokeWidth="10" 
+                    strokeDasharray="377" 
+                    strokeDashoffset={377 - (377 * Math.min(100, simulatedEquilibrio.hero.recaudoMetaPct) / 100)} 
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold font-mono text-white">{simulatedEquilibrio.hero.recaudoMetaPct.toFixed(1)}%</span>
+                  <span className="text-[9px] font-mono text-on-surface-variant uppercase">S/ APROPIACIÓN</span>
+                </div>
+              </div>
+              <div className="flex-1 space-y-2">
+                <span className="text-[10px] font-mono text-[#ffcc29] uppercase tracking-widest font-bold block">Meta Presupuestal Vigencia 2026</span>
+                <h4 className="text-lg font-bold text-white">Cumplimiento del Recaudo Proyectado</h4>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  El recaudo simulado de <strong>${simulatedEquilibrio.global.totIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</strong> representa el {simulatedEquilibrio.hero.recaudoMetaPct.toFixed(1)}% de la apropiación inicial maestro ($560.000M).
+                </p>
+              </div>
+            </div>
+
+            {/* Giro Efectivo sobre Compromisos */}
+            <div className="glass-card rounded-[32px] p-6 lg:p-8 flex flex-col sm:flex-row items-center gap-6 border border-white/10 bg-surface/50">
+              <div className="relative w-36 h-36 flex items-center justify-center shrink-0">
+                <svg className="w-full h-full -rotate-90">
+                  <circle cx="72" cy="72" r="60" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
+                  <circle 
+                    className="progress-ring-circle" 
+                    cx="72" cy="72" r="60" 
+                    fill="transparent" 
+                    stroke="#38bdf8" 
+                    strokeWidth="10" 
+                    strokeDasharray="377" 
+                    strokeDashoffset={377 - (377 * Math.min(100, simulatedEquilibrio.hero.giroSobreCompPct) / 100)} 
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold font-mono text-white">{simulatedEquilibrio.hero.giroSobreCompPct.toFixed(1)}%</span>
+                  <span className="text-[9px] font-mono text-on-surface-variant uppercase">GIRO / COMP</span>
+                </div>
+              </div>
+              <div className="flex-1 space-y-2">
+                <span className="text-[10px] font-mono text-[#38bdf8] uppercase tracking-widest font-bold block">Tasa de Giro Efectivo</span>
+                <h4 className="text-lg font-bold text-white">Rezago de Giros y Disponibilidad</h4>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Se proyecta un giro efectivo del <strong>{simulatedEquilibrio.hero.giroSobreCompPct.toFixed(1)}%</strong> sobre los compromisos totales, dejando un rezago de giro de ${simulatedEquilibrio.hero.rezagoGiro.toLocaleString('es-CO', {maximumFractionDigits:1})}M para cierre de año.
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* 4. AUDIT BOX: META OBLIGATORIA DE NÓMINA $369.650M (UNIDAD 01) */}
           <div className={`glass-card rounded-[32px] p-8 border relative overflow-hidden shadow-2xl ${financialData.payrollCompliance.complianceStatus === 'Suficiente' ? 'border-[#4ade80]/30 bg-gradient-to-r from-[#0f172a] via-[#132e22] to-[#0f172a]' : 'border-red-500/30 bg-gradient-to-r from-[#0f172a] via-[#2e1313] to-[#0f172a]'}`}>
             <div className={`absolute top-0 left-0 w-full h-1 ${financialData.payrollCompliance.complianceStatus === 'Suficiente' ? 'bg-[#4ade80]' : 'bg-red-500'}`}></div>
             
@@ -1089,8 +1427,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
             {/* Contributing Valid Resources vs Excluded Resources */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              
-              {/* Valid Contributing Resources */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
                 <h5 className="text-xs font-mono font-bold text-[#4ade80] uppercase tracking-wider flex items-center gap-1.5">
                   <CheckCircle size={14} /> Recursos Válidos de la Unidad 01 Aplicados ({financialData.payrollCompliance.validContributingResources.length})
@@ -1108,7 +1444,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </div>
               </div>
 
-              {/* Excluded Resources */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
                 <h5 className="text-xs font-mono font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
                   <XCircle size={14} className="text-rose-400" /> Recursos No Utilizables para Nómina Central ({financialData.payrollCompliance.excludedResources.length})
@@ -1125,11 +1460,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   ))}
                 </div>
               </div>
-
             </div>
           </div>
 
-          {/* 2. PANEL GENERAL DE SENSIBILIDAD & MONITOREO INTEGRAL DE TODOS LOS INGRESOS Y GASTOS */}
+          {/* 5. PANEL GENERAL DE SENSIBILIDAD & MONITOREO INTEGRAL DE TODOS LOS INGRESOS Y GASTOS */}
           <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-white/10">
               <div>
@@ -1161,7 +1495,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </div>
             </div>
 
-            {/* Shock Impact Bar Chart (Top Sensitive Rubros) */}
+            {/* Shock Impact Bar Chart */}
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-mono font-bold text-on-surface-variant uppercase tracking-wider">
@@ -1216,7 +1550,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
-          {/* 3. AUTOMATED FINANCIAL ALERTS FEED */}
+          {/* 6. AUTOMATED FINANCIAL ALERTS FEED */}
           <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -1265,63 +1599,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* 4. Macro KPI Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
-              <div className="absolute top-0 left-0 w-full h-1 bg-[#ffcc29]"></div>
-              <div>
-                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Ingresos Totales Proyectados</h4>
-                <p className="text-3xl font-display font-bold text-white">${financialData.totals.simIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
-              </div>
-              <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
-                <div className="flex justify-between">
-                  <span>CORTE A JUL 31 (REAL)</span>
-                  <span className="text-white font-bold">${semesterTotals.eneJulIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>PROYECCIÓN AGO-DIC</span>
-                  <span className="text-[#ffcc29] font-bold">${semesterTotals.agoDicIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
-              <div className="absolute top-0 left-0 w-full h-1 bg-[#f43f5e]"></div>
-              <div>
-                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Compromisos Totales</h4>
-                <p className="text-3xl font-display font-bold text-white">${financialData.totals.simGasComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
-              </div>
-              <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
-                <div className="flex justify-between">
-                  <span>CORTE A JUL 31 (REAL)</span>
-                  <span className="text-white font-bold">${semesterTotals.eneJulComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>PROYECCIÓN AGO-DIC</span>
-                  <span className="text-[#f43f5e] font-bold">${semesterTotals.agoDicComp.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
-              <div className="absolute top-0 left-0 w-full h-1 bg-[#4ade80]"></div>
-              <div>
-                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Pagos Efectivos Proyectados</h4>
-                <p className="text-3xl font-display font-bold text-white">${financialData.totals.simGasPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
-              </div>
-              <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
-                <div className="flex justify-between">
-                  <span>CORTE A JUL 31 (REAL)</span>
-                  <span className="text-white font-bold">${semesterTotals.eneJulPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>PROYECCIÓN AGO-DIC</span>
-                  <span className="text-[#4ade80] font-bold">${semesterTotals.agoDicPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -1407,7 +1684,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                           </td>
                         </tr>
 
-                        {/* Expanded detail row showing financed expenses */}
                         {isExpanded && (
                           <tr className="bg-black/40 border-b border-white/10">
                             <td colSpan={9} className="p-6 space-y-3">
@@ -1484,7 +1760,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
-          {/* Graph 1: Inflow vs Outflow */}
+          {/* Graph: Inflow vs Outflow */}
           <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10">
             <div className="flex justify-between items-center mb-6">
               <div>
