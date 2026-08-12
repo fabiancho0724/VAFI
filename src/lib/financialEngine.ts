@@ -104,12 +104,15 @@ export interface ConsistencyValidationItem {
 }
 
 export interface SensitiveBudgetItem {
+  code: string;
   name: string;
+  type: 'INGRESO' | 'GASTO';
   category: string;
   amountM: number;
   sharePct: number;
-  cashFlowImpact: number;
+  cashFlowImpact: number; // Impact of a 5% variation in $M
   sensitivityLevel: 'Bajo' | 'Medio' | 'Alto' | 'Crítico';
+  elasticityIndex: number;
   rationale: string;
 }
 
@@ -170,6 +173,7 @@ export function calculateProjections({
   simGasByResource = {},
   simGasByType = {},
   expenseAdjustMode = 'category',
+  selectedProjectedUnits = undefined,
   selectedProjectedResources = undefined,
   selectedProjectedExpenseTypes = undefined
 }: {
@@ -184,11 +188,18 @@ export function calculateProjections({
   simGasByResource?: Record<string, number>;
   simGasByType?: Record<string, number>;
   expenseAdjustMode?: 'resource' | 'category';
+  selectedProjectedUnits?: string[];
   selectedProjectedResources?: string[];
   selectedProjectedExpenseTypes?: string[];
 }): ProjectionResults {
 
   // Active projection filters (Rule 2: Project ONLY what is selected)
+  const isUnitSelected = (u: string) => {
+    if (filterUnidad !== 'Todos' && u !== filterUnidad) return false;
+    if (selectedProjectedUnits && !selectedProjectedUnits.includes(u)) return false;
+    return true;
+  };
+
   const isResSelected = (r: string) => {
     if (filterRecurso !== 'Todos' && r !== filterRecurso) return false;
     if (selectedProjectedResources && !selectedProjectedResources.includes(r)) return false;
@@ -235,7 +246,7 @@ export function calculateProjections({
       const rowUnidad = getRowUnidad(row, year);
       const isU01 = rowUnidad.includes('01 - ADMINISTRATIVA') || rowUnidad.includes('01 -');
 
-      if (filterUnidad !== 'Todos' && rowUnidad !== filterUnidad) return;
+      if (!isUnitSelected(rowUnidad)) return;
 
       const recRaw = String(row['Recurso'] || row['Codigo'] || row['Código recurso'] || '').trim();
       const recMapped = getRecursoEquivalence(recRaw);
@@ -263,7 +274,7 @@ export function calculateProjections({
   // 2. Process Expenses from rawHistoricalGastos
   rawHistoricalGastos.forEach(row => {
     const dep = String(row.dependencia || row.Unidad || '').trim();
-    if (filterUnidad !== 'Todos' && dep !== filterUnidad) return;
+    if (!isUnitSelected(dep)) return;
     if (filterTipoGasto !== 'Todos' && row.tipo !== filterTipoGasto) return;
 
     const year = row.año;
@@ -317,13 +328,12 @@ export function calculateProjections({
       }
     }
 
-    if (fixedObj && fixedObj.valorCOP > 0 && filterUnidad === 'Todos') {
+    if (fixedObj && fixedObj.valorCOP > 0 && filterUnidad === 'Todos' && (!selectedProjectedUnits || selectedProjectedUnits.includes('01 - ADMINISTRATIVA Y FINANCIERA'))) {
       totIng = fixedObj.valorCOP;
     }
 
     // Universal rule: Payments <= Income per resource
     if (totGasPago > totIng && totIng > 0) {
-      const factor = totIng / totGasPago;
       totGasPago = totIng;
       totGasComp = Math.min(totGasComp, totIng);
     }
@@ -412,7 +422,7 @@ export function calculateProjections({
   const monthlyPayroll: number[] = new Array(12).fill(0);
   rawHistoricalGastos.forEach(row => {
     const dep = String(row.dependencia || row.Unidad || '').trim();
-    if (filterUnidad !== 'Todos' && dep !== filterUnidad) return;
+    if (!isUnitSelected(dep)) return;
 
     if (row.año === 2026) {
       const monthIdx = row.mes - 1;
@@ -502,7 +512,7 @@ export function calculateProjections({
     });
   }
 
-  // 7. BUILD RESOURCE TRACEABILITY MATRIX (Section 3)
+  // 7. BUILD RESOURCE TRACEABILITY MATRIX
   const traceabilityMatrix: ResourceTraceabilityItem[] = [];
 
   RESOURCES_LIST.forEach(r => {
@@ -516,7 +526,6 @@ export function calculateProjections({
     const isU01 = ['10', '10.1', '10.2', '10.5', '12', '13', '14', '16', '17', '18', '20', '21'].includes(r);
     const unitName = isU01 ? '01 - ADMINISTRATIVA Y FINANCIERA' : (r === '31' ? '04 - CIENCIAS DE LA EDUCACION / POSGRADOS' : (r === '32' || r === '33' ? '02 - INVESTIGACION Y EXTENSION' : 'UNIDADES DESCENTRALIZADAS'));
 
-    // Financed expenses breakdown for this resource
     const financedExpenses = [];
     if (isU01 && ['10', '10.5', '14', '17', '20'].includes(r)) {
       financedExpenses.push({
@@ -591,10 +600,9 @@ export function calculateProjections({
 
   traceabilityMatrix.sort((a,b) => b.projectedIncome - a.projectedIncome);
 
-  // 8. SECTION 5 & 6: PAYROLL COMPLIANCE MODEL ($369.650.433.862 COP)
-  const targetPayrollM = BUDGET_PAYROLL_2026 / 1e6; // $369.650,43M
+  // 8. PAYROLL COMPLIANCE MODEL ($369.650.433.862 COP)
+  const targetPayrollM = BUDGET_PAYROLL_2026 / 1e6;
   
-  // Strict Rule 5: ONLY resources of Unit 01 can cover personal payroll
   let validUnit01ResourcesM = 0;
   let nonUnit01ResourcesM = 0;
   const validContributingResources: { code: string; name: string; amountM: number; pct: number }[] = [];
@@ -615,7 +623,7 @@ export function calculateProjections({
         code: item.resourceCode,
         name: item.resourceName,
         amountM: item.projectedIncome,
-        reason: item.isUnit01 ? 'Destinación específica para inversión/tasas (no aplicable a nómina regular)' : 'Recurso de unidad académica/seccional descentralizada (Restricción Unidad 01)'
+        reason: item.isUnit01 ? 'Destinación específica para inversión/tasas' : 'Recurso de unidad académica/seccional descentralizada'
       });
     }
   });
@@ -640,18 +648,17 @@ export function calculateProjections({
     excludedResources
   };
 
-  // 9. AUTOMATED FINANCIAL ALERTS (Section 8)
+  // 9. AUTOMATED FINANCIAL ALERTS
   const financialAlerts: FinancialAlertItem[] = [];
 
-  // Check 1: Payroll Target $369.650M
   if (payrollCoveragePct < 90) {
     financialAlerts.push({
       id: 'ALT-CRIT-01',
       type: 'CRITICAL',
       title: 'Déficit Crítico de Recursos Válidos para Nómina ($369.650M)',
-      message: `Los recursos válidos de la Unidad 01 ($${validUnit01ResourcesM.toFixed(1)}M) cubren únicamente el ${payrollCoveragePct.toFixed(1)}% de la meta de nómina maestro. Déficit: -$${Math.abs(payrollSurplusDeficitM).toFixed(1)}M.`,
+      message: `Los recursos válidos de la Unidad 01 ($${validUnit01ResourcesM.toFixed(1)}M) cubren únicamente el ${payrollCoveragePct.toFixed(1)}% de la meta. Déficit: -$${Math.abs(payrollSurplusDeficitM).toFixed(1)}M.`,
       impactValue: `-$${Math.abs(payrollSurplusDeficitM).toFixed(1)}M`,
-      suggestedAction: 'Priorizar asignaciones del PGN y ajustar rubros de funcionamiento descentralizado.'
+      suggestedAction: 'Priorizar asignaciones del PGN y ajustar rubros de funcionamiento.'
     });
   } else if (payrollCoveragePct < 100) {
     financialAlerts.push({
@@ -660,7 +667,7 @@ export function calculateProjections({
       title: 'Cobertura Ajustada de Nómina (Meta $369.650M)',
       message: `La cobertura de nómina con recursos de la Unidad 01 se sitúa en el ${payrollCoveragePct.toFixed(1)}%, requiriendo monitoreo de giros del MEN.`,
       impactValue: `${payrollCoveragePct.toFixed(1)}%`,
-      suggestedAction: 'Realizar seguimiento mensual a la resolución de política de gratuidad y aportes nación.'
+      suggestedAction: 'Realizar seguimiento mensual a la resolución de política de gratuidad.'
     });
   } else {
     financialAlerts.push({
@@ -672,21 +679,19 @@ export function calculateProjections({
     });
   }
 
-  // Check 2: Any resource with deficit
   traceabilityMatrix.forEach(r => {
     if (r.status === 'Déficit') {
       financialAlerts.push({
         id: `ALT-DEF-${r.resourceCode}`,
         type: 'CRITICAL',
         title: `Déficit de Caja en ${r.resourceName}`,
-        message: `Los pagos proyectados ($${r.totalPago}M) superan el ingreso proyectado ($${r.projectedIncome}M). Saldo negativo: -$${Math.abs(r.remainingBalance)}M.`,
+        message: `Los pagos proyectados ($${r.totalPago}M) superan el ingreso ($${r.projectedIncome}M). Saldo: -$${Math.abs(r.remainingBalance)}M.`,
         impactValue: `-$${Math.abs(r.remainingBalance)}M`,
-        suggestedAction: 'Readecuar compromisos o aplazar pagos para evitar sobregiro.'
+        suggestedAction: 'Readecuar compromisos o aplazar pagos.'
       });
     }
   });
 
-  // Check 3: Net cash flow
   const finalCashBalance = simulatedFlow[11]?.saldoCajaAcumulado || 0;
   if (finalCashBalance < 0) {
     financialAlerts.push({
@@ -698,7 +703,7 @@ export function calculateProjections({
     });
   }
 
-  // 10. 10 AUTOMATED CONSISTENCY VALIDATIONS (Section 10)
+  // 10. CONSISTENCY VALIDATIONS
   const totalSimIngM = totalSimIng / 1e6;
   const totalSimGasPagoM = totalSimGasPago / 1e6;
   const consistencyValidations: ConsistencyValidationItem[] = [
@@ -719,7 +724,7 @@ export function calculateProjections({
     {
       id: 3,
       ruleName: 'No utilización de recursos restringidos para gastos no permitidos',
-      description: 'Aportes de inversión (Rec. 12, 16, 40) no financian gastos corrientes de personal.',
+      description: 'Aportes de inversión no financian gastos corrientes de personal.',
       passed: true,
       details: 'Aislamiento de fuentes verificado en la matriz de trazabilidad.'
     },
@@ -733,21 +738,21 @@ export function calculateProjections({
     {
       id: 5,
       ruleName: 'No duplicidad de gastos',
-      description: 'Los compromisos no se duplican entre unidades o conceptos presupuestales.',
+      description: 'Los compromisos no se duplican entre unidades o conceptos.',
       passed: true,
       details: 'Apropiación individualizada por ítem presupuestal.'
     },
     {
       id: 6,
       ruleName: 'Cuadre de gastos financiados vs apropiación por recurso',
-      description: 'La suma de gastos por recurso coincide exactamente con la apropiación registrada.',
+      description: 'La suma de gastos por recurso coincide exactamente con la apropiación.',
       passed: true,
       details: 'Cuadre al 100% en la matriz de trazabilidad.'
     },
     {
       id: 7,
-      ruleName: 'Fuentes de financiación registradas coinciden con recursos utilizados',
-      description: 'Trazabilidad de cada peso desembolsado hacia su código de origen.',
+      ruleName: 'Fuentes de financiación coinciden con recursos utilizados',
+      description: 'Trazabilidad de cada peso desembolsado hacia su origen.',
       passed: true,
       details: 'Correspondencia unívoca en el árbol presupuestal.'
     },
@@ -774,52 +779,202 @@ export function calculateProjections({
     }
   ];
 
-  // 11. SENSITIVE BUDGET ITEMS (Section 9)
+  // 11. COMPREHENSIVE SENSITIVE BUDGET ITEMS (ALL INCOMES & ALL EXPENSES - Section 9)
   const sensitiveItems: SensitiveBudgetItem[] = [
+    // --- INGRESOS ---
     {
-      name: '10.0 Aportes Nación - Funcionamiento',
+      code: '10.0',
+      name: 'Aportes Nación - Funcionamiento',
+      type: 'INGRESO',
       category: 'Ingresos Estatutarios',
       amountM: 315327.8,
       sharePct: totalSimIngM > 0 ? (315327.8 / totalSimIngM) * 100 : 58.0,
-      cashFlowImpact: 315327.8,
+      cashFlowImpact: 315327.8 * 0.05, // 5% shock = $15.766M
       sensitivityLevel: 'Crítico',
-      rationale: 'Concentra más del 58% del recaudo institucional. Cualquier retraso en giros del MEN paraliza la caja.'
+      elasticityIndex: 95,
+      rationale: 'Concentra más del 58% del recaudo institucional. Un desfase del 5% genera un impacto de $15.766M en caja.'
     },
     {
-      name: 'Gastos de Personal (Nómina 2.1.1)',
-      category: 'Egresos Obligatorios',
-      amountM: 369650.4,
-      sharePct: totalSimGasPagoM > 0 ? (369650.4 / totalSimGasPagoM) * 100 : 70.0,
-      cashFlowImpact: 369650.4,
-      sensitivityLevel: 'Crítico',
-      rationale: 'Constituye el gasto inflexible más alto de la Universidad con pico prestacional en diciembre.'
-    },
-    {
-      name: '10.5 Política de Gratuidad',
-      category: 'Ingresos por Transferencia',
+      code: '10.5',
+      name: 'Política de Gratuidad (MEN)',
+      type: 'INGRESO',
+      category: 'Transferencias Nacionales',
       amountM: 20708.4,
       sharePct: totalSimIngM > 0 ? (20708.4 / totalSimIngM) * 100 : 3.8,
-      cashFlowImpact: 20708.4,
+      cashFlowImpact: 20708.4 * 0.05,
       sensitivityLevel: 'Alto',
-      rationale: 'Financia matrículas de pregrado; sujeto a legalización de giros del Fondo de Solidaridad.'
+      elasticityIndex: 78,
+      rationale: 'Financia matrículas de pregrado; sujeto a legalización de giros del Fondo de Solidaridad Educativa.'
     },
     {
-      name: '31 Posgrados (Recurso R31)',
+      code: '14',
+      name: 'Matrículas FSE (Solidaridad)',
+      type: 'INGRESO',
+      category: 'Fondos Especiales',
+      amountM: 19625.5,
+      sharePct: totalSimIngM > 0 ? (19625.5 / totalSimIngM) * 100 : 3.6,
+      cashFlowImpact: 19625.5 * 0.05,
+      sensitivityLevel: 'Alto',
+      elasticityIndex: 74,
+      rationale: 'Fuente complementaria de gratuidad; una variación del 5% impacta en $981M la tesorería de pregrado.'
+    },
+    {
+      code: '31',
+      name: 'Fondo Especial de Posgrados (R31)',
+      type: 'INGRESO',
       category: 'Recursos Propios Académicos',
       amountM: 19800.0,
       sharePct: totalSimIngM > 0 ? (19800.0 / totalSimIngM) * 100 : 3.6,
-      cashFlowImpact: 19800.0,
+      cashFlowImpact: 19800.0 * 0.05,
       sensitivityLevel: 'Alto',
-      rationale: 'Alta elasticidad precio de la demanda (ε = -1,19) sensible a la reforma del Proyecto de Acuerdo.'
+      elasticityIndex: 82,
+      rationale: 'Alta elasticidad precio de la demanda (ε = -1,19) altamente sensible a la tarifa por crédito vs SMLMV.'
     },
     {
-      name: 'Gastos de Inversión (2.3)',
-      category: 'Desarrollo Físico y Tecnológico',
+      code: '12',
+      name: 'Estampillas Otras Universidades',
+      type: 'INGRESO',
+      category: 'Rentas con Destinación Específica',
+      amountM: 17266.1,
+      sharePct: totalSimIngM > 0 ? (17266.1 / totalSimIngM) * 100 : 3.2,
+      cashFlowImpact: 17266.1 * 0.05,
+      sensitivityLevel: 'Medio',
+      elasticityIndex: 65,
+      rationale: 'Aporte de inversión nacional (Ley 1697); sujeto a ritmo de recaudo tributario del MinHacienda.'
+    },
+    {
+      code: '16.0',
+      name: 'Aportes Inversión Nacional (PGN)',
+      type: 'INGRESO',
+      category: 'Inversión Nacional',
+      amountM: 12877.1,
+      sharePct: totalSimIngM > 0 ? (12877.1 / totalSimIngM) * 100 : 2.4,
+      cashFlowImpact: 12877.1 * 0.05,
+      sensitivityLevel: 'Medio',
+      elasticityIndex: 60,
+      rationale: 'Recursos asignados por PGN destinados exclusivamente a obras y proyectos de desarrollo institucional.'
+    },
+    {
+      code: '20',
+      name: 'Recursos Propios Institucionales',
+      type: 'INGRESO',
+      category: 'Venta de Servicios y Derechos',
+      amountM: 11450.0,
+      sharePct: totalSimIngM > 0 ? (11450.0 / totalSimIngM) * 100 : 2.1,
+      cashFlowImpact: 11450.0 * 0.05,
+      sensitivityLevel: 'Medio',
+      elasticityIndex: 55,
+      rationale: 'Derechos pecuniarios, certificaciones y trámites; presenta estacionalidad semestral.'
+    },
+    {
+      code: '33',
+      name: 'Convenios con Derechos Económicos',
+      type: 'INGRESO',
+      category: 'Extensión y Consultoría',
+      amountM: 9500.0,
+      sharePct: totalSimIngM > 0 ? (9500.0 / totalSimIngM) * 100 : 1.8,
+      cashFlowImpact: 9500.0 * 0.05,
+      sensitivityLevel: 'Medio',
+      elasticityIndex: 52,
+      rationale: 'Contratos con entidades territoriales; ritmo de desembolso condicionado a actas de avance.'
+    },
+    {
+      code: '40',
+      name: 'Estampilla PRO-UPTC',
+      type: 'INGRESO',
+      category: 'Rentas Departamentales',
+      amountM: 5800.0,
+      sharePct: totalSimIngM > 0 ? (5800.0 / totalSimIngM) * 100 : 1.1,
+      cashFlowImpact: 5800.0 * 0.05,
+      sensitivityLevel: 'Bajo',
+      elasticityIndex: 40,
+      rationale: 'Recaudado por la Gobernación de Boyacá; pico estacional en noviembre y diciembre.'
+    },
+    {
+      code: '17',
+      name: 'Devolución Descuento Electoral',
+      type: 'INGRESO',
+      category: 'Transferencias de Ley',
+      amountM: 5447.5,
+      sharePct: totalSimIngM > 0 ? (5447.5 / totalSimIngM) * 100 : 1.0,
+      cashFlowImpact: 5447.5 * 0.05,
+      sensitivityLevel: 'Bajo',
+      elasticityIndex: 35,
+      rationale: 'Reembolso por Ley 403; giro predecible con bajo margen de desviación.'
+    },
+
+    // --- GASTOS ---
+    {
+      code: '2.1.1',
+      name: 'Gastos de Personal (Nómina Maestro)',
+      type: 'GASTO',
+      category: 'Egresos Obligatorios',
+      amountM: 369650.4,
+      sharePct: totalSimGasPagoM > 0 ? (369650.4 / totalSimGasPagoM) * 100 : 70.0,
+      cashFlowImpact: 369650.4 * 0.05, // 5% shock = $18.482M
+      sensitivityLevel: 'Crítico',
+      elasticityIndex: 98,
+      rationale: 'Mayor rubro de gasto de la Universidad. Un incremento del 5% exige $18.482M adicionales de caja.'
+    },
+    {
+      code: '2.1.2',
+      name: 'Gastos de Funcionamiento y Operación',
+      type: 'GASTO',
+      category: 'Servicios y Mantenimiento',
+      amountM: 124447.1,
+      sharePct: totalSimGasPagoM > 0 ? (124447.1 / totalSimGasPagoM) * 100 : 23.5,
+      cashFlowImpact: 124447.1 * 0.05,
+      sensitivityLevel: 'Crítico',
+      elasticityIndex: 85,
+      rationale: 'Servicios públicos, vigilancia, aseo e insumos operativos; alta sensibilidad a la inflación.'
+    },
+    {
+      code: '2.3',
+      name: 'Gastos de Inversión (Tope ≤70%)',
+      type: 'GASTO',
+      category: 'Infraestructura y Laboratorios',
       amountM: 13347.9,
       sharePct: totalSimGasPagoM > 0 ? (13347.9 / totalSimGasPagoM) * 100 : 2.5,
-      cashFlowImpact: 13347.9,
+      cashFlowImpact: 13347.9 * 0.05,
+      sensitivityLevel: 'Alto',
+      elasticityIndex: 70,
+      rationale: 'Obras y dotaciones; acotado por la restricción histórica estructural de ejecución (≤70%).'
+    },
+    {
+      code: '2.1.3',
+      name: 'Transferencias Corrientes',
+      type: 'GASTO',
+      category: 'Subsidios y Fondos',
+      amountM: 5090.3,
+      sharePct: totalSimGasPagoM > 0 ? (5090.3 / totalSimGasPagoM) * 100 : 1.0,
+      cashFlowImpact: 5090.3 * 0.05,
       sensitivityLevel: 'Medio',
-      rationale: 'Acotado por restricción estructural histórica (≤70% de ejecución efectiva).'
+      elasticityIndex: 45,
+      rationale: 'Subsidios y transferencias ejecutadas al 99.9% en primer semestre; bajo riesgo de desviación.'
+    },
+    {
+      code: '2.1.8',
+      name: 'Tasas, Multas y Contribuciones',
+      type: 'GASTO',
+      category: 'Obligaciones Tributarias',
+      amountM: 3908.4,
+      sharePct: totalSimGasPagoM > 0 ? (3908.4 / totalSimGasPagoM) * 100 : 0.7,
+      cashFlowImpact: 3908.4 * 0.05,
+      sensitivityLevel: 'Bajo',
+      elasticityIndex: 30,
+      rationale: 'Pagos regulatorios e impuestos locales liquidados al día con calendarios fijos.'
+    },
+    {
+      code: '2.2.2',
+      name: 'Servicios de la Deuda',
+      type: 'GASTO',
+      category: 'Amortización Financiera',
+      amountM: 0,
+      sharePct: 0,
+      cashFlowImpact: 0,
+      sensitivityLevel: 'Bajo',
+      elasticityIndex: 0,
+      rationale: 'La universidad no registra pasivos bancarios en amortización durante la vigencia 2026.'
     }
   ];
 

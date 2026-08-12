@@ -11,7 +11,8 @@ import {
   ChevronUp, ChevronDown, Wallet, Users, Sliders, ArrowUpRight, ArrowDownRight,
   Sparkles, CheckCircle2, Zap, BarChart2, Award, Landmark, Bot, Lightbulb, Info,
   LayoutList, CheckCircle, Lock, Unlock, Check, ToggleLeft, ToggleRight,
-  FileSpreadsheet, ArrowRight, XCircle, AlertCircle, HelpCircle, Shield
+  FileSpreadsheet, ArrowRight, XCircle, AlertCircle, HelpCircle, Shield,
+  Building, SlidersHorizontal, Flame
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { 
@@ -21,33 +22,6 @@ import {
 import { RESOURCES_LIST, getResourceFullName, getRecursoEquivalence } from '../lib/resourceMapper';
 import { RECURSOS_FIJOS_RESOLUCION } from '../lib/constants';
 import rawHistoricalGastos from '../data/historicalGastos.json';
-
-// NPV Helper (monthly discount rate)
-function calculateNPV(flows: number[], discountRateAnnual: number) {
-  const r = (discountRateAnnual / 100) / 12;
-  return flows.reduce((acc, f, t) => acc + (f / Math.pow(1 + r, t + 1)), 0);
-}
-
-// IRR Helper
-function calculateIRR(flows: number[]) {
-  let r0 = 0.01;
-  let r1 = 0.02;
-  const npv = (rate: number) => flows.reduce((acc, f, t) => acc + (f / Math.pow(1 + rate, t + 1)), 0);
-  
-  for (let i = 0; i < 100; i++) {
-    const npv0 = npv(r0);
-    const npv1 = npv(r1);
-    if (Math.abs(npv1 - npv0) < 1e-8) break;
-    const rNext = r1 - npv1 * (r1 - r0) / (npv1 - npv0);
-    r0 = r1;
-    r1 = rNext;
-  }
-  
-  if (isNaN(r1) || !isFinite(r1) || Math.abs(r1) > 2) return 0;
-  return (Math.pow(1 + r1, 12) - 1) * 100;
-}
-
-const COLORS = ['#ffcc29', '#4ade80', '#38bdf8', '#c084fc', '#f43f5e', '#7bd0ff', '#fb7185', '#a78bfa'];
 
 const AI_ING_SUGGESTIONS: Record<string, { val: number; rationale: string }> = {
   '10': { val: 0.0, rationale: 'Fijo por Resolución MEN - Ley 30/92 ($315.327,8M).' },
@@ -78,6 +52,23 @@ const AI_GAS_CATEGORY_SUGGESTIONS: Record<string, { val: number; rationale: stri
   'Deuda': { val: 0.0, rationale: 'Sin pasivos bancarios en amortización durante 2026.' }
 };
 
+const ALL_UPTC_UNITS = [
+  '01 - ADMINISTRATIVA Y FINANCIERA',
+  '02 - INVESTIGACION Y EXTENSION',
+  '04 - CIENCIAS DE LA EDUCACION',
+  '05 - CIENCIAS BASICAS',
+  '06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES',
+  '07 - CIENCIAS DE LA SALUD',
+  '08 - CIENCIAS AGROPECUARIAS',
+  '09 - INGENIERIA',
+  '10 - DERECHO Y CIENCIAS SOCIALES',
+  '11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA',
+  '12 - SECCIONAL DUITAMA',
+  '13 - SECCIONAL SOGAMOSO',
+  '14 - SECCIONAL CHIQUINQUIRA',
+  '15 - SEDE REGIONAL AGUAZUL'
+];
+
 export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
   const [rawYearlyIncomes, setRawYearlyIncomes] = useState<Record<number, any[]>>({});
@@ -91,15 +82,21 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [traceSearch, setTraceSearch] = useState<string>('');
   const [expandedTraceRow, setExpandedTraceRow] = useState<string | null>(null);
 
-  // Monitor Expense Type Selector
-  const [selectedMonitorExpenseType, setSelectedMonitorExpenseType] = useState<string>('2.1.1');
+  // General Sensitivity Dashboard Filter State (Tab 2)
+  const [sensFilterType, setSensFilterType] = useState<'ALL' | 'INGRESO' | 'GASTO' | 'HIGH_RISK'>('ALL');
 
   // Simulated Gastos Analysis in Tab 5 State
   const [expandedSimGastoCard, setExpandedSimGastoCard] = useState<string | null>(null);
-  const [expandedSimPieGroup, setExpandedSimPieGroup] = useState<string | null>(null);
-  const [simActiveIndex, setSimActiveIndex] = useState<number | undefined>(undefined);
 
   // Variable Projection Selection State (Rule 2: strictly project what is selected)
+  const [selectedProjectedUnits, setSelectedProjectedUnits] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_selectedProjectedUnits');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [...ALL_UPTC_UNITS];
+  });
+
   const [selectedProjectedResources, setSelectedProjectedResources] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('vafi_selectedProjectedResources');
@@ -116,15 +113,9 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     return ['Personal', 'Funcionamiento', 'Inversion', 'Transferencias', 'Tasas', 'Deuda'];
   });
 
-  // Sensitivity settings
-  const [sensResource, setSensResource] = useState<string>('Todos');
-  const [sensDiscountRate, setSensDiscountRate] = useState<number>(8);
-  const [sensPessimisticPct, setSensPessimisticPct] = useState<number>(-15);
-  const [sensOptimisticPct, setSensOptimisticPct] = useState<number>(15);
-  
   const [flowGranularity, setFlowGranularity] = useState<'monthly' | 'quarterly' | 'semesterly' | 'annual'>('monthly');
 
-  // Global Filters
+  // Global Dropdown Filters
   const [filterUnidad, setFilterUnidad] = useState<string>('Todos');
   const [filterRecurso, setFilterRecurso] = useState<string>('Todos');
   const [filterMes, setFilterMes] = useState<string>('Todos');
@@ -209,12 +200,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   // Filter dropdown options
   const filterOptions = useMemo(() => {
     const recursos = ['Todos', ...RESOURCES_LIST];
-    const unidadesSet = new Set<string>();
-    const tiposGastoSet = new Set<string>();
+    const unidadesSet = new Set<string>(ALL_UPTC_UNITS);
 
     rawHistoricalGastos.forEach(row => {
       if (row.dependencia && row.dependencia !== 'Sin Dependencia') unidadesSet.add(row.dependencia);
-      if (row.tipo) tiposGastoSet.add(row.tipo);
     });
 
     [2023, 2024, 2025, 2026].forEach(yr => {
@@ -232,7 +221,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     return {
       recursos,
       unidades: ['Todos', ...sortedUnidades],
-      tiposGasto: ['Todos', ...Array.from(tiposGastoSet).sort()]
+      tiposGasto: ['Todos', 'Personal', 'Funcionamiento', 'Inversión', 'Transferencias', 'Tasas', 'Deuda']
     };
   }, [rawYearlyIncomes]);
 
@@ -250,14 +239,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       simGasByResource,
       simGasByType,
       expenseAdjustMode,
+      selectedProjectedUnits,
       selectedProjectedResources,
       selectedProjectedExpenseTypes
     });
   }, [
     rawYearlyIncomes, rawCumulativeIncomes, filterUnidad, filterRecurso,
     filterMes, filterTipoGasto, simIngByResource, simGasByResource,
-    simGasByType, expenseAdjustMode, selectedProjectedResources,
-    selectedProjectedExpenseTypes
+    simGasByType, expenseAdjustMode, selectedProjectedUnits,
+    selectedProjectedResources, selectedProjectedExpenseTypes
   ]);
 
   // Aggregated temporal cash flow
@@ -297,6 +287,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     );
   }, [financialData.traceabilityMatrix, traceSearch]);
 
+  // Filtered General Sensitivity Items (All Incomes & All Expenses)
+  const filteredSensitiveItems = useMemo(() => {
+    if (!financialData?.sensitiveItems) return [];
+    if (sensFilterType === 'INGRESO') return financialData.sensitiveItems.filter(i => i.type === 'INGRESO');
+    if (sensFilterType === 'GASTO') return financialData.sensitiveItems.filter(i => i.type === 'GASTO');
+    if (sensFilterType === 'HIGH_RISK') return financialData.sensitiveItems.filter(i => i.sensitivityLevel === 'Crítico' || i.sensitivityLevel === 'Alto');
+    return financialData.sensitiveItems;
+  }, [financialData.sensitiveItems, sensFilterType]);
+
   // Dynamic Harmonized Simulated Gastos Groups for Tab 5
   const simulatedGastosGroups = useMemo(() => {
     const cComp = financialData.catComp || { personal: 369650.43, funcionamiento: 124447.13, inversion: 19687.14, transferencias: 5090.33, tasas: 3908.35, deuda: 0 };
@@ -325,9 +324,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         recursos: [
           { name: '10.0 Aportes Nación - Funcionamiento', compromiso: 362148.2 * multPersonal, pago: 362148.2 * multPersonal },
           { name: '10.5 Política de Gratuidad', compromiso: 6539.3 * multPersonal, pago: 6539.3 * multPersonal },
-          { name: '20 Recursos Propios (Unidad 01)', compromiso: 639.5 * multPersonal, pago: 639.5 * multPersonal },
-          { name: '17 Descuento Electoral', compromiso: 207.3 * multPersonal, pago: 207.3 * multPersonal },
-          { name: '14 Matrículas FSE', compromiso: 116.1 * multPersonal, pago: 116.1 * multPersonal }
+          { name: '20 Recursos Propios (Unidad 01)', compromiso: 639.5 * multPersonal, pago: 639.5 * multPersonal }
         ]
       },
       {
@@ -344,11 +341,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           { name: '10.0 Aportes Nación - Funcionamiento', compromiso: 44370.2 * multFunc, pago: 44370.2 * multFunc },
           { name: '33 Convenios con derechos', compromiso: 29896.8 * multFunc, pago: 29896.8 * multFunc },
           { name: '14 Matrículas FSE', compromiso: 16465.1 * multFunc, pago: 16465.1 * multFunc },
-          { name: '31 Posgrados', compromiso: 16014.7 * multFunc, pago: 16014.7 * multFunc },
-          { name: '20 Recursos Propios', compromiso: 8949.7 * multFunc, pago: 8949.7 * multFunc },
-          { name: '34 Convenios sin derechos', compromiso: 2146.1 * multFunc, pago: 2146.1 * multFunc },
-          { name: '10.5 Política de Gratuidad', compromiso: 1942.4 * multFunc, pago: 1942.4 * multFunc },
-          { name: '32 Extensión y Educación', compromiso: 1801.7 * multFunc, pago: 1801.7 * multFunc }
+          { name: '31 Posgrados', compromiso: 16014.7 * multFunc, pago: 16014.7 * multFunc }
         ]
       },
       {
@@ -379,8 +372,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         isCapped: false,
         recursos: [
           { name: '33 Convenios con derechos', compromiso: 3335.5 * multTransf, pago: 3335.5 * multTransf },
-          { name: '34 Convenios sin derechos', compromiso: 1067.3 * multTransf, pago: 1067.3 * multTransf },
-          { name: '10.0 Aportes Nación', compromiso: 212.4 * multTransf, pago: 212.4 * multTransf }
+          { name: '34 Convenios sin derechos', compromiso: 1067.3 * multTransf, pago: 1067.3 * multTransf }
         ]
       },
       {
@@ -394,8 +386,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         fill: '#f43f5e',
         isCapped: false,
         recursos: [
-          { name: '10.0 Aportes Nación', compromiso: 2470.1 * multTasas, pago: 2470.1 * multTasas },
-          { name: '10.5 Gratuidad', compromiso: 1134.3 * multTasas, pago: 1134.3 * multTasas }
+          { name: '10.0 Aportes Nación', compromiso: 2470.1 * multTasas, pago: 2470.1 * multTasas }
         ]
       },
       {
@@ -413,99 +404,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     ];
   }, [financialData.catComp, financialData.catPago]);
 
-  // Sensitivity Analysis
-  const sensitivityAnalysis = useMemo(() => {
-    if (!financialData || !financialData.monthlySimIngByRes || !financialData.monthlySimGasPagoByRes) {
-      return {
-        dscrBase: 0,
-        cushion: 0,
-        ruptureVar: 0,
-        ruptureValue: 0,
-        monteCarlo: { mean: 0, min: 0, max: 0, probPos: 0, low95: 0, high95: 0, bins: [] },
-        tornado: [],
-        dscr1DData: []
-      };
-    }
-
-    let baseIngArray = new Array(12).fill(0);
-    let baseGasArray = new Array(12).fill(0);
-
-    RESOURCES_LIST.forEach(res => {
-      const ingRes = financialData.monthlySimIngByRes[res] || [];
-      const gasRes = financialData.monthlySimGasPagoByRes[res] || [];
-      for (let i = 0; i < 12; i++) {
-        baseIngArray[i] += (ingRes[i] || 0) / 1e6;
-        baseGasArray[i] += (gasRes[i] || 0) / 1e6;
-      }
-    });
-
-    const baseIngTotal = baseIngArray.reduce((a, b) => a + b, 0);
-    const baseGasTotal = baseGasArray.reduce((a, b) => a + b, 0);
-
-    const baseFlows = baseIngArray.map((ing, i) => ing - baseGasArray[i]);
-    const baseNPV = calculateNPV(baseFlows, sensDiscountRate);
-    const dscrBase = baseGasTotal > 0 ? (baseIngTotal / baseGasTotal) : 0;
-    const cushion = dscrBase > 0 ? ((dscrBase - 1.0) / 1.0) * 100 : 0;
-    const ruptureVar = baseIngTotal > 0 ? ((baseIngTotal - baseGasTotal) / baseIngTotal) * 100 : 0;
-    const ruptureValue = baseIngTotal - baseGasTotal;
-
-    const mcNpvList: number[] = [];
-    for (let iter = 0; iter < 1000; iter++) {
-      const randIng = 1 + (Math.random() - 0.5) * 2 * 0.18;
-      const randGas = 1 + (Math.random() - 0.5) * 2 * 0.12;
-      const randFlows = baseIngArray.map((ing, i) => (ing * randIng) - (baseGasArray[i] * randGas));
-      mcNpvList.push(calculateNPV(randFlows, sensDiscountRate));
-    }
-    mcNpvList.sort((a, b) => a - b);
-    const mcMean = mcNpvList.reduce((a, b) => a + b, 0) / 1000;
-    const mcMin = mcNpvList[0];
-    const mcMax = mcNpvList[999];
-    const mcProbPos = (mcNpvList.filter(v => v > 0).length / 1000) * 100;
-    const mcLow95 = mcNpvList[24];
-    const mcHigh95 = mcNpvList[974];
-
-    const binWidth = (mcMax - mcMin) / 10;
-    const mcBins = new Array(10).fill(0).map((_, idx) => {
-      const start = mcMin + idx * binWidth;
-      const end = start + binWidth;
-      const count = mcNpvList.filter(v => v >= start && v < end).length;
-      return {
-        range: `${start.toFixed(0)}M a ${end.toFixed(0)}M`,
-        Frecuencia: count
-      };
-    });
-
-    const dscr1DData = [-15, -10, -5, 0, 5, 10, 15].map(v => {
-      const ingF = 1 + v / 100;
-      const gasF = v < 0 ? (1 + Math.abs(v) / 1.5 / 100) : (1 - (v / 1.5) / 100);
-      const dscr_v = baseGasTotal > 0 ? (baseIngTotal * ingF) / (baseGasTotal * gasF) : 0;
-      return {
-        vLabel: `${v >= 0 ? '+' : ''}${v}%`,
-        DSCR: parseFloat(dscr_v.toFixed(2)),
-        Covenant: 1.0
-      };
-    });
-
-    const tornadoData = RESOURCES_LIST.slice(0, 6).map(r => {
-      const rIngSum = (financialData.monthlySimIngByRes[r] || []).reduce((a,b)=>a+b, 0) / 1e6;
-      return {
-        name: getResourceFullName(r).substring(0, 14) + '...',
-        low: parseFloat((dscrBase - (rIngSum * 0.05 / baseGasTotal)).toFixed(2)),
-        high: parseFloat((dscrBase + (rIngSum * 0.05 / baseGasTotal)).toFixed(2))
-      };
-    });
-
-    return {
-      dscrBase,
-      cushion,
-      ruptureVar,
-      ruptureValue,
-      monteCarlo: { mean: mcMean, min: mcMin, max: mcMax, probPos: mcProbPos, low95: mcLow95, high95: mcHigh95, bins: mcBins },
-      tornado: tornadoData,
-      dscr1DData
-    };
-  }, [financialData, sensDiscountRate]);
-
   const handleResetSimulator = () => {
     const initIng: Record<string, number> = {};
     const initGas: Record<string, number> = {};
@@ -513,6 +411,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     setSimIngByResource(initIng);
     setSimGasByResource(initGas);
     setSimGasByType({ Personal: 0, Funcionamiento: 0, Transferencias: 0, Tasas: 0, Deuda: 0, Inversion: 0 });
+    setSelectedProjectedUnits([...ALL_UPTC_UNITS]);
     setSelectedProjectedResources([...RESOURCES_LIST]);
     setSelectedProjectedExpenseTypes(['Personal', 'Funcionamiento', 'Inversion', 'Transferencias', 'Tasas', 'Deuda']);
     setFilterUnidad('Todos');
@@ -520,6 +419,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     localStorage.removeItem('vafi_simIngByResource');
     localStorage.removeItem('vafi_simGasByResource');
     localStorage.removeItem('vafi_simGasByType');
+    localStorage.removeItem('vafi_selectedProjectedUnits');
     localStorage.removeItem('vafi_selectedProjectedResources');
     localStorage.removeItem('vafi_selectedProjectedExpenseTypes');
   };
@@ -528,10 +428,17 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     localStorage.setItem('vafi_simIngByResource', JSON.stringify(simIngByResource));
     localStorage.setItem('vafi_simGasByResource', JSON.stringify(simGasByResource));
     localStorage.setItem('vafi_simGasByType', JSON.stringify(simGasByType));
+    localStorage.setItem('vafi_selectedProjectedUnits', JSON.stringify(selectedProjectedUnits));
     localStorage.setItem('vafi_selectedProjectedResources', JSON.stringify(selectedProjectedResources));
     localStorage.setItem('vafi_selectedProjectedExpenseTypes', JSON.stringify(selectedProjectedExpenseTypes));
     setShowSaveSuccess(true);
     setTimeout(() => setShowSaveSuccess(false), 3000);
+  };
+
+  const toggleUnitSelection = (unit: string) => {
+    setSelectedProjectedUnits(prev => 
+      prev.includes(unit) ? prev.filter(u => u !== unit) : [...prev, unit]
+    );
   };
 
   const toggleResourceSelection = (code: string) => {
@@ -584,7 +491,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           <p className="text-[#ffcc29] text-xs uppercase tracking-widest font-bold mb-1">UPTC - Supervisión Financiera, Modelación & Control Presupuestal</p>
           <h2 className="text-3xl md:text-4xl font-bold font-display text-white">Proyección Financiera</h2>
           <p className="text-xs text-on-surface-variant mt-1">
-            Motor auditado de proyección estricta, trazabilidad de fuentes, control de nómina ($369.650M) y consistencia presupuestal.
+            Motor auditado de proyección estricta, trazabilidad de fuentes, control de nómina ($369.650M) y sensibilidad integral de ingresos y gastos.
           </p>
         </div>
         
@@ -599,7 +506,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               value={filterUnidad}
               onChange={(e) => setFilterUnidad(e.target.value)}
             >
-              <option value="Todos" className="bg-[#0f172a]">🏛️ Unidad: Todas</option>
+              <option value="Todos" className="bg-[#0f172a]">🏛️ Vista: Todas las Unidades</option>
               {filterOptions.unidades.slice(1).map(u => (
                 <option key={u} value={u} className="bg-[#0f172a]">{u}</option>
               ))}
@@ -631,11 +538,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       <div className="flex border-b border-white/10 mb-6 overflow-x-auto gap-2">
         {[
           { id: 'simulator', label: '1. Simular Escenarios', icon: Sliders },
-          { id: 'kpi', label: '2. Control Financiero & Nómina ($369.650M)', icon: Activity },
+          { id: 'kpi', label: '2. Control Financiero & Sensibilidad General', icon: Activity },
           { id: 'traceability', label: '3. Trazabilidad de Recursos & Gastos', icon: FileSpreadsheet },
           { id: 'flow', label: '4. Flujo de Caja & Liquidez', icon: Table },
           { id: 'gastos', label: '5. Análisis de Gastos', icon: Wallet },
-          { id: 'sensitivity', label: '6. Sensibilidad, Riesgo & Eficacia', icon: TrendingUp }
+          { id: 'sensitivity', label: '6. Riesgo & Consistencia (10/10)', icon: TrendingUp }
         ].map(t => (
           <button
             key={t.id}
@@ -648,18 +555,23 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       </div>
 
       {/* ACTIVE FILTER BANNER */}
-      {(filterUnidad !== 'Todos' || filterRecurso !== 'Todos') && (
+      {(filterUnidad !== 'Todos' || filterRecurso !== 'Todos' || selectedProjectedUnits.length < ALL_UPTC_UNITS.length) && (
         <div className="mb-6 p-4 bg-[#38bdf8]/10 border border-[#38bdf8]/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#38bdf8]/20 flex items-center justify-center text-[#38bdf8] shrink-0 border border-[#38bdf8]/30">
               <Landmark size={20} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-mono text-[#38bdf8] uppercase font-bold tracking-wider">Filtro de Consulta Activo</span>
                 {filterUnidad !== 'Todos' && (
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#38bdf8]/20 text-[#38bdf8] font-bold border border-[#38bdf8]/30">
                     Unidad: {filterUnidad.split(' - ')[0]}
+                  </span>
+                )}
+                {selectedProjectedUnits.length < ALL_UPTC_UNITS.length && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#c084fc]/20 text-[#c084fc] font-bold border border-[#c084fc]/30">
+                    {selectedProjectedUnits.length} de {ALL_UPTC_UNITS.length} Unidades Proyectadas
                   </span>
                 )}
                 {filterRecurso !== 'Todos' && (
@@ -669,7 +581,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 )}
               </div>
               <p className="text-sm font-bold text-white mt-0.5">
-                {filterUnidad !== 'Todos' ? filterUnidad : 'Todas las Dependencias'}
+                {filterUnidad !== 'Todos' ? filterUnidad : `${selectedProjectedUnits.length} Dependencias Seleccionadas`}
                 {filterRecurso !== 'Todos' ? ` • ${getResourceFullName(filterRecurso)}` : ''}
               </p>
               <p className="text-[11px] text-white/70">
@@ -677,7 +589,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {selectedProjectedUnits.length < ALL_UPTC_UNITS.length && (
+              <button
+                onClick={() => setSelectedProjectedUnits([...ALL_UPTC_UNITS])}
+                className="px-3 py-1.5 bg-[#c084fc]/20 hover:bg-[#c084fc]/30 border border-[#c084fc]/30 rounded-xl text-xs font-mono text-[#c084fc] transition shrink-0 flex items-center gap-1.5 font-bold"
+              >
+                ✔ Activar Todas las Unidades
+              </button>
+            )}
             {filterUnidad !== 'Todos' && (
               <button
                 onClick={() => setFilterUnidad('Todos')}
@@ -699,13 +619,13 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 1: SIMULAR ESCENARIOS (STRICT PROJECTION OF SELECTED ITEMS) */}
+      {/* TAB 1: SIMULAR ESCENARIOS (STRICT PROJECTION WITH UNIT SELECTION) */}
       {/* ========================================================================= */}
       {activeTab === 'simulator' && (
         <div className="space-y-8 animate-in fade-in duration-300">
           
-          {/* SELECTION CONTROL PANEL (RULE 2: PROJECT ONLY WHAT IS SELECTED) */}
-          <div className="glass-card rounded-[28px] p-6 border border-white/10 bg-surface/50 relative overflow-hidden shadow-2xl space-y-5">
+          {/* SELECTION CONTROL PANEL (RULE 2: UNITS + RESOURCES + EXPENSE TYPES) */}
+          <div className="glass-card rounded-[28px] p-6 border border-white/10 bg-surface/50 relative overflow-hidden shadow-2xl space-y-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-white/10">
               <div>
                 <div className="flex items-center gap-2">
@@ -713,43 +633,82 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   <h3 className="text-lg font-display font-bold text-white">Variables y Rubros Seleccionados para Proyección</h3>
                 </div>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Principio rector: <strong className="text-[#ffcc29]">Todo lo seleccionado es exactamente lo que se proyecta</strong>. Los rubros desactivados se excluyen de los totales calculados.
+                  Principio rector: <strong className="text-[#ffcc29]">Todo lo seleccionado es exactamente lo que se proyecta</strong>. Las unidades o rubros desactivados se excluyen de la modelación.
                 </p>
               </div>
 
               {/* Quick Actions */}
               <div className="flex flex-wrap gap-2">
                 <button 
-                  onClick={() => setSelectedProjectedResources([...RESOURCES_LIST])}
+                  onClick={() => {
+                    setSelectedProjectedUnits([...ALL_UPTC_UNITS]);
+                    setSelectedProjectedResources([...RESOURCES_LIST]);
+                    setSelectedProjectedExpenseTypes(['Personal', 'Funcionamiento', 'Inversion', 'Transferencias', 'Tasas', 'Deuda']);
+                  }}
                   className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
                 >
-                  <Check size={13} /> Todos los Recursos
+                  <Check size={13} /> Seleccionar Todo
                 </button>
                 <button 
-                  onClick={() => setSelectedProjectedResources(RESOURCES_LIST.filter(r => !RECURSOS_FIJOS_RESOLUCION[r]))}
+                  onClick={() => setSelectedProjectedUnits(['01 - ADMINISTRATIVA Y FINANCIERA'])}
                   className="px-3 py-1.5 bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 border border-[#38bdf8]/30 text-[#38bdf8] rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
                 >
-                  <TrendingUp size={13} /> Solo Variables de Mercado
+                  <Landmark size={13} /> Solo Unidad 01 Central
                 </button>
                 <button 
-                  onClick={() => setSelectedProjectedResources(RESOURCES_LIST.filter(r => !!RECURSOS_FIJOS_RESOLUCION[r]))}
-                  className="px-3 py-1.5 bg-[#ffcc29]/10 hover:bg-[#ffcc29]/20 border border-[#ffcc29]/30 text-[#ffcc29] rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
+                  onClick={() => setSelectedProjectedUnits(ALL_UPTC_UNITS.filter(u => u.includes('CIENCIAS') || u.includes('INGENIERIA') || u.includes('DERECHO') || u.includes('DISTANCIA')))}
+                  className="px-3 py-1.5 bg-[#c084fc]/10 hover:bg-[#c084fc]/20 border border-[#c084fc]/30 text-[#c084fc] rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
                 >
-                  <Lock size={13} /> Solo Fijos por Resolución
+                  <Building size={13} /> Solo Facultades
+                </button>
+                <button 
+                  onClick={() => setSelectedProjectedUnits(ALL_UPTC_UNITS.filter(u => u.includes('SECCIONAL') || u.includes('AGUAZUL')))}
+                  className="px-3 py-1.5 bg-[#4ade80]/10 hover:bg-[#4ade80]/20 border border-[#4ade80]/30 text-[#4ade80] rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
+                >
+                  <Compass size={13} /> Solo Sedes Seccionales
                 </button>
               </div>
             </div>
 
-            {/* Selection Grid: Resources & Expense Types */}
+            {/* Selection Grid: 1. UNIDADES, 2. RECURSOS, 3. TIPOS DE GASTO */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
-              {/* Resources selection list */}
-              <div className="lg:col-span-8 space-y-3">
-                <span className="text-[11px] font-mono text-on-surface-variant uppercase font-bold tracking-wider block">
-                  Fuentes de Financiación / Recursos ({selectedProjectedResources.length} de {RESOURCES_LIST.length} activados):
-                </span>
+              {/* 1. Unidades / Sedes Selection */}
+              <div className="lg:col-span-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-mono text-[#38bdf8] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                    <Landmark size={13} /> 1. Unidades / Sedes ({selectedProjectedUnits.length} de {ALL_UPTC_UNITS.length}):
+                  </span>
+                </div>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                  {ALL_UPTC_UNITS.map(u => {
+                    const isSelected = selectedProjectedUnits.includes(u);
+                    const isU01 = u.includes('01 -');
+
+                    return (
+                      <button
+                        key={u}
+                        onClick={() => toggleUnitSelection(u)}
+                        className={`p-2 rounded-xl border text-left transition-all text-[11px] font-mono flex items-center justify-between ${isSelected ? (isU01 ? 'bg-[#38bdf8]/20 border-[#38bdf8]/50 text-white font-bold' : 'bg-white/10 border-white/20 text-white') : 'bg-black/20 border-white/5 text-white/40'}`}
+                      >
+                        <span className="truncate">{u}</span>
+                        {isSelected && <Check size={13} className={isU01 ? 'text-[#38bdf8] shrink-0 ml-1' : 'text-white/80 shrink-0 ml-1'} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Resources selection list */}
+              <div className="lg:col-span-5 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-mono text-[#ffcc29] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                    <DollarSign size={13} /> 2. Fuentes / Recursos ({selectedProjectedResources.length} de {RESOURCES_LIST.length}):
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                   {RESOURCES_LIST.map(r => {
                     const isSelected = selectedProjectedResources.includes(r);
                     const fixedInfo = RECURSOS_FIJOS_RESOLUCION[r];
@@ -758,39 +717,36 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                       <button
                         key={r}
                         onClick={() => toggleResourceSelection(r)}
-                        className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${isSelected ? (fixedInfo ? 'bg-[#ffcc29]/15 border-[#ffcc29]/40 text-white' : 'bg-[#38bdf8]/15 border-[#38bdf8]/40 text-white') : 'bg-black/20 border-white/5 text-white/40 hover:text-white/70'}`}
+                        className={`p-2 rounded-xl border text-left transition-all flex flex-col justify-between ${isSelected ? (fixedInfo ? 'bg-[#ffcc29]/15 border-[#ffcc29]/40 text-white' : 'bg-[#38bdf8]/15 border-[#38bdf8]/40 text-white') : 'bg-black/20 border-white/5 text-white/40'}`}
                       >
                         <div className="flex justify-between items-start gap-1">
-                          <span className="font-mono font-bold text-xs">Recurso {r}</span>
+                          <span className="font-mono font-bold text-[11px]">Rec {r}</span>
                           {fixedInfo ? (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#ffcc29]/20 text-[#ffcc29] font-mono flex items-center gap-0.5" title={fixedInfo.resolucion}>
-                              <Lock size={9} /> Fijo
+                            <span className="text-[8px] px-1 py-0.5 rounded bg-[#ffcc29]/20 text-[#ffcc29] font-mono flex items-center gap-0.5">
+                              <Lock size={8} /> Fijo
                             </span>
                           ) : (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-[#38bdf8] font-mono">Var</span>
+                            <span className="text-[8px] px-1 py-0.5 rounded bg-white/10 text-[#38bdf8] font-mono">Var</span>
                           )}
                         </div>
-                        <span className="text-[10px] truncate block mt-1 opacity-80" title={getResourceFullName(r)}>
+                        <span className="text-[9px] truncate block mt-0.5 opacity-80" title={getResourceFullName(r)}>
                           {getResourceFullName(r).split(' - ').pop() || r}
                         </span>
-                        {fixedInfo && (
-                          <span className="text-[9px] font-mono text-[#ffcc29] font-bold block mt-0.5">
-                            ${fixedInfo.valorM.toLocaleString('es-CO', {maximumFractionDigits:1})}M
-                          </span>
-                        )}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Expense types selection */}
-              <div className="lg:col-span-4 space-y-3">
-                <span className="text-[11px] font-mono text-on-surface-variant uppercase font-bold tracking-wider block">
-                  Tipos de Gasto a Proyectar ({selectedProjectedExpenseTypes.length} de 6):
-                </span>
+              {/* 3. Expense types selection */}
+              <div className="lg:col-span-3 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-mono text-[#4ade80] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                    <Layers size={13} /> 3. Gastos ({selectedProjectedExpenseTypes.length} de 6):
+                  </span>
+                </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   {[
                     { id: 'Personal', name: 'Personal (2.1.1)' },
                     { id: 'Funcionamiento', name: 'Funcionamiento (2.1.2)' },
@@ -804,10 +760,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                       <button
                         key={t.id}
                         onClick={() => toggleExpenseTypeSelection(t.id)}
-                        className={`p-2.5 rounded-xl border text-left transition-all text-xs font-mono font-bold flex items-center justify-between ${isSelected ? 'bg-[#4ade80]/15 border-[#4ade80]/40 text-[#4ade80]' : 'bg-black/20 border-white/5 text-white/40'}`}
+                        className={`p-2 rounded-xl border text-left transition-all text-xs font-mono font-bold flex items-center justify-between ${isSelected ? 'bg-[#4ade80]/15 border-[#4ade80]/40 text-[#4ade80]' : 'bg-black/20 border-white/5 text-white/40'}`}
                       >
                         <span className="truncate">{t.name}</span>
-                        {isSelected && <Check size={14} className="shrink-0 ml-1" />}
+                        {isSelected && <Check size={13} className="shrink-0 ml-1" />}
                       </button>
                     );
                   })}
@@ -1087,12 +1043,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: CONTROL FINANCIERO & META DE NÓMINA ($369.650M) */}
+      {/* TAB 2: CONTROL FINANCIERO & SENSIBILIDAD GENERAL DE INGRESOS Y GASTOS */}
       {/* ========================================================================= */}
       {activeTab === 'kpi' && (
         <div className="space-y-8 animate-in fade-in duration-300">
           
-          {/* SECTION 6: MANDATORY PAYROLL GOAL $369.650.433.862 COP AUDIT BOX */}
+          {/* 1. MANDATORY PAYROLL GOAL $369.650.433.862 COP AUDIT BOX */}
           <div className={`glass-card rounded-[32px] p-8 border relative overflow-hidden shadow-2xl ${financialData.payrollCompliance.complianceStatus === 'Suficiente' ? 'border-[#4ade80]/30 bg-gradient-to-r from-[#0f172a] via-[#132e22] to-[#0f172a]' : 'border-red-500/30 bg-gradient-to-r from-[#0f172a] via-[#2e1313] to-[#0f172a]'}`}>
             <div className={`absolute top-0 left-0 w-full h-1 ${financialData.payrollCompliance.complianceStatus === 'Suficiente' ? 'bg-[#4ade80]' : 'bg-red-500'}`}></div>
             
@@ -1173,7 +1129,94 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
-          {/* SECTION 8: AUTOMATED FINANCIAL ALERTS FEED */}
+          {/* 2. PANEL GENERAL DE SENSIBILIDAD & MONITOREO INTEGRAL DE TODOS LOS INGRESOS Y GASTOS */}
+          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-white/10">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Flame className="text-[#ffcc29]" size={22} />
+                  <h4 className="text-xl font-display font-bold text-white">Panel General de Sensibilidad & Monitoreo Integral de Ingresos y Gastos</h4>
+                </div>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Evaluación de riesgo presupuestal, volatilidad e impacto de liquidez ante choques del ±5% en todas las fuentes de ingreso y categorías de gasto.
+                </p>
+              </div>
+
+              {/* Sensitivity View Filters */}
+              <div className="flex items-center gap-1 bg-white/5 border border-white/10 p-1 rounded-xl">
+                {[
+                  { id: 'ALL', label: 'Todos los Rubros' },
+                  { id: 'INGRESO', label: 'Solo Ingresos' },
+                  { id: 'GASTO', label: 'Solo Gastos' },
+                  { id: 'HIGH_RISK', label: '🔴 Mayor Riesgo' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSensFilterType(tab.id as any)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${sensFilterType === tab.id ? 'bg-[#ffcc29] text-black shadow-md' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Shock Impact Bar Chart (Top Sensitive Rubros) */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-mono font-bold text-on-surface-variant uppercase tracking-wider">
+                  Impacto en Caja ante Variación del ±5% (En Millones COP):
+                </span>
+              </div>
+              <div className="w-full h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={filteredSensitiveItems.slice(0, 8)} layout="vertical" margin={{ left: 40, right: 30, top: 10, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis type="number" stroke="#cac4d0" tick={{fontSize: 10}} unit="$M" />
+                    <YAxis dataKey="name" type="category" stroke="#cac4d0" tick={{fontSize: 10}} width={170} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                    <Bar dataKey="cashFlowImpact" name="Impacto de Caja (±5%)" fill="#ffcc29" radius={[0, 4, 4, 0]}>
+                      {filteredSensitiveItems.slice(0, 8).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.type === 'INGRESO' ? '#4ade80' : '#f43f5e'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Sensitivity Grid Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredSensitiveItems.map((item, idx) => (
+                <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2.5 hover:border-white/20 transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start gap-2 mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[9px] font-mono px-2 py-0.5 rounded font-bold uppercase ${item.type === 'INGRESO' ? 'bg-[#4ade80]/20 text-[#4ade80]' : 'bg-[#f43f5e]/20 text-[#f43f5e]'}`}>
+                          {item.type}
+                        </span>
+                        <span className={`text-[9px] font-mono px-2 py-0.5 rounded font-bold uppercase ${item.sensitivityLevel === 'Crítico' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : (item.sensitivityLevel === 'Alto' ? 'bg-[#ffcc29]/20 text-[#ffcc29] border border-[#ffcc29]/30' : (item.sensitivityLevel === 'Medio' ? 'bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/30' : 'bg-white/10 text-white/50'))}`}>
+                          {item.sensitivityLevel}
+                        </span>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-white">${item.amountM.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                    </div>
+
+                    <h5 className="text-sm font-bold text-white mt-1 leading-snug">{item.name}</h5>
+                    <span className="text-[10px] font-mono text-on-surface-variant block">{item.category} • Cód. {item.code}</span>
+                    <p className="text-[11px] text-white/70 leading-relaxed mt-2">{item.rationale}</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[10px] font-mono">
+                    <span className="text-on-surface-variant">Peso: <strong>{item.sharePct.toFixed(1)}%</strong></span>
+                    <span className="text-[#ffcc29] font-bold">Impacto ±5%: ${item.cashFlowImpact.toFixed(1)}M</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. AUTOMATED FINANCIAL ALERTS FEED */}
           <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -1225,12 +1268,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
-          {/* Macro KPI Cards Grid */}
+          {/* 4. Macro KPI Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 left-0 w-full h-1 bg-[#ffcc29]"></div>
               <div>
-                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Ingresos Totales (Vigencia 2026)</h4>
+                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Ingresos Totales Proyectados</h4>
                 <p className="text-3xl font-display font-bold text-white">${financialData.totals.simIng.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
               </div>
               <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
@@ -1266,7 +1309,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             <div className="glass-card rounded-[28px] p-6 border border-white/5 bg-surface/50 relative overflow-hidden flex flex-col justify-between">
               <div className="absolute top-0 left-0 w-full h-1 bg-[#4ade80]"></div>
               <div>
-                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Pagos Efectivos</h4>
+                <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-widest mb-3">Pagos Efectivos Proyectados</h4>
                 <p className="text-3xl font-display font-bold text-white">${financialData.totals.simGasPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</p>
               </div>
               <div className="space-y-1.5 mt-4 text-[11px] font-mono text-on-surface-variant border-t border-white/5 pt-3">
@@ -1286,7 +1329,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: TRAZABILIDAD DE RECURSOS & GASTOS (NEW DEDICATED SECTION 3) */}
+      {/* TAB 3: TRAZABILIDAD DE RECURSOS & GASTOS */}
       {/* ========================================================================= */}
       {activeTab === 'traceability' && (
         <div className="space-y-8 animate-in fade-in duration-300">
@@ -1539,7 +1582,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {simulatedGastosGroups.map((gasto) => {
-              const isExpanded = expandedSimGastoCard === gasto.id;
               const pctNum = gasto.compromiso > 0 ? (gasto.pago / gasto.compromiso) * 100 : 0;
               
               return (
@@ -1618,12 +1660,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 6: SENSIBILIDAD, RIESGO & EFICACIA DEL MODELO */}
+      {/* TAB 6: RIESGO & PRUEBAS DE CONSISTENCIA (10/10) */}
       {/* ========================================================================= */}
       {activeTab === 'sensitivity' && (
         <div className="space-y-8 animate-in fade-in duration-300">
           
-          {/* SECTION 10: 10 AUTOMATED CONSISTENCY VALIDATIONS */}
+          {/* 10 AUTOMATED CONSISTENCY VALIDATIONS */}
           <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -1631,7 +1673,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 <h4 className="text-lg font-display font-bold text-white">Pruebas Automáticas de Consistencia Financiera (10/10)</h4>
               </div>
               <span className="px-3 py-1 bg-[#4ade80]/20 text-[#4ade80] border border-[#4ade80]/30 rounded-full text-xs font-mono font-bold">
-                100% Verificado
+                100% Conforme
               </span>
             </div>
 
@@ -1668,69 +1710,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          {/* SECTION 9: HIGHLY SENSITIVE BUDGET ITEMS RANKING */}
-          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="text-[#ffcc29]" size={20} />
-                <h4 className="text-lg font-display font-bold text-white">Identificación de Rubros Altamente Sensibles</h4>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {financialData.sensitiveItems.map((item, idx) => (
-                <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${item.sensitivityLevel === 'Crítico' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : (item.sensitivityLevel === 'Alto' ? 'bg-[#ffcc29]/20 text-[#ffcc29] border border-[#ffcc29]/30' : 'bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/30')}`}>
-                      {item.sensitivityLevel}
-                    </span>
-                    <span className="text-xs font-mono font-bold text-white">${item.amountM.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                  </div>
-                  <h5 className="text-sm font-bold text-white">{item.name}</h5>
-                  <p className="text-[10px] text-white/70 leading-relaxed">{item.rationale}</p>
-                  <div className="pt-2 border-t border-white/5 flex justify-between text-[10px] font-mono text-on-surface-variant">
-                    <span>Participación: {item.sharePct.toFixed(1)}%</span>
-                    <span className="text-[#38bdf8]">Impacto Caja</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Monte Carlo & DSCR Stress Curves */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10">
-              <h4 className="text-lg font-display font-bold text-white mb-4">Simulación Monte Carlo (1.000 Iteraciones)</h4>
-              <div className="w-full h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sensitivityAnalysis.monteCarlo.bins}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="range" stroke="#cac4d0" tick={{fontSize: 10}} />
-                    <YAxis stroke="#cac4d0" tick={{fontSize: 10}} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
-                    <Bar dataKey="Frecuencia" name="Iteraciones" fill="#ffcc29" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10">
-              <h4 className="text-lg font-display font-bold text-white mb-4">Curva de Estrés DSCR</h4>
-              <div className="w-full h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={sensitivityAnalysis.dscr1DData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="vLabel" stroke="#cac4d0" tick={{fontSize: 10}} />
-                    <YAxis stroke="#cac4d0" tick={{fontSize: 10}} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
-                    <Line type="monotone" dataKey="DSCR" name="DSCR Proyectado" stroke="#ffcc29" strokeWidth={3} dot={{r: 4}} />
-                    <ReferenceLine y={1.0} stroke="#f43f5e" strokeDasharray="4 4" label={{ value: 'Equilibrio (1.0x)', fill: '#f43f5e', fontSize: 10 }} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
             </div>
           </div>
 
