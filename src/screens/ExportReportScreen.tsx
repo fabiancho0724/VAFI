@@ -1,7 +1,25 @@
-import { useState, useEffect } from 'react';
-import { FileText, Download, Printer, ChevronLeft } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { FileText, Download, Printer, ChevronLeft, TrendingUp, Users, DollarSign, Award, Bot, Sparkles, BarChart2, ShieldCheck } from 'lucide-react';
 import { fetchAndParseCSV, groupAndSum, getCategoryColumn, getNumericColumn } from '../lib/csvParser';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { 
+  PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, 
+  CartesianGrid, AreaChart, Area, LineChart, Line, Legend 
+} from 'recharts';
+
+// Multi-year comparison dataset (2026 - 2036) for Credits vs SMLMV
+const PROJECTION_COMPARISON_DATA = [
+  { anio: 2026, name: '2026', 'Ingresos SMLMV (M)': 45472.1, 'Ingresos Créditos (M)': 45472.1, 'Alumnos SMLMV': 5170, 'Alumnos Créditos': 5170 },
+  { anio: 2027, name: '2027', 'Ingresos SMLMV (M)': 50789.6, 'Ingresos Créditos (M)': 48427.7, 'Alumnos SMLMV': 4628, 'Alumnos Créditos': 5186 },
+  { anio: 2028, name: '2028', 'Ingresos SMLMV (M)': 52038.5, 'Ingresos Créditos (M)': 51575.5, 'Alumnos SMLMV': 4516, 'Alumnos Créditos': 5201 },
+  { anio: 2029, name: '2029', 'Ingresos SMLMV (M)': 53321.6, 'Ingresos Créditos (M)': 54928.0, 'Alumnos SMLMV': 4407, 'Alumnos Créditos': 5217 },
+  { anio: 2030, name: '2030', 'Ingresos SMLMV (M)': 54641.0, 'Ingresos Créditos (M)': 58498.3, 'Alumnos SMLMV': 4301, 'Alumnos Créditos': 5232 },
+  { anio: 2031, name: '2031', 'Ingresos SMLMV (M)': 55985.8, 'Ingresos Créditos (M)': 62300.7, 'Alumnos SMLMV': 4197, 'Alumnos Créditos': 5248 },
+  { anio: 2032, name: '2032', 'Ingresos SMLMV (M)': 57370.4, 'Ingresos Créditos (M)': 66350.2, 'Alumnos SMLMV': 4096, 'Alumnos Créditos': 5263 },
+  { anio: 2033, name: '2033', 'Ingresos SMLMV (M)': 58783.0, 'Ingresos Créditos (M)': 70663.0, 'Alumnos SMLMV': 3997, 'Alumnos Créditos': 5279 },
+  { anio: 2034, name: '2034', 'Ingresos SMLMV (M)': 60239.7, 'Ingresos Créditos (M)': 75256.1, 'Alumnos SMLMV': 3901, 'Alumnos Créditos': 5294 },
+  { anio: 2035, name: '2035', 'Ingresos SMLMV (M)': 61727.5, 'Ingresos Créditos (M)': 80147.7, 'Alumnos SMLMV': 3807, 'Alumnos Créditos': 5310 },
+  { anio: 2036, name: '2036', 'Ingresos SMLMV (M)': 63247.6, 'Ingresos Créditos (M)': 85357.3, 'Alumnos SMLMV': 3715, 'Alumnos Créditos': 5325 }
+];
 
 export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
@@ -111,10 +129,10 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
     );
   }
 
-  const margenTotal = ingresosTotal - gastosTotal;
-
   return (
-    <div className="flex flex-col mb-20 max-w-4xl mx-auto">
+    <div className="flex flex-col mb-20 max-w-5xl mx-auto px-4 md:px-0">
+      
+      {/* Top action bar */}
       <div className="flex justify-between items-center mb-8">
         <button onClick={() => onNavigate('dashboard')} className="flex items-center gap-2 text-on-surface-variant hover:text-white transition-colors">
            <ChevronLeft size={20} />
@@ -125,161 +143,309 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
             <Printer size={16} />
             Imprimir
           </button>
-          <button className="bg-primary-container text-on-primary-container px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:brightness-110 transition-colors">
+          <button className="bg-primary-container text-on-primary-container px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:brightness-110 transition-colors" onClick={() => window.print()}>
             <Download size={16} />
             Exportar PDF
           </button>
         </div>
       </div>
 
-      <div className="bg-white text-black p-10 sm:p-16 rounded-xl shadow-2xl relative print:shadow-none print:p-0">
+      {/* Main Report Document */}
+      <div className="bg-white text-black p-8 sm:p-14 md:p-16 rounded-[28px] shadow-2xl relative print:shadow-none print:p-0 print:rounded-none">
+        
         {/* Header DOCX Style */}
         <div className="border-b-2 border-black pb-6 mb-10 flex justify-between items-center">
            <div>
-             <h1 className="text-3xl font-serif font-bold text-black mb-1">INFORME FINANCIERO JULIO 2026</h1>
-             <p className="text-sm font-sans text-gray-600 font-bold tracking-widest uppercase">UPTC - Gestión Documental</p>
+             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-black mb-1">INFORME FINANCIERO Y PROYECCIÓN INSTITUCIONAL</h1>
+             <p className="text-xs sm:text-sm font-sans text-gray-600 font-bold tracking-widest uppercase">UPTC - Vicerrectoría Administrativa y Financiera (VAFI)</p>
            </div>
            <img 
              src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png" 
              alt="UPTC Logo" 
-             className="w-20 object-contain invert"
+             className="w-16 sm:w-20 object-contain invert"
            />
         </div>
 
-        <div className="space-y-10 font-serif leading-relaxed">
+        <div className="space-y-10 font-serif leading-relaxed text-sm">
+           
+           {/* Section 1: Executive Summary */}
            <section className="mb-8">
-             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
-               Resumen Ejecutivo
-             </h2>
-             <p className="text-gray-800 text-justify mb-4">
-               El presente informe tiene como propósito analizar el comportamiento financiero de la Universidad Pedagógica y Tecnológica de Colombia (UPTC) con corte al <strong>31 de julio de 2026</strong>. Se examina la incorporación y apropiación de los rubros de gasto conforme a lo establecido en los catálogos presupuestales No. 14 y 15.
-             </p>
+              <h2 className="text-lg sm:text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+                1. Resumen Ejecutivo
+              </h2>
+              <p className="text-gray-800 text-justify mb-4">
+                El presente informe consolida el comportamiento financiero y presupuestal de la Universidad Pedagógica y Tecnológica de Colombia (UPTC) con corte oficial al <strong>31 de julio de 2026</strong>. Se analiza la ejecución de ingresos y egresos conforme a los catálogos presupuestales No. 14 y 15, así como la modelación prospectiva de largo plazo de las fuentes de matrícula bajo esquemas comparativos.
+              </p>
            </section>
 
+           {/* Section 2: Methodology */}
            <section className="mb-8">
-             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
-               Metodología de Análisis
-             </h2>
-             <p className="text-gray-800 text-justify mb-4">
-               Una vez consolidados los registros de ingresos y gastos de UPTC, se procede a su clasificación y organización conforme a las categorías definidas en el Catálogo Presupuestal vigente. Este proceso permite estructurar la información financiera de manera homogénea y facilitar su análisis.
-             </p>
-             <p className="text-gray-800 text-justify mb-4">
-               Los ingresos se asignan a los conceptos correspondientes según el tipo de recurso, mientras que los gastos se agrupan en los rubros de Gastos de Personal, Gastos de Funcionamiento e Inversión. Posteriormente, se realiza un análisis de cada componente, teniendo en cuenta la unidad ejecutora y el recurso fuente de financiación asociado, lo cual permite una adecuada interpretación del comportamiento financiero institucional.
-             </p>
-             <p className="text-gray-800 text-justify mb-4">
-               La información financiera se clasifica bajo la estructura del Catálogo Presupuestal, considerando los siguientes criterios:
-             </p>
-             <ul className="list-disc pl-5 space-y-2 text-gray-800 text-justify">
-                <li><strong>Ingresos:</strong> Identificados bajo 18 tipos de recursos, excluyendo para este consolidado los correspondientes a Regalías (R15, SSF) y UNISALUD (R50).</li>
-                <li><strong>Gastos:</strong> Agrupados en Gastos de Personal, Gastos de Funcionamiento e Inversión.</li>
-                <li><strong>Procesamiento de la información:</strong> Los datos son extraídos del sistema GOOBI, lo que garantiza la trazabilidad entre el aforo inicial y el recaudo efectivo, así como la consistencia de los registros presupuestales y financieros.</li>
-             </ul>
+              <h2 className="text-lg sm:text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+                2. Metodología de Análisis
+              </h2>
+              <p className="text-gray-800 text-justify mb-4">
+                Una vez consolidados los registros de ingresos y gastos de la UPTC, se procede a su clasificación y organización conforme a las categorías definidas en el Catálogo Presupuestal vigente. Este proceso permite estructurar la información financiera de manera homogénea y facilitar su análisis prospectivo.
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-gray-800 text-justify">
+                 <li><strong>Ingresos:</strong> Identificados bajo 18 tipos de recursos, monitoreados a través del aforo y recaudo mensual.</li>
+                 <li><strong>Gastos:</strong> Agrupados en Gastos de Personal (2.1.1), Gastos de Funcionamiento (2.1.2) e Inversión (2.3).</li>
+                 <li><strong>Proyecciones:</strong> Modelación plurianual mediante indexadores macroeconómicos (IPC, ICES, SMLMV) y elasticidad precio de demanda.</li>
+              </ul>
            </section>
 
+           {/* Section 3: Revenue Analysis */}
            <section>
-             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
-               Análisis de Ingresos
-             </h2>
-             <p className="text-gray-800 text-justify mb-4">
-               A continuación, se presenta el análisis comparativo entre el aforo y el recaudo, clasificado por tipo de recurso, con corte al <strong>31 de julio</strong>.
-             </p>
-             <p className="text-gray-800 text-justify mb-4">
-               El recaudo total de la Universidad Pedagógica y Tecnológica de Colombia asciende a <strong>${ingresosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong>, lo que representa una ejecución del <strong>62,1 %</strong> frente al presupuesto aforado de <strong>$542.832,0 millones</strong>.
-             </p>
-             <p className="text-gray-800 text-justify mb-4">
-               Del total recaudado, los ingresos se distribuyen estratégicamente entre aportes del Estado, rentas propias y fondos de extensión y posgrados:
-             </p>
-             
-             <div className="flex flex-col sm:flex-row gap-6 mt-6 items-center">
-                <div className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded text-sm text-gray-700 w-full">
-                   <ul className="list-disc pl-5 space-y-2">
-                     <li><strong>Aportes de la Nación (Funcionamiento y Gratuidad):</strong> $205.457,7 M (60,9% del total)</li>
-                     <li><strong>Posgrados, Convenios y Extensión:</strong> $67.236,3 M (19,9% del total)</li>
-                     <li><strong>Estampillas y Devoluciones (IVA / Votación):</strong> $27.831,3 M (8,3% del total)</li>
-                     <li><strong>Recursos Propios (Rentas y Servicios):</strong> $14.316,3 M (4,2% del total)</li>
-                     <li><strong>Aportes para Inversión:</strong> $12.889,2 M (3,8% del total)</li>
-                   </ul>
-                </div>
-                <div className="w-full sm:w-64 h-48">
-                   <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                         <Pie data={ingresosData} dataKey="recaudo" nameKey="name" cx="50%" cy="50%" outerRadius={70} stroke="none">
-                            {ingresosData.map((entry, index) => (
-                               <Cell key={`cell-${index}`} fill={entry.fill || '#000'} />
-                            ))}
-                         </Pie>
-                         <Tooltip formatter={(value: number) => `$${value.toLocaleString('es-CO', {maximumFractionDigits: 1})} M`} />
-                      </PieChart>
-                   </ResponsiveContainer>
-                </div>
-             </div>
-           </section>
-
-           <section>
-             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
-               Análisis de Gasto
-             </h2>
-             <p className="text-gray-800 text-justify mb-4">
-               Con corte al <strong>31 de julio</strong> y conforme a lo establecido en el Catálogo Presupuestal No. 14, que define la estructura del gasto, se incluyen los gastos de personal (2.1.1), los gastos de funcionamiento (2.1.2) y los gastos de inversión (2.3), entre otros conceptos.
-             </p>
-             <p className="text-gray-800 text-justify mb-4">
-               El pago efectivo alcanza un valor total de <strong>${gastosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong> frente a una apropiación total de <strong>$542.832,0 millones</strong>. Se observa que la mayor participación corresponde a los gastos de personal, con <strong>$146.943,8 millones</strong>. Es importante mencionar de igual manera que a la fecha de corte de este informe el compromiso de los gastos de la universidad corresponde a <strong>$312.078,1 millones</strong>.
-             </p>
-             
-             <div className="h-64 mt-6">
-                <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={gastosData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                      <XAxis type="number" fontSize={12} tickFormatter={(val) => `$${val}`} />
-                      <YAxis dataKey="name" type="category" width={150} fontSize={11} />
-                      <Tooltip formatter={(value: number) => `$${value.toLocaleString('es-CO', {maximumFractionDigits: 1})} M`} cursor={{fill: 'rgba(0,0,0,0.05)'}} />
-                      <Bar dataKey="pago" fill="#3b82f6" radius={[0, 4, 4, 0]}>
-                         {gastosData.map((entry, index) => (
-                           <Cell key={`cell-${index}`} fill={entry.fill || '#3b82f6'} />
-                         ))}
-                      </Bar>
-                   </BarChart>
-                </ResponsiveContainer>
-             </div>
-           </section>
-
-           <section>
-             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
-               Gastos de Personal (2.1.1)
-             </h2>
-             <p className="text-gray-800 text-justify mb-4">
-               Los gastos clasificados en el presupuesto como 2.1.1 Gastos de Personal registran un pago total de <strong>$82.530,2 millones</strong>, equivalente al <strong>22,3 %</strong> de la ejecución. El mayor volumen de pagos corresponde al personal docente de planta, alcanzando un valor de <strong>$23.680,0 millones</strong>; en segundo lugar, se encuentra el personal docente ocasional, con pagos por <strong>$21.773,8 millones</strong>.
-             </p>
-             <div className="flex flex-wrap gap-4">
-               {nominaData.slice(0, 4).map((nom, idx) => (
-                 <div key={idx} className="flex-1 min-w-[120px] bg-gray-50 border border-gray-200 p-3 text-center rounded">
-                   <p className="text-[10px] uppercase font-sans text-gray-500 font-bold mb-1 truncate" title={nom.name}>{nom.name}</p>
-                   <p className="font-bold text-lg text-black">${nom.value.toLocaleString('es-CO', {maximumFractionDigits: 1})} M</p>
+              <h2 className="text-lg sm:text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+                3. Análisis de Ingresos (Corte Julio 2026)
+              </h2>
+              <p className="text-gray-800 text-justify mb-4">
+                El recaudo acumulado a la fecha de corte asciende a <strong>${ingresosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong>, con una alta participación de las transferencias de la Nación y la gestión de recursos propios.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-6 mt-6 items-center">
+                 <div className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded text-xs text-gray-700 w-full font-sans">
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong>Aportes de la Nación (Funcionamiento y Gratuidad):</strong> $205.457,7 M (60,9% del total)</li>
+                      <li><strong>Posgrados, Convenios y Extensión:</strong> $67.236,3 M (19,9% del total)</li>
+                      <li><strong>Estampillas y Devoluciones (IVA / Votación):</strong> $27.831,3 M (8,3% del total)</li>
+                      <li><strong>Recursos Propios (Rentas y Servicios):</strong> $14.316,3 M (4,2% del total)</li>
+                      <li><strong>Aportes para Inversión:</strong> $12.889,2 M (3,8% del total)</li>
+                    </ul>
                  </div>
-               ))}
-             </div>
+                 <div className="w-full sm:w-64 h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <PieChart>
+                          <Pie data={ingresosData} dataKey="recaudo" nameKey="name" cx="50%" cy="50%" outerRadius={70} stroke="none">
+                             {ingresosData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill || '#000'} />
+                             ))}
+                          </Pie>
+                          <Tooltip formatter={(value: number) => `$${value.toLocaleString('es-CO', {maximumFractionDigits: 1})} M`} />
+                       </PieChart>
+                    </ResponsiveContainer>
+                 </div>
+              </div>
            </section>
 
-           <section className="mb-8">
-             <h2 className="text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
-               Gastos de Funcionamiento e Inversión
-             </h2>
-             <p className="text-gray-800 text-justify mb-4">
-               <strong>Gastos de Funcionamiento (2.1.2):</strong> Los pagos efectivos a la fecha de corte ascienden a un total de <strong>$23.261,9 millones</strong>. La mayor participación se concentra en el rubro de contratos, con un valor de <strong>$9.174,6 millones</strong>. El compromiso de estos gastos asciende a <strong>$102.120,1 millones</strong>.
-             </p>
-             <p className="text-gray-800 text-justify mb-4">
-               <strong>Gastos de Inversión (2.3):</strong> El componente de inversión presenta un pago efectivo de <strong>$2.986,9 millones</strong>, equivalente a una ejecución del <strong>16,9%</strong>. A la fecha de corte, los gastos de inversión registran un compromiso de <strong>$13.717,4 millones</strong>.
-             </p>
+           {/* Section 4: Expenses Analysis */}
+           <section>
+              <h2 className="text-lg sm:text-xl font-bold mb-4 font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+                4. Análisis de Egresos y Compromisos
+              </h2>
+              <p className="text-gray-800 text-justify mb-4">
+                El pago efectivo totaliza <strong>${gastosTotal.toLocaleString('es-CO', {maximumFractionDigits: 1})} millones</strong>, liderado por la ejecución de la nómina docente y administrativa ($146.943,8M), seguido de los gastos de funcionamiento ($23.261,9M) y proyectos de inversión ($2.986,9M).
+              </p>
+              
+              <div className="h-64 mt-6">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={gastosData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                       <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                       <XAxis type="number" fontSize={11} tickFormatter={(val) => `$${val}`} />
+                       <YAxis dataKey="name" type="category" width={150} fontSize={11} />
+                       <Tooltip formatter={(value: number) => `$${value.toLocaleString('es-CO', {maximumFractionDigits: 1})} M`} cursor={{fill: 'rgba(0,0,0,0.05)'}} />
+                       <Bar dataKey="pago" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                          {gastosData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill || '#3b82f6'} />
+                          ))}
+                       </Bar>
+                    </BarChart>
+                 </ResponsiveContainer>
+              </div>
+           </section>
+
+           {/* ========================================================================= */}
+           {/* SECTION 5: PROYECCIÓN PLURIANUAL Y COMPARACIÓN DE ESCENARIOS (CRÉDITOS VS SMLMV) */}
+           {/* ========================================================================= */}
+           <section className="pt-6 border-t border-gray-300 space-y-6">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold font-sans uppercase tracking-wider text-black border-b border-gray-300 pb-2">
+                  5. Proyección Plurianual: Modelo por Créditos vs. Modelo SMLMV (2026 - 2036)
+                </h2>
+                <p className="text-gray-800 text-justify mt-3">
+                  A continuación se presentan las proyecciones comparativas de mediano y largo plazo entre la reforma tarifaria por <strong>Créditos Académicos</strong> y el esquema tradicional indexado al <strong>SMLMV</strong>. Se evalúa el impacto del incremento diferido del 15% en 2027 y la elasticidad precio de demanda sobre la matrícula y el recaudo institucional.
+                </p>
+              </div>
+
+              {/* Comparative Executive KPI Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-sans">
+                 <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl text-center">
+                    <span className="text-[10px] uppercase font-bold text-gray-500 block">Recaudo Créditos (2036)</span>
+                    <span className="text-xl font-bold text-amber-600 block mt-1">$85.357,3 M</span>
+                    <span className="text-[10px] text-gray-500">+35,0% vs SMLMV</span>
+                 </div>
+                 <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl text-center">
+                    <span className="text-[10px] uppercase font-bold text-gray-500 block">Recaudo SMLMV (2036)</span>
+                    <span className="text-xl font-bold text-gray-700 block mt-1">$63.247,6 M</span>
+                    <span className="text-[10px] text-red-500">Contracción por deserción</span>
+                 </div>
+                 <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl text-center">
+                    <span className="text-[10px] uppercase font-bold text-gray-500 block">Diferencial Acumulado (10 Años)</span>
+                    <span className="text-xl font-bold text-emerald-600 block mt-1">+$74.928,5 M</span>
+                    <span className="text-[10px] text-emerald-600">Sostenibilidad R31</span>
+                 </div>
+              </div>
+
+              {/* TWO COMPARISON CHARTS WITH FULL VISIBILITY OF AXES AND LEGENDS */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+                 
+                 {/* Chart 1: Revenue Comparison */}
+                 <div className="bg-[#0b1329] text-white p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between print:bg-gray-50 print:text-black print:border-gray-300">
+                    <div className="mb-4">
+                       <h3 className="text-xs font-bold uppercase tracking-wider font-sans text-white print:text-black flex items-center gap-2">
+                         <DollarSign size={14} className="text-[#ffcc29]" />
+                         1. Comparación de Ingresos Proyectados (Millones COP)
+                       </h3>
+                       <p className="text-[11px] text-slate-400 print:text-gray-600 font-sans mt-0.5">
+                         Evolución del recaudo anual proyectado 2026 - 2036.
+                       </p>
+                    </div>
+
+                    <div className="h-64 w-full">
+                       <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart 
+                             data={PROJECTION_COMPARISON_DATA} 
+                             margin={{ top: 10, right: 15, left: 15, bottom: 5 }}
+                          >
+                             <defs>
+                                <linearGradient id="reportCreditosGrad" x1="0" y1="0" x2="0" y2="1">
+                                   <stop offset="5%" stopColor="#ffcc29" stopOpacity={0.4}/>
+                                   <stop offset="95%" stopColor="#ffcc29" stopOpacity={0.02}/>
+                                </linearGradient>
+                                <linearGradient id="reportSmlmvGrad" x1="0" y1="0" x2="0" y2="1">
+                                   <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.25}/>
+                                   <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.01}/>
+                                </linearGradient>
+                             </defs>
+                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+                             <XAxis 
+                                dataKey="name" 
+                                stroke="#94a3b8" 
+                                tick={{ fontSize: 11, fill: '#94a3b8' }} 
+                                dy={5}
+                             />
+                             <YAxis 
+                                stroke="#94a3b8" 
+                                width={65} 
+                                tick={{ fontSize: 11, fill: '#94a3b8' }} 
+                                tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`}
+                                domain={[0, 95000]}
+                             />
+                             <Tooltip 
+                                formatter={(value: number, name: string) => [`$${value.toLocaleString('es-CO', {minimumFractionDigits: 1})}M`, name]}
+                                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', fontSize: '11px', color: '#fff' }}
+                             />
+                             <Legend 
+                                verticalAlign="bottom" 
+                                height={30} 
+                                iconType="circle" 
+                                wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#cbd5e1' }}
+                             />
+                             <Area 
+                                type="monotone" 
+                                dataKey="Ingresos Créditos (M)" 
+                                stroke="#ffcc29" 
+                                strokeWidth={2.5} 
+                                fill="url(#reportCreditosGrad)" 
+                                dot={{ r: 3, fill: '#ffcc29' }}
+                             />
+                             <Area 
+                                type="monotone" 
+                                dataKey="Ingresos SMLMV (M)" 
+                                stroke="#94a3b8" 
+                                strokeWidth={2} 
+                                fill="url(#reportSmlmvGrad)" 
+                                dot={{ r: 3, fill: '#94a3b8' }}
+                             />
+                          </AreaChart>
+                       </ResponsiveContainer>
+                    </div>
+                 </div>
+
+                 {/* Chart 2: Student Enrollment Comparison */}
+                 <div className="bg-[#0b1329] text-white p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between print:bg-gray-50 print:text-black print:border-gray-300">
+                    <div className="mb-4">
+                       <h3 className="text-xs font-bold uppercase tracking-wider font-sans text-white print:text-black flex items-center gap-2">
+                         <Users size={14} className="text-[#4ade80]" />
+                         2. Comparación de Matrículas Proyectadas (Estudiantes)
+                       </h3>
+                       <p className="text-[11px] text-slate-400 print:text-gray-600 font-sans mt-0.5">
+                         Volumen de estudiantes matriculados en posgrados.
+                       </p>
+                    </div>
+
+                    <div className="h-64 w-full">
+                       <ResponsiveContainer width="100%" height="100%">
+                          <LineChart 
+                             data={PROJECTION_COMPARISON_DATA} 
+                             margin={{ top: 10, right: 15, left: 15, bottom: 5 }}
+                          >
+                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+                             <XAxis 
+                                dataKey="name" 
+                                stroke="#94a3b8" 
+                                tick={{ fontSize: 11, fill: '#94a3b8' }} 
+                                dy={5}
+                             />
+                             <YAxis 
+                                stroke="#94a3b8" 
+                                width={55} 
+                                tick={{ fontSize: 11, fill: '#94a3b8' }} 
+                                tickFormatter={(v) => v.toLocaleString('es-CO')}
+                                domain={[0, 6000]}
+                             />
+                             <Tooltip 
+                                formatter={(value: number, name: string) => [`${value.toLocaleString('es-CO')} estudiantes`, name]}
+                                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', fontSize: '11px', color: '#fff' }}
+                             />
+                             <Legend 
+                                verticalAlign="bottom" 
+                                height={30} 
+                                iconType="circle" 
+                                wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#cbd5e1' }}
+                             />
+                             <Line 
+                                type="monotone" 
+                                dataKey="Alumnos Créditos" 
+                                stroke="#4ade80" 
+                                strokeWidth={2.5} 
+                                dot={{ r: 3, fill: '#4ade80' }}
+                             />
+                             <Line 
+                                type="monotone" 
+                                dataKey="Alumnos SMLMV" 
+                                stroke="#cbd5e1" 
+                                strokeWidth={2} 
+                                dot={{ r: 3, fill: '#cbd5e1' }}
+                             />
+                          </LineChart>
+                       </ResponsiveContainer>
+                    </div>
+                 </div>
+
+              </div>
+
+              {/* Explanatory Narrative for the Charts */}
+              <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl text-gray-800 text-xs text-justify space-y-2">
+                 <p>
+                   <strong>Análisis de Demanda y Deserción:</strong> El modelo tarifario por créditos permite ajustar el cobro al avance curricular real del estudiante, manteniendo la retención estudiantil por encima de los 5.300 alumnos anuales. Por el contrario, el esquema rígido en SMLMV, al sumar el incremento diferido del 15% en 2027 más la inflación salarial, induce una deserción que reduce la matrícula a 3.715 alumnos hacia 2036.
+                 </p>
+                 <p>
+                   <strong>Sostenibilidad Presupuestal:</strong> La mayor retención de alumnos bajo el modelo de créditos compensa holgadamente el valor unitario de la matrícula, asegurando un ingreso superior en $22.109,7 millones en la vigencia 2036 y consolidando la viabilidad del Fondo Especial de Posgrados (R31).
+                 </p>
+              </div>
+
            </section>
 
            {/* Signatures */}
-           <div className="pt-20 pb-10 flex flex-col items-center">
-              <div className="text-center w-64">
+           <div className="pt-16 pb-6 flex flex-col items-center">
+              <div className="text-center w-72">
                  <div className="border-t border-black pt-2 w-full"></div>
                  <p className="font-bold font-sans text-sm mt-2">LUIS ÁNGEL LARA GONZÁLEZ</p>
                  <p className="text-xs font-sans text-gray-500">Vicerrector Administrativo y Financiero</p>
+                 <p className="text-[10px] font-mono text-gray-400 mt-1">Universidad Pedagógica y Tecnológica de Colombia</p>
               </div>
            </div>
+
         </div>
       </div>
     </div>

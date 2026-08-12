@@ -2280,44 +2280,44 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     
                     {/* Chart 1: Revenue Comparison (SMLMV vs Credits) */}
-                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-5 flex flex-col shadow-xl">
-                      <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-3">1. Comparación de Ingresos Proyectados (Millones COP)</h4>
-                      <div className="h-48" style={{ width: '100%', height: 192, minWidth: 150 }}>
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col shadow-xl">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">1. Comparación de Ingresos Proyectados (Millones COP)</h4>
+                      <div className="h-64" style={{ width: '100%', minWidth: 150 }}>
                         <ResponsiveContainer width="100%" height="100%">
                           <AreaChart data={scenarioComparisonData.map(d => ({
                             name: d.anio.toString(),
                             'Ingresos SMLMV (M)': Math.round(d.smlmvRecaudo / 1e6 * 10) / 10,
                             'Ingresos Créditos (M)': Math.round(d.creditRecaudo / 1e6 * 10) / 10
-                          }))} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                          }))} margin={{ top: 10, right: 15, left: 15, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                            <XAxis dataKey="name" stroke="#475569" className="text-[8px] font-mono" />
-                            <YAxis stroke="#475569" className="text-[8px] font-mono" tickFormatter={(v) => `$${v}M`} />
-                            <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px', borderRadius: '8px'}} />
-                            <Legend wrapperStyle={{fontSize: '9px', marginTop: 5}} />
-                            <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.05} strokeWidth={1.5} />
-                            <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#ffcc29" fill="#ffcc29" fillOpacity={0.1} strokeWidth={2} />
+                            <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#94a3b8' }} dy={5} />
+                            <YAxis stroke="#94a3b8" width={65} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                            <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', fontSize: '11px', color: '#fff'}} />
+                            <Legend wrapperStyle={{fontSize: '11px', marginTop: 8, color: '#cbd5e1'}} />
+                            <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.15} strokeWidth={2} dot={{ r: 3, fill: '#94a3b8' }} />
+                            <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#ffcc29" fill="#ffcc29" fillOpacity={0.2} strokeWidth={2.5} dot={{ r: 3, fill: '#ffcc29' }} />
                           </AreaChart>
                         </ResponsiveContainer>
                       </div>
                     </div>
 
                     {/* Chart 2: Student enrollment comparison */}
-                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-5 flex flex-col shadow-xl">
-                      <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-3">2. Comparación de Matrículas Proyectadas (Estudiantes)</h4>
-                      <div className="h-48" style={{ width: '100%', height: 192, minWidth: 150 }}>
+                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col shadow-xl">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">2. Comparación de Matrículas Proyectadas (Estudiantes)</h4>
+                      <div className="h-64" style={{ width: '100%', minWidth: 150 }}>
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={scenarioComparisonData.map(d => ({
                             name: d.anio.toString(),
                             'Alumnos SMLMV': d.smlmvStudents,
                             'Alumnos Créditos': d.creditStudents
-                          }))} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                          }))} margin={{ top: 10, right: 15, left: 15, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                            <XAxis dataKey="name" stroke="#475569" className="text-[8px] font-mono" />
-                            <YAxis stroke="#475569" className="text-[8px] font-mono" />
-                            <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px', borderRadius: '8px'}} />
-                            <Legend wrapperStyle={{fontSize: '9px', marginTop: 5}} />
-                            <Line type="monotone" dataKey="Alumnos SMLMV" stroke="#94a3b8" strokeWidth={1.5} dot={{r: 2}} />
-                            <Line type="monotone" dataKey="Alumnos Créditos" stroke="#4ade80" strokeWidth={2} dot={{r: 2}} />
+                            <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#94a3b8' }} dy={5} />
+                            <YAxis stroke="#94a3b8" width={55} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => v.toLocaleString('es-CO')} />
+                            <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', fontSize: '11px', color: '#fff'}} />
+                            <Legend wrapperStyle={{fontSize: '11px', marginTop: 8, color: '#cbd5e1'}} />
+                            <Line type="monotone" dataKey="Alumnos SMLMV" stroke="#cbd5e1" strokeWidth={2} dot={{r: 3, fill: '#cbd5e1'}} />
+                            <Line type="monotone" dataKey="Alumnos Créditos" stroke="#4ade80" strokeWidth={2.5} dot={{r: 3, fill: '#4ade80'}} />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
