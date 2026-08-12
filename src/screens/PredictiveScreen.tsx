@@ -10,14 +10,15 @@ import {
   AlertTriangle, ShieldAlert, Gauge, TrendingDown, Target, ShieldCheck,
   ChevronUp, ChevronDown, Wallet, Users, Sliders, ArrowUpRight, ArrowDownRight,
   Sparkles, CheckCircle2, Zap, BarChart2, Award, Landmark, Bot, Lightbulb, Info,
-  LayoutList, CheckCircle
+  LayoutList, CheckCircle, Lock, Unlock, Check, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { 
-  calculateProjections, aggregateFlow, CashFlowItem, ProjectionResults,
+  calculateProjections, aggregateFlow, CashFlowItem, ProjectionResults, getRowUnidad,
   BUDGET_PAYROLL_2026, PAYROLL_REAL_ENE_JUL, PAYROLL_REMAINING_AGO_DIC
 } from '../lib/financialEngine';
 import { RESOURCES_LIST, getResourceFullName, getRecursoEquivalence, getRowResourceCode } from '../lib/resourceMapper';
+import { RECURSOS_FIJOS_RESOLUCION } from '../lib/constants';
 import rawHistoricalGastos from '../data/historicalGastos.json';
 import { MultiYearProjectionScreen } from './MultiYearProjectionScreen';
 
@@ -52,13 +53,23 @@ const COLORS = ['#ffcc29', '#4ade80', '#38bdf8', '#c084fc', '#f43f5e', '#7bd0ff'
 
 // AI Suggested values and contextual rationale
 const AI_ING_SUGGESTIONS: Record<string, { val: number; rationale: string }> = {
-  '10.0': { val: 2.0, rationale: 'Indexación de Ley 30 (IPC + Puntos) y transferencias de MinEducación programadas para fin de año.' },
-  '10.5': { val: 4.0, rationale: 'Desembolsos de proyectos de infraestructura y fortalecimiento institucional en el último trimestre.' },
+  '10': { val: 0.0, rationale: 'Fijo por Resolución MEN - Ley 30/92 ($315.327,8M).' },
+  '10.1': { val: 0.0, rationale: 'Fijo por Resolución MEN - PIC Convencional ($9.756,7M).' },
+  '10.2': { val: 0.0, rationale: 'Fijo por Resolución MEN - PIC Territorial ($3.996,7M).' },
+  '10.5': { val: 0.0, rationale: 'Fijo por Resolución MEN - Gratuidad Ley 2307 ($20.708,4M).' },
+  '12': { val: 0.0, rationale: 'Fijo por Ley 1697 / Estampilla Pro-UNAL ($17.266,1M).' },
+  '13': { val: 0.0, rationale: 'Fijo por DIAN / Excedentes Cooperativas ($2.128,2M).' },
+  '14': { val: 0.0, rationale: 'Fijo por Resolución Fondo FSE ($19.625,5M).' },
+  '16': { val: 0.0, rationale: 'Fijo por Aportes Inversión PGN ($12.877,1M).' },
+  '17': { val: 0.0, rationale: 'Fijo por Devolución Descuento Electoral Ley 403 ($5.447,5M).' },
+  '18': { val: 0.0, rationale: 'Fijo por Artículo 87 Ley 30 / CESU ($1.035,9M).' },
   '20': { val: -1.5, rationale: 'Menor flujo de derechos de grado y trámites intersemestrales durante los últimos meses de la vigencia.' },
   '31': { val: 3.5, rationale: 'Apertura de nuevas cohortes de posgrado semestrales y recaudos de convenios de extensión en Q4.' },
-  '28': { val: 5.0, rationale: 'Pico estacional por retenciones de estampillas sobre contratación pública regional al cierre de año.' },
-  '16': { val: 0.0, rationale: 'Comportamiento estable en rendimientos financieros y sin nuevas contrataciones de crédito.' },
-  '10.1': { val: 2.5, rationale: 'Liquidación y actas de cierre de convenios interadministrativos suscritos con entidades territoriales.' }
+  '32': { val: 2.0, rationale: 'Contratos y asesorías de extensión universitaria en ejecución.' },
+  '33': { val: 4.0, rationale: 'Desembolsos de convenios con derechos suscritos con entidades territoriales.' },
+  '34': { val: 1.0, rationale: 'Convenios de cooperación académica internacional.' },
+  '35': { val: 3.0, rationale: 'Diplomados y cursos de formación continua programados para fin de año.' },
+  '40': { val: 5.0, rationale: 'Pico estacional por retenciones de estampillas sobre contratación pública regional al cierre de año.' }
 };
 
 const AI_GAS_CATEGORY_SUGGESTIONS: Record<string, { val: number; rationale: string }> = {
@@ -86,6 +97,23 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [expandedSimGastoCard, setExpandedSimGastoCard] = useState<string | null>(null);
   const [expandedSimPieGroup, setExpandedSimPieGroup] = useState<string | null>(null);
   const [simActiveIndex, setSimActiveIndex] = useState<number | undefined>(undefined);
+
+  // Variable Projection Selection State (Rule 3: allow choosing which resources and expense types to project)
+  const [selectedProjectedResources, setSelectedProjectedResources] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_selectedProjectedResources');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [...RESOURCES_LIST];
+  });
+
+  const [selectedProjectedExpenseTypes, setSelectedProjectedExpenseTypes] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_selectedProjectedExpenseTypes');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return ['Personal', 'Funcionamiento', 'Inversion', 'Transferencias', 'Tasas', 'Deuda'];
+  });
 
   // Sensitivity analysis settings
   const [sensResource, setSensResource] = useState<string>('Todos');
@@ -177,25 +205,40 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     loadAllData();
   }, []);
 
-  // Filter dropdown options
+  // Filter dropdown options (comprehensive across incomes and expenses)
   const filterOptions = useMemo(() => {
     const recursos = ['Todos', ...RESOURCES_LIST];
     const unidadesSet = new Set<string>();
     const tiposGastoSet = new Set<string>();
 
+    // From historical gastos
     rawHistoricalGastos.forEach(row => {
-      if (row.dependencia) unidadesSet.add(row.dependencia);
+      if (row.dependencia && row.dependencia !== 'Sin Dependencia') unidadesSet.add(row.dependencia);
       if (row.tipo) tiposGastoSet.add(row.tipo);
     });
 
+    // From yearly incomes (e.g. 2026, 2025, 2024, 2023)
+    [2023, 2024, 2025, 2026].forEach(yr => {
+      const rows = rawYearlyIncomes[yr] || [];
+      rows.forEach(r => {
+        const u = getRowUnidad(r, yr);
+        if (u && u !== 'Sin Dependencia' && !u.startsWith('1.') && !u.startsWith('2.')) {
+          unidadesSet.add(u);
+        }
+      });
+    });
+
+    // Natural sort with numeric handling (e.g. 01, 02, ..., 15)
+    const sortedUnidades = Array.from(unidadesSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
     return {
       recursos,
-      unidades: ['Todos', ...Array.from(unidadesSet).sort()],
+      unidades: ['Todos', ...sortedUnidades],
       tiposGasto: ['Todos', ...Array.from(tiposGastoSet).sort()]
     };
-  }, []);
+  }, [rawYearlyIncomes]);
 
-  // Calculation Engine
+  // Calculation Engine with fixed resolution rules, payment <= income constraint, and projection selectors
   const financialData: ProjectionResults = useMemo(() => {
     return calculateProjections({
       rawYearlyIncomes,
@@ -208,12 +251,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       simIngByResource,
       simGasByResource,
       simGasByType,
-      expenseAdjustMode
+      expenseAdjustMode,
+      selectedProjectedResources,
+      selectedProjectedExpenseTypes
     });
   }, [
     rawYearlyIncomes, rawCumulativeIncomes, filterUnidad, filterRecurso,
     filterMes, filterTipoGasto, simIngByResource, simGasByResource,
-    simGasByType, expenseAdjustMode
+    simGasByType, expenseAdjustMode, selectedProjectedResources,
+    selectedProjectedExpenseTypes
   ]);
 
   // Aggregated temporal cash flow
@@ -527,7 +573,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       }
       
       if (gasVal > ingVal && ingVal > 0) {
-        errors[r] = "El valor del Pago Efectivo no puede ser superior al Valor Proyectado del recurso.";
+        errors[r] = "El valor del Pago Efectivo no puede ser superior al Ingreso Proyectado del recurso.";
       }
     });
     return errors;
@@ -550,19 +596,68 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       "Deuda": 0,
       "Inversion": 0
     });
+    setSelectedProjectedResources([...RESOURCES_LIST]);
+    setSelectedProjectedExpenseTypes(['Personal', 'Funcionamiento', 'Inversion', 'Transferencias', 'Tasas', 'Deuda']);
     localStorage.removeItem('vafi_simIngByResource');
     localStorage.removeItem('vafi_simGasByResource');
     localStorage.removeItem('vafi_simGasByType');
+    localStorage.removeItem('vafi_selectedProjectedResources');
+    localStorage.removeItem('vafi_selectedProjectedExpenseTypes');
   };
 
   const handleSaveSimulation = () => {
     localStorage.setItem('vafi_simIngByResource', JSON.stringify(simIngByResource));
     localStorage.setItem('vafi_simGasByResource', JSON.stringify(simGasByResource));
     localStorage.setItem('vafi_simGasByType', JSON.stringify(simGasByType));
+    localStorage.setItem('vafi_selectedProjectedResources', JSON.stringify(selectedProjectedResources));
+    localStorage.setItem('vafi_selectedProjectedExpenseTypes', JSON.stringify(selectedProjectedExpenseTypes));
     setShowSaveSuccess(true);
     setTimeout(() => {
       setShowSaveSuccess(false);
     }, 3000);
+  };
+
+  // Toggle resource projection selection
+  const toggleResourceSelection = (code: string) => {
+    setSelectedProjectedResources(prev => {
+      if (prev.includes(code)) {
+        return prev.filter(c => c !== code);
+      } else {
+        return [...prev, code];
+      }
+    });
+  };
+
+  // Toggle expense type projection selection
+  const toggleExpenseTypeSelection = (type: string) => {
+    setSelectedProjectedExpenseTypes(prev => {
+      if (prev.includes(type)) {
+        return prev.filter(t => t !== type);
+      } else {
+        return [...prev, type];
+      }
+    });
+  };
+
+  // Projection Quick Selection Presets
+  const handleSelectAllResources = () => {
+    setSelectedProjectedResources([...RESOURCES_LIST]);
+  };
+
+  const handleSelectOnlyVariableResources = () => {
+    const variables = RESOURCES_LIST.filter(r => !RECURSOS_FIJOS_RESOLUCION[r]);
+    setSelectedProjectedResources(variables);
+  };
+
+  const handleSelectOnlyFixedResources = () => {
+    const fijos = RESOURCES_LIST.filter(r => !!RECURSOS_FIJOS_RESOLUCION[r]);
+    setSelectedProjectedResources(fijos);
+  };
+
+  const handleInvertResourceSelection = () => {
+    setSelectedProjectedResources(prev => {
+      return RESOURCES_LIST.filter(r => !prev.includes(r));
+    });
   };
 
   // 1-Click AI Suggestions Applicator for Incomes
@@ -597,22 +692,34 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     const newGasType = { ...simGasByType };
 
     if (preset === 'conservador') {
-      RESOURCES_LIST.forEach(r => { newIng[r] = -3; newGas[r] = -2; });
+      RESOURCES_LIST.forEach(r => { 
+        if (!RECURSOS_FIJOS_RESOLUCION[r]) { newIng[r] = -3; newGas[r] = -2; }
+        else { newIng[r] = 0; newGas[r] = 0; }
+      });
       newGasType.Personal = 0;
       newGasType.Funcionamiento = -5;
       newGasType.Inversion = -8;
     } else if (preset === 'moderado') {
-      RESOURCES_LIST.forEach(r => { newIng[r] = 2; newGas[r] = 0; });
+      RESOURCES_LIST.forEach(r => { 
+        if (!RECURSOS_FIJOS_RESOLUCION[r]) { newIng[r] = 2; newGas[r] = 0; }
+        else { newIng[r] = 0; newGas[r] = 0; }
+      });
       newGasType.Personal = 0;
       newGasType.Funcionamiento = 0;
       newGasType.Inversion = 0;
     } else if (preset === 'optimista') {
-      RESOURCES_LIST.forEach(r => { newIng[r] = 8; newGas[r] = 2; });
+      RESOURCES_LIST.forEach(r => { 
+        if (!RECURSOS_FIJOS_RESOLUCION[r]) { newIng[r] = 8; newGas[r] = 2; }
+        else { newIng[r] = 0; newGas[r] = 0; }
+      });
       newGasType.Personal = 0;
       newGasType.Funcionamiento = 3;
       newGasType.Inversion = 10;
     } else if (preset === 'estres') {
-      RESOURCES_LIST.forEach(r => { newIng[r] = -12; newGas[r] = 4; });
+      RESOURCES_LIST.forEach(r => { 
+        if (!RECURSOS_FIJOS_RESOLUCION[r]) { newIng[r] = -12; newGas[r] = 4; }
+        else { newIng[r] = 0; newGas[r] = 0; }
+      });
       newGasType.Personal = 0;
       newGasType.Funcionamiento = 6;
       newGasType.Inversion = -15;
@@ -889,43 +996,46 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         </div>
         
         {/* Dropdown Filters */}
-        <div className="flex flex-wrap gap-3">
-          <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3.5 py-2 hover:bg-white/10 transition-colors">
-            <Filter size={15} className="text-on-surface-variant mr-2" />
+        <div className="flex flex-wrap gap-3 items-center">
+          
+          {/* Unit Filter Dropdown with highlight */}
+          <div className={`flex items-center rounded-xl border px-3.5 py-2 transition-all ${filterUnidad !== 'Todos' ? 'bg-[#38bdf8]/15 border-[#38bdf8]/50 shadow-md shadow-[#38bdf8]/10' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+            <Landmark size={15} className={filterUnidad !== 'Todos' ? 'text-[#38bdf8] mr-2 shrink-0' : 'text-on-surface-variant mr-2 shrink-0'} />
             <select 
-              className="bg-transparent text-xs text-white outline-none font-sans cursor-pointer"
-              value={filterRecurso}
-              onChange={(e) => setFilterRecurso(e.target.value)}
-            >
-              <option value="Todos" className="bg-[#0f172a]">Filtrar Recurso: Todos</option>
-              {filterOptions.recursos.slice(1).map(r => (
-                <option key={r} value={r} className="bg-[#0f172a]">{getResourceFullName(r)}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3.5 py-2 hover:bg-white/10 transition-colors">
-            <Filter size={15} className="text-on-surface-variant mr-2" />
-            <select 
-              className="bg-transparent text-xs text-white outline-none font-sans cursor-pointer"
+              className="bg-transparent text-xs text-white outline-none font-sans cursor-pointer max-w-[220px]"
               value={filterUnidad}
               onChange={(e) => setFilterUnidad(e.target.value)}
             >
-              <option value="Todos" className="bg-[#0f172a]">Sede/Unidad: Todas</option>
+              <option value="Todos" className="bg-[#0f172a]">🏛️ Sede/Unidad: Todas</option>
               {filterOptions.unidades.slice(1).map(u => (
                 <option key={u} value={u} className="bg-[#0f172a]">{u}</option>
               ))}
             </select>
           </div>
 
+          {/* Resource Filter Dropdown */}
+          <div className={`flex items-center rounded-xl border px-3.5 py-2 transition-all ${filterRecurso !== 'Todos' ? 'bg-[#ffcc29]/15 border-[#ffcc29]/50 shadow-md shadow-[#ffcc29]/10' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+            <Filter size={15} className={filterRecurso !== 'Todos' ? 'text-[#ffcc29] mr-2 shrink-0' : 'text-on-surface-variant mr-2 shrink-0'} />
+            <select 
+              className="bg-transparent text-xs text-white outline-none font-sans cursor-pointer max-w-[200px]"
+              value={filterRecurso}
+              onChange={(e) => setFilterRecurso(e.target.value)}
+            >
+              <option value="Todos" className="bg-[#0f172a]">💰 Recurso: Todos</option>
+              {filterOptions.recursos.slice(1).map(r => (
+                <option key={r} value={r} className="bg-[#0f172a]">{getResourceFullName(r)}</option>
+              ))}
+            </select>
+          </div>
+
           <button onClick={handleResetSimulator} className="flex items-center px-4 py-2 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition text-xs font-mono gap-2">
-            <RefreshCw size={13} /> Limpiar Simulador
+            <RefreshCw size={13} /> Limpiar
           </button>
         </div>
       </div>
 
       {/* Tabs Navigation (5 Reorganized Clean Tabs) */}
-      <div className="flex border-b border-white/10 mb-8 overflow-x-auto gap-2">
+      <div className="flex border-b border-white/10 mb-6 overflow-x-auto gap-2">
         {[
           { id: 'simulator', label: '1. Simular Escenarios', icon: Sliders },
           { id: 'kpi', label: '2. Indicadores Financieros', icon: Activity },
@@ -943,12 +1053,182 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         ))}
       </div>
 
+      {/* ACTIVE UNIT / RESOURCE FILTER BANNER */}
+      {(filterUnidad !== 'Todos' || filterRecurso !== 'Todos') && (
+        <div className="mb-6 p-4 bg-[#38bdf8]/10 border border-[#38bdf8]/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#38bdf8]/20 flex items-center justify-center text-[#38bdf8] shrink-0 border border-[#38bdf8]/30">
+              <Landmark size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-[#38bdf8] uppercase font-bold tracking-wider">Filtro de Consulta Activo</span>
+                {filterUnidad !== 'Todos' && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#38bdf8]/20 text-[#38bdf8] font-bold border border-[#38bdf8]/30">
+                    Unidad: {filterUnidad.split(' - ')[0]}
+                  </span>
+                )}
+                {filterRecurso !== 'Todos' && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#ffcc29]/20 text-[#ffcc29] font-bold border border-[#ffcc29]/30">
+                    Recurso: {filterRecurso}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm font-bold text-white mt-0.5">
+                {filterUnidad !== 'Todos' ? filterUnidad : 'Todas las Dependencias'}
+                {filterRecurso !== 'Todos' ? ` • ${getResourceFullName(filterRecurso)}` : ''}
+              </p>
+              <p className="text-[11px] text-white/70">
+                Los ingresos, compromisos, pagos proyectados y flujos de caja corresponden exclusivamente a los filtros seleccionados.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {filterUnidad !== 'Todos' && (
+              <button
+                onClick={() => setFilterUnidad('Todos')}
+                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-mono text-white transition shrink-0 flex items-center gap-1.5"
+              >
+                ✖ Todas las Sedes
+              </button>
+            )}
+            {filterRecurso !== 'Todos' && (
+              <button
+                onClick={() => setFilterRecurso('Todos')}
+                className="px-3 py-1.5 bg-[#ffcc29]/20 hover:bg-[#ffcc29]/30 border border-[#ffcc29]/30 rounded-xl text-xs font-mono text-[#ffcc29] transition shrink-0 flex items-center gap-1.5 font-bold"
+              >
+                ✖ Todos los Recursos
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* TAB 1: SIMULAR ESCENARIOS (FIRST TAB!) */}
       {/* ========================================================================= */}
       {activeTab === 'simulator' && (
         <div className="space-y-8 animate-in fade-in duration-300">
           
+          {/* INTERACTIVE PROJECTION SELECTION MODULE (RULE 3: SELECT WHAT TO PROJECT) */}
+          <div className="glass-card rounded-[28px] p-6 border border-white/10 bg-surface/50 relative overflow-hidden shadow-2xl space-y-5">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-white/10">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Sliders className="text-[#ffcc29]" size={20} />
+                  <h3 className="text-lg font-display font-bold text-white">Variables y Rubros Seleccionados para Proyección</h3>
+                </div>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Elija qué recursos y qué tipos de gastos desea modificar en la simulación activa. Los recursos <strong className="text-[#ffcc29] font-mono">Fijos por Resolución</strong> mantienen sus montos oficiales por norma.
+                </p>
+              </div>
+
+              {/* Quick Filter Actions */}
+              <div className="flex flex-wrap gap-2">
+                <button 
+                  onClick={handleSelectAllResources}
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
+                >
+                  <Check size={13} /> Todos los Recursos
+                </button>
+                <button 
+                  onClick={handleSelectOnlyVariableResources}
+                  className="px-3 py-1.5 bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 border border-[#38bdf8]/30 text-[#38bdf8] rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
+                >
+                  <TrendingUp size={13} /> Solo Variables (Propios/Ext.)
+                </button>
+                <button 
+                  onClick={handleSelectOnlyFixedResources}
+                  className="px-3 py-1.5 bg-[#ffcc29]/10 hover:bg-[#ffcc29]/20 border border-[#ffcc29]/30 text-[#ffcc29] rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
+                >
+                  <Lock size={13} /> Solo Fijos por Resolución
+                </button>
+                <button 
+                  onClick={handleInvertResourceSelection}
+                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-mono transition text-white/70"
+                >
+                  Invertir
+                </button>
+              </div>
+            </div>
+
+            {/* Selection Grid: Resources & Expense Types */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* Resources selection list */}
+              <div className="lg:col-span-8 space-y-3">
+                <span className="text-[11px] font-mono text-on-surface-variant uppercase font-bold tracking-wider block">
+                  Fuentes de Financiación / Recursos ({selectedProjectedResources.length} de {RESOURCES_LIST.length} activados):
+                </span>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                  {RESOURCES_LIST.map(r => {
+                    const isSelected = selectedProjectedResources.includes(r);
+                    const fixedInfo = RECURSOS_FIJOS_RESOLUCION[r];
+
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => toggleResourceSelection(r)}
+                        className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${isSelected ? (fixedInfo ? 'bg-[#ffcc29]/15 border-[#ffcc29]/40 text-white' : 'bg-[#38bdf8]/15 border-[#38bdf8]/40 text-white') : 'bg-black/20 border-white/5 text-white/40 hover:text-white/70'}`}
+                      >
+                        <div className="flex justify-between items-start gap-1">
+                          <span className="font-mono font-bold text-xs">Recurso {r}</span>
+                          {fixedInfo ? (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#ffcc29]/20 text-[#ffcc29] font-mono flex items-center gap-0.5" title={fixedInfo.resolucion}>
+                              <Lock size={9} /> Fijo
+                            </span>
+                          ) : (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-[#38bdf8] font-mono">Var</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] truncate block mt-1 opacity-80" title={getResourceFullName(r)}>
+                          {getResourceFullName(r).split(' - ').pop() || r}
+                        </span>
+                        {fixedInfo && (
+                          <span className="text-[9px] font-mono text-[#ffcc29] font-bold block mt-0.5">
+                            ${fixedInfo.valorM.toLocaleString('es-CO', {maximumFractionDigits:1})}M
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Expense types selection */}
+              <div className="lg:col-span-4 space-y-3">
+                <span className="text-[11px] font-mono text-on-surface-variant uppercase font-bold tracking-wider block">
+                  Tipos de Gasto a Proyectar ({selectedProjectedExpenseTypes.length} de 6):
+                </span>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'Personal', name: 'Personal (2.1.1)' },
+                    { id: 'Funcionamiento', name: 'Funcionamiento (2.1.2)' },
+                    { id: 'Inversion', name: 'Inversión (2.3)' },
+                    { id: 'Transferencias', name: 'Transferencias (2.1.3)' },
+                    { id: 'Tasas', name: 'Tasas y Multas (2.1.8)' },
+                    { id: 'Deuda', name: 'Deuda (2.2.2)' }
+                  ].map(t => {
+                    const isSelected = selectedProjectedExpenseTypes.includes(t.id);
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => toggleExpenseTypeSelection(t.id)}
+                        className={`p-2.5 rounded-xl border text-left transition-all text-xs font-mono font-bold flex items-center justify-between ${isSelected ? 'bg-[#4ade80]/15 border-[#4ade80]/40 text-[#4ade80]' : 'bg-black/20 border-white/5 text-white/40'}`}
+                      >
+                        <span className="truncate">{t.name}</span>
+                        {isSelected && <Check size={14} className="shrink-0 ml-1" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           {/* Expense Type Selector Header for the Monitor Module */}
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
@@ -1089,10 +1369,10 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     <Bot className="text-[#ffcc29] shrink-0 mt-0.5" size={18} />
                     <div>
                       <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                        Sugerencia Inteligente IA (Comportamiento Histórico)
+                        Sugerencia Inteligente IA (Comportamiento Histórico & Resoluciones)
                       </p>
                       <p className="text-[11px] text-white/70 mt-0.5">
-                        Calibración estacional basada en matrículas del 2do semestre, Ley 30 y retenciones de fin de año.
+                        Respeta los recursos fijos por resolución y calibra las rentas variables (posgrados, convenios y estampillas).
                       </p>
                     </div>
                   </div>
@@ -1107,34 +1387,54 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
               <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                 {RESOURCES_LIST.map(r => {
-                  const val = simIngByResource[r] || 0;
+                  const isSelected = selectedProjectedResources.includes(r);
+                  const fixedInfo = RECURSOS_FIJOS_RESOLUCION[r];
+                  const val = isSelected ? (simIngByResource[r] || 0) : 0;
                   const baseVal = financialData.resourceBaselines[r]?.ing || 0;
                   const simVal = baseVal * (1 + val / 100);
                   const aiInfo = AI_ING_SUGGESTIONS[r];
 
                   return (
-                    <div key={r} className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3 hover:border-white/20 transition-all">
+                    <div key={r} className={`p-4 rounded-2xl space-y-3 transition-all border ${isSelected ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-black/20 border-white/5 opacity-50'}`}>
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex items-center gap-2">
-                          <span className={`w-2.5 h-2.5 rounded-full ${Math.abs(val) > 10 ? 'bg-yellow-400' : 'bg-green-400'}`}></span>
+                          <span className={`w-2.5 h-2.5 rounded-full ${fixedInfo ? 'bg-[#ffcc29]' : (Math.abs(val) > 10 ? 'bg-yellow-400' : 'bg-green-400')}`}></span>
                           <span className="text-white font-bold text-xs truncate max-w-[200px]" title={getResourceFullName(r)}>
                             {getResourceFullName(r)}
                           </span>
                         </div>
-                        <span className="text-[10px] font-mono text-[#ffcc29] font-bold">
-                          {val >= 0 ? '+' : ''}{val.toFixed(1)}%
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {fixedInfo ? (
+                            <span className="text-[9px] font-mono bg-[#ffcc29]/20 text-[#ffcc29] px-2 py-0.5 rounded-full border border-[#ffcc29]/30 font-bold flex items-center gap-1">
+                              <Lock size={10} /> Fijo por Resolución
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono text-[#ffcc29] font-bold">
+                              {val >= 0 ? '+' : ''}{val.toFixed(1)}%
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* AI Insight Badge and Rationale for this resource */}
-                      {aiInfo && (
-                        <div className="p-2.5 bg-black/30 border border-white/5 rounded-xl text-[10px] text-on-surface-variant flex items-start gap-2">
-                          <Lightbulb size={13} className="text-[#ffcc29] shrink-0 mt-0.5" />
+                      {/* Fixed Resolution Badge or AI Insight Badge */}
+                      {fixedInfo ? (
+                        <div className="p-2.5 bg-[#ffcc29]/10 border border-[#ffcc29]/20 rounded-xl text-[10px] text-white/80 flex items-start gap-2 font-mono">
+                          <ShieldCheck size={14} className="text-[#ffcc29] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-[#ffcc29] font-bold font-mono mr-1.5">Sugerido IA: {aiInfo.val >= 0 ? '+' : ''}{aiInfo.val}%</span>
-                            <span>{aiInfo.rationale}</span>
+                            <span className="text-[#ffcc29] font-bold block">Monto Oficial: ${fixedInfo.valorCOP.toLocaleString('es-CO')} COP (${fixedInfo.valorM.toLocaleString('es-CO', {maximumFractionDigits:1})}M)</span>
+                            <span className="text-white/60 text-[9px]">{fixedInfo.resolucion}</span>
                           </div>
                         </div>
+                      ) : (
+                        aiInfo && (
+                          <div className="p-2.5 bg-black/30 border border-white/5 rounded-xl text-[10px] text-on-surface-variant flex items-start gap-2">
+                            <Lightbulb size={13} className="text-[#ffcc29] shrink-0 mt-0.5" />
+                            <div>
+                              <span className="text-[#ffcc29] font-bold font-mono mr-1.5">Sugerido IA: {aiInfo.val >= 0 ? '+' : ''}{aiInfo.val}%</span>
+                              <span>{aiInfo.rationale}</span>
+                            </div>
+                          </div>
+                        )
                       )}
 
                       <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-on-surface-variant">
@@ -1148,35 +1448,37 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 pt-1">
-                        <input 
-                          type="range"
-                          min="-50"
-                          max="50"
-                          step="1"
-                          value={val}
-                          onChange={(e) => {
-                            const n = parseInt(e.target.value);
-                            setSimIngByResource(prev => ({ ...prev, [r]: n }));
-                          }}
-                          className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
-                        <div className="flex items-center bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 w-24 shrink-0">
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={parseFloat(simVal.toFixed(1))}
+                      {!fixedInfo && isSelected && (
+                        <div className="flex items-center gap-4 pt-1">
+                          <input 
+                            type="range"
+                            min="-50"
+                            max="50"
+                            step="1"
+                            value={val}
                             onChange={(e) => {
-                              const inputVal = parseFloat(e.target.value) || 0;
-                              let newPct = baseVal > 0 ? ((inputVal / baseVal) - 1) * 100 : 0;
-                              newPct = Math.max(-50, Math.min(50, newPct));
-                              setSimIngByResource(prev => ({ ...prev, [r]: parseFloat(newPct.toFixed(1)) }));
+                              const n = parseInt(e.target.value);
+                              setSimIngByResource(prev => ({ ...prev, [r]: n }));
                             }}
-                            className="bg-transparent text-white font-mono text-[11px] outline-none w-full text-right"
+                            className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
                           />
-                          <span className="text-[9px] text-on-surface-variant ml-1 font-mono">M</span>
+                          <div className="flex items-center bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 w-24 shrink-0">
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={parseFloat(simVal.toFixed(1))}
+                              onChange={(e) => {
+                                const inputVal = parseFloat(e.target.value) || 0;
+                                let newPct = baseVal > 0 ? ((inputVal / baseVal) - 1) * 100 : 0;
+                                newPct = Math.max(-50, Math.min(50, newPct));
+                                setSimIngByResource(prev => ({ ...prev, [r]: parseFloat(newPct.toFixed(1)) }));
+                              }}
+                              className="bg-transparent text-white font-mono text-[11px] outline-none w-full text-right"
+                            />
+                            <span className="text-[9px] text-on-surface-variant ml-1 font-mono">M</span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1240,14 +1542,18 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     { id: 'Tasas', label: 'Tasas y Multas (2.1.8)', desc: 'Impuestos y tasas regulatorias.', color: '#f43f5e' },
                     { id: 'Deuda', label: 'Servicios de la Deuda (2.2.2)', desc: 'Amortización e intereses bancarios.', color: '#fb7185' }
                   ].map(c => {
-                    const val = simGasByType[c.id] || 0;
+                    const isTypeSelected = selectedProjectedExpenseTypes.includes(c.id);
+                    const val = isTypeSelected ? (simGasByType[c.id] || 0) : 0;
                     const aiInfo = AI_GAS_CATEGORY_SUGGESTIONS[c.id];
 
                     return (
-                      <div key={c.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3 hover:border-white/20 transition-all">
+                      <div key={c.id} className={`p-4 rounded-2xl space-y-3 transition-all border ${isTypeSelected ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-black/20 border-white/5 opacity-50'}`}>
                         <div className="flex justify-between items-start">
                           <div>
-                            <span className="text-white font-bold text-xs block">{c.label}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-bold text-xs">{c.label}</span>
+                              {!isTypeSelected && <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/50 font-mono">Desactivado</span>}
+                            </div>
                             <span className="text-[10px] text-on-surface-variant font-sans">{c.desc}</span>
                           </div>
                           <span className={`text-xs font-mono font-bold ${val >= 0 ? 'text-[#ff5b5b]' : 'text-[#4ade80]'}`}>
@@ -1266,23 +1572,25 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                           </div>
                         )}
 
-                        <div className="flex items-center gap-4 pt-1">
-                          <input 
-                            type="range"
-                            min="-50"
-                            max="50"
-                            step="1"
-                            value={val}
-                            onChange={(e) => {
-                              const n = parseInt(e.target.value);
-                              setSimGasByType(prev => ({ ...prev, [c.id]: n }));
-                            }}
-                            className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#7bd0ff]"
-                          />
-                          <div className="flex items-center bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 w-20 shrink-0">
-                            <span className="text-white font-mono text-[11px] w-full text-right">{val > 0 ? `+${val}` : val}%</span>
+                        {isTypeSelected && (
+                          <div className="flex items-center gap-4 pt-1">
+                            <input 
+                              type="range"
+                              min="-50"
+                              max="50"
+                              step="1"
+                              value={val}
+                              onChange={(e) => {
+                                const n = parseInt(e.target.value);
+                                setSimGasByType(prev => ({ ...prev, [c.id]: n }));
+                              }}
+                              className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#7bd0ff]"
+                            />
+                            <div className="flex items-center bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 w-20 shrink-0">
+                              <span className="text-white font-mono text-[11px] w-full text-right">{val > 0 ? `+${val}` : val}%</span>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1293,13 +1601,14 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               {expenseAdjustMode === 'resource' && (
                 <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                   {RESOURCES_LIST.map(r => {
-                    const val = simGasByResource[r] || 0;
+                    const isSelected = selectedProjectedResources.includes(r);
+                    const val = isSelected ? (simGasByResource[r] || 0) : 0;
                     const baseValComp = financialData.resourceBaselines[r]?.gasComp || 0;
                     const baseValPago = financialData.resourceBaselines[r]?.gasPago || 0;
                     const simValPago = baseValPago * (1 + val / 100);
 
                     return (
-                      <div key={r} className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3 hover:border-white/20 transition-all">
+                      <div key={r} className={`p-4 rounded-2xl space-y-3 transition-all border ${isSelected ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-black/20 border-white/5 opacity-50'}`}>
                         <div className="flex justify-between items-start">
                           <span className="text-white font-bold text-xs truncate max-w-[200px]" title={getResourceFullName(r)}>
                             {getResourceFullName(r)}
@@ -1320,20 +1629,22 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 pt-1">
-                          <input 
-                            type="range"
-                            min="-50"
-                            max="50"
-                            step="1"
-                            value={val}
-                            onChange={(e) => {
-                              const n = parseInt(e.target.value);
-                              setSimGasByResource(prev => ({ ...prev, [r]: n }));
-                            }}
-                            className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#f43f5e]"
-                          />
-                        </div>
+                        {isSelected && (
+                          <div className="flex items-center gap-4 pt-1">
+                            <input 
+                              type="range"
+                              min="-50"
+                              max="50"
+                              step="1"
+                              value={val}
+                              onChange={(e) => {
+                                const n = parseInt(e.target.value);
+                                setSimGasByResource(prev => ({ ...prev, [r]: n }));
+                              }}
+                              className="flex-1 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#f43f5e]"
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
