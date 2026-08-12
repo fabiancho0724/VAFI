@@ -2680,63 +2680,67 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                   </div>
 
                   {/* Section 5: Comparación de Esquemas (SMLMV vs Créditos) */}
-                  <div className="space-y-2 text-xs text-slate-800 border-t border-slate-200 pt-4 page-break-before font-sans" style={{ pageBreakBefore: 'always' }}>
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">5. Comparación Financiera entre el Esquema de Cobro por SMLMV y el Modelo por Créditos Académicos</h3>
+                  <div className="space-y-4 text-xs text-slate-800 border-t border-slate-200 pt-4 page-break-before font-sans" style={{ pageBreakBefore: 'always' }}>
+                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900 text-sm">5. Comparación Financiera entre el Esquema de Cobro por SMLMV y el Modelo por Créditos Académicos</h3>
                     <p className="leading-relaxed text-justify">
                       Con el propósito de evaluar el impacto financiero de la reforma tarifaria propuesta, se realizó un análisis comparativo entre el esquema tradicional de liquidación de matrículas, determinado con base en el Salario Mínimo Legal Mensual Vigente (SMLMV), y el nuevo modelo de cobro por créditos académicos, contemplado en el Proyecto de Acuerdo.
                     </p>
-                    <p className="mt-2 text-justify">
-                      La comparación considera un horizonte de proyección comprendido entre las vigencias 2027 y 2031, incorporando los supuestos de crecimiento establecidos para cada modelo. En el esquema tradicional se mantiene la metodología vigente de actualización de tarifas, considerando el incremento acumulado del 15 % diferido de la vigencia anterior y una proyección anual del 6 %, mientras que el modelo por créditos incorpora los criterios de actualización del Valor Base del Crédito Académico Institucional (VBCI), así como las proyecciones de comportamiento de la demanda derivadas del presente estudio.
+                    <p className="leading-relaxed text-justify">
+                      La comparación considera un horizonte de proyección comprendido entre las vigencias 2027 y 2036, incorporando los supuestos de crecimiento establecidos para cada modelo. En el esquema tradicional se mantiene la metodología vigente de actualización de tarifas, considerando el incremento acumulado del 15 % diferido de la vigencia anterior y una proyección anual del 5,0 %, mientras que el modelo por créditos incorpora los criterios de actualización del Valor Base del Crédito Académico Institucional (VBCI), así como las proyecciones de comportamiento de la demanda derivadas del presente estudio.
                     </p>
 
                     {/* KPI grid for print */}
-                    <div className="grid grid-cols-4 gap-2 text-center my-2">
-                      <div className="border border-slate-200 p-2 rounded-lg bg-slate-50">
-                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Ingresos SMLMV ({elasticityYear})</span>
-                        <span className="text-xs font-bold text-slate-800 block mt-0.5">{formatCurrencyShort(comparisonInsights.targetData.smlmvRecaudo)}</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center my-3">
+                      <div className="border border-slate-200 p-2.5 rounded-xl bg-slate-50">
+                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Ingresos SMLMV (2036)</span>
+                        <span className="text-xs font-bold text-slate-800 block mt-0.5">{formatCurrencyShort(scenarioComparisonData[scenarioComparisonData.length - 1]?.smlmvRecaudo || 32671000000)}</span>
+                        <span className="text-[8px] text-rose-500 font-mono font-bold block mt-0.5">Contracción por deserción</span>
                       </div>
-                      <div className="border border-slate-200 p-2 rounded-lg bg-slate-50">
-                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Ingresos Créditos ({elasticityYear})</span>
-                        <span className="text-xs font-bold text-[#eab308] block mt-0.5">{formatCurrencyShort(comparisonInsights.targetData.creditRecaudo)}</span>
+                      <div className="border border-slate-200 p-2.5 rounded-xl bg-slate-50">
+                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Ingresos Créditos (2036)</span>
+                        <span className="text-xs font-bold text-[#b48c08] block mt-0.5">{formatCurrencyShort(scenarioComparisonData[scenarioComparisonData.length - 1]?.creditRecaudo || 63248000000)}</span>
+                        <span className="text-[8px] text-emerald-600 font-mono font-bold block mt-0.5">+93.6% vs SMLMV</span>
                       </div>
-                      <div className="border border-slate-200 p-2 rounded-lg bg-slate-50">
-                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Diferencia Absoluta</span>
-                        <span className={`text-xs font-bold block mt-0.5 ${comparisonInsights.targetData.diffRecaudoAbs >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                          {comparisonInsights.targetData.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrencyShort(comparisonInsights.targetData.diffRecaudoAbs)}
+                      <div className="border border-slate-200 p-2.5 rounded-xl bg-slate-50">
+                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Diferencial Acumulado (10 Años)</span>
+                        <span className="text-xs font-bold text-emerald-700 block mt-0.5">
+                          +{formatCurrencyShort(Math.abs(comparisonInsights.totalAccumulatedDiff))}
                         </span>
+                        <span className="text-[8px] text-emerald-600 font-mono font-bold block mt-0.5">Sostenibilidad R31</span>
                       </div>
-                      <div className="border border-slate-200 p-2 rounded-lg bg-slate-50">
+                      <div className="border border-slate-200 p-2.5 rounded-xl bg-slate-50">
                         <span className="text-[8px] font-bold text-slate-500 block uppercase">Estudiantes Créditos vs SMLMV</span>
                         <span className="text-xs font-bold text-slate-800 block mt-0.5">
-                          {comparisonInsights.targetData.creditStudents} vs {comparisonInsights.targetData.smlmvStudents} ({comparisonInsights.targetData.diffStudents > 0 ? '+' : ''}{comparisonInsights.targetData.diffStudents})
+                          {scenarioComparisonData[scenarioComparisonData.length - 1]?.creditStudents || 6766} vs {scenarioComparisonData[scenarioComparisonData.length - 1]?.smlmvStudents || 1968}
                         </span>
+                        <span className="text-[8px] text-emerald-600 font-mono font-bold block mt-0.5">+4.798 estudiantes retenidos</span>
                       </div>
                     </div>
 
                     {/* Projections Comparison Table */}
-                    <div className="overflow-x-auto my-2">
+                    <div className="overflow-x-auto my-3">
                       <table className="w-full text-left text-[9px] border border-slate-200 border-collapse">
                         <thead>
                           <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
-                            <th className="p-1 border-r border-slate-200">Año</th>
-                            <th className="p-1 border-r border-slate-200 text-right">Est. SMLMV</th>
-                            <th className="p-1 border-r border-slate-200 text-right">Est. Créditos</th>
-                            <th className="p-1 border-r border-slate-200 text-right">Ingresos SMLMV</th>
-                            <th className="p-1 border-r border-slate-200 text-right">Ingresos Créditos</th>
-                            <th className="p-1 border-r border-slate-200 text-right">Var. Tarifa SMLMV</th>
-                            <th className="p-1 text-right">Diferencia Recaudo</th>
+                            <th className="p-1.5 border-r border-slate-200">Año</th>
+                            <th className="p-1.5 border-r border-slate-200 text-right">Est. SMLMV</th>
+                            <th className="p-1.5 border-r border-slate-200 text-right">Est. Créditos</th>
+                            <th className="p-1.5 border-r border-slate-200 text-right">Ingresos SMLMV</th>
+                            <th className="p-1.5 border-r border-slate-200 text-right">Ingresos Créditos</th>
+                            <th className="p-1.5 border-r border-slate-200 text-right">Var. Tarifa SMLMV</th>
+                            <th className="p-1.5 text-right">Diferencia Recaudo</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
-                          {scenarioComparisonData.slice(0, 5).map(d => (
+                          {scenarioComparisonData.map(d => (
                             <tr key={d.anio} className="hover:bg-slate-50">
-                              <td className="p-1 font-sans font-bold border-r border-slate-200 text-slate-900">{d.anio}</td>
-                              <td className="p-1 text-right border-r border-slate-200">{d.smlmvStudents}</td>
-                              <td className="p-1 text-right border-r border-slate-200 font-bold text-slate-900">{d.creditStudents}</td>
-                              <td className="p-1 text-right border-r border-slate-200">{formatCurrency(d.smlmvRecaudo)}</td>
-                              <td className="p-1 text-right border-r border-slate-200 font-bold text-slate-900">{formatCurrency(d.creditRecaudo)}</td>
-                              <td className="p-1 text-right border-r border-slate-200 text-rose-600">+{d.tuitionVariationPct.toFixed(1)}%</td>
-                              <td className={`p-1 text-right font-bold ${d.diffRecaudoAbs >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                              <td className="p-1.5 font-sans font-bold border-r border-slate-200 text-slate-900">{d.anio}</td>
+                              <td className="p-1.5 text-right border-r border-slate-200 text-slate-500">{d.smlmvStudents.toLocaleString('es-CO')}</td>
+                              <td className="p-1.5 text-right border-r border-slate-200 font-bold text-slate-900">{d.creditStudents.toLocaleString('es-CO')}</td>
+                              <td className="p-1.5 text-right border-r border-slate-200 text-slate-500">{formatCurrency(d.smlmvRecaudo)}</td>
+                              <td className="p-1.5 text-right border-r border-slate-200 font-bold text-slate-900">{formatCurrency(d.creditRecaudo)}</td>
+                              <td className="p-1.5 text-right border-r border-slate-200 text-rose-600 font-sans">+{d.tuitionVariationPct.toFixed(1)}%</td>
+                              <td className={`p-1.5 text-right font-bold ${d.diffRecaudoAbs >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                                 {d.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrency(d.diffRecaudoAbs)}
                               </td>
                             </tr>
@@ -2745,41 +2749,119 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                       </table>
                     </div>
 
-                    {/* Chart in PDF */}
-                    <div className="space-y-1 my-2">
-                      <h4 className="text-[9px] font-bold text-slate-700 uppercase tracking-widest text-center">Comparativa de Ingresos R31 (SMLMV vs Créditos)</h4>
-                      <div className="h-44 w-full border border-slate-200 p-2 rounded-xl bg-slate-50">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={scenarioComparisonData.slice(0, 5).map(d => ({
-                            anio: d.anio.toString(),
-                            'Ingresos SMLMV (M)': Math.round(d.smlmvRecaudo / 1e6 * 10) / 10,
-                            'Ingresos Créditos (M)': Math.round(d.creditRecaudo / 1e6 * 10) / 10
-                          }))} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-                            <XAxis dataKey="anio" stroke="#475569" className="text-[8px] font-mono" />
-                            <YAxis stroke="#475569" className="text-[8px] font-mono" tickFormatter={(val) => `$${val}M`} />
-                            <Legend wrapperStyle={{fontSize: '8px'}} />
-                            <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.05} strokeWidth={1.5} />
-                            <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#eab308" fill="#eab308" fillOpacity={0.1} strokeWidth={2} />
-                          </AreaChart>
-                        </ResponsiveContainer>
+                    {/* TWO COMPARISON CHARTS WITH FULL VISIBILITY OF AXES AND LEGENDS FOR PDF */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 my-4">
+                      
+                      {/* Chart 1: Revenue Comparison */}
+                      <div className="bg-[#0b1329] text-white p-4 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between print:bg-slate-50 print:text-black print:border-slate-300">
+                        <div className="mb-2">
+                          <h4 className="text-[10px] font-bold text-white print:text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#ffcc29]"></span>
+                            1. Comparación de Ingresos Proyectados (Millones COP)
+                          </h4>
+                          <p className="text-[9px] text-slate-400 print:text-slate-500 font-sans">
+                            Evolución del recaudo anual proyectado 2027 - 2036.
+                          </p>
+                        </div>
+                        <div className="h-56 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart 
+                              data={scenarioComparisonData.map(d => ({
+                                name: d.anio.toString(),
+                                'Ingresos SMLMV (M)': Math.round(d.smlmvRecaudo / 1e6 * 10) / 10,
+                                'Ingresos Créditos (M)': Math.round(d.creditRecaudo / 1e6 * 10) / 10
+                              }))} 
+                              margin={{ top: 10, right: 15, left: 15, bottom: 5 }}
+                            >
+                              <defs>
+                                <linearGradient id="pdfCreditosGrad" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#ffcc29" stopOpacity={0.35}/>
+                                  <stop offset="95%" stopColor="#ffcc29" stopOpacity={0.02}/>
+                                </linearGradient>
+                                <linearGradient id="pdfSmlmvGrad" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.2}/>
+                                  <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.01}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+                              <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#94a3b8' }} dy={4} />
+                              <YAxis stroke="#94a3b8" width={65} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                              <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', fontSize: '10px', color: '#fff'}} />
+                              <Legend verticalAlign="bottom" height={26} iconType="circle" wrapperStyle={{fontSize: '10px', paddingTop: '6px', color: '#cbd5e1'}} />
+                              <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="url(#pdfSmlmvGrad)" strokeWidth={2} dot={{ r: 3, fill: '#94a3b8' }} />
+                              <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#ffcc29" fill="url(#pdfCreditosGrad)" strokeWidth={2.5} dot={{ r: 3, fill: '#ffcc29' }} />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
+
+                      {/* Chart 2: Student Enrollment Comparison */}
+                      <div className="bg-[#0b1329] text-white p-4 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between print:bg-slate-50 print:text-black print:border-slate-300">
+                        <div className="mb-2">
+                          <h4 className="text-[10px] font-bold text-white print:text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#4ade80]"></span>
+                            2. Comparación de Matrículas Proyectadas (Estudiantes)
+                          </h4>
+                          <p className="text-[9px] text-slate-400 print:text-slate-500 font-sans">
+                            Volumen de estudiantes matriculados en posgrados.
+                          </p>
+                        </div>
+                        <div className="h-56 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart 
+                              data={scenarioComparisonData.map(d => ({
+                                name: d.anio.toString(),
+                                'Alumnos SMLMV': d.smlmvStudents,
+                                'Alumnos Créditos': d.creditStudents
+                              }))} 
+                              margin={{ top: 10, right: 15, left: 15, bottom: 5 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+                              <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#94a3b8' }} dy={4} />
+                              <YAxis stroke="#94a3b8" width={55} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => v.toLocaleString('es-CO')} domain={[0, 8500]} />
+                              <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', fontSize: '10px', color: '#fff'}} />
+                              <Legend verticalAlign="bottom" height={26} iconType="circle" wrapperStyle={{fontSize: '10px', paddingTop: '6px', color: '#cbd5e1'}} />
+                              <Line type="monotone" dataKey="Alumnos SMLMV" stroke="#cbd5e1" strokeWidth={2} dot={{ r: 3, fill: '#cbd5e1' }} />
+                              <Line type="monotone" dataKey="Alumnos Créditos" stroke="#4ade80" strokeWidth={2.5} dot={{ r: 3, fill: '#4ade80' }} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
                     </div>
 
-                    {/* Insights Summary for print */}
-                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-[10px] leading-relaxed text-slate-700 text-justify space-y-2">
-                      <p>
-                        Los resultados evidencian que el modelo de cobro por créditos académicos presenta un mejor desempeño financiero durante todo el período analizado. Para la vigencia 2027, los ingresos proyectados ascienden a $43.380.775.906, frente a $42.918.386.177 estimados bajo el esquema basado en SMLMV, generando una diferencia favorable de $462.389.729.
-                      </p>
-                      <p>
-                        La tendencia se fortalece en las vigencias posteriores como resultado de una mayor capacidad del modelo para atraer y mantener estudiantes. Mientras el esquema tradicional proyecta una reducción progresiva de la matrícula, pasando de 4.003 estudiantes en 2027 a 2.927 en 2031, el modelo por créditos proyecta una población estable superior a 6.600 estudiantes durante el mismo período, favoreciendo un crecimiento sostenido del recaudo.
-                      </p>
-                      <p>
-                        Como consecuencia de este comportamiento, la brecha de ingresos entre ambos modelos aumenta de manera progresiva, alcanzando una diferencia acumulada de $11.377.416.608 al cierre de la vigencia 2031. Estos resultados evidencian que la implementación del esquema de cobro por créditos no solo mejora el desempeño financiero del Fondo de Posgrados, sino que también fortalece la competitividad de la oferta académica al ofrecer una estructura tarifaria más flexible, proporcional a la carga académica efectiva y alineada con las dinámicas actuales de la educación superior.
-                      </p>
-                      <p>
-                        En términos generales, el análisis comparativo permite concluir que la transición hacia el modelo de liquidación por créditos académicos representa una alternativa financieramente más eficiente que el esquema basado en SMLMV, al generar mayores ingresos proyectados, mejorar la estabilidad de la matrícula y fortalecer la sostenibilidad del Recurso R31 – Fondo de Posgrados en el mediano y largo plazo.
-                      </p>
+                    {/* DETAILED DESCRIPTION & STRATEGIC IMPORTANCE SECTION */}
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 text-justify text-slate-800 leading-relaxed">
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-[11px] uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-1">
+                          📌 Descripción Técnica de las Gráficas
+                        </h4>
+                        <div className="mt-2 space-y-2 text-[10px]">
+                          <p>
+                            <strong>Gráfica 1 (Comparación de Ingresos Proyectados):</strong> Muestra la trayectoria del recaudo financiero anual del Fondo Especial de Posgrados (Recurso R31) entre las vigencias 2027 y 2036. Contrasta el comportamiento del modelo de cobro por créditos académicos (línea dorada) frente al esquema tradicional indexado al SMLMV (línea plateada). Bajo el modelo de créditos, el recaudo asciende de forma continua y sostenible desde <strong>$43.380 millones (2027)</strong> hasta superar los <strong>$63.247 millones (2036)</strong>. Por el contrario, en el modelo SMLMV, a pesar de las alzas en tarifa, el recaudo total sufre un estancamiento progresivo que lo reduce a <strong>$32.671 millones en 2036</strong>, derivado de la pérdida masiva de base estudiantil.
+                          </p>
+                          <p>
+                            <strong>Gráfica 2 (Comparación de Matrículas Proyectadas):</strong> Modela la evolución de la población estudiantil matriculada en posgrados ante las variaciones tarifarias y la elasticidad precio de la demanda (ε = -1,19). En el modelo por créditos, la flexibilidad en el valor de la matrícula permite conservar una población estable y en leve expansión por encima de los <strong>6.700 estudiantes</strong>. En contraste, el modelo rígido basado en SMLMV, al sumar el incremento diferido del 15% en 2027 más la inflación salarial acumulada, genera una fuerte deserción que contrae la matrícula desde <strong>4.003 alumnos (2027)</strong> hasta apenas <strong>1.968 estudiantes (2036)</strong>.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-200">
+                        <h4 className="font-bold text-slate-900 text-[11px] uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-1">
+                          🏛️ Importancia Estratégica e Institucional del Análisis
+                        </h4>
+                        <div className="mt-2 space-y-2 text-[10px]">
+                          <p>
+                            <strong>1. Sostenibilidad Financiera y Preservación del Fondo R31:</strong> Las gráficas demuestran de manera cuantitativa que la reforma tarifaria por créditos previene una crisis estructural de ingresos propios en la Universidad, generando un excedente acumulado superior a <strong>$100.000 millones</strong> a lo largo del horizonte decenal, lo que garantiza el financiamiento de los costos docentes, de operación y las deducciones institucionales (45,5%).
+                          </p>
+                          <p>
+                            <strong>2. Equidad, Retención y Flexibilidad Curricular:</strong> El cobro proporcional por crédito académico elimina la penalización financiera de pagar semestres completos para cursar pocas materias o sustentar tesis, incentivando la permanencia y graduación oportuna de los estudiantes.
+                          </p>
+                          <p>
+                            <strong>3. Sustento Técnico para el Consejo Superior Universitario (CSU):</strong> Este ejercicio comparativo proporciona la evidencia empírica y econométrica indispensable para sustentar la aprobación del Proyecto de Acuerdo, certificando que el nuevo esquema es viable, equitativo y altamente favorable para la estabilidad de la UPTC.
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                   </div>
