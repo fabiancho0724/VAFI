@@ -1,194 +1,196 @@
-Unidad;Concepto;Recurso;Tipo de Ingreso;Valor inicial;Valor aforo;Total recaudo;Fecha inicial;Fecha final;Tipo de Recurso
-01 - ADMINISTRATIVA Y FINANCIERA;Aportes para Funcionamiento;10.0-Aportes Nacion - Funcionamiento;Aportes de la Naci贸n;314782000000.0;314782000000.0;184000000000.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Aportes funcionamiento;10.0-Aportes Nacion - Funcionamiento;Aportes de la Naci贸n;0.0;545944007.9;545944007.9;1/01/2026;31/07/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Aportes;10.0-Aportes Nacion - Funcionamiento;Aportes de la Naci贸n;0.0;0.0;11038169644.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - PIC Convencional;10.1-Aportes Naci贸n - PIC Convencional;Aportes de la Naci贸n;0.0;1967656093.0;1967656093.0;1/01/2026;31/07/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - PIC Territorial;10.2-Aportes Naci贸n - PIC Territorial;Aportes de la Naci贸n;0.0;936477783.6;936477783.6;1/01/2026;31/07/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Matr铆culas Pregrado-Pol铆tica de Gratuidad;10.5-Aportes Naci贸n - Pol铆tica de gratuidad;Aportes de la Naci贸n;20708427143.0;20708427143.0;7019746120.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Estampilla Pro- Universidad Nacional y Dem谩s Entidades Estatales de Colombia;12-Estampillas Otras Universidades;Aportes de la Naci贸n;5706455422.0;7265094590.0;7265094590.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - Estampilla Pro UNAL y demas universidades;12-Estampillas Otras Universidades;Aportes de la Naci贸n;0.0;0.0;11966301.16;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Estampilla Prounal;12-Estampillas Otras Universidades;Aportes de la Naci贸n;0.0;9991479040.0;9991479040.0;1/01/2026;31/07/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Excedentes Cooperativas Art.142, Ley 1819 del 2016;13-Cooperativas;Aportes de la Naci贸n;2126284735.0;2126284735.0;1534765063.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del Balance - Cooperativas;13-Cooperativas;Aportes de la Naci贸n;0.0;1887697.0;1887697.0;1/01/2026;31/07/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Matr铆culas Pregrado FSE;14-Matriculas FSE;Aportes de la Naci贸n;18737327483.0;18737327483.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Matr铆culas FSE;14-Matriculas FSE;Aportes de la Naci贸n;0.0;888183454.3;888183454.3;1/01/2026;31/07/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Aportes para Inversion;16.0-Aportes inversion;Aportes de la Naci贸n;7728720060.0;13736522221.0;7740281271.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - CREE;16.0-Aportes inversion;Aportes de la Naci贸n;0.0;0.0;503416.94;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Aportes inversion;16.0-Aportes inversion;Aportes de la Naci贸n;0.0;5148400892.0;5148400892.0;1/01/2026;31/07/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Plan Fomento a Bienestar (mejoramiento condiciones de bienestar);16.1-Plan fomento a Bienestar (mejoramiento condiciones de  bienestar);Aportes de la Naci贸n;0.0;1407480044.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Devolucion de descuento por votacion;17-Devolucion descuento electoral;Aportes de la Naci贸n;5447536009.0;5447536009.0;3249301630.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Articulo 87 CESU;18-Articulo 87 CESU;Aportes de la Naci贸n;427778274.0;427778274.0;1214979208.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Certificaciones y constancias;20-Propios;Recursos Propios;54390954.0;54390954.0;38799050.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Inscripciones ;20-Propios;Recursos Propios;316506993.0;316506993.0;1463473800.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Derechos de grado;20-Propios;Recursos Propios;451761696.0;451761696.0;653451540.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Matr铆culas;20-Propios;Recursos Propios;5525977978.0;5525977978.0;3257504933.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Pregrado - Certificaciones, constancias acad茅micas y derechos complementarios;20-Propios;Recursos Propios;4231617827.0;4231617827.0;2737099886.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Sanciones administrativas;20-Propios;Recursos Propios;22586143.0;22586143.0;21154850.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;"Comercio y distribuci贸n; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribuci贸n de electricidad, gas y agua";20-Propios;Recursos Propios;4173694824.0;4173694824.0;2090075579.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;"Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing";20-Propios;Recursos Propios;235081376.0;235081376.0;137953044.9;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;"Minerales; electricidad, gas y agua";20-Propios;Recursos Propios;129404752.0;129404752.0;75598779.34;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Productos met谩licos, maquinaria y equipo;20-Propios;Recursos Propios;5025174.0;5025174.0;6887590.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - Propios;20-Propios;Recursos Propios;1822006660.0;1822006660.0;1725201000.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Propios;20-Propios;Recursos Propios;0.0;1579085708.0;1579085708.0;1/01/2026;31/07/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;Recursos Propios;331465375.0;331465375.0;125936121.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Servicios P煤blicos;20-Propios;Recursos Propios;0.0;0.0;10533812.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Ingresos de Vigencias Anteriores - Propios;20-Propios;Recursos Propios;0.0;0.0;13845388.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Pregrado - Inscripciones ;20-Propios;Recursos Propios;0.0;0.0;11554400.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Pregrado - Matr铆culas;20-Propios;Recursos Propios;0.0;0.0;2525510.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Pregrado - Certificaciones, constancias acad茅micas y derechos complementarios;20-Propios;Recursos Propios;0.0;0.0;3148500.0;1/01/2026;31/07/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Pregrado - Matr铆culas;20-Propios;Recursos Propios;0.0;25044900.0;25044900.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Pregrado - Matr铆culas;20-Propios;Recursos Propios;0.0;11310600.0;17773800.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Pregrado - Matr铆culas;20-Propios;Recursos Propios;0.0;0.0;4473300.0;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Pregrado - Matr铆culas;20-Propios;Recursos Propios;0.0;94437340.8;152068530.0;1/01/2026;31/07/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Pregrado - Matr铆culas;20-Propios;Recursos Propios;0.0;43357500.0;43895900.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Pregrado - Matr铆culas;20-Propios;Recursos Propios;0.0;38874617.0;53081900.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Pregrado - Matr铆culas;20-Propios;Recursos Propios;0.0;39540000.0;43043000.0;1/01/2026;31/07/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Pregrado - Inscripciones ;20-Propios;Recursos Propios;0.0;0.0;7615400.0;1/01/2026;31/07/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Pregrado - Certificaciones, constancias acad茅micas y derechos complementarios;20-Propios;Recursos Propios;0.0;0.0;836000.0;1/01/2026;31/07/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Pregrado - Inscripciones ;20-Propios;Recursos Propios;0.0;0.0;4989400.0;1/01/2026;31/07/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Pregrado - Matr铆culas;20-Propios;Recursos Propios;0.0;0.0;3321030.0;1/01/2026;31/07/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Pregrado - Certificaciones, constancias acad茅micas y derechos complementarios;20-Propios;Recursos Propios;0.0;0.0;5523000.0;1/01/2026;31/07/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Sanciones administrativas;20-Propios;Recursos Propios;0.0;0.0;777700.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Devoluci贸n IVA - Instituciones de Educaci贸n Superior;21-Devolucion IVA;Recursos Propios;4587997825.0;4587997825.0;4672202857.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Devolucion IVA;21-Devolucion IVA;Recursos Propios;0.0;953393273.0;953393273.0;1/01/2026;31/07/2026;Recursos del Balance
-01 - ADMINISTRATIVA Y FINANCIERA;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;12379600.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;6301886.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;212479362.0;212479362.0;121807800.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;372975795.0;372975795.0;162141900.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;10485147378.0;10527470904.0;6216407959.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;14917592.0;14917592.0;44592100.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Recursos del balance - Posgrados;31-Posgrados;Extensi贸n y Posgrados;0.0;179478068.0;179478068.0;1/01/2026;31/07/2026;Recursos del Balance
-05 - CIENCIAS BASICAS;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;30612465.0;30612465.0;38667600.0;1/01/2026;31/07/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;41215292.0;41215292.0;23638500.0;1/01/2026;31/07/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;1408521574.0;1408521574.0;1169256172.0;1/01/2026;31/07/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;1273178.0;1273178.0;6259000.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;111276000.0;111276000.0;45008600.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;218394000.0;218394000.0;155488700.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;5018300000.0;5018300000.0;3132170272.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;15218000.0;1/01/2026;31/07/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;21238620.0;21238620.0;6827600.0;1/01/2026;31/07/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;33309900.0;33309900.0;13132500.0;1/01/2026;31/07/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;2205929622.0;2206189622.0;1601383858.0;1/01/2026;31/07/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;1879500.0;1/01/2026;31/07/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;25000.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;44900440.0;44900440.0;38730400.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;129301900.0;129301900.0;77044000.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;2008442150.0;2008442150.0;1568878538.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;2342000.0;2342000.0;7409200.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;17762500.0;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;85344600.0;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;148222100.0;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;7974390060.0;8136426419.0;5466735714.0;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;32199000.0;1/01/2026;31/07/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;4612000.0;4612000.0;2152500.0;1/01/2026;31/07/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;7686900.0;7686900.0;4377500.0;1/01/2026;31/07/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;364581200.0;364581200.0;190695338.0;1/01/2026;31/07/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;1000000.0;1000000.0;2901000.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;90602928.0;90602928.0;49900100.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;205081160.0;205081160.0;88863000.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;3406788528.0;3406788528.0;2008642005.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;9540000.0;9540000.0;10967600.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;105525765.0;105525765.0;41452300.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;208353425.0;208353425.0;103309000.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;4945268530.0;4956301314.0;2850238767.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;14313000.0;1/01/2026;31/07/2026;Recursos UPTC
-14 - SECCIONAL CHIQUINQUIRA;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;4441320.0;4441320.0;1537500.0;1/01/2026;31/07/2026;Recursos UPTC
-14 - SECCIONAL CHIQUINQUIRA;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;11103300.0;11103300.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-14 - SECCIONAL CHIQUINQUIRA;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;194307750.0;194307750.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-14 - SECCIONAL CHIQUINQUIRA;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;307500.0;1/01/2026;31/07/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Inscripciones ;31-Posgrados;Extensi贸n y Posgrados;138200000.0;138200000.0;74569100.0;1/01/2026;31/07/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Derechos de grado;31-Posgrados;Extensi贸n y Posgrados;238000000.0;238000000.0;165206400.0;1/01/2026;31/07/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Matr铆culas;31-Posgrados;Extensi贸n y Posgrados;5202000000.0;5369355119.0;4378795856.0;1/01/2026;31/07/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Posgrado - Certificaciones, constancias acad茅micas y derechos complementarios;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;19500000.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;Extensi贸n y Posgrados;0.0;0.0;20500000.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Extension;32-Extension;Extensi贸n y Posgrados;0.0;0.0;2548873752.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Extension;32-Extension;Extensi贸n y Posgrados;0.0;0.0;6250000.0;1/01/2026;31/07/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Extension;32-Extension;Extensi贸n y Posgrados;10000000.0;46690000.0;56775144.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Extension;32-Extension;Extensi贸n y Posgrados;0.0;0.0;76200000.0;1/01/2026;31/07/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Extension;32-Extension;Extensi贸n y Posgrados;0.0;0.0;450000.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Extension;32-Extension;Extensi贸n y Posgrados;810500000.0;823714759.4;75185450.0;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Extension;32-Extension;Extensi贸n y Posgrados;1575000000.0;1635316860.0;34754710.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Extension;32-Extension;Extensi贸n y Posgrados;21050000.0;21050000.0;27244388.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Extension;32-Extension;Extensi贸n y Posgrados;460000000.0;480000000.0;254804380.0;1/01/2026;31/07/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Extension;32-Extension;Extensi贸n y Posgrados;0.0;0.0;1598876.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Agricultura, silvicultura y productos de la pesca;32-Extension;Extensi贸n y Posgrados;650000000.0;650000000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Extension;32-Extension;Extensi贸n y Posgrados;15000000.0;15000000.0;24280717.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Agricultura, silvicultura y productos de la pesca;32-Extension;Extensi贸n y Posgrados;0.0;0.0;272053183.6;1/01/2026;31/07/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Extension;32-Extension;Extensi贸n y Posgrados;0.0;0.0;25576000.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;3041262435.0;8702826283.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;537500000.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;57743765.2;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;6000000.0;6000000.0;1/01/2026;31/07/2026;Recursos del Balance
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;4301415000.0;11002883271.0;7612500.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;6250000.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;6250000.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;6500000.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;6500000.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;49500000.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;5674059937.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;49471850.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;6500000.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;49439100.0;49439100.0;1/01/2026;31/07/2026;Recursos del Balance
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;19800000.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;20000000.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;30000000.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;20000000.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;27000000.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;20000000.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;34000000.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;220000000.0;220631149.0;48500000.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;10025999.71;10025999.71;1/01/2026;31/07/2026;Recursos del Balance
-07 - CIENCIAS DE LA SALUD;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;100000000.0;118040000.0;20400000.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;1000000000.0;1518807975.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;7331637.85;7331637.85;1/01/2026;31/07/2026;Recursos del Balance
-09 - INGENIERIA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;337750000.0;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;4800000000.0;7052942545.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;50607918.5;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;7589269.0;7589269.0;1/01/2026;31/07/2026;Recursos del Balance
-10 - DERECHO Y CIENCIAS SOCIALES;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;250000000.0;250000000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;22537438.83;22537438.83;1/01/2026;31/07/2026;Recursos del Balance
-12 - SECCIONAL DUITAMA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;12000000.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;192348000.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;825000000.0;825000000.0;71346827.08;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;25650000.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;47532087.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;13358706.47;13358706.47;1/01/2026;31/07/2026;Recursos del Balance
-13 - SECCIONAL SOGAMOSO;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;113893750.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;233677514.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;469841460.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;663804100.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;3000000000.0;5627817063.0;150871644.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;201525.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;35745120.82;35745120.82;1/01/2026;31/07/2026;Recursos del Balance
-02 - INVESTIGACION Y EXTENSION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;16000000000.0;16000000000.0;12134184377.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;18000000.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;29600000.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Investigacion;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;1342657000.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;2979210.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Recursos del balance - Convenios con derechos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;7450551.58;7450551.58;1/01/2026;31/07/2026;Recursos del Balance
-15 - SEDE REGIONAL AGUAZUL;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;278555210.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Convenios con derechos econ贸micos;33-Convenios con derechos;Extensi贸n y Posgrados;0.0;0.0;58820000.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Convenios sin derechos econ贸micos;34-Convenios sin derechos;Extensi贸n y Posgrados;0.0;0.0;24250000.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;Extensi贸n y Posgrados;0.0;136861637.0;136861637.0;1/01/2026;31/07/2026;Recursos del Balance
-04 - CIENCIAS DE LA EDUCACION;Convenios sin derechos econ贸micos;34-Convenios sin derechos;Extensi贸n y Posgrados;628035382.0;628135382.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-04 - CIENCIAS DE LA EDUCACION;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;Extensi贸n y Posgrados;0.0;491023700.2;491023700.2;1/01/2026;31/07/2026;Recursos del Balance
-12 - SECCIONAL DUITAMA;Convenios sin derechos econ贸micos;34-Convenios sin derechos;Extensi贸n y Posgrados;0.0;39840000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Convenios sin derechos econ贸micos;34-Convenios sin derechos;Extensi贸n y Posgrados;0.0;0.0;2200000.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Convenios sin derechos econ贸micos;34-Convenios sin derechos;Extensi贸n y Posgrados;4984000000.0;4984000000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;Extensi贸n y Posgrados;0.0;1810609128.0;1810609128.0;1/01/2026;31/07/2026;Recursos del Balance
-04 - CIENCIAS DE LA EDUCACION;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;150000000.0;150000000.0;44100000.0;1/01/2026;31/07/2026;Recursos UPTC
-05 - CIENCIAS BASICAS;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;61000000.0;61000000.0;420240.0;1/01/2026;31/07/2026;Recursos UPTC
-06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;69000000.0;69000000.0;4800000.0;1/01/2026;31/07/2026;Recursos UPTC
-07 - CIENCIAS DE LA SALUD;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;100000000.0;179719581.0;182042705.0;1/01/2026;31/07/2026;Recursos UPTC
-08 - CIENCIAS AGROPECUARIAS;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;4000000.0;4000000.0;0.0;1/01/2026;31/07/2026;Recursos UPTC
-09 - INGENIERIA;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;117000000.0;117000000.0;4375000.0;1/01/2026;31/07/2026;Recursos UPTC
-10 - DERECHO Y CIENCIAS SOCIALES;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;20000000.0;58290500.0;71534000.0;1/01/2026;31/07/2026;Recursos UPTC
-12 - SECCIONAL DUITAMA;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;255500000.0;255500000.0;83504000.0;1/01/2026;31/07/2026;Recursos UPTC
-13 - SECCIONAL SOGAMOSO;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;142000000.0;169000000.0;112664000.0;1/01/2026;31/07/2026;Recursos UPTC
-14 - SECCIONAL CHIQUINQUIRA;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;43000000.0;43000000.0;6103000.0;1/01/2026;31/07/2026;Recursos UPTC
-11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;860000000.0;860000000.0;1098041919.0;1/01/2026;31/07/2026;Recursos UPTC
-02 - INVESTIGACION Y EXTENSION;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;535000000.0;535000000.0;324330619.0;1/01/2026;31/07/2026;Recursos UPTC
-15 - SEDE REGIONAL AGUAZUL;Educaci贸n continuada;35-Educacion continuada;Extensi贸n y Posgrados;30000000.0;30000000.0;12079000.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Estampilla pro Universidad Pedag贸gica y Tecnol贸gica de Colombia;40-Estampilla UPTC;Estampilla Pro UPTC;4206444980.0;5737263195.0;3057171181.0;1/01/2026;31/07/2026;Recursos UPTC
-01 - ADMINISTRATIVA Y FINANCIERA;Recursos del balance - Estampilla UPTC;40-Estampilla UPTC;Estampilla Pro UPTC;0.0;1880006027.0;1880006027.0;1/01/2026;31/07/2026;Recursos del Balance
-;;;;;;;;;
+Unidad;C骴igo concepto;Concepto;Recurso;Valor inicial;Valor aforo;Total recaudo;Fecha final
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.01;Aportes para Funcionamiento;10.0-Aportes Nacion - Funcionamiento;$ 314,781,873,726.00;$ 314,781,873,726.00;$ 211,546,696,007.86;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.001;Recursos del balance - Aportes funcionamiento;10.0-Aportes Nacion - Funcionamiento;$ 0.00;$ 545,944,007.86;$ 545,944,007.86;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.002;Ingresos de Vigencias Anteriores - Aportes;10.0-Aportes Nacion - Funcionamiento;$ 0.00;$ 0.00;$ 11,038,169,644.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.021;Recursos del balance - PIC Convencional;10.1-Aportes Naci髇 - PIC Convencional;$ 0.00;$ 1,967,656,092.91;$ 1,967,656,092.91;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.020;Recursos del balance - PIC Territorial;10.2-Aportes Naci髇 - PIC Territorial;$ 0.00;$ 936,477,783.56;$ 936,477,783.56;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.10;Matr韈ulas Pregrado-Pol韙ica de Gratuidad;10.5-Aportes Naci髇 - Pol韙ica de gratuidad;$ 20,708,427,143.00;$ 20,708,427,143.00;$ 11,208,316,954.14;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.07.01;Estampilla Pro- Universidad Nacional y Dem醩 Entidades Estatales de Colombia;12-Estampillas Otras Universidades;$ 5,706,455,422.00;$ 7,265,094,590.00;$ 7,265,094,590.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.003;Rendimientos Financieros - Estampilla Pro UNAL y demas universidades;12-Estampillas Otras Universidades;$ 0.00;$ 0.00;$ 14,813,424.44;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.007;Recursos del balance - Estampilla Prounal;12-Estampillas Otras Universidades;$ 0.00;$ 9,991,479,039.75;$ 9,991,479,039.75;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.06.00;Excedentes Cooperativas Art.142, Ley 1819 del 2016;13-Cooperativas;$ 2,126,284,735.00;$ 2,126,284,735.00;$ 1,534,765,063.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.022;Recursos del Balance - Cooperativas;13-Cooperativas;$ 0.00;$ 1,887,697.00;$ 1,887,697.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.03;Matr韈ulas Pregrado FSE;14-Matriculas FSE;$ 18,737,327,483.00;$ 18,737,327,483.00;$ 0.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.023;Recursos del balance - Matr韈ulas FSE;14-Matriculas FSE;$ 0.00;$ 888,183,454.34;$ 888,183,454.34;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.002.01.03.00;Asignaciones del Sistema General de Regal韆s;15-Regalias;$ 0.00;$ 0.00;$ 234,759,273.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.02;Aportes para Inversion;16.0-Aportes inversion;$ 7,728,720,060.00;$ 13,736,522,221.00;$ 7,740,281,271.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.004;Rendimientos Financieros - CREE;16.0-Aportes inversion;$ 0.00;$ 0.00;$ 589,379.13;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.014;Recursos del balance - Aportes inversion;16.0-Aportes inversion;$ 0.00;$ 5,148,400,891.97;$ 5,148,400,891.97;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.11;Inversion PFB Plan de Fomento al Bienestar;16.1-Inversion PFB;$ 0.00;$ 1,407,480,044.00;$ 1,407,480,044.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.04;Devolucion de descuento por votacion;17-Devolucion descuento electoral;$ 5,447,536,009.00;$ 5,447,536,009.00;$ 3,728,146,085.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.05;Articulo 87 CESU;18-Articulo 87 CESU;$ 427,778,274.00;$ 427,778,274.00;$ 1,394,028,776.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.015;Certificaciones y constancias;20-Propios;$ 54,390,954.00;$ 54,390,954.00;$ 42,600,900.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;$ 316,506,993.00;$ 316,506,993.00;$ 1,596,086,800.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.02;Pregrado - Derechos de grado;20-Propios;$ 451,761,696.00;$ 451,761,696.00;$ 699,931,740.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 5,525,977,978.00;$ 5,525,977,978.00;$ 3,331,279,702.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias acad閙icas y derechos complementarios;20-Propios;$ 4,231,617,827.00;$ 4,231,617,827.00;$ 3,739,800,586.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.03.001.05;Sanciones administrativas;20-Propios;$ 22,586,143.00;$ 22,586,143.00;$ 22,513,150.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.06;"Comercio y distribuci髇; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribuci髇 de electricidad, gas y agua";20-Propios;$ 4,173,694,824.00;$ 4,173,694,824.00;$ 2,381,952,429.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.07;"Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing";20-Propios;$ 235,081,376.00;$ 235,081,376.00;$ 154,696,148.94;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.01;"Minerales; electricidad, gas y agua";20-Propios;$ 129,404,752.00;$ 129,404,752.00;$ 83,257,428.34;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.04;Productos met醠icos, maquinaria y equipo;20-Propios;$ 5,025,174.00;$ 5,025,174.00;$ 8,587,590.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.002;Rendimientos Financieros - Propios;20-Propios;$ 1,822,006,660.00;$ 1,822,006,660.00;$ 2,005,694,254.70;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.002;Recursos del balance - Propios;20-Propios;$ 0.00;$ 1,579,085,707.80;$ 1,579,085,707.80;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 331,465,375.00;$ 331,465,375.00;$ 125,936,121.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.003;Ingresos de Vigencias Anteriores - Servicios P鷅licos;20-Propios;$ 0.00;$ 0.00;$ 10,533,812.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.007;Ingresos de Vigencias Anteriores - Propios;20-Propios;$ 0.00;$ 0.00;$ 13,845,388.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;$ 0.00;$ 0.00;$ 13,655,200.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 0.00;$ 2,525,510.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias acad閙icas y derechos complementarios;20-Propios;$ 0.00;$ 0.00;$ 3,624,500.00;25/08/2026
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 25,044,900.00;$ 25,044,900.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 11,310,600.00;$ 17,773,800.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 0.00;$ 4,473,300.00;25/08/2026
+09 - INGENIERIA;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 94,437,340.80;$ 152,068,530.00;25/08/2026
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 43,357,500.00;$ 43,895,900.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 38,874,617.00;$ 53,081,900.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 39,540,000.00;$ 43,043,000.00;25/08/2026
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 0.00;$ 390,000.00;25/08/2026
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;$ 0.00;$ 0.00;$ 8,403,200.00;25/08/2026
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias acad閙icas y derechos complementarios;20-Propios;$ 0.00;$ 0.00;$ 1,049,000.00;25/08/2026
+15 - SEDE REGIONAL AGUAZUL;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;$ 0.00;$ 0.00;$ 4,989,400.00;25/08/2026
+15 - SEDE REGIONAL AGUAZUL;1.1.02.02.116.01.01.03;Pregrado - Matr韈ulas;20-Propios;$ 0.00;$ 0.00;$ 3,321,030.00;25/08/2026
+15 - SEDE REGIONAL AGUAZUL;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias acad閙icas y derechos complementarios;20-Propios;$ 0.00;$ 0.00;$ 6,720,000.00;25/08/2026
+15 - SEDE REGIONAL AGUAZUL;1.1.02.03.001.05;Sanciones administrativas;20-Propios;$ 0.00;$ 0.00;$ 777,700.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.02;Devoluci髇 IVA - Instituciones de Educaci髇 Superior;21-Devolucion IVA;$ 4,587,997,825.00;$ 4,587,997,825.00;$ 4,672,202,857.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.015;Recursos del balance - Devolucion IVA;21-Devolucion IVA;$ 0.00;$ 953,393,273.00;$ 953,393,273.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 0.00;$ 0.00;$ 24,372,100.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 0.00;$ 0.00;$ 6,301,886.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 212,479,362.00;$ 212,479,362.00;$ 178,695,300.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 372,975,795.00;$ 372,975,795.00;$ 162,141,900.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 10,485,147,378.00;$ 10,527,470,904.00;$ 7,651,844,871.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 14,917,592.00;$ 14,917,592.00;$ 47,794,100.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.003;Recursos del balance - Posgrados;31-Posgrados;$ 0.00;$ 179,478,068.00;$ 179,478,068.00;25/08/2026
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 30,612,465.00;$ 30,612,465.00;$ 58,962,600.00;25/08/2026
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 41,215,292.00;$ 41,215,292.00;$ 23,638,500.00;25/08/2026
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 1,408,521,574.00;$ 1,415,831,303.00;$ 1,672,875,590.00;25/08/2026
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 1,273,178.00;$ 1,273,178.00;$ 7,620,500.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 111,276,000.00;$ 111,276,000.00;$ 80,063,600.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 218,394,000.00;$ 218,394,000.00;$ 155,488,700.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 5,018,300,000.00;$ 5,025,000,000.00;$ 3,941,968,748.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 0.00;$ 0.00;$ 16,859,500.00;25/08/2026
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 21,238,620.00;$ 21,238,620.00;$ 16,975,100.00;25/08/2026
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 33,309,900.00;$ 33,309,900.00;$ 13,132,500.00;25/08/2026
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 2,205,929,622.00;$ 2,232,556,309.50;$ 1,789,597,604.00;25/08/2026
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 0.00;$ 0.00;$ 2,330,500.00;25/08/2026
+07 - CIENCIAS DE LA SALUD;1.2.13.01.004;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;$ 0.00;$ 0.00;$ 25,000.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 44,900,440.00;$ 44,900,440.00;$ 62,407,900.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 129,301,900.00;$ 129,301,900.00;$ 77,044,000.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 2,008,442,150.00;$ 2,008,442,150.00;$ 1,958,250,160.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 2,342,000.00;$ 2,342,000.00;$ 8,595,200.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.2.13.01.004;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;$ 0.00;$ 0.00;$ 17,762,500.00;25/08/2026
+09 - INGENIERIA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 0.00;$ 0.00;$ 140,387,100.00;25/08/2026
+09 - INGENIERIA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 0.00;$ 0.00;$ 149,097,600.00;25/08/2026
+09 - INGENIERIA;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 7,974,390,060.00;$ 8,314,839,994.87;$ 7,071,190,129.00;25/08/2026
+09 - INGENIERIA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 0.00;$ 0.00;$ 36,947,500.00;25/08/2026
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 4,612,000.00;$ 4,612,000.00;$ 4,612,500.00;25/08/2026
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 7,686,900.00;$ 7,686,900.00;$ 4,377,500.00;25/08/2026
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 364,581,200.00;$ 364,581,200.00;$ 223,033,699.00;25/08/2026
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 1,000,000.00;$ 1,000,000.00;$ 2,995,500.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 90,602,928.00;$ 90,602,928.00;$ 97,255,100.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 205,081,160.00;$ 205,081,160.00;$ 88,863,000.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 3,406,788,528.00;$ 3,474,440,828.00;$ 2,902,662,292.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 9,540,000.00;$ 9,540,000.00;$ 12,875,100.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 105,525,765.00;$ 105,525,765.00;$ 76,814,800.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 208,353,425.00;$ 208,353,425.00;$ 104,184,500.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 4,945,268,530.00;$ 4,956,301,314.00;$ 3,763,674,265.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 0.00;$ 0.00;$ 16,895,000.00;25/08/2026
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 4,441,320.00;$ 4,441,320.00;$ 1,537,500.00;25/08/2026
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 11,103,300.00;$ 11,103,300.00;$ 0.00;25/08/2026
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 194,307,750.00;$ 194,307,750.00;$ 0.00;25/08/2026
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 0.00;$ 0.00;$ 307,500.00;25/08/2026
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 138,200,000.00;$ 138,200,000.00;$ 151,136,600.00;25/08/2026
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 238,000,000.00;$ 238,000,000.00;$ 165,469,000.00;25/08/2026
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.03;Posgrado - Matr韈ulas;31-Posgrados;$ 5,202,000,000.00;$ 5,369,355,118.57;$ 6,101,143,594.00;25/08/2026
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias acad閙icas y derechos complementarios;31-Posgrados;$ 0.00;$ 0.00;$ 22,776,000.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.2.13.01.004;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;$ 0.00;$ 0.00;$ 20,500,000.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0.00;$ 0.00;$ 2,391,111,981.81;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0.00;$ 0.00;$ 6,250,000.00;25/08/2026
+05 - CIENCIAS BASICAS;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 10,000,000.00;$ 46,690,000.00;$ 56,965,085.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0.00;$ 0.00;$ 76,200,000.00;25/08/2026
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0.00;$ 0.00;$ 450,000.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 810,500,000.00;$ 823,714,759.38;$ 79,783,450.00;25/08/2026
+09 - INGENIERIA;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 1,575,000,000.00;$ 1,635,316,860.00;$ 34,804,710.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 21,050,000.00;$ 21,050,000.00;$ 37,003,741.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 460,000,000.00;$ 480,000,000.00;$ 285,807,153.00;25/08/2026
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0.00;$ 0.00;$ 1,598,876.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.00;Agricultura, silvicultura y productos de la pesca;32-Extension;$ 650,000,000.00;$ 650,000,000.00;$ 0.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 15,000,000.00;$ 15,000,000.00;$ 25,117,717.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.002.00;Agricultura, silvicultura y productos de la pesca;32-Extension;$ 0.00;$ 0.00;$ 330,325,996.45;25/08/2026
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0.00;$ 0.00;$ 27,244,000.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 537,500,000.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 4,877,748,060.24;$ 9,588,987,823.63;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 64,481,601.12;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 8,851,700.00;$ 8,851,700.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 6,500,000.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 6,500,000.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 6,250,000.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 6,250,000.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 6,500,000.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 49,500,000.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 5,674,059,936.95;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 49,471,850.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 4,301,415,000.00;$ 11,002,883,270.75;$ 7,612,500.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 49,439,100.00;$ 49,439,100.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 34,000,000.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 19,800,000.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 30,000,000.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 20,000,000.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 27,000,000.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 20,000,000.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 220,000,000.00;$ 573,196,311.39;$ 48,500,000.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 20,000,000.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 10,025,999.71;$ 10,025,999.71;25/08/2026
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 100,000,000.00;$ 118,040,000.00;$ 20,400,000.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 1,000,000,000.00;$ 1,518,807,974.71;$ 0.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 10,932,918.85;$ 10,932,918.85;25/08/2026
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 50,607,918.50;25/08/2026
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 337,750,000.00;25/08/2026
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 4,800,000,000.00;$ 7,814,546,428.05;$ 0.00;25/08/2026
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 8,928,429.00;$ 8,928,429.00;25/08/2026
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 250,000,000.00;$ 250,000,000.00;$ 0.00;25/08/2026
+10 - DERECHO Y CIENCIAS SOCIALES;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 22,537,438.83;$ 22,537,438.83;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 25,650,000.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 12,000,000.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 825,000,000.00;$ 825,000,000.00;$ 71,346,827.08;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 47,532,087.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 192,348,000.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 13,358,706.47;$ 13,358,706.47;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 469,841,460.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 3,000,000,000.00;$ 5,956,817,063.46;$ 150,871,644.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 663,804,100.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 113,893,750.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 233,677,514.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 230,693.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 35,745,120.82;$ 35,745,120.82;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 18,000,000.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 16,000,000,000.00;$ 16,000,000,000.00;$ 15,347,572,587.68;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 29,600,000.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.09.01.04;Investigacion;33-Convenios con derechos;$ 0.00;$ 0.00;$ 1,539,978,939.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 4,672,368.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0.00;$ 7,450,551.58;$ 7,450,551.58;25/08/2026
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 278,555,209.98;$ 0.00;25/08/2026
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.08.01;Convenios con derechos econ髆icos;33-Convenios con derechos;$ 0.00;$ 0.00;$ 58,820,000.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.02;Convenios sin derechos econ髆icos;34-Convenios sin derechos;$ 0.00;$ 94,071,388.00;$ 24,250,000.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0.00;$ 136,861,637.00;$ 136,861,637.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.02;Convenios sin derechos econ髆icos;34-Convenios sin derechos;$ 628,035,382.00;$ 628,135,382.00;$ 0.00;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0.00;$ 491,023,700.15;$ 491,023,700.15;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.02;Convenios sin derechos econ髆icos;34-Convenios sin derechos;$ 0.00;$ 39,840,000.00;$ 0.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos econ髆icos;34-Convenios sin derechos;$ 0.00;$ 0.00;$ 2,200,000.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos econ髆icos;34-Convenios sin derechos;$ 4,984,000,000.00;$ 4,984,000,000.00;$ 0.00;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0.00;$ 1,810,609,128.13;$ 1,810,609,128.13;25/08/2026
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 150,000,000.00;$ 150,000,000.00;$ 44,100,000.00;25/08/2026
+05 - CIENCIAS BASICAS;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 61,000,000.00;$ 61,000,000.00;$ 590,358.00;25/08/2026
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 69,000,000.00;$ 69,000,000.00;$ 4,800,000.00;25/08/2026
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 100,000,000.00;$ 179,719,581.00;$ 184,492,705.00;25/08/2026
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 4,000,000.00;$ 4,000,000.00;$ 0.00;25/08/2026
+09 - INGENIERIA;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 117,000,000.00;$ 117,000,000.00;$ 4,375,000.00;25/08/2026
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 20,000,000.00;$ 58,290,500.00;$ 71,534,000.00;25/08/2026
+12 - SECCIONAL DUITAMA;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 255,500,000.00;$ 255,500,000.00;$ 87,232,000.00;25/08/2026
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 142,000,000.00;$ 184,901,750.00;$ 125,100,000.00;25/08/2026
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 43,000,000.00;$ 43,000,000.00;$ 6,103,000.00;25/08/2026
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 860,000,000.00;$ 1,048,403,089.49;$ 1,149,444,122.32;25/08/2026
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 535,000,000.00;$ 535,000,000.00;$ 352,773,619.00;25/08/2026
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.09.01.05;Educaci髇 continuada;35-Educacion continuada;$ 30,000,000.00;$ 31,600,000.00;$ 13,515,000.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.01.02.300.32;Estampilla pro Universidad Pedag骻ica y Tecnol骻ica de Colombia;40-Estampilla UPTC;$ 4,206,444,980.00;$ 5,737,263,195.00;$ 3,302,272,885.00;25/08/2026
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.006;Recursos del balance - Estampilla UPTC;40-Estampilla UPTC;$ 0.00;$ 1,880,006,027.14;$ 1,880,006,027.14;25/08/2026
+;;;;$489,266,925,925.00;$546,705,764,271.06;$386,535,093,899.96;

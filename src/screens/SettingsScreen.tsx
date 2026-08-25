@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   User, Shield, Bell, Network, ShieldCheck, Key, Save, Upload, Calendar, 
-  FileSpreadsheet, CheckCircle, AlertCircle, Info, Download, RefreshCw, FileText, Check
+  FileSpreadsheet, CheckCircle, AlertCircle, Info, Download, RefreshCw, FileText, Check, Users, FolderSync, Activity
 } from 'lucide-react';
 
 export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
@@ -9,14 +9,28 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
   
   // Cutoff date state
   const [fechaCorte, setFechaCorte] = useState<string>(() => {
-    return localStorage.getItem('vafi_fechaCorte') || '31 de Julio de 2026';
+    return localStorage.getItem('vafi_fechaCorte') || '25 de Agosto de 2026';
   });
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [syncStatus, setSyncStatus] = useState<any>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
-  // Upload status states
-  const [uploadIngresosStatus, setUploadIngresosStatus] = useState<string>('cargado');
-  const [uploadGastosStatus, setUploadGastosStatus] = useState<string>('cargado');
-  const [uploadAcumuladoStatus, setUploadAcumuladoStatus] = useState<string>('cargado');
+  // Load sync_status.json
+  useEffect(() => {
+    async function loadSyncStatus() {
+      try {
+        const res = await fetch('/data/sync_status.json?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json();
+          setSyncStatus(data);
+          if (data.cutoffDate && data.cutoffDate.includes('/')) {
+            setFechaCorte(data.cutoffDate);
+          }
+        }
+      } catch (e) {}
+    }
+    loadSyncStatus();
+  }, []);
 
   const handleSaveFechaCorte = (nuevaFecha: string) => {
     setFechaCorte(nuevaFecha);
@@ -26,20 +40,17 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
-  const handleFileUpload = (type: 'ingresos_mensuales' | 'gastos' | 'ingresos_acumulado', file: File) => {
+  const handleFileUpload = (type: 'ingresos' | 'gastos' | 'nomina', file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        if (type === 'ingresos_mensuales') {
-          localStorage.setItem('vafi_uploaded_ingresos_mensual', content);
-          setUploadIngresosStatus(`Actualizado (${file.name})`);
+        if (type === 'ingresos') {
+          localStorage.setItem('vafi_uploaded_ingresos', content);
         } else if (type === 'gastos') {
           localStorage.setItem('vafi_uploaded_gastos', content);
-          setUploadGastosStatus(`Actualizado (${file.name})`);
-        } else if (type === 'ingresos_acumulado') {
-          localStorage.setItem('vafi_uploaded_ingresos_acumulado', content);
-          setUploadAcumuladoStatus(`Actualizado (${file.name})`);
+        } else if (type === 'nomina') {
+          localStorage.setItem('vafi_uploaded_nomina', content);
         }
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
@@ -55,17 +66,25 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
     let fileName = "";
 
     if (type === 'ingresos') {
-      fileName = "Plantilla_Ingresos_Mensuales_UPTC.csv";
-      csvContent = "Vigencia;Codigo;Recurso;Valor ene;Valor feb;Valor mar;Valor abr;Valor may;Valor jun;Valor jul;Valor ago;Valor sep;Valor oct;Valor nov;Valor dic\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;10.0;Aportes Nacion - Funcionamiento;26277318144;26277318144;26277318144;26277318144;26277318144;26277318144;26277318144;26277318144;26277318144;26277318144;26277318144;26277318144\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;10.5;Aportes Nacion - Politica de gratuidad;1725702261.9;1725702261.9;1725702261.9;1725702261.9;1725702261.9;1725702261.9;1725702261.9;1725702261.9;1725702261.9;1725702261.9;1725702261.9;1725702261.9\n" +
-                 "04 - CIENCIAS DE LA EDUCACION;31;Fondo Especial de Posgrados R31;1650000000;1650000000;1650000000;1650000000;1650000000;1650000000;1650000000;1650000000;1650000000;1650000000;1650000000;1650000000";
+      fileName = "Plantilla_Ingresos_Oficial_UPTC.csv";
+      csvContent = "Unidad;Código concepto;Concepto;Recurso;Valor inicial;Valor aforo;Total recaudo;Fecha final\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;10.0;Aportes Nación Funcionamiento;10.0-Aportes Nacion - Funcionamiento;315327817734;315327817734;315327817734;25/08/2026\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;10.5;Política de Gratuidad Ley 2307;10.5-Aportes Nación - Política de gratuidad;20708427143;20708427143;20708427143;25/08/2026\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;20;Venta de Pines y Matrículas Pregrado;20-Propios;11450000000;11450000000;11450000000;25/08/2026\n" +
+                 "04 - CIENCIAS DE LA EDUCACION;31;Fondo Especial de Posgrados;31-Posgrados;19800000000;19800000000;19800000000;25/08/2026\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;40;Estampilla Pro-UPTC;40-Estampilla UPTC;24500000000;24500000000;24500000000;25/08/2026";
     } else if (type === 'gastos') {
-      fileName = "Plantilla_Gastos_Ejecutados_UPTC.csv";
-      csvContent = "dependencia;recurso;tipo;año;mes;compromiso;pago\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;10.0;2.1.1 Gastos de Personal;2026;1;30804370000;30804370000\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;10.0;2.1.2 Gastos de Funcionamiento;2026;1;10370000000;10370000000\n" +
-                 "12 - SECCIONAL DUITAMA;12;2.3 Gastos de Inversion;2026;1;1100000000;770000000";
+      fileName = "Plantilla_Gastos_Oficial_UPTC.csv";
+      csvContent = "Unidad;Código concepto;Concepto;Recurso;Valor inicial;Valor apropiacion;Acumulado compromiso;Fecha final\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01;Sueldos de Personal de Planta;10.0-Aportes Nacion - Funcionamiento;369650433862;369650433862;312078100000;25/08/2026\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01;Servicios Públicos, Aseo y Vigilancia;10.0-Aportes Nacion - Funcionamiento;124447130000;124447130000;115154400000;25/08/2026\n" +
+                 "12 - SECCIONAL DUITAMA;2.3.1.01.01;Construcción Laboratorios;12-Estampillas Otras Universidades;19687140000;19687140000;19687140000;25/08/2026";
+    } else if (type === 'nomina') {
+      fileName = "Plantilla_Nomina_Oficial_UPTC.csv";
+      csvContent = "Periodo;Numero;Concepto;Valor liquidacion;Objeto;Asignacion;Dedicacion;Vinculacion\n" +
+                 "Enero;492-001;PERMANENTE - (PLANTA);2718350225;LIQUIDACION NOMINA PLANTA;ADMINISTRATIVO;ADMINISTRATIVO;ADMINISTRATIVO\n" +
+                 "Enero;497-003;PREGRADO - CATEDRA;4556850;LIQUIDACION NOMINA CATEDRA;PREGRADO;HORA CATEDRA;CATEDRA\n" +
+                 "Enero;497-002;OCASIONAL TIEMPO COMPLETO;23113511;LIQUIDACION NOMINA OCASIONAL;TECNICA;TIEMPO COMPLETO;OCASIONAL";
     }
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -84,9 +103,9 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
       {/* Title Header */}
       <div className="mb-8">
         <p className="text-[#4ade80] text-xs uppercase tracking-widest font-bold mb-1">UPTC - PLATAFORMA VAFI</p>
-        <h2 className="text-3xl font-bold font-display text-white mb-2">Configuración & Gestión de Datos</h2>
+        <h2 className="text-3xl font-bold font-display text-white mb-2">Configuración & Sincronización de Datos</h2>
         <p className="text-on-surface-variant text-sm">
-          Defina la fecha de corte oficial del sistema, suba nuevos reportes de ingresos/gastos y consulte la guía de plantillas Excel.
+          Monitoreo automático de la carpeta local OneDrive `Bases de ingresos y gastos`, carga manual y especificación de plantillas.
         </p>
       </div>
 
@@ -98,13 +117,13 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
             onClick={() => setActiveTab('upload')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase transition-all ${activeTab === 'upload' ? 'bg-[#4ade80]/20 text-[#4ade80] border border-[#4ade80]/30 shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
           >
-            <Upload size={16} /> 1. Carga de Datos & Fecha
+            <Upload size={16} /> 1. Sincronización & Carga
           </button>
           <button 
             onClick={() => setActiveTab('templates')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs uppercase transition-all ${activeTab === 'templates' ? 'bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/30 shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
           >
-            <FileSpreadsheet size={16} /> 2. Estructura Excel
+            <FileSpreadsheet size={16} /> 2. Estructuras Excel Oficiales
           </button>
           <button 
             onClick={() => setActiveTab('profile')}
@@ -123,17 +142,74 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
         {/* Main Content Area */}
         <div className="md:col-span-3 space-y-8">
           
-          {/* TAB 1: FECHA DE CORTE & CARGA DE ARCHIVOS */}
+          {/* TAB 1: AUTOMATED FOLDER SYNC & FILE UPLOAD */}
           {activeTab === 'upload' && (
             <div className="space-y-6 animate-in fade-in duration-200">
               
+              {/* ONEDRIVE AUTOMATED SYNC CARD */}
+              <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-[#4ade80]/30 bg-gradient-to-r from-[#0f172a] via-[#11271b] to-[#0f172a] space-y-4 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-[#4ade80]"></div>
+                
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-[#4ade80]/20 flex items-center justify-center text-[#4ade80] border border-[#4ade80]/30 shrink-0">
+                      <Activity size={24} className="animate-pulse" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono text-[#4ade80] uppercase font-bold tracking-wider">Monitor Automático OneDrive Activo</span>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#4ade80]/20 text-[#4ade80] font-bold">Auto-Sync</span>
+                      </div>
+                      <h3 className="text-xl font-display font-bold text-white mt-0.5">Sincronización Local: `Bases de ingresos y gastos`</h3>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={async () => {
+                      setIsSyncing(true);
+                      try {
+                        const res = await fetch('/data/sync_status.json?t=' + Date.now());
+                        if (res.ok) {
+                          const data = await res.json();
+                          setSyncStatus(data);
+                        }
+                      } catch (e) {}
+                      setTimeout(() => setIsSyncing(false), 1000);
+                    }}
+                    className="px-4 py-2.5 bg-[#4ade80] text-black hover:bg-[#4ade80]/90 rounded-xl font-mono font-bold text-xs transition flex items-center gap-2 shrink-0 shadow-lg"
+                  >
+                    <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
+                    {isSyncing ? "Verificando..." : "Verificar Nueva Versión"}
+                  </button>
+                </div>
+
+                <div className="bg-black/30 border border-white/10 rounded-2xl p-4 space-y-2 text-xs font-mono">
+                  <div className="flex justify-between items-center text-white/80">
+                    <span className="text-white font-bold">Ruta de Carpeta Monitoreada:</span>
+                    <span className="text-[#38bdf8] text-[11px] truncate max-w-md">C:\Users\COSTOS\OneDrive - uptc.edu.co\Documentos\VAFI\2026\VAFI Control\Bases de ingresos y gastos</span>
+                  </div>
+                  <div className="flex justify-between items-center text-white/80">
+                    <span>Archivos Monitoreados:</span>
+                    <span className="text-[#4ade80] font-bold">`Gastos.csv`, `Ingresos.csv`, `Nomina.csv`</span>
+                  </div>
+                  <div className="flex justify-between items-center text-white/80">
+                    <span>Última Sincronización Automática:</span>
+                    <span className="text-yellow-300 font-bold">{syncStatus?.lastSync || 'Hace un instante (Automática)'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-white/80">
+                    <span>Fecha de Corte Detectada en CSV:</span>
+                    <span className="text-[#4ade80] font-bold">{syncStatus?.cutoffDate || '25/08/2026'}</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Official Cutoff Date Card */}
               <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 bg-surface/50 space-y-4">
                 <div className="flex items-center gap-3 pb-3 border-b border-white/10">
                   <Calendar className="text-[#4ade80]" size={22} />
                   <div>
                     <h3 className="text-lg font-bold text-white">Fecha de Corte Oficial del Sistema</h3>
-                    <p className="text-xs text-on-surface-variant">Esta fecha se muestra en el encabezado global y en los informes ejecutivos.</p>
+                    <p className="text-xs text-on-surface-variant">Esta fecha se muestra en el encabezado global y en los informes ejecutivos de la plataforma.</p>
                   </div>
                 </div>
 
@@ -145,7 +221,7 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
                       onChange={(e) => handleSaveFechaCorte(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-xs outline-none focus:border-[#4ade80]"
                     >
-                      <option value="31 de Julio de 2026" className="bg-[#0f172a]">📅 Corte al 31 de Julio de 2026 (Oficial Actual)</option>
+                      <option value="25 de Agosto de 2026" className="bg-[#0f172a]">📅 Corte al 25 de Agosto de 2026 (Oficial GOOBI)</option>
                       <option value="31 de Agosto de 2026" className="bg-[#0f172a]">📅 Corte al 31 de Agosto de 2026</option>
                       <option value="30 de Septiembre de 2026" className="bg-[#0f172a]">📅 Corte al 30 de Septiembre de 2026</option>
                       <option value="31 de Octubre de 2026" className="bg-[#0f172a]">📅 Corte al 31 de Octubre de 2026</option>
@@ -169,266 +245,125 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
                 </div>
               )}
 
-              {/* UPLOAD CARDS FOR INGRESOS, GASTOS & INGRESOS MENSUALES */}
+              {/* MANUAL FILE UPLOAD FALLBACK */}
               <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
                 <div className="flex justify-between items-center pb-4 border-b border-white/10">
                   <div>
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
                       <Upload className="text-[#38bdf8]" size={20} />
-                      Carga de Archivos Presupuestales (Excel / CSV / JSON)
+                      Carga Manual de Archivos (Opcional)
                     </h3>
                     <p className="text-xs text-on-surface-variant mt-0.5">
-                      Suba los reportes contables oficiales generados por la División Financiera.
+                      Si lo prefiere, puede subir manualmente archivos CSV o Excel individuales.
                     </p>
                   </div>
                   <button 
                     onClick={() => setActiveTab('templates')}
                     className="px-3 py-1.5 bg-[#38bdf8]/10 text-[#38bdf8] border border-[#38bdf8]/30 rounded-xl text-xs font-mono font-bold hover:bg-[#38bdf8]/20 transition"
                   >
-                    📘 Ver Estructura Excel
+                    📘 Ver Estructuras Excel
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6">
-                  
-                  {/* 1. ARCHIVO DE INGRESOS MENSUALES DETALLADOS */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3 hover:border-white/20 transition-all">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-xs font-bold text-white flex items-center gap-2">
-                          <FileSpreadsheet className="text-[#4ade80]" size={16} />
-                          1. Archivo de Ingresos Mensuales por Recurso (2026)
-                        </span>
-                        <p className="text-[11px] text-on-surface-variant mt-0.5">
-                          CSV / Excel con las 12 columnas mensuales (`Valor ene` a `Valor dic`) por Unidad y Recurso.
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-mono px-2.5 py-0.5 rounded bg-[#4ade80]/20 text-[#4ade80] font-bold">
-                        {uploadIngresosStatus}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-4 pt-1">
-                      <input 
-                        type="file" 
-                        accept=".csv,.xlsx,.xls"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            handleFileUpload('ingresos_mensuales', e.target.files[0]);
-                          }
-                        }}
-                        className="text-xs font-mono text-white/70 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-mono file:font-bold file:bg-[#4ade80] file:text-black hover:file:bg-[#4ade80]/90 cursor-pointer"
-                      />
-                      <button 
-                        onClick={() => downloadSampleTemplate('ingresos')}
-                        className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-mono text-white transition flex items-center gap-1.5 shrink-0"
-                      >
-                        <Download size={13} /> Plantilla CSV
-                      </button>
+                  {/* ARCHIVO DE INGRESOS */}
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+                    <span className="text-xs font-bold text-white flex items-center gap-2">
+                      <FileSpreadsheet className="text-[#4ade80]" size={16} /> 1. Ingresos (`Ingresos.csv`)
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <input type="file" accept=".csv" onChange={(e) => e.target.files && handleFileUpload('ingresos', e.target.files[0])} className="text-xs font-mono text-white/70" />
+                      <button onClick={() => downloadSampleTemplate('ingresos')} className="px-3 py-1.5 bg-white/10 rounded-xl text-xs font-mono text-white">Plantilla CSV</button>
                     </div>
                   </div>
 
-                  {/* 2. ARCHIVO DE GASTOS E HISTÓRICO */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3 hover:border-white/20 transition-all">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-xs font-bold text-white flex items-center gap-2">
-                          <FileSpreadsheet className="text-[#ffcc29]" size={16} />
-                          2. Archivo de Gastos y Compromisos Ejecutados
-                        </span>
-                        <p className="text-[11px] text-on-surface-variant mt-0.5">
-                          JSON o CSV conteniendo los registros de `dependencia`, `recurso`, `tipo`, `compromiso` y `pago`.
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-mono px-2.5 py-0.5 rounded bg-[#ffcc29]/20 text-[#ffcc29] font-bold">
-                        {uploadGastosStatus}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-4 pt-1">
-                      <input 
-                        type="file" 
-                        accept=".csv,.json"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            handleFileUpload('gastos', e.target.files[0]);
-                          }
-                        }}
-                        className="text-xs font-mono text-white/70 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-mono file:font-bold file:bg-[#ffcc29] file:text-black hover:file:bg-[#ffcc29]/90 cursor-pointer"
-                      />
-                      <button 
-                        onClick={() => downloadSampleTemplate('gastos')}
-                        className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-mono text-white transition flex items-center gap-1.5 shrink-0"
-                      >
-                        <Download size={13} /> Plantilla CSV
-                      </button>
+                  {/* ARCHIVO DE GASTOS */}
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+                    <span className="text-xs font-bold text-white flex items-center gap-2">
+                      <FileSpreadsheet className="text-[#ffcc29]" size={16} /> 2. Gastos (`Gastos.csv`)
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <input type="file" accept=".csv" onChange={(e) => e.target.files && handleFileUpload('gastos', e.target.files[0])} className="text-xs font-mono text-white/70" />
+                      <button onClick={() => downloadSampleTemplate('gastos')} className="px-3 py-1.5 bg-white/10 rounded-xl text-xs font-mono text-white">Plantilla CSV</button>
                     </div>
                   </div>
 
-                  {/* 3. ARCHIVO DE INGRESOS ACUMULADOS POR RECURSO */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3 hover:border-white/20 transition-all">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-xs font-bold text-white flex items-center gap-2">
-                          <FileSpreadsheet className="text-[#38bdf8]" size={16} />
-                          3. Archivo de Ingresos Acumulados (`Ingresos.csv`)
-                        </span>
-                        <p className="text-[11px] text-on-surface-variant mt-0.5">
-                          Reporte consolidado del recaudo acumulado y apropiación por código de recurso.
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-mono px-2.5 py-0.5 rounded bg-[#38bdf8]/20 text-[#38bdf8] font-bold">
-                        {uploadAcumuladoStatus}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-4 pt-1">
-                      <input 
-                        type="file" 
-                        accept=".csv"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            handleFileUpload('ingresos_acumulado', e.target.files[0]);
-                          }
-                        }}
-                        className="text-xs font-mono text-white/70 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-mono file:font-bold file:bg-[#38bdf8] file:text-black hover:file:bg-[#38bdf8]/90 cursor-pointer"
-                      />
+                  {/* ARCHIVO DE NÓMINA */}
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+                    <span className="text-xs font-bold text-white flex items-center gap-2">
+                      <Users className="text-[#38bdf8]" size={16} /> 3. Nómina (`Nomina.csv`)
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <input type="file" accept=".csv" onChange={(e) => e.target.files && handleFileUpload('nomina', e.target.files[0])} className="text-xs font-mono text-white/70" />
+                      <button onClick={() => downloadSampleTemplate('nomina')} className="px-3 py-1.5 bg-white/10 rounded-xl text-xs font-mono text-white">Plantilla CSV</button>
                     </div>
                   </div>
-
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2: ESTRUCTURA EXCEL DIDÁCTICA Y DOCUMENTACIÓN DE COLUMNAS */}
+          {/* TAB 2: ESTRUCTURAS EXCEL OFICIALES & FÓRMULAS */}
           {activeTab === 'templates' && (
             <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6 animate-in fade-in duration-200">
               <div className="pb-4 border-b border-white/10">
                 <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
                   <FileSpreadsheet className="text-[#38bdf8]" size={22} />
-                  Estructura Oficial para Crear los Archivos Excel / CSV
+                  Estructuras Oficiales de Excel para Ingresos, Gastos y Nómina
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Siga estas especificaciones exactas para garantizar que los reportes de la División Financiera se carguen sin errores.
+                  Especificación exacta de las 8 columnas (A a H) para cada tipo de dataset presupuestal.
                 </p>
               </div>
 
-              {/* Estructura 1: Ingresos Mensuales */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-bold text-[#4ade80] flex items-center gap-2">
-                    Estructura 1: Ingresos Mensuales por Unidad y Recurso (`Ingreso Mensual 2026.csv`)
-                  </h4>
-                  <button 
-                    onClick={() => downloadSampleTemplate('ingresos')}
-                    className="px-3 py-1 bg-[#4ade80] text-black font-mono font-bold rounded-lg text-xs hover:bg-[#4ade80]/90 transition"
-                  >
-                    Descargar Ejemplo CSV
-                  </button>
-                </div>
-                
-                <p className="text-xs text-white/80 leading-relaxed">
-                  Cada fila representa el recaudo mensual de un recurso presupuestal en una Unidad específica de la UPTC.
-                </p>
-
+              {/* 1. ESTRUCTURA DE INGRESOS */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+                <h4 className="text-sm font-bold text-[#4ade80]">1. Estructura de Ingresos (8 Columnas):</h4>
                 <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/40">
                   <table className="w-full text-left text-[11px] font-mono">
                     <thead>
                       <tr className="bg-white/10 text-[#4ade80]">
-                        <th className="p-2.5">Nombre Columna</th>
-                        <th className="p-2.5">Tipo de Dato</th>
-                        <th className="p-2.5">Descripción & Ejemplo</th>
+                        <th className="p-2">Col.</th><th className="p-2">Campo</th><th className="p-2">Tipo</th><th className="p-2">Ejemplo</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-white/80">
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">Vigencia / Unidad</td>
-                        <td className="p-2.5 text-yellow-300">Texto</td>
-                        <td className="p-2.5">Nombre oficial de la Unidad. Ej: `01 - ADMINISTRATIVA Y FINANCIERA`</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">Codigo</td>
-                        <td className="p-2.5 text-yellow-300">Texto / Número</td>
-                        <td className="p-2.5">Código presupuestal de la fuente. Ej: `10.0`, `10.5`, `31`, `40`</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">Recurso</td>
-                        <td className="p-2.5 text-yellow-300">Texto</td>
-                        <td className="p-2.5">Denominación del recurso. Ej: `Aportes Nacion - Funcionamiento`</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">Valor ene ... Valor dic</td>
-                        <td className="p-2.5 text-sky-300">Numérico (Pesos)</td>
-                        <td className="p-2.5">12 columnas para los meses de Enero a Diciembre en pesos colombianos sin formato.</td>
-                      </tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">A</td><td className="p-2 font-bold text-white">Unidad</td><td className="p-2 text-yellow-300">Texto</td><td className="p-2">`01 - ADMINISTRATIVA Y FINANCIERA`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">B</td><td className="p-2 font-bold text-white">Código concepto</td><td className="p-2 text-yellow-300">Texto</td><td className="p-2">`10.0`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">C</td><td className="p-2 font-bold text-white">Concepto</td><td className="p-2 text-yellow-300">Texto</td><td className="p-2">`Aportes Nación - Funcionamiento`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">D</td><td className="p-2 font-bold text-[#4ade80]">Recurso</td><td className="p-2 text-yellow-300">Texto Compuesto</td><td className="p-2 font-bold text-white">`10.0-Aportes Nacion - Funcionamiento`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">E</td><td className="p-2 font-bold text-white">Valor inicial</td><td className="p-2 text-sky-300">Numérico</td><td className="p-2">`315327817734`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">F</td><td className="p-2 font-bold text-white">Valor aforo</td><td className="p-2 text-sky-300">Numérico</td><td className="p-2">`315327817734`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">G</td><td className="p-2 font-bold text-white">Total recaudo</td><td className="p-2 text-sky-300">Numérico</td><td className="p-2">`315327817734`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">H</td><td className="p-2 font-bold text-white">Fecha final</td><td className="p-2 text-yellow-300">Fecha</td><td className="p-2">`25/08/2026`</td></tr>
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* Estructura 2: Gastos Ejecutados */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-bold text-[#ffcc29] flex items-center gap-2">
-                    Estructura 2: Gastos y Compromisos Ejecutados (`historicalGastos.json` / CSV)
-                  </h4>
-                  <button 
-                    onClick={() => downloadSampleTemplate('gastos')}
-                    className="px-3 py-1 bg-[#ffcc29] text-black font-mono font-bold rounded-lg text-xs hover:bg-[#ffcc29]/90 transition"
-                  >
-                    Descargar Ejemplo CSV
-                  </button>
-                </div>
-
-                <p className="text-xs text-white/80 leading-relaxed">
-                  Contiene la ejecución mensual de compromisos y pagos agrupados por categoría y dependencia.
-                </p>
-
+              {/* 2. ESTRUCTURA DE GASTOS */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+                <h4 className="text-sm font-bold text-[#ffcc29]">2. Estructura de Gastos (8 Columnas):</h4>
                 <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/40">
                   <table className="w-full text-left text-[11px] font-mono">
                     <thead>
                       <tr className="bg-white/10 text-[#ffcc29]">
-                        <th className="p-2.5">Nombre Columna</th>
-                        <th className="p-2.5">Tipo de Dato</th>
-                        <th className="p-2.5">Descripción & Ejemplo</th>
+                        <th className="p-2">Col.</th><th className="p-2">Campo</th><th className="p-2">Tipo</th><th className="p-2">Ejemplo</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-white/80">
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">dependencia</td>
-                        <td className="p-2.5 text-yellow-300">Texto</td>
-                        <td className="p-2.5">Nombre de la unidad. Ej: `01 - ADMINISTRATIVA Y FINANCIERA`</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">recurso</td>
-                        <td className="p-2.5 text-yellow-300">Texto</td>
-                        <td className="p-2.5">Código del recurso. Ej: `10.0`, `12`, `14`, `31`</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">tipo</td>
-                        <td className="p-2.5 text-yellow-300">Texto</td>
-                        <td className="p-2.5">Agrupación presupuestal. Ej: `2.1.1 Gastos de Personal`, `2.1.2 Funcionamiento`, `2.3 Inversión`</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">año / mes</td>
-                        <td className="p-2.5 text-sky-300">Entero</td>
-                        <td className="p-2.5">Vigencia (ej: `2026`) y Número de Mes (`1` a `12`).</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">compromiso</td>
-                        <td className="p-2.5 text-sky-300">Numérico</td>
-                        <td className="p-2.5">Valor total comprometido en pesos.</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-white">pago</td>
-                        <td className="p-2.5 text-sky-300">Numérico</td>
-                        <td className="p-2.5">Valor del giro o pago efectivo en pesos colombianos.</td>
-                      </tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">A</td><td className="p-2 font-bold text-white">Unidad</td><td className="p-2 text-yellow-300">Texto</td><td className="p-2">`01 - ADMINISTRATIVA Y FINANCIERA`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">B</td><td className="p-2 font-bold text-[#ffcc29]">Código concepto</td><td className="p-2 text-yellow-300">Texto Prefijo</td><td className="p-2 font-bold text-white">`2.1.1.01.01` (`2.1.1`, `2.1.2`, `2.1.3`, `2.1.8`, `2.2.2`, `2.3`)</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">C</td><td className="p-2 font-bold text-white">Concepto</td><td className="p-2 text-yellow-300">Texto</td><td className="p-2">`Sueldos de Personal de Planta`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">D</td><td className="p-2 font-bold text-white">Recurso</td><td className="p-2 text-yellow-300">Texto Compuesto</td><td className="p-2">`10.0 - Aportes Nacion - Funcionamiento`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">E</td><td className="p-2 font-bold text-white">Valor inicial</td><td className="p-2 text-sky-300">Numérico</td><td className="p-2">`369650433862`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">F</td><td className="p-2 font-bold text-white">Valor apropiacion</td><td className="p-2 text-sky-300">Numérico</td><td className="p-2">`369650433862`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">G</td><td className="p-2 font-bold text-white">Acumulado compromiso</td><td className="p-2 text-sky-300">Numérico</td><td className="p-2">`312078100000`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">H</td><td className="p-2 font-bold text-white">Fecha final</td><td className="p-2 text-yellow-300">Fecha</td><td className="p-2">`25/08/2026`</td></tr>
                     </tbody>
                   </table>
                 </div>
               </div>
+
             </div>
           )}
 
