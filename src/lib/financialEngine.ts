@@ -23,6 +23,92 @@ export const PAYROLL_AGO_DIC_WEIGHTS = [
   0.3600  // Dic (36.00%)
 ];
 
+// --- EICE-2026 LEY 550 CORE INTERFACES ---
+
+export interface RentItem {
+  code: string;
+  name: string;
+  rentA_Actuals: number; // Actuals / Ejecución Real ($M)
+  rentB_Budget: number;   // Budget / Presupuesto Planeado ($M)
+  varianceM: number;
+  variancePct: number;
+  qualitativeThreshold: 'OPTIMO' | 'ALERTA' | 'DEFICIT';
+}
+
+export interface AcreenciaASA {
+  id: string;
+  subcuenta: string;
+  acreedorNombre: string;
+  acreedorNit: string;
+  acreedorEmail: string;
+  acreedorTelefono: string;
+  acreedorDomicilio: string;
+  grupoAcreencia: '1. Laboral' | '2. Pública' | '3. Financiera' | '4. Comercial' | '5. Otros';
+  concepto: string;
+  documentoSoporte: string; // Contrato / Factura / Acta
+  cdpNumero: string;
+  rpNumero: string;
+  fechaVencimiento: string;
+  valorBruto: number; // $M
+  descuentosDeducciones: number; // $M
+  saldoInicial: number; // $M (Cargue)
+  ajustesCapital: number; // $M
+  depuracionesCapital: number; // $M
+  saldoFinalVotacion: number; // $M
+  derechosVoto: number; // %
+  interesesMora: number; // $M
+  ajustesIntereses: number; // $M
+  depuracionesIntereses: number; // $M
+  sancionesOtros: number; // $M
+  tieneCdpRp: boolean; // Validation rule: must link CDP and RP
+  estadoConciliacion: 'Pendiente' | 'Conciliado' | 'Depurado' | 'Condonado' | 'Extinguido';
+}
+
+export interface ActivoRealItem {
+  id: string;
+  tipo: 'Efectivo' | 'Inversion' | 'CuentaPorCobrar' | 'PPE';
+  nombre: string;
+  detalles: string;
+  valorBook: number; // $M
+  deterioroConciliacion: number; // $M
+  valorNetoReal: number; // $M
+  estadoUbicacion: string;
+  origenDestinacion: string;
+}
+
+export interface AuditLogItem {
+  id: string;
+  timestamp: string;
+  usuario: string;
+  rol: string;
+  subcuenta: string;
+  acreedor: string;
+  accion: string; // e.g. "Depuración de Capital Res 193/2016"
+  valorAnterior: number;
+  valorNuevo: number;
+  cdpRpRef: string;
+  motivo: string;
+}
+
+export interface SensitivityScenario {
+  recaudoShockPct: number;
+  inflacionPct: number;
+  vanM: number;
+  tirPct: number;
+  superavitPrimarioM: number;
+  limiteLey617Pct: number;
+  cumpleLey819: boolean;
+}
+
+export interface TornadoVariable {
+  variableName: string;
+  minVanM: number;
+  baseVanM: number;
+  maxVanM: number;
+  swingM: number;
+  riskLevel: 'Crítico' | 'Alto' | 'Medio' | 'Bajo';
+}
+
 export interface CashFlowItem {
   name: string;
   ingresos: number;
@@ -110,7 +196,7 @@ export interface SensitiveBudgetItem {
   category: string;
   amountM: number;
   sharePct: number;
-  cashFlowImpact: number; // Impact of a 5% variation in $M
+  cashFlowImpact: number;
   sensitivityLevel: 'Bajo' | 'Medio' | 'Alto' | 'Crítico';
   elasticityIndex: number;
   rationale: string;
@@ -136,6 +222,14 @@ export interface FinancialTotals {
   payrollCoverageRatio: number;
   payrollSurplus: number;
   unpaidCommitments: number;
+
+  // EICE-2026 Fiscal Health Totals
+  superavitPrimarioM: number;
+  icldM: number;
+  gastosFuncionamientoLey617M: number;
+  ratioLey617Pct: number;
+  cumpleLey617: boolean;
+  cumpleLey819: boolean;
 }
 
 export interface ProjectionResults {
@@ -153,6 +247,17 @@ export interface ProjectionResults {
   financialAlerts: FinancialAlertItem[];
   consistencyValidations: ConsistencyValidationItem[];
   sensitiveItems: SensitiveBudgetItem[];
+  
+  // EICE-2026 Data Extensions
+  rentComparison: RentItem[];
+  acreenciasASA: AcreenciaASA[];
+  activosReales: ActivoRealItem[];
+  auditLogs: AuditLogItem[];
+  tornadoVariables: TornadoVariable[];
+  sensitivityMatrix2D: SensitivityScenario[][];
+  vanBaseM: number;
+  tirBasePct: number;
+
   catComp: Record<string, number>;
   catPago: Record<string, number>;
   categoryBreakdown: {
@@ -160,6 +265,227 @@ export interface ProjectionResults {
     pago: { name: string; value: number }[];
   };
 }
+
+// --- INITIAL EICE-2026 DEMO DATASETS FOR LEY 550 SANEAMIENTO ---
+
+export const INITIAL_ACREENCIAS_ASA: AcreenciaASA[] = [
+  {
+    id: 'ACR-001',
+    subcuenta: '240101',
+    acreedorNombre: 'Sindicato SintraUPTC',
+    acreedorNit: '891.800.123-1',
+    acreedorEmail: 'juridica@sintrauptc.org',
+    acreedorTelefono: '310 456 7890',
+    acreedorDomicilio: 'Calle 14 No. 2-15, Tunja, Boyacá',
+    grupoAcreencia: '1. Laboral',
+    concepto: 'Primas extralegales y retroactivo salarial pendiente 2024-2025',
+    documentoSoporte: 'Convención Colectiva Act-044 / Acta de Liquidación 2025',
+    cdpNumero: 'CDP-2026-0891',
+    rpNumero: 'RP-2026-1142',
+    fechaVencimiento: '2025-12-31',
+    valorBruto: 4580.0,
+    descuentosDeducciones: 120.0,
+    saldoInicial: 4460.0,
+    ajustesCapital: -200.0,
+    depuracionesCapital: -150.0,
+    saldoFinalVotacion: 4110.0,
+    derechosVoto: 32.4,
+    interesesMora: 185.0,
+    ajustesIntereses: -25.0,
+    depuracionesIntereses: -10.0,
+    sancionesOtros: 0,
+    tieneCdpRp: true,
+    estadoConciliacion: 'Conciliado'
+  },
+  {
+    id: 'ACR-002',
+    subcuenta: '242405',
+    acreedorNombre: 'DIAN - Dirección de Impuestos y Aduanas Nacionales',
+    acreedorNit: '800.197.268-4',
+    acreedorEmail: 'recaudo_tunja@dian.gov.co',
+    acreedorTelefono: '608 742 3000',
+    acreedorDomicilio: 'Carrera 10 No. 20-40, Tunja, Boyacá',
+    grupoAcreencia: '2. Pública',
+    concepto: 'Retención en la fuente e IVA vigencia 2025 sujeta a acuerdo Ley 550',
+    documentoSoporte: 'Declaración DIAN Form-350 / Resolución Liquidación',
+    cdpNumero: 'CDP-2026-0412',
+    rpNumero: 'RP-2026-0520',
+    fechaVencimiento: '2025-11-15',
+    valorBruto: 3250.0,
+    descuentosDeducciones: 0,
+    saldoInicial: 3250.0,
+    ajustesCapital: 0,
+    depuracionesCapital: 0,
+    saldoFinalVotacion: 3250.0,
+    derechosVoto: 25.6,
+    interesesMora: 310.0,
+    ajustesIntereses: -80.0,
+    depuracionesIntereses: -50.0,
+    sancionesOtros: 45.0,
+    tieneCdpRp: true,
+    estadoConciliacion: 'Conciliado'
+  },
+  {
+    id: 'ACR-003',
+    subcuenta: '243001',
+    acreedorNombre: 'Banco Agrario de Colombia S.A.',
+    acreedorNit: '800.037.800-8',
+    acreedorEmail: 'estructuracion@bancoagrario.gov.co',
+    acreedorTelefono: '601 594 8500',
+    acreedorDomicilio: 'Carrera 8 No. 15-43, Bogotá D.C.',
+    grupoAcreencia: '3. Financiera',
+    concepto: 'Pagaré sustitutivo de amortización rotativa infraestructura',
+    documentoSoporte: 'Contrato Crédito No. 550-2023 / Pagaré 8812',
+    cdpNumero: 'CDP-2026-0105',
+    rpNumero: 'RP-2026-0180',
+    fechaVencimiento: '2026-06-30',
+    valorBruto: 2800.0,
+    descuentosDeducciones: 0,
+    saldoInicial: 2800.0,
+    ajustesCapital: -300.0,
+    depuracionesCapital: 0,
+    saldoFinalVotacion: 2500.0,
+    derechosVoto: 19.7,
+    interesesMora: 140.0,
+    ajustesIntereses: -40.0,
+    depuracionesIntereses: 0,
+    sancionesOtros: 0,
+    tieneCdpRp: true,
+    estadoConciliacion: 'Conciliado'
+  },
+  {
+    id: 'ACR-004',
+    subcuenta: '240301',
+    acreedorNombre: 'Servicios de Seguridad Boyacá Ltda.',
+    acreedorNit: '891.805.991-2',
+    acreedorEmail: 'gerencia@segboyaca.com',
+    acreedorTelefono: '315 789 1234',
+    acreedorDomicilio: 'Avenida Universitaria No. 45-12, Tunja',
+    grupoAcreencia: '4. Comercial',
+    concepto: 'Servicio de vigilancia y monitoreo sedes Tunja, Duitama y Sogamoso',
+    documentoSoporte: 'Contrato Licitación 012-2024 / Facturas 4410-4425',
+    cdpNumero: 'CDP-2026-0920',
+    rpNumero: 'RP-2026-1055',
+    fechaVencimiento: '2025-10-31',
+    valorBruto: 1950.0,
+    descuentosDeducciones: 85.0,
+    saldoInicial: 1865.0,
+    ajustesCapital: 0,
+    depuracionesCapital: -120.0,
+    saldoFinalVotacion: 1745.0,
+    derechosVoto: 13.8,
+    interesesMora: 65.0,
+    ajustesIntereses: -20.0,
+    depuracionesIntereses: -15.0,
+    sancionesOtros: 0,
+    tieneCdpRp: true,
+    estadoConciliacion: 'Depurado'
+  },
+  {
+    id: 'ACR-005',
+    subcuenta: '249090',
+    acreedorNombre: 'Consorcio Edificaciones Universitarias 2024',
+    acreedorNit: '901.442.110-5',
+    acreedorEmail: 'representacion@consorcioedificos.com',
+    acreedorTelefono: '311 234 5678',
+    acreedorDomicilio: 'Carrera 7 No. 71-21, Bogotá D.C.',
+    grupoAcreencia: '5. Otros',
+    concepto: 'Reclamación de acta final sin respaldo de RP presupuestal formalizado',
+    documentoSoporte: 'Solicitud de cobro judicial no ejecutoriada',
+    cdpNumero: 'SIN_CDP',
+    rpNumero: 'SIN_RP',
+    fechaVencimiento: '2025-08-30',
+    valorBruto: 1200.0,
+    descuentosDeducciones: 0,
+    saldoInicial: 1200.0,
+    ajustesCapital: 0,
+    depuracionesCapital: -1200.0,
+    saldoFinalVotacion: 0,
+    derechosVoto: 0,
+    interesesMora: 110.0,
+    ajustesIntereses: 0,
+    depuracionesIntereses: -110.0,
+    sancionesOtros: 0,
+    tieneCdpRp: false, // Bloqueado por regla legal MinHacienda
+    estadoConciliacion: 'Extinguido'
+  }
+];
+
+export const INITIAL_ACTIVOS_REALES: ActivoRealItem[] = [
+  {
+    id: 'ACT-001',
+    tipo: 'Efectivo',
+    nombre: 'Cuenta Corriente Davivienda No. 0012-8819 (Rentas Propias)',
+    detalles: 'Cuenta operativa central. Incluye embargos preventivos judiciales por $420M.',
+    valorBook: 18500.0,
+    deterioroConciliacion: -420.0,
+    valorNetoReal: 18080.0,
+    estadoUbicacion: 'Activo / Conciliado Jul 2026',
+    origenDestinacion: 'Fondo de Tesorería General (Libre Destinación)'
+  },
+  {
+    id: 'ACT-002',
+    tipo: 'Inversion',
+    nombre: 'Participación Accionaria Lotería de Boyacá S.A.',
+    detalles: '1.250.000 acciones ordinarias con dividendo estipulado anualmente.',
+    valorBook: 4200.0,
+    deterioroConciliacion: 0,
+    valorNetoReal: 4200.0,
+    estadoUbicacion: 'Vigente / Depósito Deceval',
+    origenDestinacion: 'Inversión Institucional de Fondo Patrimonial'
+  },
+  {
+    id: 'ACT-003',
+    tipo: 'CuentaPorCobrar',
+    nombre: 'Cartera por Matrículas y Deudores Extensión (Vigencias 2022-2025)',
+    detalles: 'Cobro persuasivo y jurisdicción coactiva en curso.',
+    valorBook: 8900.0,
+    deterioroConciliacion: -2670.0,
+    valorNetoReal: 6230.0,
+    estadoUbicacion: 'Cobro Coactivo / Res 193 Depuración 30%',
+    origenDestinacion: 'Recursos Propios (Ingresos por Servicios Académicos)'
+  },
+  {
+    id: 'ACT-004',
+    tipo: 'PPE',
+    nombre: 'Predio Campus Central - Edificio Laboratorios de Ingeniería',
+    detalles: 'Físicamente habilitado y en uso continuo de investigación.',
+    valorBook: 34500.0,
+    deterioroConciliacion: -3450.0,
+    valorNetoReal: 31050.0,
+    estadoUbicacion: 'Bueno / Uso Permanente Institucional',
+    origenDestinacion: 'Patrimonio de Uso Institucional No Enajenable'
+  }
+];
+
+export const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
+  {
+    id: 'LOG-2026-001',
+    timestamp: '2026-08-12 09:15:22',
+    usuario: 'Dr. Carlos Mendoza (Promotor DAF)',
+    rol: 'Promotor DAF MinHacienda',
+    subcuenta: '240301',
+    acreedor: 'Servicios de Seguridad Boyacá Ltda.',
+    accion: 'Depuración de Capital Res 193/2016',
+    valorAnterior: 1865.0,
+    valorNuevo: 1745.0,
+    cdpRpRef: 'CDP-2026-0920 / RP-2026-1055',
+    motivo: 'Ajuste por acta de conciliación y condonación voluntaria de recargos.'
+  },
+  {
+    id: 'LOG-2026-002',
+    timestamp: '2026-08-11 16:40:10',
+    usuario: 'Dra. Elena Ramos (Contadora General)',
+    rol: 'Contador Público UPTC',
+    subcuenta: '249090',
+    acreedor: 'Consorcio Edificaciones Universitarias 2024',
+    accion: 'Bloqueo Exigibilidad y Extinción por Falta de RP',
+    valorAnterior: 1200.0,
+    valorNuevo: 0,
+    cdpRpRef: 'SIN_CDP / SIN_RP',
+    motivo: 'Falta de Registro Presupuestal obligatorio (Art. 71 EOP & Requisito MinHacienda).'
+  }
+];
 
 export function calculateProjections({
   rawYearlyIncomes,
@@ -789,7 +1115,7 @@ export function calculateProjections({
       category: 'Ingresos Estatutarios',
       amountM: 315327.8,
       sharePct: totalSimIngM > 0 ? (315327.8 / totalSimIngM) * 100 : 58.0,
-      cashFlowImpact: 315327.8 * 0.05, // 5% shock = $15.766M
+      cashFlowImpact: 315327.8 * 0.05,
       sensitivityLevel: 'Crítico',
       elasticityIndex: 95,
       rationale: 'Concentra más del 58% del recaudo institucional. Un desfase del 5% genera un impacto de $15.766M en caja.'
@@ -866,42 +1192,6 @@ export function calculateProjections({
       elasticityIndex: 55,
       rationale: 'Derechos pecuniarios, certificaciones y trámites; presenta estacionalidad semestral.'
     },
-    {
-      code: '33',
-      name: 'Convenios con Derechos Económicos',
-      type: 'INGRESO',
-      category: 'Extensión y Consultoría',
-      amountM: 9500.0,
-      sharePct: totalSimIngM > 0 ? (9500.0 / totalSimIngM) * 100 : 1.8,
-      cashFlowImpact: 9500.0 * 0.05,
-      sensitivityLevel: 'Medio',
-      elasticityIndex: 52,
-      rationale: 'Contratos con entidades territoriales; ritmo de desembolso condicionado a actas de avance.'
-    },
-    {
-      code: '40',
-      name: 'Estampilla PRO-UPTC',
-      type: 'INGRESO',
-      category: 'Rentas Departamentales',
-      amountM: 5800.0,
-      sharePct: totalSimIngM > 0 ? (5800.0 / totalSimIngM) * 100 : 1.1,
-      cashFlowImpact: 5800.0 * 0.05,
-      sensitivityLevel: 'Bajo',
-      elasticityIndex: 40,
-      rationale: 'Recaudado por la Gobernación de Boyacá; pico estacional en noviembre y diciembre.'
-    },
-    {
-      code: '17',
-      name: 'Devolución Descuento Electoral',
-      type: 'INGRESO',
-      category: 'Transferencias de Ley',
-      amountM: 5447.5,
-      sharePct: totalSimIngM > 0 ? (5447.5 / totalSimIngM) * 100 : 1.0,
-      cashFlowImpact: 5447.5 * 0.05,
-      sensitivityLevel: 'Bajo',
-      elasticityIndex: 35,
-      rationale: 'Reembolso por Ley 403; giro predecible con bajo margen de desviación.'
-    },
 
     // --- GASTOS ---
     {
@@ -911,7 +1201,7 @@ export function calculateProjections({
       category: 'Egresos Obligatorios',
       amountM: 369650.4,
       sharePct: totalSimGasPagoM > 0 ? (369650.4 / totalSimGasPagoM) * 100 : 70.0,
-      cashFlowImpact: 369650.4 * 0.05, // 5% shock = $18.482M
+      cashFlowImpact: 369650.4 * 0.05,
       sensitivityLevel: 'Crítico',
       elasticityIndex: 98,
       rationale: 'Mayor rubro de gasto de la Universidad. Un incremento del 5% exige $18.482M adicionales de caja.'
@@ -939,44 +1229,137 @@ export function calculateProjections({
       sensitivityLevel: 'Alto',
       elasticityIndex: 70,
       rationale: 'Obras y dotaciones; acotado por la restricción histórica estructural de ejecución (≤70%).'
-    },
-    {
-      code: '2.1.3',
-      name: 'Transferencias Corrientes',
-      type: 'GASTO',
-      category: 'Subsidios y Fondos',
-      amountM: 5090.3,
-      sharePct: totalSimGasPagoM > 0 ? (5090.3 / totalSimGasPagoM) * 100 : 1.0,
-      cashFlowImpact: 5090.3 * 0.05,
-      sensitivityLevel: 'Medio',
-      elasticityIndex: 45,
-      rationale: 'Subsidios y transferencias ejecutadas al 99.9% en primer semestre; bajo riesgo de desviación.'
-    },
-    {
-      code: '2.1.8',
-      name: 'Tasas, Multas y Contribuciones',
-      type: 'GASTO',
-      category: 'Obligaciones Tributarias',
-      amountM: 3908.4,
-      sharePct: totalSimGasPagoM > 0 ? (3908.4 / totalSimGasPagoM) * 100 : 0.7,
-      cashFlowImpact: 3908.4 * 0.05,
-      sensitivityLevel: 'Bajo',
-      elasticityIndex: 30,
-      rationale: 'Pagos regulatorios e impuestos locales liquidados al día con calendarios fijos.'
-    },
-    {
-      code: '2.2.2',
-      name: 'Servicios de la Deuda',
-      type: 'GASTO',
-      category: 'Amortización Financiera',
-      amountM: 0,
-      sharePct: 0,
-      cashFlowImpact: 0,
-      sensitivityLevel: 'Bajo',
-      elasticityIndex: 0,
-      rationale: 'La universidad no registra pasivos bancarios en amortización durante la vigencia 2026.'
     }
   ];
+
+  // 12. EICE-2026 RENT A (ACTUALS) VS RENT B (BUDGET) COMPARISON
+  const rentComparison: RentItem[] = [
+    {
+      code: 'ING-10.0',
+      name: 'Aportes Nación Funcionamiento',
+      rentA_Actuals: totalSimIngM * 0.58,
+      rentB_Budget: 315327.8,
+      varianceM: (totalSimIngM * 0.58) - 315327.8,
+      variancePct: ((totalSimIngM * 0.58 - 315327.8) / 315327.8) * 100,
+      qualitativeThreshold: 'OPTIMO'
+    },
+    {
+      code: 'ING-PROPIOS',
+      name: 'Rentas Propias & Posgrados',
+      rentA_Actuals: totalSimIngM * 0.22,
+      rentB_Budget: 118400.0,
+      varianceM: (totalSimIngM * 0.22) - 118400.0,
+      variancePct: ((totalSimIngM * 0.22 - 118400.0) / 118400.0) * 100,
+      qualitativeThreshold: 'ALERTA'
+    },
+    {
+      code: 'GAS-2.1.1',
+      name: 'Gastos de Personal',
+      rentA_Actuals: totalSimGasPagoM * 0.70,
+      rentB_Budget: 369650.4,
+      varianceM: (totalSimGasPagoM * 0.70) - 369650.4,
+      variancePct: ((totalSimGasPagoM * 0.70 - 369650.4) / 369650.4) * 100,
+      qualitativeThreshold: 'OPTIMO'
+    },
+    {
+      code: 'GAS-2.1.2',
+      name: 'Gastos de Funcionamiento',
+      rentA_Actuals: totalSimGasPagoM * 0.235,
+      rentB_Budget: 124447.1,
+      varianceM: (totalSimGasPagoM * 0.235) - 124447.1,
+      variancePct: ((totalSimGasPagoM * 0.235 - 124447.1) / 124447.1) * 100,
+      qualitativeThreshold: 'OPTIMO'
+    },
+    {
+      code: 'GAS-2.3',
+      name: 'Gastos de Inversión',
+      rentA_Actuals: totalSimGasPagoM * 0.025,
+      rentB_Budget: 19687.1,
+      varianceM: (totalSimGasPagoM * 0.025) - 19687.1,
+      variancePct: ((totalSimGasPagoM * 0.025 - 19687.1) / 19687.1) * 100,
+      qualitativeThreshold: 'ALERTA'
+    }
+  ];
+
+  // 13. SENSITIVITY MATRIX 2D (VAN & TIR & LEY 819 SUPERAVIT PRIMARIO)
+  const baseVanM = (totalSimIngM - totalSimGasPagoM) * 3.8; // NPV approximation over 5 years
+  const tirBasePct = 14.5;
+  const icldM = totalSimIngM * 0.35; // Ingresos Corrientes de Libre Destinación
+  const gastosFuncM = totalSimGasPagoM * 0.235;
+  const ratioLey617Pct = icldM > 0 ? (gastosFuncM / icldM) * 100 : 0;
+  const superavitPrimarioM = totalSimIngM - totalSimGasPagoM;
+
+  const tornadoVariables: TornadoVariable[] = [
+    {
+      variableName: 'Recaudo Aportes Nación (Ley 30)',
+      minVanM: baseVanM - 45000.0,
+      baseVanM: baseVanM,
+      maxVanM: baseVanM + 38000.0,
+      swingM: 83000.0,
+      riskLevel: 'Crítico'
+    },
+    {
+      variableName: 'Gastos de Personal (Incremento Salarial / Primas)',
+      minVanM: baseVanM - 38000.0,
+      baseVanM: baseVanM,
+      maxVanM: baseVanM + 22000.0,
+      swingM: 60000.0,
+      riskLevel: 'Crítico'
+    },
+    {
+      variableName: 'Recaudo por Matrículas de Posgrado (R31)',
+      minVanM: baseVanM - 12500.0,
+      baseVanM: baseVanM,
+      maxVanM: baseVanM + 15000.0,
+      swingM: 27500.0,
+      riskLevel: 'Alto'
+    },
+    {
+      variableName: 'Giro Política de Gratuidad (MEN)',
+      minVanM: baseVanM - 9800.0,
+      baseVanM: baseVanM,
+      maxVanM: baseVanM + 11000.0,
+      swingM: 20800.0,
+      riskLevel: 'Alto'
+    },
+    {
+      variableName: 'Ejecución Gastos de Inversión (POAI / POI)',
+      minVanM: baseVanM - 6000.0,
+      baseVanM: baseVanM,
+      maxVanM: baseVanM + 7500.0,
+      swingM: 13500.0,
+      riskLevel: 'Medio'
+    }
+  ];
+
+  const shocks = [-10, -5, 0, 5, 10];
+  const inflations = [3.0, 4.5, 6.0, 7.5];
+  const sensitivityMatrix2D: SensitivityScenario[][] = [];
+
+  shocks.forEach(shock => {
+    const row: SensitivityScenario[] = [];
+    inflations.forEach(inf => {
+      const ingMod = 1 + (shock / 100);
+      const gasMod = 1 + (inf / 100);
+      const simIngLocal = totalSimIngM * ingMod;
+      const simGasLocal = totalSimGasPagoM * gasMod;
+      const localVan = (simIngLocal - simGasLocal) * 3.8;
+      const localTir = 14.5 + (shock * 0.6) - (inf * 0.4);
+      const localSuperavit = simIngLocal - simGasLocal;
+      const localRatio617 = icldM > 0 ? (simGasLocal * 0.235 / (icldM * ingMod)) * 100 : 0;
+
+      row.push({
+        recaudoShockPct: shock,
+        inflacionPct: inf,
+        vanM: parseFloat(localVan.toFixed(1)),
+        tirPct: parseFloat(localTir.toFixed(1)),
+        superavitPrimarioM: parseFloat(localSuperavit.toFixed(1)),
+        limiteLey617Pct: parseFloat(localRatio617.toFixed(1)),
+        cumpleLey819: localSuperavit >= 0
+      });
+    });
+    sensitivityMatrix2D.push(row);
+  });
 
   // Breakdown by category
   const catComp = {
@@ -1018,7 +1401,14 @@ export function calculateProjections({
       simulatedPayrollTotal: parseFloat(targetPayrollM.toFixed(1)),
       payrollCoverageRatio: parseFloat(payrollCoveragePct.toFixed(1)),
       payrollSurplus: parseFloat(payrollSurplusDeficitM.toFixed(1)),
-      unpaidCommitments: parseFloat(((totalSimGasComp - totalSimGasPago) / 1e6).toFixed(1))
+      unpaidCommitments: parseFloat(((totalSimGasComp - totalSimGasPago) / 1e6).toFixed(1)),
+
+      superavitPrimarioM: parseFloat(superavitPrimarioM.toFixed(1)),
+      icldM: parseFloat(icldM.toFixed(1)),
+      gastosFuncionamientoLey617M: parseFloat(gastosFuncM.toFixed(1)),
+      ratioLey617Pct: parseFloat(ratioLey617Pct.toFixed(1)),
+      cumpleLey617: ratioLey617Pct <= 50.0,
+      cumpleLey819: superavitPrimarioM >= 0
     },
     resourceBaselines,
     monthlySimIngByRes,
@@ -1032,6 +1422,16 @@ export function calculateProjections({
     financialAlerts,
     consistencyValidations,
     sensitiveItems,
+
+    rentComparison,
+    acreenciasASA: INITIAL_ACREENCIAS_ASA,
+    activosReales: INITIAL_ACTIVOS_REALES,
+    auditLogs: INITIAL_AUDIT_LOGS,
+    tornadoVariables,
+    sensitivityMatrix2D,
+    vanBaseM: parseFloat(baseVanM.toFixed(1)),
+    tirBasePct,
+
     catComp: {
       personal: catComp.personal / 1e6,
       funcionamiento: catComp.funcionamiento / 1e6,
