@@ -75,10 +75,10 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
                  "01 - ADMINISTRATIVA Y FINANCIERA;40;Estampilla Pro-UPTC;40-Estampilla UPTC;24500000000;24500000000;24500000000;25/08/2026";
     } else if (type === 'gastos') {
       fileName = "Plantilla_Gastos_Oficial_UPTC.csv";
-      csvContent = "Unidad;Código concepto;Concepto;Recurso;Valor inicial;Valor apropiacion;Acumulado compromiso;Fecha final\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01;Sueldos de Personal de Planta;10.0-Aportes Nacion - Funcionamiento;369650433862;369650433862;312078100000;25/08/2026\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01;Servicios Públicos, Aseo y Vigilancia;10.0-Aportes Nacion - Funcionamiento;124447130000;124447130000;115154400000;25/08/2026\n" +
-                 "12 - SECCIONAL DUITAMA;2.3.1.01.01;Construcción Laboratorios;12-Estampillas Otras Universidades;19687140000;19687140000;19687140000;25/08/2026";
+      csvContent = "Unidad;Código concepto;Concepto;Recurso;Valor inicial;Valor apropiacion;Acumulado compromiso;Acumulado pago;Fecha final\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01;Sueldos de Personal de Planta;10.0-Aportes Nacion - Funcionamiento;369650433862;369650433862;312078100000;246751600000;25/08/2026\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01;Servicios Públicos, Aseo y Vigilancia;10.0-Aportes Nacion - Funcionamiento;124447130000;124447130000;115154400000;47737200000;25/08/2026\n" +
+                 "12 - SECCIONAL DUITAMA;2.3.1.01.01;Construcción Laboratorios;12-Estampillas Otras Universidades;19687140000;19687140000;19687140000;15200000000;25/08/2026";
     } else if (type === 'nomina') {
       fileName = "Plantilla_Nomina_Oficial_UPTC.csv";
       csvContent = "Periodo;Numero;Concepto;Valor liquidacion;Objeto;Asignacion;Dedicacion;Vinculacion\n" +
@@ -342,23 +342,37 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
 
               {/* 2. ESTRUCTURA DE GASTOS */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
-                <h4 className="text-sm font-bold text-[#ffcc29]">2. Estructura de Gastos (8 Columnas):</h4>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <h4 className="text-sm font-bold text-[#ffcc29]">2. Estructura de Gastos (9 Columnas A a I):</h4>
+                  <span className="px-2.5 py-1 rounded-full bg-[#ffcc29]/10 text-[#ffcc29] text-[10px] font-mono font-bold border border-[#ffcc29]/30">
+                    Estructura Actualizada 9 Cols
+                  </span>
+                </div>
+
+                <div className="p-3.5 bg-[#ffcc29]/10 border border-[#ffcc29]/30 rounded-xl space-y-1.5 font-mono text-xs">
+                  <span className="text-[#ffcc29] font-bold block">Fórmula de Clasificación de Gasto en Excel (Basada en Código concepto Col B):</span>
+                  <code className="text-white text-[10px] block p-2 bg-black/50 rounded border border-white/10 overflow-x-auto select-all">
+                    {`=SI(IZQUIERDA(B2;5)="2.1.1";"2.1.1 Gastos de Personal";SI(IZQUIERDA(B2;5)="2.1.2";"2.1.2 Gastos de Funcionamiento";SI(IZQUIERDA(B2;5)="2.1.3";"2.1.3 Transferencias Corrientes";SI(IZQUIERDA(B2;5)="2.1.8";"2.1.8 Tasas y Multas";SI(IZQUIERDA(B2;5)="2.2.2";"2.2.2 Servicios de la Deuda";"2.3 Gastos de Inversión")))))`}
+                  </code>
+                </div>
+
                 <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/40">
                   <table className="w-full text-left text-[11px] font-mono">
                     <thead>
                       <tr className="bg-white/10 text-[#ffcc29]">
-                        <th className="p-2">Col.</th><th className="p-2">Campo</th><th className="p-2">Tipo</th><th className="p-2">Ejemplo</th>
+                        <th className="p-2">Col.</th><th className="p-2">Campo</th><th className="p-2">Tipo / Estructura</th><th className="p-2">Ejemplo de Dato</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-white/80">
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">A</td><td className="p-2 font-bold text-white">Unidad</td><td className="p-2 text-yellow-300">Texto</td><td className="p-2">`01 - ADMINISTRATIVA Y FINANCIERA`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">B</td><td className="p-2 font-bold text-[#ffcc29]">Código concepto</td><td className="p-2 text-yellow-300">Texto Prefijo</td><td className="p-2 font-bold text-white">`2.1.1.01.01` (`2.1.1`, `2.1.2`, `2.1.3`, `2.1.8`, `2.2.2`, `2.3`)</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">C</td><td className="p-2 font-bold text-white">Concepto</td><td className="p-2 text-yellow-300">Texto</td><td className="p-2">`Sueldos de Personal de Planta`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">D</td><td className="p-2 font-bold text-white">Recurso</td><td className="p-2 text-yellow-300">Texto Compuesto</td><td className="p-2">`10.0 - Aportes Nacion - Funcionamiento`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">E</td><td className="p-2 font-bold text-white">Valor inicial</td><td className="p-2 text-sky-300">Numérico</td><td className="p-2">`369650433862`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">F</td><td className="p-2 font-bold text-white">Valor apropiacion</td><td className="p-2 text-sky-300">Numérico</td><td className="p-2">`369650433862`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">G</td><td className="p-2 font-bold text-white">Acumulado compromiso</td><td className="p-2 text-sky-300">Numérico</td><td className="p-2">`312078100000`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">H</td><td className="p-2 font-bold text-white">Fecha final</td><td className="p-2 text-yellow-300">Fecha</td><td className="p-2">`25/08/2026`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">A</td><td className="p-2 font-bold text-white">Unidad</td><td className="p-2 text-yellow-300">Texto Dependencia</td><td className="p-2">`01 - ADMINISTRATIVA Y FINANCIERA`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">B</td><td className="p-2 font-bold text-[#ffcc29]">Código concepto</td><td className="p-2 text-yellow-300">Texto Prefijo Presupuestal</td><td className="p-2 font-bold text-white">`2.1.1.01.01` (`2.1.1`, `2.1.2`, `2.1.3`, `2.1.8`, `2.2.2`, `2.3`)</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">C</td><td className="p-2 font-bold text-white">Concepto</td><td className="p-2 text-yellow-300">Texto Nombre Rubro</td><td className="p-2">`Sueldos de Personal de Planta`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">D</td><td className="p-2 font-bold text-white">Recurso</td><td className="p-2 text-yellow-300">Texto Compuesto Fuente</td><td className="p-2">`10.0-Aportes Nacion - Funcionamiento`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">E</td><td className="p-2 font-bold text-white">Valor inicial</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`369650433862`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">F</td><td className="p-2 font-bold text-white">Valor apropiacion</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`369650433862`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">G</td><td className="p-2 font-bold text-white">Acumulado compromiso</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`312078100000`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">H</td><td className="p-2 font-bold text-[#4ade80]">Acumulado pago</td><td className="p-2 text-sky-300">Numérico ($ COP - Nuevo)</td><td className="p-2 font-bold text-[#4ade80]">`246751600000`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">I</td><td className="p-2 font-bold text-white">Fecha final</td><td className="p-2 text-yellow-300">Fecha DD/MM/AAAA</td><td className="p-2">`25/08/2026`</td></tr>
                     </tbody>
                   </table>
                 </div>
