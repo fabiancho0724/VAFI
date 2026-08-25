@@ -25,6 +25,35 @@ import { RESOURCES_LIST, getResourceFullName, getRecursoEquivalence } from '../l
 import { RECURSOS_FIJOS_RESOLUCION } from '../lib/constants';
 import rawHistoricalGastos from '../data/historicalGastos.json';
 
+const AI_ING_SUGGESTIONS: Record<string, { val: number; rationale: string }> = {
+  '10': { val: 0.0, rationale: 'Fijo por Resolución MEN - Ley 30/92 ($315.327,8M).' },
+  '10.1': { val: 0.0, rationale: 'Fijo por Resolución MEN - PIC Convencional ($9.756,7M).' },
+  '10.2': { val: 0.0, rationale: 'Fijo por Resolución MEN - PIC Territorial ($3.996,7M).' },
+  '10.5': { val: 0.0, rationale: 'Fijo por Resolución MEN - Gratuidad Ley 2307 ($20.708,4M).' },
+  '12': { val: 0.0, rationale: 'Fijo por Ley 1697 / Estampilla Pro-UNAL ($17.266,1M).' },
+  '13': { val: 0.0, rationale: 'Fijo por DIAN / Excedentes Cooperativas ($2.128,2M).' },
+  '14': { val: 0.0, rationale: 'Fijo por Resolución Fondo FSE ($19.625,5M).' },
+  '16': { val: 0.0, rationale: 'Fijo por Aportes Inversión PGN ($12.877,1M).' },
+  '17': { val: 0.0, rationale: 'Fijo por Devolución Descuento Electoral Ley 403 ($5.447,5M).' },
+  '18': { val: 0.0, rationale: 'Fijo por Artículo 87 Ley 30 / CESU ($1.035,9M).' },
+  '20': { val: -1.5, rationale: 'Menor flujo de derechos de grado y trámites intersemestrales en Q4.' },
+  '31': { val: 3.5, rationale: 'Nuevas cohortes de posgrado y convenios de extensión en Q4.' },
+  '32': { val: 2.0, rationale: 'Contratos y consultorías de extensión universitaria en ejecución.' },
+  '33': { val: 4.0, rationale: 'Desembolsos de convenios con derechos suscritos con entidades territoriales.' },
+  '34': { val: 1.0, rationale: 'Convenios de cooperación académica internacional.' },
+  '35': { val: 3.0, rationale: 'Diplomados y cursos de formación continua programados para fin de año.' },
+  '40': { val: 5.0, rationale: 'Pico estacional por retenciones de estampillas sobre contratación pública regional.' }
+};
+
+const AI_GAS_CATEGORY_SUGGESTIONS: Record<string, { val: number; rationale: string }> = {
+  'Personal': { val: 0.0, rationale: 'Techo oficial fijado en $369.650M; las primas y cesantías de diciembre ya están contempladas.' },
+  'Funcionamiento': { val: 3.5, rationale: 'Cubre la indexación de servicios públicos fijos y contratos continuos de aseo y vigilancia.' },
+  'Inversion': { val: 4.0, rationale: 'Aceleración de actas POAI considerando la restricción histórica estructural (máx. 70%).' },
+  'Transferencias': { val: 0.0, rationale: 'Ejecución al 99.9% en Ene-Jul; gasto residual sin presiones de sobrecosto.' },
+  'Tasas': { val: 0.0, rationale: 'Obligaciones tributarias y contribuciones regulatorias al día.' },
+  'Deuda': { val: 0.0, rationale: 'Sin pasivos bancarios en amortización durante 2026.' }
+};
+
 const ALL_UPTC_UNITS = [
   '01 - ADMINISTRATIVA Y FINANCIERA',
   '02 - INVESTIGACION Y EXTENSION',
@@ -48,8 +77,12 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [rawCumulativeIncomes, setRawCumulativeIncomes] = useState<any[]>([]);
   const [showSaveSuccess, setShowSaveSuccess] = useState<boolean>(false);
   
-  // 6 Executive EICE-2026 Core Tabs
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'asa' | 'inventory' | 'mfmp' | 'sensitivity' | 'audit'>('dashboard');
+  // 8 Executive Tabs Combining Interactive Projections & EICE-2026 Ley 550
+  const [activeTab, setActiveTab] = useState<'simulator' | 'monthly_balance' | 'equilibrio' | 'traceability' | 'asa' | 'inventory' | 'sensitivity' | 'audit'>('simulator');
+
+  // Search & Filter States
+  const [traceSearch, setTraceSearch] = useState<string>('');
+  const [expandedTraceRow, setExpandedTraceRow] = useState<string | null>(null);
 
   // Interactive ASA State
   const [asaList, setAsaList] = useState<AcreenciaASA[]>([]);
@@ -63,32 +96,58 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   // Audit Log State
   const [auditLogsList, setAuditLogsList] = useState<AuditLogItem[]>([]);
-  const [auditSearch, setAuditSearch] = useState<string>('');
 
-  // Signature and Radicación Cert state
-  const [repLegalSigned, setRepLegalSigned] = useState<boolean>(true);
-  const [contadorSigned, setContadorSigned] = useState<boolean>(true);
-  const [radicationStatus, setRadicationStatus] = useState<string>('RADICADO_OK');
+  // Variable Projection Selection State (Rule: strictly project what is selected)
+  const [selectedProjectedUnits, setSelectedProjectedUnits] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_selectedProjectedUnits');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [...ALL_UPTC_UNITS];
+  });
 
-  // Simulation Sliders State
-  const [selectedProjectedUnits, setSelectedProjectedUnits] = useState<string[]>([...ALL_UPTC_UNITS]);
-  const [selectedProjectedResources, setSelectedProjectedResources] = useState<string[]>([...RESOURCES_LIST]);
-  const [selectedProjectedExpenseTypes, setSelectedProjectedExpenseTypes] = useState<string[]>(['Personal', 'Funcionamiento', 'Inversion', 'Transferencias', 'Tasas', 'Deuda']);
+  const [selectedProjectedResources, setSelectedProjectedResources] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_selectedProjectedResources');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [...RESOURCES_LIST];
+  });
 
+  const [selectedProjectedExpenseTypes, setSelectedProjectedExpenseTypes] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_selectedProjectedExpenseTypes');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return ['Personal', 'Funcionamiento', 'Inversion', 'Transferencias', 'Tasas', 'Deuda'];
+  });
+
+  const [flowGranularity, setFlowGranularity] = useState<'monthly' | 'quarterly' | 'semesterly' | 'annual'>('monthly');
+
+  // Global Dropdown Filters
+  const [filterUnidad, setFilterUnidad] = useState<string>('Todos');
+  const [filterRecurso, setFilterRecurso] = useState<string>('Todos');
+
+  // Sliders State
   const [simIngByResource, setSimIngByResource] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_simIngByResource');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
     const init: Record<string, number> = {};
     RESOURCES_LIST.forEach(r => { init[r] = 0; });
     return init;
   });
 
-  const [simGasByType, setSimGasByType] = useState<Record<string, number>>({
-    "Personal": 0, "Funcionamiento": 0, "Transferencias": 0, "Tasas": 0, "Deuda": 0, "Inversion": 0
+  const [simGasByType, setSimGasByType] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('vafi_simGasByType');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      "Personal": 0, "Funcionamiento": 0, "Transferencias": 0, "Tasas": 0, "Deuda": 0, "Inversion": 0
+    };
   });
-
-  // Global Dropdown Filters
-  const [filterUnidad, setFilterUnidad] = useState<string>('Todos');
-  const [filterRecurso, setFilterRecurso] = useState<string>('Todos');
-  const [flowGranularity, setFlowGranularity] = useState<'monthly' | 'quarterly' | 'semesterly' | 'annual'>('monthly');
 
   // Fetch datasets
   useEffect(() => {
@@ -164,7 +223,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     selectedProjectedResources, selectedProjectedExpenseTypes
   ]);
 
-  // Initialize ASA and Activos List on load
+  // Sync EICE datasets on engine calculate
   useEffect(() => {
     if (financialData) {
       setAsaList(financialData.acreenciasASA);
@@ -177,6 +236,19 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const aggregatedFlowData = useMemo(() => {
     return aggregateFlow(financialData.simulatedFlow, flowGranularity);
   }, [financialData.simulatedFlow, flowGranularity]);
+
+  // Filtered Traceability Matrix
+  const filteredTraceability = useMemo(() => {
+    if (!financialData?.traceabilityMatrix) return [];
+    if (!traceSearch.trim()) return financialData.traceabilityMatrix;
+    const q = traceSearch.toLowerCase();
+    return financialData.traceabilityMatrix.filter(t => 
+      t.resourceCode.toLowerCase().includes(q) || 
+      t.resourceName.toLowerCase().includes(q) ||
+      t.unitName.toLowerCase().includes(q) ||
+      t.status.toLowerCase().includes(q)
+    );
+  }, [financialData.traceabilityMatrix, traceSearch]);
 
   // Filtered ASA List
   const filteredASA = useMemo(() => {
@@ -252,11 +324,56 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     setEditingAsa(null);
   };
 
+  const handleResetSimulator = () => {
+    const initIng: Record<string, number> = {};
+    RESOURCES_LIST.forEach(r => { initIng[r] = 0; });
+    setSimIngByResource(initIng);
+    setSimGasByType({ Personal: 0, Funcionamiento: 0, Transferencias: 0, Tasas: 0, Deuda: 0, Inversion: 0 });
+    setSelectedProjectedUnits([...ALL_UPTC_UNITS]);
+    setSelectedProjectedResources([...RESOURCES_LIST]);
+    setSelectedProjectedExpenseTypes(['Personal', 'Funcionamiento', 'Inversion', 'Transferencias', 'Tasas', 'Deuda']);
+    setFilterUnidad('Todos');
+    setFilterRecurso('Todos');
+    localStorage.removeItem('vafi_simIngByResource');
+    localStorage.removeItem('vafi_simGasByType');
+    localStorage.removeItem('vafi_selectedProjectedUnits');
+    localStorage.removeItem('vafi_selectedProjectedResources');
+    localStorage.removeItem('vafi_selectedProjectedExpenseTypes');
+  };
+
+  const handleSaveSimulation = () => {
+    localStorage.setItem('vafi_simIngByResource', JSON.stringify(simIngByResource));
+    localStorage.setItem('vafi_simGasByType', JSON.stringify(simGasByType));
+    localStorage.setItem('vafi_selectedProjectedUnits', JSON.stringify(selectedProjectedUnits));
+    localStorage.setItem('vafi_selectedProjectedResources', JSON.stringify(selectedProjectedResources));
+    localStorage.setItem('vafi_selectedProjectedExpenseTypes', JSON.stringify(selectedProjectedExpenseTypes));
+    setShowSaveSuccess(true);
+    setTimeout(() => setShowSaveSuccess(false), 3000);
+  };
+
+  const toggleUnitSelection = (unit: string) => {
+    setSelectedProjectedUnits(prev => 
+      prev.includes(unit) ? prev.filter(u => u !== unit) : [...prev, unit]
+    );
+  };
+
+  const toggleResourceSelection = (code: string) => {
+    setSelectedProjectedResources(prev => 
+      prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
+    );
+  };
+
+  const toggleExpenseTypeSelection = (type: string) => {
+    setSelectedProjectedExpenseTypes(prev => 
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
   if (dataStage === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
         <div className="w-12 h-12 border-4 border-[#4ade80] border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-on-surface-variant font-mono animate-pulse text-sm">Cargando Memoria Financiera EICE-2026 y Registros DAF...</p>
+        <p className="text-on-surface-variant font-mono animate-pulse text-sm">Cargando Memoria Financiera, Proyecciones y Registros ASA DAF...</p>
       </div>
     );
   }
@@ -264,7 +381,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   return (
     <div className="flex flex-col mb-20 max-w-7xl mx-auto px-4 md:px-0 text-white">
       
-      {/* Title Header (Vaulto / OpsPulse 2026 Style) */}
+      {/* Title Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -272,19 +389,21 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               EICE-2026 • LEY 550 DE 1999
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-[9px] font-mono bg-white/10 text-white/70">
-              MINHACIENDA DAF
+              SANEAMIENTO & PROYECCIÓN INTEGRAL
             </span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold font-display text-white">Gestión Financiera & Saneamiento Fiscal</h2>
+          <h2 className="text-3xl md:text-4xl font-bold font-display text-white">Proyección Financiera & Saneamiento</h2>
           <p className="text-xs text-on-surface-variant mt-1">
-            Memoria Financiera Institucional, Registro ASA DAF, Depuración Contable Res. 193/2016 y Sensibilidad Ley 617 / Ley 819.
+            Simulador paramétrico por Recurso y Unidad, Balance Mensual, Trazabilidad, Registro ASA DAF, Sensibilidad y Res. 193/2016.
           </p>
         </div>
         
         {/* Top Dropdowns and Controls */}
         <div className="flex flex-wrap gap-3 items-center">
-          <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3.5 py-2 hover:bg-white/10 transition-colors">
-            <Landmark size={15} className="text-[#38bdf8] mr-2 shrink-0" />
+          
+          {/* Unit Filter Dropdown */}
+          <div className={`flex items-center rounded-xl border px-3.5 py-2 transition-all ${filterUnidad !== 'Todos' ? 'bg-[#38bdf8]/15 border-[#38bdf8]/50 shadow-md' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+            <Landmark size={15} className={filterUnidad !== 'Todos' ? 'text-[#38bdf8] mr-2 shrink-0' : 'text-on-surface-variant mr-2 shrink-0'} />
             <select 
               className="bg-transparent text-xs text-white outline-none font-sans cursor-pointer max-w-[200px]"
               value={filterUnidad}
@@ -297,8 +416,9 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </select>
           </div>
 
-          <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3.5 py-2 hover:bg-white/10 transition-colors">
-            <Filter size={15} className="text-[#ffcc29] mr-2 shrink-0" />
+          {/* Resource Filter Dropdown */}
+          <div className={`flex items-center rounded-xl border px-3.5 py-2 transition-all ${filterRecurso !== 'Todos' ? 'bg-[#ffcc29]/15 border-[#ffcc29]/50 shadow-md' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+            <Filter size={15} className={filterRecurso !== 'Todos' ? 'text-[#ffcc29] mr-2 shrink-0' : 'text-on-surface-variant mr-2 shrink-0'} />
             <select 
               className="bg-transparent text-xs text-white outline-none font-sans cursor-pointer max-w-[180px]"
               value={filterRecurso}
@@ -310,213 +430,256 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
               ))}
             </select>
           </div>
+
+          <button onClick={handleResetSimulator} className="flex items-center px-3.5 py-2 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition text-xs font-mono gap-1.5">
+            <RefreshCw size={13} /> Limpiar
+          </button>
         </div>
       </div>
 
-      {/* Navigation Tabs (6 Executive Core Modules) */}
+      {/* Navigation Tabs (8 Complete Executive Core Tabs) */}
       <div className="flex border-b border-white/10 mb-6 overflow-x-auto gap-2">
         {[
-          { id: 'dashboard', label: '1. Dashboard & Salud Fiscal', icon: Activity },
-          { id: 'asa', label: '2. Aplicativo ASA MinHacienda', icon: FileSpreadsheet },
-          { id: 'inventory', label: '3. Acreedores & Activos Reales', icon: Building },
-          { id: 'mfmp', label: '4. Proyecciones MFMP & Ley 617', icon: Table },
-          { id: 'sensitivity', label: '5. Sensibilidad (VAN, TIR & Tornado)', icon: Flame },
-          { id: 'audit', label: '6. Conciliación & Log Res. 193', icon: History }
+          { id: 'simulator', label: '1. Simular Escenarios (Recurso/Unidad)', icon: Sliders },
+          { id: 'monthly_balance', label: '2. Balance Mensual & Flujo de Caja', icon: Table },
+          { id: 'equilibrio', label: '3. Tablero de Equilibrio Simulado', icon: Scale },
+          { id: 'traceability', label: '4. Trazabilidad Recurso/Unidad', icon: FileSpreadsheet },
+          { id: 'asa', label: '5. Aplicativo ASA MinHacienda', icon: FileText },
+          { id: 'inventory', label: '6. Acreedores & Activos Reales', icon: Building },
+          { id: 'sensitivity', label: '7. Sensibilidad (VAN, TIR & Tornado)', icon: Flame },
+          { id: 'audit', label: '8. Conciliación & Log Res. 193', icon: History }
         ].map(t => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id as any)}
-            className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === t.id ? 'border-[#4ade80] text-[#4ade80] bg-[#4ade80]/5' : 'border-transparent text-white/55 hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-2 px-4 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === t.id ? 'border-[#4ade80] text-[#4ade80] bg-[#4ade80]/5' : 'border-transparent text-white/55 hover:text-white hover:bg-white/5'}`}
           >
-            <t.icon size={15} /> {t.label}
+            <t.icon size={14} /> {t.label}
           </button>
         ))}
       </div>
 
+      {/* ACTIVE FILTER BANNER */}
+      {(filterUnidad !== 'Todos' || filterRecurso !== 'Todos' || selectedProjectedUnits.length < ALL_UPTC_UNITS.length) && (
+        <div className="mb-6 p-4 bg-[#38bdf8]/10 border border-[#38bdf8]/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#38bdf8]/20 flex items-center justify-center text-[#38bdf8] shrink-0 border border-[#38bdf8]/30">
+              <Landmark size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-mono text-[#38bdf8] uppercase font-bold tracking-wider">Filtro de Consulta Activo</span>
+                {filterUnidad !== 'Todos' && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#38bdf8]/20 text-[#38bdf8] font-bold border border-[#38bdf8]/30">
+                    Unidad: {filterUnidad.split(' - ')[0]}
+                  </span>
+                )}
+                {selectedProjectedUnits.length < ALL_UPTC_UNITS.length && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#c084fc]/20 text-[#c084fc] font-bold border border-[#c084fc]/30">
+                    {selectedProjectedUnits.length} de {ALL_UPTC_UNITS.length} Unidades Proyectadas
+                  </span>
+                )}
+                {filterRecurso !== 'Todos' && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#ffcc29]/20 text-[#ffcc29] font-bold border border-[#ffcc29]/30">
+                    Recurso: {filterRecurso}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm font-bold text-white mt-0.5">
+                {filterUnidad !== 'Todos' ? filterUnidad : `${selectedProjectedUnits.length} Dependencias Seleccionadas`}
+                {filterRecurso !== 'Todos' ? ` • ${getResourceFullName(filterRecurso)}` : ''}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {selectedProjectedUnits.length < ALL_UPTC_UNITS.length && (
+              <button
+                onClick={() => setSelectedProjectedUnits([...ALL_UPTC_UNITS])}
+                className="px-3 py-1.5 bg-[#c084fc]/20 hover:bg-[#c084fc]/30 border border-[#c084fc]/30 rounded-xl text-xs font-mono text-[#c084fc] transition shrink-0 flex items-center gap-1.5 font-bold"
+              >
+                ✔ Activar Todas las Unidades
+              </button>
+            )}
+            {filterUnidad !== 'Todos' && (
+              <button
+                onClick={() => setFilterUnidad('Todos')}
+                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-mono text-white transition shrink-0 flex items-center gap-1.5"
+              >
+                ✖ Todas las Sedes
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ========================================================================= */}
-      {/* TAB 1: DASHBOARD DE CONTROL FINANCIERO (VAULTO / OPSPULSE 2026) */}
+      {/* TAB 1: SIMULAR ESCENARIOS POR RECURSO Y UNIDAD */}
       {/* ========================================================================= */}
-      {activeTab === 'dashboard' && (
+      {activeTab === 'simulator' && (
         <div className="space-y-8 animate-in fade-in duration-300">
           
-          {/* Hyid Proactive Fiscal Health Banner */}
-          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 bg-gradient-to-r from-[#0f172a] via-[#11241a] to-[#0f172a] relative overflow-hidden shadow-2xl space-y-4">
-            <div className="absolute top-0 left-0 w-full h-1 bg-[#4ade80]"></div>
-            
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-white/10 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#4ade80]/20 flex items-center justify-center text-[#4ade80] shrink-0 border border-[#4ade80]/30">
-                  <ShieldAlert size={24} />
+          {/* SELECTION CONTROL PANEL */}
+          <div className="glass-card rounded-[28px] p-6 border border-white/10 bg-surface/50 relative overflow-hidden shadow-2xl space-y-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-white/10">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Sliders className="text-[#4ade80]" size={20} />
+                  <h3 className="text-lg font-display font-bold text-white">Variables y Rubros Seleccionados para Proyección</h3>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-[#4ade80] uppercase font-bold tracking-wider">Asistente de Salud Fiscal Hyid</span>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#4ade80]/20 text-[#4ade80] font-bold">Diagnóstico 2026</span>
-                  </div>
-                  <h3 className="text-xl font-display font-bold text-white mt-0.5">Estado del Plan de Saneamiento y Ley 819</h3>
-                </div>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Principio rector: <strong className="text-[#4ade80]">Todo lo seleccionado por Recurso y Unidad es lo que se proyecta</strong>.
+                </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl">
-                  <span className="text-[9px] font-mono text-on-surface-variant uppercase block">Superávit Primario (Ley 819)</span>
-                  <span className={`text-base font-mono font-bold ${financialData.totals.cumpleLey819 ? 'text-[#4ade80]' : 'text-red-400'}`}>
-                    ${financialData.totals.superavitPrimarioM.toLocaleString('es-CO', {maximumFractionDigits:1})}M
-                  </span>
-                </div>
-                <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl">
-                  <span className="text-[9px] font-mono text-on-surface-variant uppercase block">Gastos Func / ICLD (Ley 617)</span>
-                  <span className={`text-base font-mono font-bold ${financialData.totals.cumpleLey617 ? 'text-[#4ade80]' : 'text-[#ffcc29]'}`}>
-                    {financialData.totals.ratioLey617Pct.toFixed(1)}% <span className="text-[10px] font-sans font-normal text-white/60">(Límite ≤50%)</span>
-                  </span>
-                </div>
+              <div className="flex flex-wrap gap-2">
+                <button 
+                  onClick={() => {
+                    setSelectedProjectedUnits([...ALL_UPTC_UNITS]);
+                    setSelectedProjectedResources([...RESOURCES_LIST]);
+                    setSelectedProjectedExpenseTypes(['Personal', 'Funcionamiento', 'Inversion', 'Transferencias', 'Tasas', 'Deuda']);
+                  }}
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
+                >
+                  <Check size={13} /> Seleccionar Todo
+                </button>
+                <button 
+                  onClick={() => setSelectedProjectedUnits(['01 - ADMINISTRATIVA Y FINANCIERA'])}
+                  className="px-3 py-1.5 bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 border border-[#38bdf8]/30 text-[#38bdf8] rounded-xl text-[11px] font-mono font-bold transition flex items-center gap-1.5"
+                >
+                  <Landmark size={13} /> Solo Unidad 01 Central
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
-              <div className="p-3 bg-white/5 border border-white/5 rounded-xl flex items-start gap-2">
-                <CheckCircle size={15} className="text-[#4ade80] shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-white font-bold block">Sostenibilidad Ley 819</span>
-                  <span className="text-white/70 text-[11px]">Superávit primario positivo garantizado en la vigencia.</span>
-                </div>
-              </div>
-              <div className="p-3 bg-white/5 border border-white/5 rounded-xl flex items-start gap-2">
-                <AlertTriangle size={15} className="text-[#ffcc29] shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-white font-bold block">Alerta Intereses de Mora ASA</span>
-                  <span className="text-white/70 text-[11px]">${asaTotals.totalInteresesMora.toFixed(1)}M pendientes de ajuste legal.</span>
-                </div>
-              </div>
-              <div className="p-3 bg-white/5 border border-white/5 rounded-xl flex items-start gap-2">
-                <Lock size={15} className="text-[#38bdf8] shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-white font-bold block">Firma Digital Radicada</span>
-                  <span className="text-white/70 text-[11px]">Certificado de Representante Legal y Contador al día.</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stephen Few Bullet Charts Panel */}
-          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
-            <div>
-              <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
-                <BarChart2 className="text-[#4ade80]" size={22} />
-                Stephen Few Bullet Charts: Presupuesto Planeado (Rent B) vs Ejecución Real (Rent A)
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-1">
-                Comparativa de desempeño con umbrales cualitativos al 60% (alerta) y 100% (meta de eficiencia).
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              {financialData.rentComparison.map((item, idx) => {
-                const maxVal = Math.max(item.rentA_Actuals, item.rentB_Budget) * 1.2;
-                const pctOfBudget = item.rentB_Budget > 0 ? (item.rentA_Actuals / item.rentB_Budget) * 100 : 0;
-                
-                return (
-                  <div key={idx} className="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-2">
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <div>
-                        <span className="text-white font-bold">{item.name}</span>
-                        <span className="text-on-surface-variant text-[10px] ml-2">({item.code})</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-white font-bold font-mono">Real (Rent A): ${item.rentA_Actuals.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                        <span className="text-on-surface-variant font-mono">Meta (Rent B): ${item.rentB_Budget.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${pctOfBudget >= 100 ? 'bg-[#4ade80]/20 text-[#4ade80]' : 'bg-[#ffcc29]/20 text-[#ffcc29]'}`}>
-                          {pctOfBudget.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Bullet Bar Visual */}
-                    <div className="relative h-6 w-full bg-white/10 rounded-lg overflow-hidden flex items-center">
-                      {/* Qualitative Zones */}
-                      <div className="absolute left-0 top-0 h-full bg-red-500/20" style={{ width: '60%' }}></div>
-                      <div className="absolute left-[60%] top-0 h-full bg-yellow-500/20" style={{ width: '40%' }}></div>
-                      
-                      {/* Actual Performance Bar (Rent A) */}
-                      <div 
-                        className="h-3 bg-[#4ade80] rounded-sm transition-all relative z-10" 
-                        style={{ width: `${Math.min(100, (item.rentA_Actuals / maxVal) * 100)}%` }}
-                      ></div>
-
-                      {/* Target Marker (Rent B) */}
-                      <div 
-                        className="absolute top-0 bottom-0 w-1 bg-[#ffcc29] z-20" 
-                        style={{ left: `${Math.min(100, (item.rentB_Budget / maxVal) * 100)}%` }}
-                        title={`Presupuesto Planeado: $${item.rentB_Budget}M`}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Diagrama de Sankey: Rentas Territoriales -> Fondos -> Acreencias Ley 550 */}
-          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
-            <div>
-              <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
-                <Layers className="text-[#38bdf8]" size={22} />
-                Flujo de Activos y Distribución Ley 550 (Diagrama Sankey)
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-1">
-                Trazabilidad del flujo de recursos desde rentas territoriales hacia el servicio de acreencias en fiducias de saneamiento.
-              </p>
-            </div>
-
-            <div className="bg-black/30 border border-white/10 rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            {/* Selection Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
-              {/* Column 1: Rentas */}
-              <div className="space-y-3">
-                <span className="text-[10px] font-mono text-[#4ade80] uppercase font-bold tracking-widest block">1. Rentas Territoriales</span>
-                <div className="p-3 bg-white/5 border border-[#4ade80]/30 rounded-xl space-y-1">
-                  <span className="text-xs font-bold text-white block">Aportes Nación Ley 30</span>
-                  <span className="text-sm font-mono text-[#4ade80] font-bold">$315.327,8M</span>
-                </div>
-                <div className="p-3 bg-white/5 border border-[#38bdf8]/30 rounded-xl space-y-1">
-                  <span className="text-xs font-bold text-white block">Recursos Propios & Derechos</span>
-                  <span className="text-sm font-mono text-[#38bdf8] font-bold">$51.250,0M</span>
-                </div>
-                <div className="p-3 bg-white/5 border border-[#ffcc29]/30 rounded-xl space-y-1">
-                  <span className="text-xs font-bold text-white block">Estampillas & Fondos Ley</span>
-                  <span className="text-sm font-mono text-[#ffcc29] font-bold">$42.750,0M</span>
-                </div>
-              </div>
-
-              {/* Column 2: Fiducias / Fondos */}
-              <div className="space-y-3">
-                <span className="text-[10px] font-mono text-[#38bdf8] uppercase font-bold tracking-widest block">2. Fondos / Encargos Fiduciarios</span>
-                <div className="p-3 bg-white/5 border border-[#38bdf8]/30 rounded-xl space-y-1">
-                  <span className="text-xs font-bold text-white block">Encargo Fiduciario Ley 550 DAF</span>
-                  <span className="text-sm font-mono text-white font-bold">$18.500,0M</span>
-                </div>
-                <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-1">
-                  <span className="text-xs font-bold text-white block">Fondo de Reservas Contingentes</span>
-                  <span className="text-sm font-mono text-white font-bold">$6.230,0M</span>
+              {/* 1. Unidades Selection */}
+              <div className="lg:col-span-4 space-y-3">
+                <span className="text-[11px] font-mono text-[#38bdf8] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                  <Landmark size={13} /> 1. Unidades / Sedes ({selectedProjectedUnits.length} de {ALL_UPTC_UNITS.length}):
+                </span>
+                
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                  {ALL_UPTC_UNITS.map(u => {
+                    const isSelected = selectedProjectedUnits.includes(u);
+                    return (
+                      <button
+                        key={u}
+                        onClick={() => toggleUnitSelection(u)}
+                        className={`p-2 rounded-xl border text-left transition-all text-[11px] font-mono flex items-center justify-between ${isSelected ? 'bg-[#38bdf8]/20 border-[#38bdf8]/50 text-white font-bold' : 'bg-black/20 border-white/5 text-white/40'}`}
+                      >
+                        <span className="truncate">{u}</span>
+                        {isSelected && <Check size={13} className="text-[#38bdf8] shrink-0 ml-1" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Column 3: Acreencias Ley 550 */}
-              <div className="space-y-3">
-                <span className="text-[10px] font-mono text-[#f43f5e] uppercase font-bold tracking-widest block">3. Pasivos Ley 550</span>
-                <div className="p-3 bg-white/5 border border-red-500/30 rounded-xl space-y-1">
-                  <span className="text-xs font-bold text-white block">Grupo 1: Laborales (Sintras)</span>
-                  <span className="text-sm font-mono text-red-400 font-bold">$4.110,0M</span>
-                </div>
-                <div className="p-3 bg-white/5 border border-yellow-500/30 rounded-xl space-y-1">
-                  <span className="text-xs font-bold text-white block">Grupo 2: Públicas (DIAN)</span>
-                  <span className="text-sm font-mono text-yellow-400 font-bold">$3.250,0M</span>
-                </div>
-                <div className="p-3 bg-white/5 border border-blue-500/30 rounded-xl space-y-1">
-                  <span className="text-xs font-bold text-white block">Grupo 3: Financieras (Banco Agrario)</span>
-                  <span className="text-sm font-mono text-blue-400 font-bold">$2.500,0M</span>
+              {/* 2. Resources selection */}
+              <div className="lg:col-span-5 space-y-3">
+                <span className="text-[11px] font-mono text-[#ffcc29] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                  <DollarSign size={13} /> 2. Fuentes / Recursos ({selectedProjectedResources.length} de {RESOURCES_LIST.length}):
+                </span>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                  {RESOURCES_LIST.map(r => {
+                    const isSelected = selectedProjectedResources.includes(r);
+                    const fixedInfo = RECURSOS_FIJOS_RESOLUCION[r];
+
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => toggleResourceSelection(r)}
+                        className={`p-2 rounded-xl border text-left transition-all flex flex-col justify-between ${isSelected ? (fixedInfo ? 'bg-[#ffcc29]/15 border-[#ffcc29]/40 text-white' : 'bg-[#38bdf8]/15 border-[#38bdf8]/40 text-white') : 'bg-black/20 border-white/5 text-white/40'}`}
+                      >
+                        <div className="flex justify-between items-start gap-1">
+                          <span className="font-mono font-bold text-[11px]">Rec {r}</span>
+                          {fixedInfo && <span className="text-[8px] px-1 py-0.5 rounded bg-[#ffcc29]/20 text-[#ffcc29] font-mono">Fijo</span>}
+                        </div>
+                        <span className="text-[9px] truncate block mt-0.5 opacity-80" title={getResourceFullName(r)}>
+                          {getResourceFullName(r).split(' - ').pop() || r}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* 3. Expense types selection */}
+              <div className="lg:col-span-3 space-y-3">
+                <span className="text-[11px] font-mono text-[#4ade80] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                  <Layers size={13} /> 3. Gastos ({selectedProjectedExpenseTypes.length} de 6):
+                </span>
+
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { id: 'Personal', name: 'Personal (2.1.1)' },
+                    { id: 'Funcionamiento', name: 'Funcionamiento (2.1.2)' },
+                    { id: 'Inversion', name: 'Inversión (2.3)' },
+                    { id: 'Transferencias', name: 'Transferencias (2.1.3)' },
+                    { id: 'Tasas', name: 'Tasas y Multas (2.1.8)' },
+                    { id: 'Deuda', name: 'Deuda (2.2.2)' }
+                  ].map(t => {
+                    const isSelected = selectedProjectedExpenseTypes.includes(t.id);
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => toggleExpenseTypeSelection(t.id)}
+                        className={`p-2 rounded-xl border text-left transition-all text-xs font-mono font-bold flex items-center justify-between ${isSelected ? 'bg-[#4ade80]/15 border-[#4ade80]/40 text-[#4ade80]' : 'bg-black/20 border-white/5 text-white/40'}`}
+                      >
+                        <span className="truncate">{t.name}</span>
+                        {isSelected && <Check size={13} className="shrink-0 ml-1" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Toolbar */}
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-on-surface-variant uppercase">Escenarios Rápidos:</span>
+              <button onClick={() => {
+                const newIng: Record<string, number> = {};
+                RESOURCES_LIST.forEach(r => { if (!RECURSOS_FIJOS_RESOLUCION[r]) newIng[r] = -3; });
+                setSimIngByResource(newIng);
+                setSimGasByType({ Personal: 0, Funcionamiento: -5, Inversion: -8, Transferencias: 0, Tasas: 0, Deuda: 0 });
+              }} className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-mono transition">
+                📉 Conservador (-3%)
+              </button>
+              <button onClick={() => {
+                const newIng: Record<string, number> = {};
+                RESOURCES_LIST.forEach(r => { if (!RECURSOS_FIJOS_RESOLUCION[r]) newIng[r] = 2; });
+                setSimIngByResource(newIng);
+                setSimGasByType({ Personal: 0, Funcionamiento: 0, Inversion: 0, Transferencias: 0, Tasas: 0, Deuda: 0 });
+              }} className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-mono transition text-[#ffcc29]">
+                ⚖️ Moderado (+2%)
+              </button>
+              <button onClick={() => {
+                const newIng: Record<string, number> = {};
+                RESOURCES_LIST.forEach(r => { if (!RECURSOS_FIJOS_RESOLUCION[r]) newIng[r] = 8; });
+                setSimIngByResource(newIng);
+                setSimGasByType({ Personal: 0, Funcionamiento: 3, Inversion: 10, Transferencias: 0, Tasas: 0, Deuda: 0 });
+              }} className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-mono transition text-[#4ade80]">
+                🚀 Optimista (+8%)
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleSaveSimulation} 
+                className="flex items-center px-4 py-2 bg-[#4ade80] text-black hover:bg-[#4ade80]/90 rounded-xl transition text-xs font-mono gap-2 font-bold shadow-lg"
+              >
+                <CheckSquare size={13} /> Guardar Escenario
+              </button>
+              <button onClick={handleResetSimulator} className="flex items-center px-4 py-2 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition text-xs font-mono gap-2 text-white">
+                <RefreshCw size={13} /> Restaurar Línea Base
+              </button>
             </div>
           </div>
 
@@ -524,43 +687,254 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: APLICATIVO DE SEGUIMIENTO DE ACREENCIAS (ASA - DAF MINHACIENDA) */}
+      {/* TAB 2: BALANCE MENSUAL & FLUJO DE CAJA */}
+      {/* ========================================================================= */}
+      {activeTab === 'monthly_balance' && (
+        <div className="space-y-8 animate-in fade-in duration-300">
+          
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <div>
+              <h3 className="text-2xl font-display font-bold text-white">Balance Mensual, Flujo de Caja & Liquidez</h3>
+              <p className="text-xs text-on-surface-variant mt-1">
+                Comportamiento temporal mes a mes (Ene-Dic) por recurso y unidad de la vigencia 2026.
+              </p>
+            </div>
+            
+            <div className="bg-white/5 border border-white/10 rounded-xl p-1 flex gap-1">
+              {[
+                { id: 'monthly', label: 'Mensual' },
+                { id: 'quarterly', label: 'Trimestral' },
+                { id: 'semesterly', label: 'Semestral' },
+                { id: 'annual', label: 'Anual' }
+              ].map(g => (
+                <button
+                  key={g.id}
+                  onClick={() => setFlowGranularity(g.id as any)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${flowGranularity === g.id ? 'bg-[#4ade80] text-black font-extrabold shadow-md' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Consolidated Flow Chart */}
+          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h4 className="text-lg font-display font-bold text-white">Dinámica Temporal de Ingresos vs Pagos Efectivos</h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">Ingresos proyectados frente a los giros efectivos mensuales.</p>
+              </div>
+              <span className="px-3 py-1 bg-white/5 rounded-full border border-white/10 text-[10px] font-mono text-[#4ade80]">
+                Superávit Consolidado: +${financialData.totals.simNetPago.toFixed(1)}M
+              </span>
+            </div>
+            <div className="w-full h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={aggregatedFlowData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="name" stroke="#cac4d0" tick={{fontSize: 11}} />
+                  <YAxis stroke="#cac4d0" tick={{fontSize: 11}} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                  <Legend />
+                  <Area type="monotone" dataKey="ingresos" name="Ingresos ($M)" fill="#4ade80" stroke="#4ade80" opacity={0.25} />
+                  <Bar dataKey="gastosPago" name="Pagos Efectivos ($M)" fill="#ffcc29" radius={[4, 4, 0, 0]} opacity={0.85} />
+                  <Line type="monotone" dataKey="netoPago" name="Saldo Neto Mensual ($M)" stroke="#38bdf8" strokeWidth={3} dot={{r: 4}} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Consolidated Monthly Balance Table */}
+          <div className="glass-card rounded-[32px] p-8 border border-white/10">
+            <h4 className="text-lg font-display font-bold text-white mb-4">Tabla de Balance Mensual ({flowGranularity.toUpperCase()})</h4>
+            <div className="overflow-x-auto rounded-[24px] border border-white/10 bg-white/5 custom-scrollbar">
+              <table className="w-full text-left border-collapse text-xs font-mono">
+                <thead>
+                  <tr className="bg-white/10 text-[#4ade80] uppercase tracking-wider">
+                    <th className="p-4 font-bold border-b border-white/10">Período</th>
+                    <th className="p-4 font-bold border-b border-white/10 text-right">Ingresos Proyectados</th>
+                    <th className="p-4 font-bold border-b border-white/10 text-right">Compromisos</th>
+                    <th className="p-4 font-bold border-b border-white/10 text-right">Pagos Efectivos</th>
+                    <th className="p-4 font-bold border-b border-white/10 text-right">Nómina ($M)</th>
+                    <th className="p-4 font-bold border-b border-white/10 text-right">Saldo Neto</th>
+                    <th className="p-4 font-bold border-b border-white/10 text-right">Reserva Caja</th>
+                    <th className="p-4 font-bold border-b border-white/10 text-right">Ejecución %</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {aggregatedFlowData.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-white/5">
+                      <td className="p-4 text-white font-bold">{row.name}</td>
+                      <td className="p-4 text-right text-[#4ade80]">${row.ingresos.toLocaleString('es-CO', {minimumFractionDigits: 1})}M</td>
+                      <td className="p-4 text-right text-[#f43f5e]">${row.gastosComp.toLocaleString('es-CO', {minimumFractionDigits: 1})}M</td>
+                      <td className="p-4 text-right text-[#ffcc29]">${row.gastosPago.toLocaleString('es-CO', {minimumFractionDigits: 1})}M</td>
+                      <td className="p-4 text-right text-[#38bdf8]">${row.gastoPersonal.toLocaleString('es-CO', {minimumFractionDigits: 1})}M</td>
+                      <td className={`p-4 text-right font-bold ${row.netoPago >= 0 ? 'text-[#4ade80]' : 'text-red-400'}`}>
+                        ${row.netoPago.toLocaleString('es-CO', {minimumFractionDigits: 1})}M
+                      </td>
+                      <td className="p-4 text-right text-[#38bdf8]">${row.saldoCajaAcumulado.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</td>
+                      <td className="p-4 text-right font-bold text-white/80">{row.ejecucion.toFixed(1)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: TABLERO DE EQUILIBRIO PRESUPUESTAL SIMULADO */}
+      {/* ========================================================================= */}
+      {activeTab === 'equilibrio' && (
+        <div className="space-y-8 animate-in fade-in duration-300">
+          
+          <div className="glass-card rounded-[32px] p-8 border border-white/10 glow-primary relative overflow-hidden shadow-2xl">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Scale className="text-[#4ade80]" size={24} />
+                  <h3 className="text-2xl font-display font-bold text-white">Equilibrio Presupuestal Consolidado (Escenario Simulado)</h3>
+                </div>
+                <p className="text-on-surface-variant text-xs mt-1">
+                  Relación entre recaudo proyectado total, compromisos y pagos efectivos simulados.
+                </p>
+              </div>
+              
+              <div className="bg-white/5 rounded-2xl p-5 border border-white/10 text-center min-w-[260px]">
+                <span className="text-[10px] text-[#4ade80] uppercase tracking-widest font-bold block mb-1">Recaudo Total Proyectado</span>
+                <span className="text-3xl font-display font-bold text-white">
+                  ${financialData.totals.simIng.toLocaleString('es-CO', {maximumFractionDigits: 1})} <span className="text-sm font-sans text-on-surface-variant font-normal">mill</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-surface/50 rounded-2xl p-6 border border-white/5 space-y-4">
+                <span className="text-xs text-[#c084fc] font-bold uppercase tracking-wider block">Frente al Compromiso Simulado</span>
+                <span className="text-2xl font-bold font-mono text-white">${financialData.totals.simGasComp.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#c084fc] rounded-full" style={{ width: `${Math.min(100, (financialData.totals.simGasComp / (financialData.totals.simIng || 1)) * 100)}%` }}></div>
+                </div>
+              </div>
+
+              <div className="bg-surface/50 rounded-2xl p-6 border border-white/5 space-y-4">
+                <span className="text-xs text-[#ffcc29] font-bold uppercase tracking-wider block">Frente al Pago Efectivo Simulado</span>
+                <span className="text-2xl font-bold font-mono text-white">${financialData.totals.simGasPago.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#ffcc29] rounded-full" style={{ width: `${Math.min(100, (financialData.totals.simGasPago / (financialData.totals.simIng || 1)) * 100)}%` }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: TRAZABILIDAD POR RECURSO Y UNIDAD */}
+      {/* ========================================================================= */}
+      {activeTab === 'traceability' && (
+        <div className="space-y-8 animate-in fade-in duration-300">
+          
+          <div className="glass-card rounded-[28px] p-6 lg:p-8 border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h3 className="text-2xl font-display font-bold text-white flex items-center gap-2">
+                <FileSpreadsheet className="text-[#ffcc29]" size={24} />
+                Matriz de Trazabilidad: Recurso → Ingreso → Apropiación → Gasto por Unidad
+              </h3>
+              <p className="text-xs text-on-surface-variant mt-1">
+                Auditoría detallada por fuente de financiación. Despliegue cada fila para inspeccionar los gastos específicos financiados.
+              </p>
+            </div>
+
+            <input 
+              type="text"
+              placeholder="Buscar recurso o unidad..."
+              value={traceSearch}
+              onChange={(e) => setTraceSearch(e.target.value)}
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-[#ffcc29] font-sans w-64"
+            />
+          </div>
+
+          <div className="glass-card rounded-[32px] p-8 border border-white/10">
+            <div className="overflow-x-auto rounded-[24px] border border-white/10 bg-white/5">
+              <table className="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr className="bg-white/10 text-[#ffcc29] uppercase">
+                    <th className="p-4">Cód.</th>
+                    <th className="p-4">Recurso / Denominación</th>
+                    <th className="p-4">Unidad Responsable</th>
+                    <th className="p-4 text-right">Ingreso Proyectado</th>
+                    <th className="p-4 text-right">Apropiación (Pago)</th>
+                    <th className="p-4 text-right">Saldo Disponible</th>
+                    <th className="p-4 text-right">% Utilización</th>
+                    <th className="p-4 text-center">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredTraceability.map((item) => (
+                    <tr key={item.resourceCode} className="hover:bg-white/5 transition-colors">
+                      <td className="p-4 font-bold text-white">{item.resourceCode}</td>
+                      <td className="p-4 text-white font-bold max-w-[220px] truncate" title={item.resourceName}>{item.resourceName}</td>
+                      <td className="p-4 text-on-surface-variant max-w-[180px] truncate" title={item.unitName}>{item.unitName}</td>
+                      <td className="p-4 text-right text-[#4ade80] font-bold">${item.projectedIncome.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
+                      <td className="p-4 text-right text-[#ffcc29] font-bold">${item.totalPago.toLocaleString('es-CO', {maximumFractionDigits:1})}M</td>
+                      <td className={`p-4 text-right font-bold ${item.remainingBalance >= 0 ? 'text-[#38bdf8]' : 'text-red-400'}`}>
+                        ${item.remainingBalance.toLocaleString('es-CO', {maximumFractionDigits:1})}M
+                      </td>
+                      <td className="p-4 text-right font-bold">{item.utilizationPct.toFixed(1)}%</td>
+                      <td className="p-4 text-center">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${item.status === 'Excedente' ? 'bg-[#4ade80]/20 text-[#4ade80]' : (item.status === 'Equilibrado' ? 'bg-[#38bdf8]/20 text-[#38bdf8]' : 'bg-red-500/20 text-red-400')}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 5: APLICATIVO ASA (DAF MINHACIENDA) & LEY 550 */}
       {/* ========================================================================= */}
       {activeTab === 'asa' && (
         <div className="space-y-8 animate-in fade-in duration-300">
           
-          {/* Header & Totals Card */}
           <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
               <div>
                 <h3 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-                  <FileSpreadsheet className="text-[#4ade80]" size={24} />
+                  <FileText className="text-[#4ade80]" size={24} />
                   Hoja de Ajustes y Depuraciones ASA (DAF MinHacienda)
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Estructura oficial Anexo No. 1 DAF para la determinación de acreencias, depuración contable y asignación de derechos de voto.
+                  Estructura oficial Anexo No. 1 DAF para la determinación de acreencias, depuración contable y derechos de voto.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                <input 
-                  type="text"
-                  placeholder="Buscar por acreedor, NIT o CDP..."
-                  value={asaSearch}
-                  onChange={(e) => setAsaSearch(e.target.value)}
-                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-[#4ade80] font-sans w-64"
-                />
-              </div>
+              <input 
+                type="text"
+                placeholder="Buscar acreedor o CDP..."
+                value={asaSearch}
+                onChange={(e) => setAsaSearch(e.target.value)}
+                className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-[#4ade80] font-sans w-64"
+              />
             </div>
 
-            {/* ASA Totals Metrics Bar */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                 <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Capital Cargue Inicial</span>
                 <span className="text-xl font-mono font-bold text-white">${asaTotals.totalInicial.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
               </div>
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Depuraciones de Capital</span>
+                <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Depuraciones Capital</span>
                 <span className="text-xl font-mono font-bold text-rose-400">${asaTotals.totalDepuraciones.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
               </div>
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
@@ -574,7 +948,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
-          {/* ASA Main Data Table */}
+          {/* ASA Data Table */}
           <div className="glass-card rounded-[32px] p-8 border border-white/10">
             <div className="overflow-x-auto rounded-[24px] border border-white/10 bg-white/5">
               <table className="w-full text-left text-xs font-mono">
@@ -585,63 +959,29 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     <th className="p-4">Grupo Ley 550</th>
                     <th className="p-4">CDP / RP Soporte</th>
                     <th className="p-4 text-right">Inicial ($M)</th>
-                    <th className="p-4 text-right">Ajustes ($M)</th>
                     <th className="p-4 text-right">Depuración</th>
                     <th className="p-4 text-right">Saldo Votación</th>
                     <th className="p-4 text-center">Voto %</th>
-                    <th className="p-4 text-center">Estado Legal</th>
                     <th className="p-4 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {filteredASA.map((item) => (
                     <tr key={item.id} className="hover:bg-white/5 transition-colors">
-                      <td className="p-4">
-                        <span className="font-bold text-white block">{item.subcuenta}</span>
-                        <span className="text-[9px] text-white/50">{item.id}</span>
-                      </td>
-                      <td className="p-4 max-w-[200px]">
-                        <span className="font-bold text-white block truncate" title={item.acreedorNombre}>{item.acreedorNombre}</span>
-                        <span className="text-[10px] text-on-surface-variant">{item.acreedorNit}</span>
-                      </td>
-                      <td className="p-4">
-                        <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-white/10 text-white">
-                          {item.grupoAcreencia}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        {item.tieneCdpRp ? (
-                          <div className="text-[10px] text-[#4ade80]">
-                            <span className="block font-bold">{item.cdpNumero}</span>
-                            <span className="block text-white/60">{item.rpNumero}</span>
-                          </div>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 font-bold text-[9px] flex items-center gap-1 w-max">
-                            <Lock size={10} /> Sin CDP/RP (Bloqueado)
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4 text-right text-white">${item.saldoInicial.toFixed(1)}M</td>
-                      <td className="p-4 text-right text-yellow-300">${item.ajustesCapital.toFixed(1)}M</td>
+                      <td className="p-4"><span className="font-bold text-white">{item.subcuenta}</span></td>
+                      <td className="p-4 max-w-[200px] font-bold text-white truncate" title={item.acreedorNombre}>{item.acreedorNombre}</td>
+                      <td className="p-4"><span className="px-2 py-0.5 bg-white/10 rounded text-[9px]">{item.grupoAcreencia}</span></td>
+                      <td className="p-4 text-[#4ade80]">{item.tieneCdpRp ? item.cdpNumero : 'Sin CDP/RP'}</td>
+                      <td className="p-4 text-right">${item.saldoInicial.toFixed(1)}M</td>
                       <td className="p-4 text-right text-rose-400">${item.depuracionesCapital.toFixed(1)}M</td>
                       <td className="p-4 text-right text-[#4ade80] font-bold">${item.saldoFinalVotacion.toFixed(1)}M</td>
-                      <td className="p-4 text-center font-bold text-white">{item.derechosVoto.toFixed(1)}%</td>
-                      <td className="p-4 text-center">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase ${item.estadoConciliacion === 'Conciliado' ? 'bg-[#4ade80]/20 text-[#4ade80]' : (item.estadoConciliacion === 'Depurado' ? 'bg-yellow-500/20 text-yellow-300' : 'bg-red-500/20 text-red-400')}`}>
-                          {item.estadoConciliacion}
-                        </span>
-                      </td>
+                      <td className="p-4 text-center font-bold">{item.derechosVoto.toFixed(1)}%</td>
                       <td className="p-4 text-center">
                         {item.tieneCdpRp ? (
-                          <button
-                            onClick={() => setEditingAsa(item)}
-                            className="px-2.5 py-1 rounded bg-[#4ade80]/20 hover:bg-[#4ade80]/30 text-[#4ade80] text-[10px] font-bold transition flex items-center gap-1 mx-auto"
-                          >
-                            <Edit3 size={12} /> Depurar
+                          <button onClick={() => setEditingAsa(item)} className="px-2.5 py-1 bg-[#4ade80]/20 text-[#4ade80] rounded font-bold text-[10px]">
+                            Depurar
                           </button>
-                        ) : (
-                          <span className="text-[10px] text-white/30">Inexigible</span>
-                        )}
+                        ) : <span className="text-white/30 text-[10px]">Inexigible</span>}
                       </td>
                     </tr>
                   ))}
@@ -650,60 +990,21 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
-          {/* Modal for Depuración Contable (Res. 193/2016) */}
+          {/* Modal for Depuración */}
           {editingAsa && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-              <div className="glass-card rounded-[32px] p-6 lg:p-8 max-w-lg w-full border border-white/20 bg-[#0f172a] space-y-6">
-                <div className="flex justify-between items-center border-b border-white/10 pb-4">
-                  <h4 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Edit3 className="text-[#4ade80]" size={20} />
-                    Depuración Contable (Res. 193/2016)
-                  </h4>
-                  <button onClick={() => setEditingAsa(null)} className="text-white/60 hover:text-white">✕</button>
-                </div>
-
-                <div className="space-y-3 text-xs font-mono">
-                  <p className="text-white font-bold">{editingAsa.acreedorNombre} ({editingAsa.acreedorNit})</p>
-                  <p className="text-on-surface-variant">Subcuenta: {editingAsa.subcuenta} • Saldo Votación Actual: ${editingAsa.saldoFinalVotacion}M</p>
-
-                  <div className="space-y-2 pt-2">
-                    <label className="block text-white font-bold">Monto a Depurar ($M):</label>
-                    <input 
-                      type="number"
-                      id="montoDepurarInput"
-                      defaultValue={100}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white font-mono outline-none focus:border-[#4ade80]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-white font-bold">Motivo Legal (Res. 193/2016):</label>
-                    <textarea 
-                      id="motivoInput"
-                      rows={3}
-                      defaultValue="Ajuste por condonación o falta de exigibilidad según acta de fiscalización DAF."
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white font-sans text-xs outline-none focus:border-[#4ade80]"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-                  <button 
-                    onClick={() => setEditingAsa(null)}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-mono"
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    onClick={() => {
-                      const montoEl = document.getElementById('montoDepurarInput') as HTMLInputElement;
-                      const motivoEl = document.getElementById('motivoInput') as HTMLTextAreaElement;
-                      handleApplyDepuracion(editingAsa.id, parseFloat(montoEl?.value || '0'), motivoEl?.value || '');
-                    }}
-                    className="px-4 py-2 bg-[#4ade80] text-black font-bold font-mono rounded-xl hover:bg-[#4ade80]/90"
-                  >
-                    Aplicar Depuración
-                  </button>
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+              <div className="glass-card rounded-[32px] p-6 max-w-lg w-full bg-[#0f172a] space-y-4">
+                <h4 className="text-lg font-bold text-white">Depuración Contable (Res. 193/2016)</h4>
+                <p className="text-xs text-white/70">{editingAsa.acreedorNombre} - Saldo: ${editingAsa.saldoFinalVotacion}M</p>
+                <input type="number" id="montoDepurarInput" defaultValue={100} className="w-full p-2 bg-white/5 border border-white/10 rounded text-white text-xs font-mono" />
+                <textarea id="motivoInput" rows={3} defaultValue="Ajuste por condonación o depuración legal" className="w-full p-2 bg-white/5 border border-white/10 rounded text-white text-xs font-sans" />
+                <div className="flex justify-end gap-2 pt-2">
+                  <button onClick={() => setEditingAsa(null)} className="px-3 py-1.5 bg-white/10 rounded text-xs">Cancelar</button>
+                  <button onClick={() => {
+                    const m = parseFloat((document.getElementById('montoDepurarInput') as any)?.value || '0');
+                    const r = (document.getElementById('motivoInput') as any)?.value || '';
+                    handleApplyDepuracion(editingAsa.id, m, r);
+                  }} className="px-3 py-1.5 bg-[#4ade80] text-black font-bold rounded text-xs">Aplicar</button>
                 </div>
               </div>
             </div>
@@ -713,115 +1014,41 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: INVENTARIO DE ACREEDORES & ACTIVOS REALES */}
+      {/* TAB 6: ACREEDORES & ACTIVOS REALES */}
       {/* ========================================================================= */}
       {activeTab === 'inventory' && (
         <div className="space-y-8 animate-in fade-in duration-300">
-          
           <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-                  <Building className="text-[#38bdf8]" size={24} />
-                  Inventario de Activos Reales y Contingentes (Sección 2.2)
-                </h3>
-                <p className="text-xs text-on-surface-variant mt-1">
-                  Valoración contable de respaldo del acuerdo Ley 550: Efectivo, Inversiones, Cartera y PPE.
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                {['ALL', 'Efectivo', 'Inversion', 'CuentaPorCobrar', 'PPE'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setActivoTabType(t)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition ${activoTabType === t ? 'bg-[#38bdf8] text-black' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
+            <h3 className="text-2xl font-display font-bold text-white flex items-center gap-2">
+              <Building className="text-[#38bdf8]" size={24} />
+              Inventario de Activos Reales y Contingentes (Sección 2.2)
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {activosList.filter(a => activoTabType === 'ALL' || a.tipo === activoTabType).map(activo => (
-                <div key={activo.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-3 hover:border-white/20 transition-all">
-                  <div className="flex justify-between items-start">
-                    <span className="px-2.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/30 uppercase">
-                      {activo.tipo}
-                    </span>
-                    <span className="text-sm font-mono font-bold text-[#4ade80]">${activo.valorNetoReal.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+              {activosList.map(a => (
+                <div key={a.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-2">
+                  <div className="flex justify-between font-mono">
+                    <span className="text-[#38bdf8] font-bold text-xs">{a.tipo}</span>
+                    <span className="text-[#4ade80] font-bold">${a.valorNetoReal.toLocaleString('es-CO')}M</span>
                   </div>
-
-                  <div>
-                    <h4 className="font-bold text-white text-sm">{activo.nombre}</h4>
-                    <p className="text-xs text-white/70 mt-1 leading-relaxed">{activo.detalles}</p>
-                  </div>
-
-                  <div className="pt-2 border-t border-white/5 grid grid-cols-2 gap-2 text-[10px] font-mono text-on-surface-variant">
-                    <div>
-                      <span>Valor Libros:</span>
-                      <span className="text-white font-bold block">${activo.valorBook.toLocaleString('es-CO')}M</span>
-                    </div>
-                    <div>
-                      <span>Estado / Conciliación:</span>
-                      <span className="text-[#38bdf8] font-bold block">{activo.estadoUbicacion}</span>
-                    </div>
-                  </div>
+                  <h4 className="font-bold text-white text-sm">{a.nombre}</h4>
+                  <p className="text-xs text-white/70">{a.detalles}</p>
                 </div>
               ))}
             </div>
           </div>
-
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: PROYECCIONES MFMP & LEY 617 */}
-      {/* ========================================================================= */}
-      {activeTab === 'mfmp' && (
-        <div className="space-y-8 animate-in fade-in duration-300">
-          
-          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
-            <div>
-              <h3 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-                <Table className="text-[#ffcc29]" size={24} />
-                Marco Fiscal de Mediano Plazo (MFMP) & Cumplimiento Ley 617
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-1">
-                Proyección plurianual de flujos de caja y ratio de gastos de funcionamiento sobre ICLD (Límite legal ≤50%).
-              </p>
-            </div>
-
-            <div className="w-full h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={aggregatedFlowData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="name" stroke="#cac4d0" tick={{fontSize: 11}} />
-                  <YAxis stroke="#cac4d0" tick={{fontSize: 11}} />
-                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }} />
-                  <Area type="monotone" dataKey="ingresos" name="Ingresos ($M)" fill="#4ade80" stroke="#4ade80" opacity={0.3} />
-                  <Area type="monotone" dataKey="gastosPago" name="Exigibilidades ($M)" fill="#f43f5e" stroke="#f43f5e" opacity={0.3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 5: SENSIBILIDAD (VAN, TIR & TORNADO) */}
+      {/* TAB 7: SENSIBILIDAD (VAN, TIR & TORNADO) */}
       {/* ========================================================================= */}
       {activeTab === 'sensitivity' && (
         <div className="space-y-8 animate-in fade-in duration-300">
-          
-          {/* Header VAN/TIR */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="glass-card rounded-[28px] p-6 border border-white/10 flex justify-between items-center">
               <div>
-                <span className="text-xs text-on-surface-variant font-mono uppercase block">Valor Actual Neto (VAN) Saneamiento</span>
-                <span className="text-3xl font-display font-bold text-[#4ade80]">${financialData.vanBaseM.toLocaleString('es-CO', {maximumFractionDigits:1})}M</span>
+                <span className="text-xs text-on-surface-variant font-mono uppercase block">Valor Actual Neto (VAN)</span>
+                <span className="text-3xl font-display font-bold text-[#4ade80]">${financialData.vanBaseM.toLocaleString('es-CO')}M</span>
               </div>
               <Award size={32} className="text-[#4ade80]" />
             </div>
@@ -834,118 +1061,61 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
 
-          {/* Diagrama de Tornado Obligatorio */}
-          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
-            <div>
-              <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
-                <Flame className="text-rose-400" size={22} />
-                Diagrama de Tornado: Jerarquización de Variables de Mayor Riesgo
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-1">
-                Impacto sobre el VAN ante variaciones del ±10% en cada variable crítica.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {financialData.tornadoVariables.map((v, idx) => (
-                <div key={idx} className="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-2">
-                  <div className="flex justify-between items-center text-xs font-mono">
-                    <span className="text-white font-bold">{v.variableName}</span>
-                    <span className="text-[#4ade80] font-bold">Rango VAN: ${v.minVanM.toFixed(0)}M a ${v.maxVanM.toFixed(0)}M (Oscilación ${v.swingM.toFixed(0)}M)</span>
-                  </div>
-                  <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden relative flex items-center">
-                    <div className="h-full bg-rose-500 rounded-full mx-auto" style={{ width: `${Math.min(100, (v.swingM / 100000) * 100)}%` }}></div>
-                  </div>
+          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-4">
+            <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
+              <Flame className="text-rose-400" size={22} />
+              Diagrama de Tornado: Variables de Mayor Riesgo
+            </h3>
+            {financialData.tornadoVariables.map((v, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 p-4 rounded-2xl font-mono text-xs space-y-1">
+                <div className="flex justify-between font-bold">
+                  <span>{v.variableName}</span>
+                  <span className="text-[#4ade80]">Oscilación VAN: ${v.swingM.toFixed(0)}M</span>
                 </div>
-              ))}
-            </div>
+                <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-rose-500 rounded-full mx-auto" style={{ width: `${Math.min(100, (v.swingM / 80000) * 100)}%` }}></div>
+                </div>
+              </div>
+            ))}
           </div>
-
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 6: CONCILIACIÓN & LOG AUDITORÍA (RES. 193/2016) */}
+      {/* TAB 8: CONCILIACIÓN & LOG RES. 193 */}
       {/* ========================================================================= */}
       {activeTab === 'audit' && (
         <div className="space-y-8 animate-in fade-in duration-300">
-          
-          {/* Digital Signatures and Certifications */}
-          <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-6">
-            <div>
-              <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
-                <Key className="text-[#4ade80]" size={22} />
-                Certificación y Radicación Digital Sede Electrónica MinHacienda
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-1">
-                Autenticidad y no repudio firmado por Representante Legal y Contador Público DAF.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white block">Representante Legal</span>
-                  <span className="text-[10px] text-white/60 font-mono block mt-0.5">Certificado RSA-4096 Activo</span>
-                </div>
-                <span className="px-3 py-1 bg-[#4ade80]/20 text-[#4ade80] rounded-full text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle size={13} /> Firmado
-                </span>
-              </div>
-              <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white block">Contador Público DAF</span>
-                  <span className="text-[10px] text-white/60 font-mono block mt-0.5">T.P. 18842-T Certificado</span>
-                </div>
-                <span className="px-3 py-1 bg-[#4ade80]/20 text-[#4ade80] rounded-full text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle size={13} /> Firmado
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Log de Auditoría Inalterable Res 193/2016 */}
           <div className="glass-card rounded-[32px] p-6 lg:p-8 border border-white/10 space-y-4">
-            <div>
-              <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
-                <History className="text-[#ffcc29]" size={22} />
-                Log de Auditoría Inalterable (Resolución No. 193 de 2016)
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-1">
-                Trazabilidad contable con fecha, hora, usuario, subcuenta y justificación legal de cada ajuste.
-              </p>
-            </div>
-
+            <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
+              <History className="text-[#ffcc29]" size={22} />
+              Log de Auditoría Inalterable (Resolución No. 193 de 2016)
+            </h3>
             <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
               <table className="w-full text-left text-xs font-mono">
                 <thead>
                   <tr className="bg-white/10 text-[#ffcc29] uppercase">
-                    <th className="p-3">ID Log</th>
                     <th className="p-3">Timestamp</th>
                     <th className="p-3">Usuario / Rol</th>
                     <th className="p-3">Subcuenta</th>
                     <th className="p-3">Acción Contable</th>
-                    <th className="p-3 font-bold">CDP / RP</th>
                     <th className="p-3">Motivo Legal</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {auditLogsList.map(log => (
                     <tr key={log.id} className="hover:bg-white/5">
-                      <td className="p-3 font-bold text-white">{log.id}</td>
                       <td className="p-3 text-white/70">{log.timestamp}</td>
                       <td className="p-3 text-[#38bdf8] font-bold">{log.usuario}</td>
                       <td className="p-3 text-white">{log.subcuenta}</td>
                       <td className="p-3 text-[#4ade80] font-bold">{log.accion}</td>
-                      <td className="p-3 text-white/80">{log.cdpRpRef}</td>
-                      <td className="p-3 text-white/90 max-w-xs truncate" title={log.motivo}>{log.motivo}</td>
+                      <td className="p-3 text-white/90">{log.motivo}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
-
         </div>
       )}
 
