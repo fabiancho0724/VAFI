@@ -136,4 +136,14 @@ export function getResourceFullName(code: string): string {
   return found ? found.nombre : code;
 }
 
+export function getTipoRecursoBalance(conceptoStr: string): 'Recursos del Balance' | 'Recursos UPTC' {
+  // Excel Formula: =SI(ESNUMERO(HALLAR("Recursos del Balance"; C2 (Concepto))); "Recursos del Balance"; "Recursos UPTC")
+  const clean = String(conceptoStr || '').trim().toLowerCase();
+  if (clean.includes('recursos del balance')) {
+    return 'Recursos del Balance';
+  }
+  return 'Recursos UPTC';
+}
+
 export const MONTHS_STR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+

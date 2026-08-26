@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Download, Filter, Wallet, Component, Network, Layers, LayoutList, Settings, TrendingUp, CheckCircle, Clock, Upload, AlertTriangle, PieChart as PieChartIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { fetchAndParseCSV, groupAndSum, getNumericColumn, getCategoryColumn } from '../lib/csvParser';
 import { RECURSOS_FINANCIEROS } from '../lib/constants';
+import { getTipoRecursoBalance } from '../lib/resourceMapper';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart, Line, AreaChart, Area, LabelList } from 'recharts';
 
 export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
@@ -43,48 +44,47 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
   useEffect(() => {
     if (rawIngresos && rawIngresos.length > 0) {
       const firstRowKeysDef = Object.keys(rawIngresos[0]);
-      if (firstRowKeysDef.length >= 10) {
-        const aforoCol = firstRowKeysDef[5]; // index 5 for col 6
-        const recaudoCol = firstRowKeysDef[6]; // index 6 for col 7
-        const tipoCol = firstRowKeysDef[3]; // index 3 for col 4 (agrupación Análisis) 
-        const filterCol = firstRowKeysDef[9]; // index 9 for col 10 (filtro general)
-        const recursoCol = firstRowKeysDef[2]; // index 2 for col 3 Recurso (used for details)
+      const aforoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('aforo')) || firstRowKeysDef[5] || 'Valor aforo';
+      const recaudoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('recaudo')) || firstRowKeysDef[6] || 'Total recaudo';
+      const recursoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('recurso')) || firstRowKeysDef[3] || 'Recurso';
+      const conceptoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('concepto')) || firstRowKeysDef[2] || 'Concepto';
 
-        const filteredData = recursoFiltro === 'Todos' ? rawIngresos : rawIngresos.filter(r => r[filterCol] === recursoFiltro);
+      const filteredData = recursoFiltro === 'Todos'
+        ? rawIngresos
+        : rawIngresos.filter(r => getTipoRecursoBalance(r[conceptoCol] || r['Concepto'] || '') === recursoFiltro);
 
-        const aforoSum = filteredData.reduce((acc, row) => acc + (parseFloat(row[aforoCol]) || 0), 0);
-        const recaudoSum = filteredData.reduce((acc, row) => acc + (parseFloat(row[recaudoCol]) || 0), 0);
-        
-        if (aforoSum > 0) setIngresosAforado(aforoSum / 1e6);
-        if (recaudoSum > 0) {
-           setIngresosRecaudado(recaudoSum / 1e6);
-           setIngresosTotal(recaudoSum / 1e6); 
-        }
-
-        // Group by Tipo de Ingreso
-        const tipos = Array.from(new Set(filteredData.map(r => r[tipoCol]))).filter(Boolean);
-        const parsedTiposGroups = tipos.map(tipo => {
-           const rows = filteredData.filter(r => r[tipoCol] === tipo);
-           const tAforo = rows.reduce((acc, r) => acc + (parseFloat(r[aforoCol]) || 0), 0) / 1e6;
-           const tRecaudo = rows.reduce((acc, r) => acc + (parseFloat(r[recaudoCol]) || 0), 0) / 1e6;
-           
-           const recursosKeys = Array.from(new Set(rows.map(r => r[recursoCol]))).filter(Boolean);
-           const recursosItems = recursosKeys.map(rec => {
-               const recRows = rows.filter(r => r[recursoCol] === rec);
-               const rAforo = recRows.reduce((acc, r) => acc + (parseFloat(r[aforoCol]) || 0), 0) / 1e6;
-               const rRecaudo = recRows.reduce((acc, r) => acc + (parseFloat(r[recaudoCol]) || 0), 0) / 1e6;
-               return { name: rec, aforo: rAforo, recaudo: rRecaudo };
-           }).sort((a, b) => b.recaudo - a.recaudo);
-
-           return { 
-               name: tipo, 
-               aforo: tAforo, 
-               recaudo: tRecaudo, 
-               recursos: recursosItems 
-           };
-        }).sort((a,b) => b.recaudo - a.recaudo);
-        setIngresosTiposGroups(parsedTiposGroups);
+      const aforoSum = filteredData.reduce((acc, row) => acc + (parseFloat(String(row[aforoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
+      const recaudoSum = filteredData.reduce((acc, row) => acc + (parseFloat(String(row[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
+      
+      if (aforoSum > 0) setIngresosAforado(aforoSum / 1e6);
+      if (recaudoSum > 0) {
+         setIngresosRecaudado(recaudoSum / 1e6);
+         setIngresosTotal(recaudoSum / 1e6); 
       }
+
+      // Group by Recurso / Fuente
+      const tipos = Array.from(new Set(filteredData.map(r => r[recursoCol]))).filter(Boolean);
+      const parsedTiposGroups = tipos.map(tipo => {
+         const rows = filteredData.filter(r => r[recursoCol] === tipo);
+         const tAforo = rows.reduce((acc, r) => acc + (parseFloat(String(r[aforoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         const tRecaudo = rows.reduce((acc, r) => acc + (parseFloat(String(r[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         
+         const conceptoKeys = Array.from(new Set(rows.map(r => r[conceptoCol]))).filter(Boolean);
+         const recursosItems = conceptoKeys.map(conc => {
+             const cRows = rows.filter(r => r[conceptoCol] === conc);
+             const rAforo = cRows.reduce((acc, r) => acc + (parseFloat(String(r[aforoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             const rRecaudo = cRows.reduce((acc, r) => acc + (parseFloat(String(r[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             return { name: conc, aforo: rAforo, recaudo: rRecaudo };
+         }).sort((a, b) => b.recaudo - a.recaudo);
+
+         return { 
+             name: tipo, 
+             aforo: tAforo, 
+             recaudo: tRecaudo, 
+             recursos: recursosItems 
+         };
+      }).sort((a,b) => b.recaudo - a.recaudo);
+      setIngresosTiposGroups(parsedTiposGroups);
     }
   }, [rawIngresos, recursoFiltro]);
 
@@ -166,54 +166,52 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
     }
 
     if (filteredIngresos && filteredIngresos.length > 0) {
-      // The rest of the useEffects down below handle the groups for ingresos based on rawIngresos.
-      // But we need to update the total for aforo and recaudo based on filtered.
-      const aforoCol = Object.keys(filteredIngresos[0])[5] || 'Valor aforo';
-      const recaudoCol = Object.keys(filteredIngresos[0])[6] || 'Total recaudo';
+      const keys = Object.keys(filteredIngresos[0]);
+      const aforoCol = keys.find(k => k.toLowerCase().includes('aforo')) || keys[5] || 'Valor aforo';
+      const recaudoCol = keys.find(k => k.toLowerCase().includes('recaudo')) || keys[6] || 'Total recaudo';
       
-      const aforoTotal = filteredIngresos.reduce((acc, r) => acc + (parseFloat(r[aforoCol]) || 0), 0);
-      const recaudoTotal = filteredIngresos.reduce((acc, r) => acc + (parseFloat(r[recaudoCol]) || 0), 0);
+      const aforoTotal = filteredIngresos.reduce((acc, r) => acc + (parseFloat(String(r[aforoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
+      const recaudoTotal = filteredIngresos.reduce((acc, r) => acc + (parseFloat(String(r[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
       
       setIngresosAforado(aforoTotal / 1e6);
       setIngresosRecaudado(recaudoTotal / 1e6);
-      ingSum = recaudoTotal; // Use for the generic var
+      ingSum = recaudoTotal;
     }
     
     if (filteredGastos && filteredGastos.length > 0) {
       const firstRowKeys = Object.keys(filteredGastos[0]);
       
-      const compCol = firstRowKeys.find(k => k.toLowerCase().includes('compromiso') && k.toLowerCase().includes('valor')) || firstRowKeys[9] || 'Valor compromiso';
-      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago') && k.toLowerCase().includes('valor')) || firstRowKeys[10] || 'Valor pago';
-      const catCol9 = firstRowKeys.find(k => k.toLowerCase().includes('código recurso') || k.toLowerCase().includes('codigo recurso') || k.toLowerCase().includes('cã³digo recurso') || k.toLowerCase().includes('cdigo recurso')) || firstRowKeys[7] || 'Código recurso';
-      const catCol10 = firstRowKeys.find(k => k.toLowerCase() === 'tipo de gasto') || firstRowKeys[6] || 'Tipo de gasto';
-      const catCol2 = firstRowKeys.find(k => k.toLowerCase() === 'referencia') || firstRowKeys[2] || 'Referencia';
-      const catCol3 = firstRowKeys.find(k => k.toLowerCase() === 'operacion' || k.toLowerCase() === 'operación') || firstRowKeys[3] || 'Operacion';
+      const compCol = firstRowKeys.find(k => k.toLowerCase().includes('compromiso')) || firstRowKeys[6] || 'Acumulado compromiso';
+      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago')) || firstRowKeys[7] || 'Acumulado pago';
+      const recCol = firstRowKeys.find(k => k.toLowerCase().includes('recurso')) || firstRowKeys[3] || 'Recurso';
+      const codigoCol = firstRowKeys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || firstRowKeys[1] || 'Código concepto';
+      const conceptoCol = firstRowKeys.find(k => k.toLowerCase().includes('concepto')) || firstRowKeys[2] || 'Concepto';
 
-      const compSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(String(row[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0);
-      const pagoSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(String(row[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0);
+      const compSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(String(row[compCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
+      const pagoSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(String(row[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
       
       setGastosComprometido(compSum / 1e6);
       setGastosPagado(pagoSum / 1e6);
       gasSum = pagoSum;
 
-      // create custom group by col 10 (Recursos), summing pagoCol (Pagado)
-      setGastosRecursosGroups(groupAndSum(filteredGastos, catCol10, pagoCol).sort((a: any, b: any) => b.value - a.value));
+      // create custom group by Recurso, summing Acumulado pago
+      setGastosRecursosGroups(groupAndSum(filteredGastos, recCol, pagoCol).sort((a: any, b: any) => b.value - a.value));
       
-      // custom grouping for categorisation from col 9
-      setGastosGroups(groupAndSum(filteredGastos, catCol9, pagoCol).sort((a: any, b: any) => b.value - a.value));
+      // custom grouping by Código concepto
+      setGastosGroups(groupAndSum(filteredGastos, codigoCol, pagoCol).sort((a: any, b: any) => b.value - a.value));
 
       // Group by Tipo de Gasto (Clasificacion)
-      const gTipos = Array.from(new Set(filteredGastos.map(r => r[catCol9]))).filter(Boolean);
+      const gTipos = Array.from(new Set(filteredGastos.map(r => r[codigoCol]))).filter(Boolean);
       const parsedGastoTiposGroups = gTipos.map(tipo => {
-         const rows = filteredGastos.filter(r => r[catCol9] === tipo);
-         const tComp = rows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
-         const tPago = rows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         const rows = filteredGastos.filter(r => r[codigoCol] === tipo);
+         const tComp = rows.reduce((acc, r) => acc + (parseFloat(String(r[compCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         const tPago = rows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
          
-         const recursosKeys = Array.from(new Set(rows.map(r => r[catCol10]))).filter(Boolean);
+         const recursosKeys = Array.from(new Set(rows.map(r => r[recCol]))).filter(Boolean);
          const recursosItems = recursosKeys.map(rec => {
-             const recRows = rows.filter(r => r[catCol10] === rec);
-             const rComp = recRows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
-             const rPago = recRows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             const recRows = rows.filter(r => r[recCol] === rec);
+             const rComp = recRows.reduce((acc, r) => acc + (parseFloat(String(r[compCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             const rPago = recRows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
              return { name: rec, compromiso: rComp, pago: rPago };
          }).sort((a, b) => b.pago - a.pago);
 
@@ -226,27 +224,19 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
       }).sort((a,b) => b.pago - a.pago);
       setGastosTiposGroups(parsedGastoTiposGroups);
 
-      // Group by Referencia (col 2)
-      const gRef = Array.from(new Set(filteredGastos.map(r => r[catCol2]))).filter(Boolean);
+      // Group by Concepto (col C)
+      const gRef = Array.from(new Set(filteredGastos.map(r => r[conceptoCol]))).filter(Boolean);
       const parsedGastoReferenciasGroups = gRef.map(ref => {
-         const rows = filteredGastos.filter(r => r[catCol2] === ref);
-         const tComp = rows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
-         const tPago = rows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         const rows = filteredGastos.filter(r => r[conceptoCol] === ref);
+         const tComp = rows.reduce((acc, r) => acc + (parseFloat(String(r[compCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         const tPago = rows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
          
-         const recursosKeys = Array.from(new Set(rows.map(r => r[catCol10]))).filter(Boolean);
+         const recursosKeys = Array.from(new Set(rows.map(r => r[recCol]))).filter(Boolean);
          const recursosItems = recursosKeys.map(rec => {
-             const recRows = rows.filter(r => r[catCol10] === rec);
-             const rComp = recRows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
-             const rPago = recRows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             const recRows = rows.filter(r => r[recCol] === rec);
+             const rComp = recRows.reduce((acc, r) => acc + (parseFloat(String(r[compCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+             const rPago = recRows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
              return { name: rec, compromiso: rComp, pago: rPago };
-         }).sort((a, b) => b.pago - a.pago);
-
-         const operacionesKeys = Array.from(new Set(rows.map(r => r[catCol3]))).filter(Boolean);
-         const operacionesItems = operacionesKeys.map(op => {
-             const opRows = rows.filter(r => r[catCol3] === op);
-             const oComp = opRows.reduce((acc, r) => acc + (parseFloat(String(r[compCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
-             const oPago = opRows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
-             return { name: op, compromiso: oComp, pago: oPago };
          }).sort((a, b) => b.pago - a.pago);
 
          return { 
@@ -254,7 +244,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
              compromiso: tComp, 
              pago: tPago, 
              recursos: recursosItems,
-             operaciones: operacionesItems
+             operaciones: []
          };
       }).sort((a,b) => b.pago - a.pago);
       setGastosReferenciasGroups(parsedGastoReferenciasGroups);

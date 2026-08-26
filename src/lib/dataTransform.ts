@@ -39,15 +39,15 @@ export const normalizeData = (ingresosRaw: any[], gastosRaw: any[], ingresoMensu
   // Normalize Ingresos
   if (ingresosRaw && ingresosRaw.length > 0) {
     const keys = Object.keys(ingresosRaw[0]);
-    const aforoCol = keys[5] || 'Valor aforo';
-    const recaudoCol = keys[6] || 'Total recaudo';
-    const recursoCol = keys[2] || 'Recurso'; // "10.0-Aportes Nacion..."
+    const aforoCol = keys.find(k => k.toLowerCase().includes('aforo')) || keys[5] || 'Valor aforo';
+    const recaudoCol = keys.find(k => k.toLowerCase().includes('recaudo')) || keys[6] || 'Total recaudo';
+    const recursoCol = keys.find(k => k.toLowerCase().includes('recurso')) || keys[3] || 'Recurso';
 
     ingresosRaw.forEach(row => {
-      const recaudo = parseFloat(String(row[recaudoCol]).replace(/[^0-9.-]+/g, '')) || 0;
+      const recaudo = parseFloat(String(row[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0;
       ingresosTotales += recaudo;
 
-      let recursoId = String(row[recursoCol]).split('-')[0].trim();
+      let recursoId = String(row[recursoCol] || '').split('-')[0].trim();
       if (!ingresosPorRecurso[recursoId]) ingresosPorRecurso[recursoId] = 0;
       ingresosPorRecurso[recursoId] += recaudo;
     });
@@ -56,23 +56,26 @@ export const normalizeData = (ingresosRaw: any[], gastosRaw: any[], ingresoMensu
   // Normalize Gastos
   if (gastosRaw && gastosRaw.length > 0) {
     const keys = Object.keys(gastosRaw[0]);
-    const pagoCol = keys.find(k => k.toLowerCase().includes('pago') && k.toLowerCase().includes('valor')) || keys[keys.length - 1];
-    const recCol = keys.find(k => k.toLowerCase() === 'tipo de gasto') || keys[6];
-    const tipoCol = keys.find(k => k.toLowerCase().includes('código recurso') || k.toLowerCase().includes('codigo recurso') || k.toLowerCase().includes('cã³digo recurso') || k.toLowerCase().includes('cdigo recurso')) || keys[7];
+    const compCol = keys.find(k => k.toLowerCase().includes('compromiso')) || keys[6] || 'Acumulado compromiso';
+    const pagoCol = keys.find(k => k.toLowerCase().includes('pago')) || keys[7] || 'Acumulado pago';
+    const recCol = keys.find(k => k.toLowerCase().includes('recurso')) || keys[3] || 'Recurso';
+    const codigoCol = keys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || keys[1] || 'Código concepto';
     
     gastosRaw.forEach(row => {
-      const pago = parseFloat(String(row[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0;
+      const pago = parseFloat(String(row[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0;
       gastosTotales += pago;
 
       let recursoText = String(row[recCol] || '');
       let recursoId = recursoText.split('-')[0].trim();
       
-      let tipoText = String(row[tipoCol] || '');
+      let tipoText = String(row[codigoCol] || '');
       let tipoNormalizado = 'Otros Gastos';
       if (tipoText.includes('2.1.1')) tipoNormalizado = 'Gastos de Personal';
       else if (tipoText.includes('2.1.2')) tipoNormalizado = 'Gastos de Funcionamiento';
-      else if (tipoText.includes('2.3')) tipoNormalizado = 'Inversión';
-      else if (tipoText.includes('Transferencias')) tipoNormalizado = 'Transferencias';
+      else if (tipoText.includes('2.1.3')) tipoNormalizado = 'Transferencias Corrientes';
+      else if (tipoText.includes('2.1.8')) tipoNormalizado = 'Tasas y Multas';
+      else if (tipoText.includes('2.2.2')) tipoNormalizado = 'Servicios de la Deuda';
+      else if (tipoText.includes('2.3')) tipoNormalizado = 'Gastos de Inversión';
       
       if (!gastosPorRecurso[recursoId]) gastosPorRecurso[recursoId] = 0;
       gastosPorRecurso[recursoId] += pago;

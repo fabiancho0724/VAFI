@@ -1,4 +1,4 @@
-import { getRecursoEquivalence, RESOURCES_LIST } from './resourceMapper';
+import { getRecursoEquivalence, RESOURCES_LIST, getTipoRecursoBalance } from './resourceMapper';
 import { RECURSOS_FIJOS_RESOLUCION } from './constants';
 
 export const BUDGET_PAYROLL_2026 = 369650433862; // Master Budget for Payroll ($369.650,4M COP)
@@ -528,8 +528,14 @@ export function calculateProjections({
     return true;
   };
 
-  const isResSelected = (r: string) => {
-    if (filterRecurso !== 'Todos' && r !== filterRecurso) return false;
+  const isResSelected = (r: string, concepto?: string) => {
+    if (filterRecurso !== 'Todos') {
+      if (filterRecurso === 'Recursos del Balance' || filterRecurso === 'Recursos UPTC') {
+        if (concepto && getTipoRecursoBalance(concepto) !== filterRecurso) return false;
+      } else if (r !== filterRecurso) {
+        return false;
+      }
+    }
     if (selectedProjectedResources && !selectedProjectedResources.includes(r)) return false;
     return true;
   };
