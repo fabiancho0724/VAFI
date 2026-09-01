@@ -107,12 +107,21 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
         ]
       };
 
+      const getNormalizedGroup = (val: string) => {
+         const s = String(val || '').toLowerCase();
+         if (s.includes('aportes')) return 'Aportes de la Nación';
+         if (s.includes('estampilla')) return 'Estampilla Pro UPTC';
+         if (s.includes('posgrados')) return 'Extensión y Posgrados';
+         if (s.includes('propios')) return 'Recursos Propios';
+         return null;
+      };
+
       const groupKeys = validClasificaciones.filter(groupName => 
-        filteredData.some(r => String(r[clasifCol] || '').trim().toLowerCase() === groupName.toLowerCase())
+        filteredData.some(r => getNormalizedGroup(r[clasifCol]) === groupName)
       );
       
       const parsedTiposGroups = groupKeys.map(groupName => {
-         const clasifRows = filteredData.filter(r => String(r[clasifCol] || '').trim().toLowerCase() === groupName.toLowerCase());
+         const clasifRows = filteredData.filter(r => getNormalizedGroup(r[clasifCol]) === groupName);
          const tInicial = clasifRows.reduce((acc, r) => acc + parseNumber(r[inicialCol]), 0) / 1e6;
          const tAforo = clasifRows.reduce((acc, r) => acc + parseNumber(r[aforoCol]), 0) / 1e6;
          const tRecaudo = clasifRows.reduce((acc, r) => acc + parseNumber(r[recaudoCol]), 0) / 1e6;
