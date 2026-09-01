@@ -59,11 +59,20 @@ export interface StrictResourceProjection {
   trace: TraceNode[];
 }
 
+export interface ExpenseDetail {
+  recurso: string;
+  nombre: string;
+  valorReal: number;
+  valorProyectado: number;
+  total: number;
+}
+
 export interface ExpenseTypeBreakdown {
   tipo: string;
   valorReal: number;
   valorProyectado: number;
   total: number;
+  detalles: ExpenseDetail[];
 }
 
 export interface StrictTotals {
@@ -145,6 +154,7 @@ function simulateCore(
   baseData: BaseResource[],
   monthlyHist: any,
   expenseTypeReal: Record<string, number>,
+  expenseTypeResourceReal: Record<string, Record<string, number>>,
   nominaStats: { nominaHistTotal: number, missingMonths: number, avgMonthlyNomina: number },
   config: StrictConfig,
   modifierVariations: { incomeVar: number, expenseVar: number }
@@ -270,7 +280,27 @@ function simulateCore(
        const weight = totalOthers > 0 ? expenseTypeReal[tipo] / totalOthers : 0;
        proj = Math.max(0, remainingGastoProyectado * weight);
     }
-    breakdown.push({ tipo, valorReal: expenseTypeReal[tipo], valorProyectado: proj, total: expenseTypeReal[tipo] + proj });
+    
+    const detalles: ExpenseDetail[] = [];
+    const resMap = expenseTypeResourceReal[tipo] || {};
+    const totalRealForTipo = expenseTypeReal[tipo] || 1;
+    
+    Object.keys(resMap).forEach(rec => {
+      const realVal = resMap[rec];
+      const weight = realVal / totalRealForTipo;
+      const recProj = tipo === 'Personal (Nómina)' ? (rec === '31' ? proj * 0.4 : proj * 0.6) : (proj * weight);
+      const recBase = baseData.find(b => b.recurso === rec);
+      detalles.push({
+        recurso: rec,
+        nombre: recBase ? recBase.nombre : rec,
+        valorReal: realVal,
+        valorProyectado: recProj,
+        total: realVal + recProj
+      });
+    });
+    
+    detalles.sort((a,b) => b.total - a.total);
+    breakdown.push({ tipo, valorReal: expenseTypeReal[tipo], valorProyectado: proj, total: expenseTypeReal[tipo] + proj, detalles });
   });
   totals.expenseBreakdown = breakdown.sort((a,b) => b.total - a.total);
 
@@ -339,6 +369,7 @@ export function calculateStrictProjections(
   });
 
   const expenseTypeReal: Record<string, number> = {};
+  const expenseTypeResourceReal: Record<string, Record<string, number>> = {};
   compromisosData.forEach(row => {
     const uni = getUnidadKey(row);
     if (config.filterUnidad !== 'Todos' && !uni.includes(config.filterUnidad)) return;
@@ -356,6 +387,9 @@ export function calculateStrictProjections(
           monthlyHist.pago[rec][mIdx] += pagoVal;
           if (!expenseTypeReal[tipo]) expenseTypeReal[tipo] = 0;
           expenseTypeReal[tipo] += compVal;
+          if (!expenseTypeResourceReal[tipo]) expenseTypeResourceReal[tipo] = {};
+          if (!expenseTypeResourceReal[tipo][rec]) expenseTypeResourceReal[tipo][rec] = 0;
+          expenseTypeResourceReal[tipo][rec] += compVal;
         }
       }
     }
@@ -374,7 +408,7 @@ export function calculateStrictProjections(
   const missingMonths = 12 - nominaMonthsCount;
 
   // Base Simulation
-  const baseSim = simulateCore(baseData, monthlyHist, expenseTypeReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: 0, expenseVar: 0 });
+  const baseSim = simulateCore(baseData, monthlyHist, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: 0, expenseVar: 0 });
 
   // AI Suggestions
   const suggestions: AISuggestion[] = [];
@@ -403,7 +437,7 @@ export function calculateStrictProjections(
   const variations = [-0.20, -0.15, -0.10, -0.05, 0, 0.05, 0.10, 0.15, 0.20];
   
   variations.forEach(v => {
-    const sim = simulateCore(baseData, monthlyHist, expenseTypeReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: v, expenseVar: 0 });
+    const sim = simulateCore(baseData, monthlyHist, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: v, expenseVar: 0 });
     let impacto: SensitivityItem['impacto'] = 'Estable';
     if (sim.totals.saldoDisponible < 0) impacto = 'Alto Riesgo';
     else if (sim.totals.saldoDisponible < baseSim.totals.saldoDisponible * 0.5) impacto = 'Medio Riesgo';

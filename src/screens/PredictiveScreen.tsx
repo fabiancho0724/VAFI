@@ -3,7 +3,7 @@ import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart, Line, PieChart, Pie, Cell 
 } from 'recharts';
 import { 
-  Filter, AlertTriangle, Layers, Briefcase, Activity, Settings, TrendingUp, List
+  Filter, AlertTriangle, Layers, Briefcase, Activity, Settings, TrendingUp, List, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
@@ -20,6 +20,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [errorMessage, setErrorMessage] = useState('');
   const [activeTab, setActiveTab] = useState(1);
   const [selectedResourceTrace, setSelectedResourceTrace] = useState<any>(null);
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   const [config, setConfig] = useState<StrictConfig>({
     scenarioName: 'Proyección Anual',
@@ -55,7 +56,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   if (dataStage === 'loading') {
     return <div className="flex items-center justify-center h-full min-h-[500px]">
-      <div className="flex flex-col items-center gap-4 text-slate-500">
+      <div className="flex flex-col items-center gap-4 text-slate-400">
         <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         <p className="font-medium animate-pulse">Analizando ejecuciones, simulando escenarios y trazabilidad...</p>
       </div>
@@ -104,7 +105,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       )}
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+      <div className="flex flex-wrap gap-2 border-b border-slate-700 pb-2">
         {[
           {id: 1, label: 'Parámetros del Escenario', icon: Settings},
           {id: 2, label: 'Balance y Flujo de Caja', icon: Activity},
@@ -112,7 +113,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           {id: 4, label: 'Detalle de Proyección', icon: List}
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl font-semibold transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl font-semibold transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-700'}`}>
             <tab.icon className="w-4 h-4" /> {tab.label}
           </button>
         ))}
@@ -121,15 +122,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {/* TAB 1: PARÁMETROS */}
       {activeTab === 1 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Nombre Escenario</label>
-                <input type="text" value={config.scenarioName} onChange={e => setConfig({...config, scenarioName: e.target.value})} className="w-full text-sm border border-slate-200 rounded-xl bg-slate-50 p-2.5 outline-none" />
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Nombre Escenario</label>
+                <input type="text" value={config.scenarioName} onChange={e => setConfig({...config, scenarioName: e.target.value})} className="w-full text-sm border border-slate-700 rounded-xl bg-slate-900/50 p-2.5 outline-none" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Modelo Base</label>
-                <select className="w-full text-sm border-slate-200 rounded-xl bg-slate-50 p-2.5 outline-none" value={config.scenario} onChange={e => setConfig({...config, scenario: e.target.value as any})}>
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Modelo Base</label>
+                <select className="w-full text-sm border-slate-700 rounded-xl bg-slate-900/50 p-2.5 outline-none" value={config.scenario} onChange={e => setConfig({...config, scenario: e.target.value as any})}>
                   <option value="Base">Base</option>
                   <option value="Optimista">Optimista (+5% global)</option>
                   <option value="Pesimista">Pesimista (-5% global)</option>
@@ -137,23 +138,23 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Crecimiento Global Ingresos</label>
-                <input type="range" min="-0.5" max="0.5" step="0.01" value={config.globalGrowthRate} onChange={e => setConfig({...config, globalGrowthRate: parseFloat(e.target.value)})} className="w-full h-2 bg-slate-200 rounded-lg accent-indigo-600" disabled={config.scenario !== 'Personalizado'} />
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Crecimiento Global Ingresos</label>
+                <input type="range" min="-0.5" max="0.5" step="0.01" value={config.globalGrowthRate} onChange={e => setConfig({...config, globalGrowthRate: parseFloat(e.target.value)})} className="w-full h-2 bg-slate-700 rounded-lg accent-indigo-600" disabled={config.scenario !== 'Personalizado'} />
                 <div className="text-right text-xs mt-1 font-bold text-indigo-700">{(config.globalGrowthRate*100).toFixed(0)}%</div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Tasa Ejecución Gastos</label>
-                <input type="range" min="0.1" max="1" step="0.05" value={config.globalExpenseRate} onChange={e => setConfig({...config, globalExpenseRate: parseFloat(e.target.value)})} className="w-full h-2 bg-slate-200 rounded-lg accent-orange-500" />
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Tasa Ejecución Gastos</label>
+                <input type="range" min="0.1" max="1" step="0.05" value={config.globalExpenseRate} onChange={e => setConfig({...config, globalExpenseRate: parseFloat(e.target.value)})} className="w-full h-2 bg-slate-700 rounded-lg accent-orange-500" />
                 <div className="text-right text-xs mt-1 font-bold text-orange-700">{(config.globalExpenseRate*100).toFixed(0)}%</div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b border-slate-100 bg-slate-50/50"><h3 className="font-bold text-slate-800 text-lg">Configuración por Recurso y Sugerencias IA</h3></div>
+          <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-700 overflow-hidden">
+            <div className="p-5 border-b border-slate-700/50 bg-slate-900/40"><h3 className="font-bold text-slate-100 text-lg">Configuración por Recurso y Sugerencias IA</h3></div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-xs">
+                <thead className="bg-slate-900/50 text-slate-400 font-semibold uppercase text-xs">
                   <tr><th className="px-4 py-3">Recurso</th><th className="px-4 py-3 text-right">Aforo</th><th className="px-4 py-3 text-right">Recaudo Real</th><th className="px-4 py-3 text-center">Método Asignado</th><th className="px-4 py-3 text-right">Tasa Aplicada</th><th className="px-4 py-3">Sugerencia IA</th></tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -162,21 +163,21 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     const isSiif = r.methodUsed === 'Fijo (SIIF)';
                     const sugg = results.suggestions.find(s => s.recurso === r.recurso);
                     return (
-                      <tr key={i} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-700">{r.recurso} - {r.nombre}</td>
+                      <tr key={i} className="hover:bg-slate-900/50">
+                        <td className="px-4 py-3 font-medium text-slate-200">{r.recurso} - {r.nombre}</td>
                         <td className="px-4 py-3 text-right">{fmt(base?.Aforo || 0)}</td>
                         <td className="px-4 py-3 text-right">{fmt(r.ingresosReales)}</td>
                         <td className="px-4 py-3 text-center">
-                          {isSiif ? <span className="bg-slate-200 text-slate-700 px-2 py-1 rounded text-xs font-bold">Fijo (SIIF)</span> : <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold">{r.methodUsed}</span>}
+                          {isSiif ? <span className="bg-slate-700 text-slate-200 px-2 py-1 rounded text-xs font-bold">Fijo (SIIF)</span> : <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold">{r.methodUsed}</span>}
                         </td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-700">
+                        <td className="px-4 py-3 text-right font-medium text-slate-200">
                           {isSiif ? 'N/A' : `${((config.resourceOverrides[r.recurso]?.growthRate ?? config.globalGrowthRate)*100).toFixed(1)}%`}
                         </td>
                         <td className="px-4 py-3">
                           {sugg ? (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-slate-600 truncate max-w-[200px]" title={sugg.mensaje}>{sugg.mensaje} ({(sugg.tasaSugerida*100).toFixed(0)}%)</span>
-                              <button onClick={() => acceptAISuggestion(r.recurso, sugg.tasaSugerida)} className="px-2 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded hover:bg-indigo-100">Aplicar</button>
+                              <span className="text-xs text-slate-300 truncate max-w-[200px]" title={sugg.mensaje}>{sugg.mensaje} ({(sugg.tasaSugerida*100).toFixed(0)}%)</span>
+                              <button onClick={() => acceptAISuggestion(r.recurso, sugg.tasaSugerida)} className="px-2 py-1 bg-indigo-500/20 text-indigo-600 text-xs font-bold rounded hover:bg-indigo-900/400/40">Aplicar</button>
                             </div>
                           ) : <span className="text-slate-400 text-xs">Sin sugerencia</span>}
                         </td>
@@ -194,46 +195,70 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {activeTab === 2 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm"><p className="text-xs text-slate-500 font-semibold mb-2 uppercase">Total Aforo</p><p className="text-3xl font-black text-slate-800">{fmt(results.totals.totalAforo)}</p></div>
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm"><p className="text-xs text-slate-500 font-semibold mb-2 uppercase">Recaudo Real</p><p className="text-3xl font-black text-blue-600">{fmt(results.totals.totalRecaudo)}</p></div>
-            <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-md"><p className="text-xs text-indigo-200 font-semibold mb-2 uppercase">Ingresos Proyectados</p><p className="text-3xl font-black text-white">{fmt(results.totals.totalIngresosProyectados)}</p></div>
-            <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-md"><p className="text-xs text-emerald-100 font-semibold mb-2 uppercase">Saldo Caja Proyectado</p><p className="text-3xl font-black text-white">{fmt(results.totals.saldoDisponible)}</p></div>
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-sm"><p className="text-xs text-slate-400 font-semibold mb-2 uppercase">Total Aforo</p><p className="text-3xl font-black text-slate-100">{fmt(results.totals.totalAforo)}</p></div>
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-sm"><p className="text-xs text-slate-400 font-semibold mb-2 uppercase">Total Recaudo (Real + Proy)</p><p className="text-3xl font-black text-blue-500">{fmt(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</p></div>
+            <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-md"><p className="text-xs text-indigo-200 font-semibold mb-2 uppercase">Total Comprometido</p><p className="text-3xl font-black text-white">{fmt(results.totals.totalCompromisos)}</p></div>
+            <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-md"><p className="text-xs text-emerald-100 font-semibold mb-2 uppercase">Total Pagado</p><p className="text-3xl font-black text-white">{fmt(results.totals.totalPagos)}</p></div>
           </div>
           
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="text-base font-bold text-slate-800 mb-6">Flujo de Caja Mensual</h3>
+             <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm">
+                <h3 className="text-base font-bold text-slate-100 mb-6">Flujo de Caja Mensual</h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={results.flow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
                       <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
                       <YAxis tickFormatter={(val) => `$${val/1000}k`} fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                      <Tooltip formatter={(val: number) => fmt(val*1e6)} />
+                      <Tooltip formatter={(val: number) => fmt(val*1e6)} contentStyle={{ backgroundColor: '#1e293b', border: 'none', color: '#f8fafc', borderRadius: '8px' }} />
                       <Legend wrapperStyle={{ paddingTop: '20px' }} />
                       <Bar dataKey="ingresosReales" name="Ingreso Real" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                      <Bar dataKey="ingresosProyectados" name="Ingreso Proy." stackId="a" fill="#c7d2fe" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="ingresosProyectados" name="Ingreso Proy." stackId="a" fill="#6366f1" radius={[4, 4, 0, 0]} />
                       <Line type="monotone" dataKey="pagos" name="Pagos Totales" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
              </div>
              
-             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="text-base font-bold text-slate-800 mb-6">Composición del Gasto Proyectado</h3>
-                <div className="h-80 flex flex-col items-center justify-center">
-                  <ResponsiveContainer width="100%" height="80%">
-                    <PieChart>
-                      <Pie data={results.totals.expenseBreakdown.map(b=>({name:b.tipo, value:b.total}))} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value" stroke="none">
-                        {results.totals.expenseBreakdown.map((e, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip formatter={(v: number) => fmt(v)} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex flex-wrap justify-center gap-2 mt-2">
-                     {results.totals.expenseBreakdown.map((b, i) => (
-                        <div key={i} className="text-xs font-semibold text-slate-600 flex items-center gap-1"><div className="w-2 h-2 rounded-full" style={{backgroundColor: PIE_COLORS[i % PIE_COLORS.length]}}></div>{b.tipo}: {fmt(b.total)}</div>
-                     ))}
+             <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm overflow-hidden flex flex-col">
+                <h3 className="text-base font-bold text-slate-100 mb-6">Análisis de Gastos por Recurso</h3>
+                <div className="flex-1 overflow-y-auto pr-2">
+                  <div className="space-y-3">
+                    {results.totals.expenseBreakdown.map((b, idx) => (
+                      <div key={idx} className="border border-slate-700 rounded-xl overflow-hidden bg-slate-900/40">
+                        <div 
+                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/80 transition-colors"
+                          onClick={() => setExpandedRow(expandedRow === b.tipo ? null : b.tipo)}
+                        >
+                          <div className="flex items-center gap-3">
+                            {expandedRow === b.tipo ? <ChevronDown className="w-5 h-5 text-indigo-400"/> : <ChevronRight className="w-5 h-5 text-slate-400"/>}
+                            <span className="font-bold text-slate-200">{b.tipo}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-black text-slate-100">{fmt(b.total)}</span>
+                          </div>
+                        </div>
+                        {expandedRow === b.tipo && b.detalles && (
+                          <div className="bg-slate-900/80 p-4 border-t border-slate-700/50">
+                            <table className="w-full text-sm text-left">
+                              <thead className="text-xs text-slate-400 uppercase border-b border-slate-700/50">
+                                <tr><th className="pb-2 font-semibold">Recurso</th><th className="pb-2 text-right font-semibold">Gasto Real</th><th className="pb-2 text-right font-semibold">Proyectado</th><th className="pb-2 text-right font-semibold">Total</th></tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-700/50">
+                                {b.detalles.map((d: any, dIdx: number) => (
+                                  <tr key={dIdx} className="hover:bg-slate-800/50">
+                                    <td className="py-2 font-medium text-slate-300">{d.recurso} - {d.nombre}</td>
+                                    <td className="py-2 text-right text-slate-400">{fmt(d.valorReal)}</td>
+                                    <td className="py-2 text-right text-indigo-400">{fmt(d.valorProyectado)}</td>
+                                    <td className="py-2 text-right font-bold text-slate-200">{fmt(d.total)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
              </div>
@@ -245,17 +270,17 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {activeTab === 3 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-5 border-b border-slate-100 bg-slate-50/50"><h3 className="font-bold text-slate-800 text-lg">Matriz de Sensibilidad de Ingresos (Heatmap)</h3></div>
+            <div className="lg:col-span-2 bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-700 overflow-hidden">
+              <div className="p-5 border-b border-slate-700/50 bg-slate-900/40"><h3 className="font-bold text-slate-100 text-lg">Matriz de Sensibilidad de Ingresos (Heatmap)</h3></div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-xs">
+                  <thead className="bg-slate-900/50 text-slate-400 font-semibold uppercase text-xs">
                     <tr><th className="px-6 py-4">Variación Ingreso</th><th className="px-6 py-4 text-right">Ingresos Proyectados</th><th className="px-6 py-4 text-right">Saldo Disponible</th><th className="px-6 py-4 text-center">Impacto</th></tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {results.sensitivity.map((s, i) => (
-                      <tr key={i} className={s.variationNum === 0 ? 'bg-indigo-50/50 font-bold' : 'hover:bg-slate-50'}>
-                        <td className="px-6 py-4 font-medium text-slate-700">{s.variationStr} {s.variationNum === 0 ? '(Base)' : ''}</td>
+                      <tr key={i} className={s.variationNum === 0 ? 'bg-indigo-900/20 font-bold' : 'hover:bg-slate-900/50'}>
+                        <td className="px-6 py-4 font-medium text-slate-200">{s.variationStr} {s.variationNum === 0 ? '(Base)' : ''}</td>
                         <td className="px-6 py-4 text-right">{fmt(s.ingresos)}</td>
                         <td className="px-6 py-4 text-right">{fmt(s.saldo)}</td>
                         <td className="px-6 py-4 text-center">
@@ -267,15 +292,15 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                 </table>
               </div>
             </div>
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-6">
-              <h3 className="font-bold text-slate-800 text-lg mb-4">Elasticidad & Ranking de Riesgo</h3>
-              <p className="text-sm text-slate-500 mb-6">Mide cómo impacta porcentualmente un cambio en los ingresos sobre el saldo disponible institucional.</p>
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-700 overflow-hidden p-6">
+              <h3 className="font-bold text-slate-100 text-lg mb-4">Elasticidad & Ranking de Riesgo</h3>
+              <p className="text-sm text-slate-400 mb-6">Mide cómo impacta porcentualmente un cambio en los ingresos sobre el saldo disponible institucional.</p>
               <div className="space-y-4">
                 {results.elasticityRanking.map((e, i) => (
-                  <div key={i} className="flex flex-col gap-1 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                    <span className="text-sm font-semibold text-slate-700">{e.variable}</span>
+                  <div key={i} className="flex flex-col gap-1 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                    <span className="text-sm font-semibold text-slate-200">{e.variable}</span>
                     <div className="flex justify-between items-end">
-                      <span className="text-xs text-slate-500">Coeficiente de Elasticidad:</span>
+                      <span className="text-xs text-slate-400">Coeficiente de Elasticidad:</span>
                       <span className={`text-xl font-black ${e.elasticity > 1 ? 'text-red-600' : 'text-emerald-600'}`}>{e.elasticity.toFixed(2)}x</span>
                     </div>
                   </div>
@@ -289,22 +314,22 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {/* TAB 4: DETALLE DE PROYECCIÓN */}
       {activeTab === 4 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="font-bold text-slate-800 text-lg">Trazabilidad por Recurso</h3>
-              <p className="text-xs text-slate-500">Haz clic en cualquier recurso para ver el método utilizado y el paso a paso matemático de su proyección.</p>
+          <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-700 overflow-hidden">
+            <div className="p-5 border-b border-slate-700/50 bg-slate-900/40">
+              <h3 className="font-bold text-slate-100 text-lg">Trazabilidad por Recurso</h3>
+              <p className="text-xs text-slate-400">Haz clic en cualquier recurso para ver el método utilizado y el paso a paso matemático de su proyección.</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-xs">
+                <thead className="bg-slate-900/50 text-slate-400 font-semibold uppercase text-xs">
                   <tr><th className="px-6 py-4">Recurso</th><th className="px-6 py-4 text-right">Ingreso Proy.</th><th className="px-6 py-4 text-right">Total Ingreso</th><th className="px-6 py-4 text-right">Total Compromiso</th><th className="px-6 py-4 text-right">Saldo Final</th></tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {results.resources.map((r, i) => (
-                    <tr key={i} className="hover:bg-indigo-50 cursor-pointer transition-colors" onClick={() => setSelectedResourceTrace(r)}>
-                      <td className="px-6 py-4 font-bold text-slate-700">{r.recurso} - {r.nombre}</td>
+                    <tr key={i} className="hover:bg-indigo-900/400/20 cursor-pointer transition-colors" onClick={() => setSelectedResourceTrace(r)}>
+                      <td className="px-6 py-4 font-bold text-slate-200">{r.recurso} - {r.nombre}</td>
                       <td className="px-6 py-4 text-right text-indigo-500">{fmt(r.ingresosProyectados)}</td>
-                      <td className="px-6 py-4 text-right font-bold text-slate-800">{fmt(r.totalIngresos)}</td>
+                      <td className="px-6 py-4 text-right font-bold text-slate-100">{fmt(r.totalIngresos)}</td>
                       <td className="px-6 py-4 text-right font-medium text-orange-500">{fmt(r.totalCompromisos)}</td>
                       <td className={`px-6 py-4 text-right font-black ${r.saldoDisponible < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>{fmt(r.saldoDisponible)}</td>
                     </tr>
@@ -316,21 +341,21 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           
           {selectedResourceTrace && (
              <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedResourceTrace(null)}>
-               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                 <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white">
-                   <h3 className="text-xl font-bold text-slate-800">Trazabilidad Matemática: {selectedResourceTrace.recurso}</h3>
-                   <button onClick={() => setSelectedResourceTrace(null)} className="text-slate-400 hover:text-slate-600">&times;</button>
+               <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                 <div className="p-6 border-b border-slate-700/50 flex justify-between items-center sticky top-0 bg-slate-800/60 backdrop-blur-sm">
+                   <h3 className="text-xl font-bold text-slate-100">Trazabilidad Matemática: {selectedResourceTrace.recurso}</h3>
+                   <button onClick={() => setSelectedResourceTrace(null)} className="text-slate-400 hover:text-slate-300">&times;</button>
                  </div>
                  <div className="p-6">
-                   <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Secuencia de Cálculo Aplicada</h4>
+                   <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Secuencia de Cálculo Aplicada</h4>
                    <div className="space-y-4">
                      {selectedResourceTrace.trace.map((t: any, i: number) => (
-                       <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                       <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
                          <div className="bg-indigo-100 text-indigo-600 font-bold rounded-full w-8 h-8 flex items-center justify-center shrink-0">{i+1}</div>
                          <div>
-                           <p className="font-bold text-slate-800">{t.step}</p>
+                           <p className="font-bold text-slate-100">{t.step}</p>
                            <p className="text-lg text-indigo-600 font-semibold">{typeof t.value === 'number' ? fmt(t.value) : t.value}</p>
-                           <p className="text-sm text-slate-500">{t.detail}</p>
+                           <p className="text-sm text-slate-400">{t.detail}</p>
                          </div>
                        </div>
                      ))}
