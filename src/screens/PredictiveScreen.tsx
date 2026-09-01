@@ -1,22 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart, Line 
+  BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart, Line, PieChart, Pie, Cell 
 } from 'recharts';
 import { 
-  Filter, AlertTriangle, Layers
+  Filter, AlertTriangle, Layers, Briefcase, Activity
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
 import { RESOURCES_LIST } from '../lib/resourceMapper';
+
+const PIE_COLORS = ['#3b82f6', '#f97316', '#10b981', '#8b5cf6', '#ef4444', '#64748b'];
 
 export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready' | 'error'>('loading');
   const [balanceData, setBalanceData] = useState<any[]>([]);
   const [ingresosMensuales, setIngresosMensuales] = useState<any[]>([]);
   const [compromisos, setCompromisos] = useState<any[]>([]);
+  const [nominaData, setNominaData] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Strict config state
   const [config, setConfig] = useState<StrictConfig>({
     growthRate: 0.05,
     expenseRate: 0.8,
@@ -31,9 +33,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         const bd = await fetchAndParseCSV('/data/balance.csv');
         const im = await fetchAndParseCSV('/data/ingresos_mensuales.csv');
         const co = await fetchAndParseCSV('/data/compromisos.csv');
+        const nd = await fetchAndParseCSV('/data/nomina.csv');
         setBalanceData(bd);
         setIngresosMensuales(im);
         setCompromisos(co);
+        setNominaData(nd);
         setDataStage('ready');
       } catch (e: any) {
         setErrorMessage(e.message);
@@ -45,14 +49,14 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   const results: StrictProjectionResult | null = useMemo(() => {
     if (dataStage !== 'ready' || balanceData.length === 0) return null;
-    return calculateStrictProjections(balanceData, ingresosMensuales, compromisos, config);
-  }, [dataStage, balanceData, ingresosMensuales, compromisos, config]);
+    return calculateStrictProjections(balanceData, ingresosMensuales, compromisos, nominaData, config);
+  }, [dataStage, balanceData, ingresosMensuales, compromisos, nominaData, config]);
 
   if (dataStage === 'loading') {
     return <div className="flex items-center justify-center h-full min-h-[500px]">
       <div className="flex flex-col items-center gap-4 text-slate-500">
         <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-medium animate-pulse">Analizando ejecuciones mensuales e históricos...</p>
+        <p className="font-medium animate-pulse">Analizando ejecuciones mensuales y nómina...</p>
       </div>
     </div>;
   }
@@ -62,6 +66,11 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   if (!results) return null;
 
   const fmt = (v: number) => '$' + (v/1e6).toLocaleString('es-CO', { maximumFractionDigits: 1 }) + 'M';
+
+  const pieData = results.totals.expenseBreakdown.map(b => ({
+    name: b.tipo,
+    value: b.total
+  }));
 
   return (
     <div className="space-y-6">
@@ -73,7 +82,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             Proyección Financiera y Motor de Escenarios
           </h2>
           <p className="text-indigo-100/80 text-sm max-w-2xl">
-            Modelo estricto basado en Balance Actual y ejecuciones mensuales. Evalúa escenarios controlando límites de recaudo, ingresos inflexibles de SIIF y flujo de caja histórico.
+            Modelo estricto que integra ejecución mensual, reglas de Nómina (Unidad Administrativa) y distribución del 40% para el Recurso 31 (Posgrados).
           </p>
         </div>
       </div>
@@ -82,7 +91,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
       {results.alerts.length > 0 && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-sm space-y-2">
           <h3 className="text-red-800 font-bold flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" /> Alertas Críticas (Regla Financiera Incumplida)
+            <AlertTriangle className="w-5 h-5" /> Alertas Críticas de Cumplimiento
           </h3>
           <div className="pl-7 space-y-1">
             {results.alerts.map((al, idx) => (
@@ -91,6 +100,27 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           </div>
         </div>
       )}
+
+      {/* Regla de Unidad Administrativa y Nómina */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl p-6 border border-indigo-100 shadow-sm flex flex-col justify-center">
+          <h3 className="text-indigo-900 font-bold mb-1 flex items-center gap-2"><Briefcase className="w-5 h-5 text-indigo-600"/> Recursos Habilitados para Nómina</h3>
+          <p className="text-sm text-indigo-600/80 mb-4">Ingresos asignados a la Unidad Administrativa (Incluye 40% de Posgrados - R31)</p>
+          <div className="flex justify-between items-end">
+            <p className="text-3xl font-black text-indigo-700">{fmt(results.totals.ingresoAdminTotal)}</p>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-orange-50 to-white rounded-2xl p-6 border border-orange-100 shadow-sm flex flex-col justify-center">
+          <h3 className="text-orange-900 font-bold mb-1 flex items-center gap-2"><Activity className="w-5 h-5 text-orange-600"/> Proyección Total de Nómina</h3>
+          <p className="text-sm text-orange-600/80 mb-4">Gastos de Personal reales + proyecciones de meses faltantes</p>
+          <div className="flex justify-between items-end">
+            <p className="text-3xl font-black text-orange-700">{fmt(results.totals.nominaTotal)}</p>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${results.totals.nominaTotal <= results.totals.ingresoAdminTotal ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+              {results.totals.nominaTotal <= results.totals.ingresoAdminTotal ? 'Cobertura OK' : 'Déficit de Cobertura'}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Configuración y Filtros */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -138,7 +168,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ejecución Gasto Restante</label>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Gasto Restante</label>
             <div className="flex items-center gap-3">
               <input type="range" min="0.1" max="1" step="0.05" 
                      value={config.expenseRate} 
@@ -150,53 +180,75 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         </div>
       </div>
 
-      {/* Balance Financiero Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-slate-100 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
-          <p className="text-xs text-slate-500 font-semibold mb-2 uppercase tracking-wider">Total Aforo (Anual)</p>
-          <p className="text-3xl font-black text-slate-800">{fmt(results.totals.totalAforo)}</p>
+      {/* Balance y Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <p className="text-xs text-slate-500 font-semibold mb-2 uppercase tracking-wider">Total Aforo</p>
+            <p className="text-2xl font-black text-slate-800">{fmt(results.totals.totalAforo)}</p>
+          </div>
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <p className="text-xs text-slate-500 font-semibold mb-2 uppercase tracking-wider">Recaudo 31/08</p>
+            <p className="text-2xl font-black text-blue-600">{fmt(results.totals.totalRecaudo)}</p>
+          </div>
+          <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-md">
+            <p className="text-xs text-indigo-200 font-semibold mb-2 uppercase tracking-wider">Ingresos Proy.</p>
+            <p className="text-2xl font-black text-white">{fmt(results.totals.totalIngresosProyectados)}</p>
+          </div>
+          <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-md">
+            <p className="text-xs text-emerald-100 font-semibold mb-2 uppercase tracking-wider">Saldo Caja Proy.</p>
+            <p className="text-2xl font-black text-white">{fmt(results.totals.saldoDisponible)}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-blue-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
-          <p className="text-xs text-slate-500 font-semibold mb-2 uppercase tracking-wider">Total Recaudo 31/08</p>
-          <p className="text-3xl font-black text-blue-600">{fmt(results.totals.totalRecaudo)}</p>
-        </div>
-        <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-indigo-500 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
-          <p className="text-xs text-indigo-200 font-semibold mb-2 uppercase tracking-wider">Ingresos Proyectados (Sep-Dic)</p>
-          <p className="text-3xl font-black text-white">{fmt(results.totals.totalIngresosProyectados)}</p>
-        </div>
-        <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-md relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-emerald-400 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
-          <p className="text-xs text-emerald-100 font-semibold mb-2 uppercase tracking-wider">Saldo Caja Proyectado</p>
-          <p className="text-3xl font-black text-white">{fmt(results.totals.saldoDisponible)}</p>
+        
+        {/* Distribución del Gasto */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+          <h3 className="text-sm font-bold text-slate-800 mb-2">Composición del Gasto (Real + Proy)</h3>
+          <div className="h-40 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={2} dataKey="value" stroke="none">
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v: number) => fmt(v)} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2 mt-2 max-h-32 overflow-y-auto pr-2">
+            {results.totals.expenseBreakdown.map((b, idx) => (
+              <div key={idx} className="flex justify-between items-center text-xs">
+                <span className="flex items-center gap-1.5 text-slate-600 font-medium">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: PIE_COLORS[idx % PIE_COLORS.length]}}></div>
+                  {b.tipo}
+                </span>
+                <span className="font-bold text-slate-800">{fmt(b.total)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="text-base font-bold text-slate-800 mb-6">Flujo de Caja Mensual (Ingresos vs Pagos)</h3>
+            <h3 className="text-base font-bold text-slate-800 mb-6">Flujo de Caja Mensual</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={results.flow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(val) => `$${val/1000}k`} fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    formatter={(val: number) => fmt(val*1e6)} 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
+                  <Tooltip formatter={(val: number) => fmt(val*1e6)} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   <Bar dataKey="ingresosReales" name="Ingreso Real" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="ingresosProyectados" name="Ingreso Proyectado" stackId="a" fill="#c7d2fe" radius={[4, 4, 0, 0]} />
-                  <Line type="monotone" dataKey="pagos" name="Pagos Efectivos" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                  <Bar dataKey="ingresosProyectados" name="Ingreso Proy." stackId="a" fill="#c7d2fe" radius={[4, 4, 0, 0]} />
+                  <Line type="monotone" dataKey="pagos" name="Pagos Totales" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
          </div>
-         
          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <h3 className="text-base font-bold text-slate-800 mb-6">Evolución Saldo de Caja Acumulado</h3>
             <div className="h-80">
@@ -211,10 +263,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(val) => `$${val/1000}k`} fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    formatter={(val: number) => fmt(val*1e6)} 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
+                  <Tooltip formatter={(val: number) => fmt(val*1e6)} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                   <Area type="monotone" dataKey="saldoFinal" name="Saldo Acumulado" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorSaldo)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -232,9 +281,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs">
               <tr>
                 <th className="px-6 py-4">Recurso</th>
-                <th className="px-6 py-4 text-right">Recaudo Real</th>
-                <th className="px-6 py-4 text-right">Ingreso Proy.</th>
-                <th className="px-6 py-4 text-right">Total Ingreso</th>
+                <th className="px-6 py-4 text-right">Recaudo Total</th>
+                <th className="px-6 py-4 text-right">Aporte Admin</th>
                 <th className="px-6 py-4 text-right">Total Compromiso</th>
                 <th className="px-6 py-4 text-right">Total Pago</th>
                 <th className="px-6 py-4 text-right">Saldo Final</th>
@@ -247,9 +295,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                     <span className="font-bold text-slate-700">{r.recurso}</span>
                     <span className="text-slate-500 ml-2 hidden md:inline">- {r.nombre}</span>
                   </td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-600">{fmt(r.ingresosReales)}</td>
-                  <td className="px-6 py-4 text-right font-medium text-indigo-500">{fmt(r.ingresosProyectados)}</td>
                   <td className="px-6 py-4 text-right font-bold text-slate-800 bg-slate-50/50">{fmt(r.totalIngresos)}</td>
+                  <td className="px-6 py-4 text-right font-medium text-indigo-500">{fmt(r.ingresoAdministrativo)}</td>
                   <td className="px-6 py-4 text-right font-medium text-orange-500">{fmt(r.totalCompromisos)}</td>
                   <td className="px-6 py-4 text-right font-medium text-rose-500">{fmt(r.totalPagos)}</td>
                   <td className={`px-6 py-4 text-right font-black ${r.saldoDisponible < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
@@ -257,17 +304,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                   </td>
                 </tr>
               ))}
-              <tr className="bg-slate-800 font-bold text-white">
-                <td className="px-6 py-5 rounded-bl-xl">TOTALES</td>
-                <td className="px-6 py-5 text-right">{fmt(results.totals.totalRecaudo)}</td>
-                <td className="px-6 py-5 text-right text-indigo-300">{fmt(results.totals.totalIngresosProyectados)}</td>
-                <td className="px-6 py-5 text-right">{fmt(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</td>
-                <td className="px-6 py-5 text-right text-orange-300">{fmt(results.totals.totalCompromisos)}</td>
-                <td className="px-6 py-5 text-right text-rose-300">{fmt(results.totals.totalPagos)}</td>
-                <td className={`px-6 py-5 text-right rounded-br-xl ${results.totals.saldoDisponible < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                  {fmt(results.totals.saldoDisponible)}
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
