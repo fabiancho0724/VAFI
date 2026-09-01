@@ -74,10 +74,14 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
       setIngresosTotal(recaudoSum / 1e6); 
 
       // Group by Clasificación del Recurso (Columna J - 10) -> Recursos (Col D - 4) -> Conceptos Nombres (Col C - 3)
-      const groupKeys = Array.from(new Set(filteredData.map(r => String(r[clasifCol] || getTipoRecursoBalance(r) || 'Otros Recaudos').trim()))).filter(Boolean);
+      const validClasificaciones = ['Aportes de la Nación', 'Estampilla Pro UPTC', 'Extensión y Posgrados', 'Recursos Propios'];
+      
+      const groupKeys = validClasificaciones.filter(groupName => 
+        filteredData.some(r => String(r[clasifCol] || '').trim().toLowerCase() === groupName.toLowerCase())
+      );
       
       const parsedTiposGroups = groupKeys.map(groupName => {
-         const clasifRows = filteredData.filter(r => String(r[clasifCol] || getTipoRecursoBalance(r) || '').trim() === groupName);
+         const clasifRows = filteredData.filter(r => String(r[clasifCol] || '').trim().toLowerCase() === groupName.toLowerCase());
          const tInicial = clasifRows.reduce((acc, r) => acc + parseNumber(r[inicialCol]), 0) / 1e6;
          const tAforo = clasifRows.reduce((acc, r) => acc + parseNumber(r[aforoCol]), 0) / 1e6;
          const tRecaudo = clasifRows.reduce((acc, r) => acc + parseNumber(r[recaudoCol]), 0) / 1e6;
@@ -128,7 +132,8 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
              ejecucionPct: ejecucionPct,
              recursos: recursosList 
          };
-      }).sort((a,b) => b.recaudo - a.recaudo);
+      }).filter(g => g.aforo > 0 || g.recaudo > 0 || g.inicial > 0)
+        .sort((a,b) => b.recaudo - a.recaudo);
       
       setIngresosTiposGroups(parsedTiposGroups);
     }
@@ -1207,7 +1212,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-container via-secondary to-[#4ade80]"></div>
             
             {/* Ambient Background Glow */}
-            <div className="absolute top-0 left-0 w-96 h-96 bg-[#ffcc29]/5 blur-[120px] rounded-full pointer-events-none"></div>
+<div className="absolute top-0 left-0 w-96 h-96 bg-[#ffcc29]/5 blur-[120px] rounded-full pointer-events-none"></div>
 
             <div className="flex flex-col md:flex-row justify-between items-center border-b border-white/10 pb-6 mb-12 z-10 relative">
                <div className="text-left mb-6 md:mb-0">
@@ -1217,38 +1222,50 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
                
                <div className="flex flex-wrap gap-2 items-center">
                   <span className="text-xs text-on-surface-variant font-mono uppercase tracking-widest mr-2">Período:</span>
-                  {['Todos', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio'].map(mes => {
-                     const isActive = nominaPeriodoFiltro.includes(mes) || (mes !== 'Todos' && nominaPeriodoFiltro.includes('Todos'));
-                     return (
-                       <button
-                         key={mes}
-                         onClick={() => {
-                           if (mes === 'Todos') {
-                             setNominaPeriodoFiltro(['Todos']);
-                           } else {
-                             let newFiltro = nominaPeriodoFiltro.filter(m => m !== 'Todos');
-                             if (newFiltro.includes(mes)) {
-                               newFiltro = newFiltro.filter(m => m !== mes);
-                             } else {
-                               newFiltro.push(mes);
-                             }
-                             if (newFiltro.length === 0 || newFiltro.length === 6) {
-                               setNominaPeriodoFiltro(['Todos']);
-                             } else {
-                               setNominaPeriodoFiltro(newFiltro);
-                             }
-                           }
-                         }}
-                         className={`px-3 py-1.5 text-xs font-mono rounded-xl transition-all ${
-                           isActive 
-                             ? 'bg-primary-container text-black font-bold shadow-[0_0_10px_rgba(255,204,41,0.3)]' 
-                             : 'bg-white/5 text-on-surface-variant hover:bg-white/10 border border-white/5'
-                         }`}
-                       >
-                         {mes}
-                       </button>
-                     );
-                  })}
+                  {(() => {
+                    const orderedMonths = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                    let distinctMonths = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto'];
+                    if (rawNomina && rawNomina.length > 0) {
+                      const colPeriod = Object.keys(rawNomina[0])[0];
+                      const found = Array.from(new Set(rawNomina.map(r => String(r[colPeriod] || '').trim()))).filter(Boolean);
+                      if (found.length > 0) {
+                        distinctMonths = found.sort((a, b) => orderedMonths.indexOf(a) - orderedMonths.indexOf(b));
+                      }
+                    }
+                    const allMonths = ['Todos', ...distinctMonths];
+                    return allMonths.map(mes => {
+                      const isActive = nominaPeriodoFiltro.includes(mes) || (mes !== 'Todos' && nominaPeriodoFiltro.includes('Todos'));
+                      return (
+                        <button
+                          key={mes}
+                          onClick={() => {
+                            if (mes === 'Todos') {
+                              setNominaPeriodoFiltro(['Todos']);
+                            } else {
+                              let newFiltro = nominaPeriodoFiltro.filter(m => m !== 'Todos');
+                              if (newFiltro.includes(mes)) {
+                                newFiltro = newFiltro.filter(m => m !== mes);
+                              } else {
+                                newFiltro.push(mes);
+                              }
+                              if (newFiltro.length === 0 || newFiltro.length === distinctMonths.length) {
+                                setNominaPeriodoFiltro(['Todos']);
+                              } else {
+                                setNominaPeriodoFiltro(newFiltro);
+                              }
+                            }
+                          }}
+                          className={`px-3 py-1.5 text-xs font-mono rounded-xl transition-all ${
+                            isActive 
+                              ? 'bg-primary-container text-black font-bold shadow-[0_0_10px_rgba(255,204,41,0.3)]' 
+                              : 'bg-white/5 text-on-surface-variant hover:bg-white/10 border border-white/5'
+                          }`}
+                        >
+                          {mes}
+                        </button>
+                      );
+                    });
+                  })()}
                </div>
             </div>
 
