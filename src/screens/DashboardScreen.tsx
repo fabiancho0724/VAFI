@@ -8,12 +8,12 @@ import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, 
 export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
   
-  const [ingresosTotal, setIngresosTotal] = useState(173254.7);
-  const [ingresosAforado, setIngresosAforado] = useState(170665.2);
-  const [ingresosRecaudado, setIngresosRecaudado] = useState(173254.7);
-  const [gastosTotal, setGastosTotal] = useState(110225.5);
-  const [gastosComprometido, setGastosComprometido] = useState(199818.9);
-  const [gastosPagado, setGastosPagado] = useState(110225.5);
+  const [ingresosTotal, setIngresosTotal] = useState(387794.0);
+  const [ingresosAforado, setIngresosAforado] = useState(512232.6);
+  const [ingresosRecaudado, setIngresosRecaudado] = useState(387794.0);
+  const [gastosTotal, setGastosTotal] = useState(282311.9);
+  const [gastosComprometido, setGastosComprometido] = useState(345068.5);
+  const [gastosPagado, setGastosPagado] = useState(282311.9);
   
   const [ingresosGroups, setIngresosGroups] = useState<any[]>([]);
   const [gastosGroups, setGastosGroups] = useState<any[]>([]);
@@ -30,9 +30,10 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
   const [filtroGeneralRecurso, setFiltroGeneralRecurso] = useState<string>('Todos');
   const [ingresosTiposGroups, setIngresosTiposGroups] = useState<any[]>([]);
   const [expandedIngresoGroup, setExpandedIngresoGroup] = useState<string | null>(null);
-  const [expandedPieGroup, setExpandedPieGroup] = useState<string | null>(null); // New state for interactive pie
-  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined); // New state for pie hover
-  const [recursoFiltro, setRecursoFiltro] = useState<string>('Todos'); // 'Todos' | 'Recursos UPTC' | 'Recursos del Balance'
+  const [expandedRecursoItem, setExpandedRecursoItem] = useState<string | null>(null); // State for Level 2 Recurso toggle
+  const [expandedPieGroup, setExpandedPieGroup] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
+  const [recursoFiltro, setRecursoFiltro] = useState<string>('Todos');
   const [filtroReferencia, setFiltroReferencia] = useState<string>('Todas');
   const [filtroOperacionesLimit, setFiltroOperacionesLimit] = useState<string>('Top 5');
 
@@ -72,32 +73,48 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
       setIngresosRecaudado(recaudoSum / 1e6);
       setIngresosTotal(recaudoSum / 1e6); 
 
-      // Group by Clasificación del Recurso (Columna J - 10)
-      const groupKeys = Array.from(new Set(filteredData.map(r => String(r[clasifCol] || r[recursoCol] || '').trim()))).filter(Boolean);
+      // Group by Clasificación del Recurso (Columna J - 10) -> Recursos (Col D - 4) -> Conceptos Nombres (Col C - 3)
+      const groupKeys = Array.from(new Set(filteredData.map(r => String(r[clasifCol] || getTipoRecursoBalance(r) || 'Otros Recaudos').trim()))).filter(Boolean);
       
       const parsedTiposGroups = groupKeys.map(groupName => {
-         const rows = filteredData.filter(r => String(r[clasifCol] || r[recursoCol] || '').trim() === groupName);
-         const tInicial = rows.reduce((acc, r) => acc + parseNumber(r[inicialCol]), 0) / 1e6;
-         const tAforo = rows.reduce((acc, r) => acc + parseNumber(r[aforoCol]), 0) / 1e6;
-         const tRecaudo = rows.reduce((acc, r) => acc + parseNumber(r[recaudoCol]), 0) / 1e6;
+         const clasifRows = filteredData.filter(r => String(r[clasifCol] || getTipoRecursoBalance(r) || '').trim() === groupName);
+         const tInicial = clasifRows.reduce((acc, r) => acc + parseNumber(r[inicialCol]), 0) / 1e6;
+         const tAforo = clasifRows.reduce((acc, r) => acc + parseNumber(r[aforoCol]), 0) / 1e6;
+         const tRecaudo = clasifRows.reduce((acc, r) => acc + parseNumber(r[recaudoCol]), 0) / 1e6;
          
-         const conceptosItems = rows.map(r => {
-             const cNombre = String(r[conceptoCol] || '').trim();
-             const cCodigo = String(r[codigoCol] || '').trim();
-             const cRecurso = String(r[recursoCol] || '').trim();
-             const cInic = parseNumber(r[inicialCol]) / 1e6;
-             const cAforo = parseNumber(r[aforoCol]) / 1e6;
-             const cRecaudo = parseNumber(r[recaudoCol]) / 1e6;
-             const cEjec = cAforo > 0 ? (cRecaudo / cAforo) * 100 : 0;
+         const recursoKeys = Array.from(new Set(clasifRows.map(r => String(r[recursoCol] || '').trim()))).filter(Boolean);
+         
+         const recursosList = recursoKeys.map(recName => {
+             const recRows = clasifRows.filter(r => String(r[recursoCol] || '').trim() === recName);
+             const rInicial = recRows.reduce((acc, r) => acc + parseNumber(r[inicialCol]), 0) / 1e6;
+             const rAforo = recRows.reduce((acc, r) => acc + parseNumber(r[aforoCol]), 0) / 1e6;
+             const rRecaudo = recRows.reduce((acc, r) => acc + parseNumber(r[recaudoCol]), 0) / 1e6;
+             const rEjec = rAforo > 0 ? (rRecaudo / rAforo) * 100 : 0;
              
-             return { 
-                 code: cCodigo, 
-                 name: cNombre || cCodigo || 'Sin Concepto', 
-                 recurso: cRecurso,
-                 inicial: cInic,
-                 aforo: cAforo, 
-                 recaudo: cRecaudo,
-                 ejecucionPct: parseFloat(cEjec.toFixed(1))
+             const conceptosList = recRows.map(r => {
+                 const cNombre = String(r[conceptoCol] || r[codigoCol] || 'Sin Nombre').trim(); // SOLO TEXTO DE LA COL C (NOMBRE DEL CONCEPTO)
+                 const cInic = parseNumber(r[inicialCol]) / 1e6;
+                 const cAforo = parseNumber(r[aforoCol]) / 1e6;
+                 const cRecaudo = parseNumber(r[recaudoCol]) / 1e6;
+                 const cEjec = cAforo > 0 ? (cRecaudo / cAforo) * 100 : 0;
+                 
+                 return {
+                     name: cNombre, // NOMBRE TEXTUAL SIN CÓDIGO
+                     inicial: cInic,
+                     aforo: cAforo,
+                     recaudo: cRecaudo,
+                     ejecucionPct: parseFloat(cEjec.toFixed(1))
+                 };
+             }).filter(c => c.aforo > 0 || c.recaudo > 0 || c.inicial > 0)
+               .sort((a, b) => b.recaudo - a.recaudo);
+
+             return {
+                 name: recName,
+                 inicial: rInicial,
+                 aforo: rAforo,
+                 recaudo: rRecaudo,
+                 ejecucionPct: parseFloat(rEjec.toFixed(1)),
+                 conceptos: conceptosList
              };
          }).sort((a, b) => b.recaudo - a.recaudo);
 
@@ -109,7 +126,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
              aforo: tAforo, 
              recaudo: tRecaudo, 
              ejecucionPct: ejecucionPct,
-             recursos: conceptosItems 
+             recursos: recursosList 
          };
       }).sort((a,b) => b.recaudo - a.recaudo);
       
@@ -687,7 +704,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
                 </div>
              </div>
 
-             {/* Expanded Resources View */}
+             {/* Level 2: Expanded Resources & Level 3: Conceptos (Nombres de Col C) */}
              {rubro.recursos && rubro.recursos.length > 0 && (
                <div className="mt-4 pt-4 border-t border-white/10 w-full">
                  <button 
@@ -695,35 +712,63 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
                    className="w-full flex items-center justify-center gap-2 text-xs font-mono text-on-surface-variant hover:text-white transition-colors bg-white/5 hover:bg-white/10 py-2 rounded-lg"
                  >
                    {isExpanded ? (
-                     <><ChevronUp size={16} /> Ocultar Conceptos</>
+                     <><ChevronUp size={16} /> Ocultar Recursos de la Clasificación</>
                    ) : (
-                     <><ChevronDown size={16} /> Desplegar Conceptos que Constituyen el Ingreso (Col C) ({rubro.recursos.length})</>
+                     <><ChevronDown size={16} /> Ver Recursos que la Componen (Col D) ({rubro.recursos.length})</>
                    )}
                  </button>
                  
                  {isExpanded && (
-                   <div className="mt-4 space-y-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                     <div className="flex justify-between items-center px-4 py-2 text-[10px] font-mono text-on-surface-variant/70 uppercase bg-black/40 rounded-lg">
-                       <span className="flex-1 font-bold">Concepto (Col C) / Código (Col B)</span>
-                       <span className="w-20 text-right">Inicial (E)</span>
-                       <span className="w-20 text-right">Aforo (F)</span>
-                       <span className="w-20 text-right">Recaudo (G)</span>
-                       <span className="w-20 text-right">% Ejec. (G/F)</span>
-                     </div>
-                     {rubro.recursos.map((rec: any, idx: number) => (
-                       <div key={idx} className="flex justify-between items-center bg-white/5 hover:bg-white/10 transition-colors px-4 py-2.5 rounded-lg w-full font-mono text-xs">
-                         <div className="flex-1 mr-4 overflow-hidden">
-                           <span className="text-white font-bold block truncate" title={rec.name}>{String(rec.name || '')}</span>
-                           {rec.code && <span className="text-[10px] text-on-surface-variant/70 block">{rec.code}</span>}
+                   <div className="mt-4 space-y-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                     {rubro.recursos.map((recItem: any, rIdx: number) => {
+                       const recId = `${rubro.id}-REC-${rIdx}`;
+                       const isRecExpanded = expandedRecursoItem === recId;
+                       return (
+                         <div key={rIdx} className="bg-black/30 border border-white/10 rounded-xl p-3 space-y-2">
+                           {/* Level 2 Recurso Header */}
+                           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                             <div className="flex-1">
+                               <span className="text-xs font-bold text-white block">{recItem.name}</span>
+                               <span className="text-[10px] font-mono text-on-surface-variant/70">
+                                 Aforo: ${recItem.aforo.toLocaleString('es-CO', {maximumFractionDigits: 1})}M | Recaudo: ${recItem.recaudo.toLocaleString('es-CO', {maximumFractionDigits: 1})}M
+                               </span>
+                             </div>
+                             <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                               <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${recItem.ejecucionPct >= 80 ? 'bg-[#4ade80]/20 text-[#4ade80]' : recItem.ejecucionPct >= 50 ? 'bg-[#ffcc29]/20 text-[#ffcc29]' : 'bg-[#ff5b5b]/20 text-[#ff5b5b]'}`}>
+                                 {recItem.ejecucionPct.toFixed(1)}%
+                               </span>
+                               <button
+                                 onClick={() => setExpandedRecursoItem(isRecExpanded ? null : recId)}
+                                 className="text-[10px] font-mono px-2.5 py-1 rounded bg-white/5 hover:bg-white/15 text-primary-container hover:text-white transition-colors flex items-center gap-1"
+                               >
+                                 {isRecExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                 {isRecExpanded ? 'Ocultar Conceptos' : `Ver Conceptos (${recItem.conceptos.length})`}
+                               </button>
+                             </div>
+                           </div>
+
+                           {/* Level 3: Conceptos List (SOLO NOMBRES DE CONCEPTOS COL C) */}
+                           {isRecExpanded && recItem.conceptos && recItem.conceptos.length > 0 && (
+                             <div className="mt-2 pt-2 border-t border-white/5 space-y-1.5 pl-2">
+                               <div className="grid grid-cols-12 text-[9px] font-mono text-on-surface-variant/70 uppercase px-2 py-1 bg-white/5 rounded">
+                                 <span className="col-span-6 font-bold">Nombre del Concepto (Col C)</span>
+                                 <span className="col-span-2 text-right">Inicial (E)</span>
+                                 <span className="col-span-2 text-right">Aforo (F)</span>
+                                 <span className="col-span-2 text-right">Recaudo (G)</span>
+                               </div>
+                               {recItem.conceptos.map((cItem: any, cIdx: number) => (
+                                 <div key={cIdx} className="grid grid-cols-12 text-xs font-mono items-center px-2 py-1.5 bg-white/[0.02] hover:bg-white/10 rounded transition-colors">
+                                   <span className="col-span-6 text-white font-medium truncate" title={cItem.name}>{cItem.name}</span>
+                                   <span className="col-span-2 text-on-surface-variant text-right">${cItem.inicial.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                                   <span className="col-span-2 text-sky-300 text-right">${cItem.aforo.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                                   <span className="col-span-2 text-primary-container font-bold text-right">${cItem.recaudo.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                                 </div>
+                               ))}
+                             </div>
+                           )}
                          </div>
-                         <span className="text-on-surface-variant w-20 text-right">${rec.inicial.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
-                         <span className="text-sky-300 w-20 text-right">${rec.aforo.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
-                         <span className="text-primary-container font-bold w-20 text-right">${rec.recaudo.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
-                         <span className={`w-20 text-right font-bold ${rec.ejecucionPct >= 80 ? 'text-[#4ade80]' : rec.ejecucionPct >= 50 ? 'text-[#ffcc29]' : 'text-[#ff5b5b]'}`}>
-                           {rec.ejecucionPct.toFixed(1)}%
-                         </span>
-                       </div>
-                     ))}
+                       );
+                     })}
                    </div>
                  )}
                </div>
