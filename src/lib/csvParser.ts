@@ -65,15 +65,44 @@ export function getCategoryColumn(data: any[], preferredNames: string[] = ['conc
   return null;
 }
 
+export function parseNumber(val: any): number {
+  if (val === undefined || val === null) return 0;
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  let s = String(val).trim();
+  if (!s) return 0;
+  s = s.replace(/[$ ]/g, '');
+  if (s.includes(',') && s.includes('.')) {
+    s = s.replace(/,/g, '');
+  } else if (s.includes(',') && !s.includes('.')) {
+    s = s.replace(/,/g, '.');
+  }
+  const parsed = parseFloat(s);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 export function groupAndSum(data: any[], groupCol: string, sumCol: string) {
   const result: Record<string, number> = {};
   data.forEach(row => {
     const group = row[groupCol] || 'Otros';
-    const val = row[sumCol] || 0;
+    const val = row[sumCol];
     if (!result[group]) result[group] = 0;
-    // ensure value is a number
-    let numVal = typeof val === 'number' ? val : parseFloat(val.toString().replace(/[^0-9.-]+/g, '')) || 0;
-    result[group] += numVal;
+    result[group] += parseNumber(val);
   });
   return Object.entries(result).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+}
+
+export function formatFechaCorte(rawDate: string): string {
+  if (!rawDate) return '31 de Agosto de 2026';
+  const clean = String(rawDate).trim();
+  const parts = clean.split('/');
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const monthIdx = parseInt(parts[1], 10) - 1;
+    const year = parts[2];
+    const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    if (!isNaN(day) && monthIdx >= 0 && monthIdx < 12) {
+      return `${day} de ${months[monthIdx]} de ${year}`;
+    }
+  }
+  return clean;
 }

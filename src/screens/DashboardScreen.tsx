@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Download, Filter, Wallet, Component, Network, Layers, LayoutList, Settings, TrendingUp, CheckCircle, Clock, Upload, AlertTriangle, PieChart as PieChartIcon, ChevronDown, ChevronUp } from 'lucide-react';
-import { fetchAndParseCSV, groupAndSum, getNumericColumn, getCategoryColumn } from '../lib/csvParser';
+import { fetchAndParseCSV, groupAndSum, getNumericColumn, getCategoryColumn, parseNumber, formatFechaCorte } from '../lib/csvParser';
 import { RECURSOS_FINANCIEROS } from '../lib/constants';
 import { getTipoRecursoBalance } from '../lib/resourceMapper';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart, Line, AreaChart, Area, LabelList } from 'recharts';
@@ -44,46 +44,75 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
   useEffect(() => {
     if (rawIngresos && rawIngresos.length > 0) {
       const firstRowKeysDef = Object.keys(rawIngresos[0]);
+      const inicialCol = firstRowKeysDef.find(k => k.toLowerCase().includes('inicial')) || firstRowKeysDef[4] || 'Valor inicial';
       const aforoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('aforo')) || firstRowKeysDef[5] || 'Valor aforo';
       const recaudoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('recaudo')) || firstRowKeysDef[6] || 'Total recaudo';
-      const recursoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('recurso')) || firstRowKeysDef[3] || 'Recurso';
+      const fechaCol = firstRowKeysDef.find(k => k.toLowerCase().includes('fecha')) || firstRowKeysDef[7] || 'Fecha final';
+      const recursoCol = firstRowKeysDef.find(k => k.toLowerCase() === 'recurso') || firstRowKeysDef[3] || 'Recurso';
       const conceptoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('concepto')) || firstRowKeysDef[2] || 'Concepto';
+      const codigoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || firstRowKeysDef[1] || 'Código concepto';
+      const clasifCol = firstRowKeysDef.find(k => k.toLowerCase().includes('clasificaci')) || firstRowKeysDef[9] || 'Clasificación del Recurso';
+
+      // Update Cutoff Date dynamically from Col H (8)
+      const rawFecha = rawIngresos[0][fechaCol] || rawIngresos[0][firstRowKeysDef[7]] || '';
+      if (rawFecha) {
+        const formattedDate = formatFechaCorte(String(rawFecha));
+        localStorage.setItem('vafi_fechaCorte', formattedDate);
+        window.dispatchEvent(new Event('storage'));
+      }
 
       const filteredData = recursoFiltro === 'Todos'
         ? rawIngresos
         : rawIngresos.filter(r => getTipoRecursoBalance(r) === recursoFiltro);
 
-      const aforoSum = filteredData.reduce((acc, row) => acc + (parseFloat(String(row[aforoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
-      const recaudoSum = filteredData.reduce((acc, row) => acc + (parseFloat(String(row[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
+      const aforoSum = filteredData.reduce((acc, row) => acc + parseNumber(row[aforoCol]), 0);
+      const recaudoSum = filteredData.reduce((acc, row) => acc + parseNumber(row[recaudoCol]), 0);
       
-      if (aforoSum > 0) setIngresosAforado(aforoSum / 1e6);
-      if (recaudoSum > 0) {
-         setIngresosRecaudado(recaudoSum / 1e6);
-         setIngresosTotal(recaudoSum / 1e6); 
-      }
+      setIngresosAforado(aforoSum / 1e6);
+      setIngresosRecaudado(recaudoSum / 1e6);
+      setIngresosTotal(recaudoSum / 1e6); 
 
-      // Group by Recurso / Fuente
-      const tipos = Array.from(new Set(filteredData.map(r => r[recursoCol]))).filter(Boolean);
-      const parsedTiposGroups = tipos.map(tipo => {
-         const rows = filteredData.filter(r => r[recursoCol] === tipo);
-         const tAforo = rows.reduce((acc, r) => acc + (parseFloat(String(r[aforoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
-         const tRecaudo = rows.reduce((acc, r) => acc + (parseFloat(String(r[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+      // Group by Clasificación del Recurso (Columna J - 10)
+      const groupKeys = Array.from(new Set(filteredData.map(r => String(r[clasifCol] || r[recursoCol] || '').trim()))).filter(Boolean);
+      
+      const parsedTiposGroups = groupKeys.map(groupName => {
+         const rows = filteredData.filter(r => String(r[clasifCol] || r[recursoCol] || '').trim() === groupName);
+         const tInicial = rows.reduce((acc, r) => acc + parseNumber(r[inicialCol]), 0) / 1e6;
+         const tAforo = rows.reduce((acc, r) => acc + parseNumber(r[aforoCol]), 0) / 1e6;
+         const tRecaudo = rows.reduce((acc, r) => acc + parseNumber(r[recaudoCol]), 0) / 1e6;
          
-         const conceptoKeys = Array.from(new Set(rows.map(r => r[conceptoCol]))).filter(Boolean);
-         const recursosItems = conceptoKeys.map(conc => {
-             const cRows = rows.filter(r => r[conceptoCol] === conc);
-             const rAforo = cRows.reduce((acc, r) => acc + (parseFloat(String(r[aforoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
-             const rRecaudo = cRows.reduce((acc, r) => acc + (parseFloat(String(r[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
-             return { name: conc, aforo: rAforo, recaudo: rRecaudo };
+         const conceptosItems = rows.map(r => {
+             const cNombre = String(r[conceptoCol] || '').trim();
+             const cCodigo = String(r[codigoCol] || '').trim();
+             const cRecurso = String(r[recursoCol] || '').trim();
+             const cInic = parseNumber(r[inicialCol]) / 1e6;
+             const cAforo = parseNumber(r[aforoCol]) / 1e6;
+             const cRecaudo = parseNumber(r[recaudoCol]) / 1e6;
+             const cEjec = cAforo > 0 ? (cRecaudo / cAforo) * 100 : 0;
+             
+             return { 
+                 code: cCodigo, 
+                 name: cNombre || cCodigo || 'Sin Concepto', 
+                 recurso: cRecurso,
+                 inicial: cInic,
+                 aforo: cAforo, 
+                 recaudo: cRecaudo,
+                 ejecucionPct: parseFloat(cEjec.toFixed(1))
+             };
          }).sort((a, b) => b.recaudo - a.recaudo);
 
+         const ejecucionPct = tAforo > 0 ? parseFloat(((tRecaudo / tAforo) * 100).toFixed(1)) : 0;
+
          return { 
-             name: tipo, 
+             name: groupName, 
+             inicial: tInicial,
              aforo: tAforo, 
              recaudo: tRecaudo, 
-             recursos: recursosItems 
+             ejecucionPct: ejecucionPct,
+             recursos: conceptosItems 
          };
       }).sort((a,b) => b.recaudo - a.recaudo);
+      
       setIngresosTiposGroups(parsedTiposGroups);
     }
   }, [rawIngresos, recursoFiltro]);
@@ -313,7 +342,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
   }
 
   const recaudoPct = ingresosAforado > 0 ? (ingresosRecaudado / ingresosAforado) * 100 : 0;
-  const gastoPct = ingresosAforado > 0 ? (gastosComprometido / ingresosAforado) * 100 : 0;
+  const gastoPct = gastosComprometido > 0 ? (gastosPagado / gastosComprometido) * 100 : 0;
 
   return (
     <div className="flex flex-col mb-20 max-w-7xl mx-auto">
@@ -411,13 +440,13 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
               </div>
               <div className="text-right">
                 <span className="text-xs text-on-surface-variant block mb-1">Ejecución</span>
-                <span className="text-xl font-mono font-bold text-white">{ingresosRecaudado > 0 ? ((gastosPagado / ingresosRecaudado) * 100).toFixed(1) : '0'}%</span>
+                <span className="text-xl font-mono font-bold text-white">{gastosComprometido > 0 ? ((gastosPagado / gastosComprometido) * 100).toFixed(1) : '0'}%</span>
               </div>
             </div>
             
             {/* Progress Bar */}
             <div className="w-full h-3 bg-white/10 rounded-full mb-6 overflow-hidden flex">
-              <div className="h-full bg-[#ffcc29] rounded-full" style={{ width: `${Math.min(100, ingresosRecaudado > 0 ? (gastosPagado / ingresosRecaudado) * 100 : 0)}%` }}></div>
+              <div className="h-full bg-[#ffcc29] rounded-full" style={{ width: `${Math.min(100, gastosComprometido > 0 ? (gastosPagado / gastosComprometido) * 100 : 0)}%` }}></div>
             </div>
             
             <div className="pt-4 flex justify-between items-center text-sm">
@@ -519,10 +548,11 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
         {(ingresosTiposGroups.length > 0 ? ingresosTiposGroups.map((g, idx) => ({
            id: `R-${(idx+1)*10}`,
            title: g.name,
-           sub: 'CLASIFICACIÓN DE INGRESO',
-           presupuesto: g.aforo.toLocaleString('es-CO', {maximumFractionDigits: 1}),
+           sub: 'CLASIFICACIÓN DE INGRESO (COL J)',
+           inicial: g.inicial.toLocaleString('es-CO', {maximumFractionDigits: 1}),
+           aforo: g.aforo.toLocaleString('es-CO', {maximumFractionDigits: 1}),
            recaudo: g.recaudo.toLocaleString('es-CO', {maximumFractionDigits: 1}),
-           pct: g.aforo > 0 ? ((g.recaudo / g.aforo) * 100).toFixed(1) + '%' : '0%',
+           pct: g.ejecucionPct.toFixed(1) + '%',
            color: idx % 4 === 0 ? 'from-[#ffcc29] to-[#ffcc29]/70' : idx % 4 === 1 ? 'from-[#7bd0ff] to-[#7bd0ff]/70' : idx % 4 === 2 ? 'from-secondary to-secondary/70' : 'from-[#ff5b5b] to-[#ff5b5b]/70',
            baseColor: idx % 4 === 0 ? '#ffcc29' : idx % 4 === 1 ? '#7bd0ff' : idx % 4 === 2 ? '#d0bcff' : '#ff5b5b',
            recursos: g.recursos || [],
@@ -530,61 +560,65 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
         })) : [
            { 
               id: 'R-10', 
-              title: 'Recursos Nación', 
+              title: 'Aportes de la Nación', 
               sub: 'APORTES DE LA NACIÓN', 
-              presupuesto: '375.664,4', 
-              recaudo: '125.518,3', 
-              pct: '33.4%', 
+              inicial: '356.927,1',
+              aforo: '385.381,0', 
+              recaudo: '276.365,9', 
+              pct: '71.7%', 
               color: 'from-[#ffcc29] to-[#ffcc29]/70',
               baseColor: '#ffcc29',
               recursos: [],
               subItems: [
-                { label: 'Funcionamiento', value: '115.282,8' },
-                { label: 'Inversión', value: '7.745,0' }
+                { label: 'Funcionamiento', value: '211.546,7' },
+                { label: 'Inversión', value: '7.740,3' }
               ]
            },
            { 
               id: 'R-20', 
-              title: 'Recursos Propios', 
-              sub: 'MATRÍCULAS PREGRADO / OTRAS RENTAS', 
-              presupuesto: '21.887,5', 
-              recaudo: '9.200,1', 
-              pct: '48.0%', 
-              color: 'from-[#7bd0ff] to-[#7bd0ff]/70',
-              baseColor: '#7bd0ff',
-              recursos: [],
-              subItems: [
-                { label: 'Pregrado', value: '4.737,0' },
-                { label: 'Otros Ingresos Propios', value: '4.949,4' }
-              ]
-           },
-           { 
-              id: 'R-30', 
               title: 'Extensión y Posgrados', 
               sub: 'POSGRADOS, CONVENIOS Y EDUCACIÓN CONTINUADA', 
-              presupuesto: '87.508,6', 
-              recaudo: '36.931,0', 
-              pct: '38.0%', 
+              inicial: '74.987,1',
+              aforo: '94.561,7', 
+              recaudo: '84.234,1', 
+              pct: '89.1%', 
               color: 'from-secondary to-secondary/70',
               baseColor: '#d0bcff',
               recursos: [],
               subItems: [
-                { label: 'Posgrados', value: '18.466,2' },
-                { label: 'Convenios', value: '15.154,2' }
+                { label: 'Posgrados', value: '7.734,7' },
+                { label: 'Convenios', value: '15.347,6' }
+              ]
+           },
+           { 
+              id: 'R-30', 
+              title: 'Recursos Propios', 
+              sub: 'MATRÍCULAS PREGRADO / OTRAS RENTAS', 
+              inicial: '21.887,5',
+              aforo: '24.672,6', 
+              recaudo: '22.002,7', 
+              pct: '89.2%', 
+              color: 'from-[#7bd0ff] to-[#7bd0ff]/70',
+              baseColor: '#7bd0ff',
+              recursos: [],
+              subItems: [
+                { label: 'Devolución IVA', value: '4.672,2' },
+                { label: 'Otros Propios', value: '3.745,5' }
               ]
            },
            { 
               id: 'R-40', 
-              title: 'Estampilla PRO-UPTC', 
+              title: 'Estampilla Pro UPTC', 
               sub: 'PRO DESARROLLO DE LA UPTC', 
-              presupuesto: '4.206,4', 
-              recaudo: '1.605,1', 
-              pct: '38.1%', 
+              inicial: '4.206,4',
+              aforo: '7.617,3', 
+              recaudo: '5.191,2', 
+              pct: '68.2%', 
               color: 'from-[#ff5b5b] to-[#ff5b5b]/70',
               baseColor: '#ff5b5b',
               recursos: [],
               subItems: [
-                { label: 'Recaudo Total', value: '1.605,1' }
+                { label: 'Recaudo Total', value: '5.191,2' }
               ]
            },
         ]).map((rubro) => {
@@ -601,47 +635,52 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
                     <div className="flex items-center gap-3 mb-2">
                       <h4 className="text-xl font-display font-bold text-white">{String(rubro.title || '')}</h4>
                     </div>
-                    <p className="text-[10px] text-on-surface-variant font-mono tracking-widest uppercase mb-6 truncate" title={rubro.sub}>{rubro.sub}</p>
+                    <p className="text-[10px] text-on-surface-variant font-mono tracking-widest uppercase mb-4 truncate" title={rubro.sub}>{rubro.sub}</p>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-2 bg-white/5 p-3 rounded-xl border border-white/10">
                     <div>
-                       <span className="text-xs text-on-surface-variant block mb-1">Presupuestado Inicial</span>
-                       <span className="text-2xl font-bold font-mono text-white">${rubro.presupuesto} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                       <span className="text-[10px] text-on-surface-variant block mb-0.5">Inicial (Col E)</span>
+                       <span className="text-sm font-bold font-mono text-white">${rubro.inicial} <span className="text-[10px] text-on-surface-variant">M</span></span>
                     </div>
                     <div>
-                       <span className="text-xs text-on-surface-variant block mb-1">Recaudo</span>
-                       <span className="text-3xl font-display font-bold text-primary-container">${rubro.recaudo} <span className="text-xs font-sans text-on-surface-variant font-normal">mill.</span></span>
+                       <span className="text-[10px] text-on-surface-variant block mb-0.5">Aforo (Col F)</span>
+                       <span className="text-sm font-bold font-mono text-sky-300">${rubro.aforo} <span className="text-[10px] text-on-surface-variant">M</span></span>
+                    </div>
+                    <div>
+                       <span className="text-[10px] text-on-surface-variant block mb-0.5">Recaudo (Col G)</span>
+                       <span className="text-sm font-bold font-mono text-primary-container">${rubro.recaudo} <span className="text-[10px] text-on-surface-variant">M</span></span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right side: Chart & Details */}
                 <div className="w-full md:w-56 flex flex-col items-center justify-center shrink-0 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
-                  <div className="relative w-28 h-28 flex items-center justify-center mb-4">
+                  <div className="relative w-24 h-24 flex items-center justify-center mb-2">
                      <svg className="w-full h-full -rotate-90">
-                        <circle cx="56" cy="56" r="48" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                        <circle cx="48" cy="48" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
                         <circle 
                            className="progress-ring-circle" 
-                           cx="56" cy="56" r="48" 
+                           cx="48" cy="48" r="40" 
                            fill="transparent" 
                            stroke="currentColor" 
-                           strokeWidth="12" 
-                           strokeDasharray="301" 
-                           strokeDashoffset={301 - (301 * parseFloat(rubro.pct || '0') / 100)} 
+                           strokeWidth="10" 
+                           strokeDasharray="251" 
+                           strokeDashoffset={251 - (251 * parseFloat(rubro.pct || '0') / 100)} 
                            style={{ color: rubro.baseColor }}
                         />
                      </svg>
                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-white">{rubro.pct}</span>
+                        <span className="text-lg font-bold text-white">{rubro.pct}</span>
+                        <span className="text-[9px] text-on-surface-variant font-mono">Ejecución</span>
                      </div>
                   </div>
 
-                  <div className="w-full space-y-2">
+                  <div className="w-full space-y-1.5">
                     {rubro.subItems.map((item: any, idx: number) => (
-                      <div key={idx} className="bg-white/5 px-3 py-2 rounded-lg flex justify-between items-center w-full">
+                      <div key={idx} className="bg-white/5 px-2.5 py-1.5 rounded-lg flex justify-between items-center w-full">
                          <span className="text-[10px] text-on-surface-variant uppercase truncate mr-2" title={item.label}>{String(item.label || '')}</span>
-                         <span className="text-xs font-bold text-white whitespace-nowrap">${item.value}</span>
+                         <span className="text-xs font-bold text-white whitespace-nowrap">${item.value}M</span>
                       </div>
                     ))}
                   </div>
@@ -656,24 +695,33 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
                    className="w-full flex items-center justify-center gap-2 text-xs font-mono text-on-surface-variant hover:text-white transition-colors bg-white/5 hover:bg-white/10 py-2 rounded-lg"
                  >
                    {isExpanded ? (
-                     <><ChevronUp size={16} /> Ocultar Recursos</>
+                     <><ChevronUp size={16} /> Ocultar Conceptos</>
                    ) : (
-                     <><ChevronDown size={16} /> Ver Todos los Recursos ({rubro.recursos.length})</>
+                     <><ChevronDown size={16} /> Desplegar Conceptos que Constituyen el Ingreso (Col C) ({rubro.recursos.length})</>
                    )}
                  </button>
                  
                  {isExpanded && (
-                   <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                     <div className="flex justify-between items-center px-4 py-2 text-[10px] font-mono text-on-surface-variant/70 uppercase">
-                       <span className="flex-1">Nombre del Recurso</span>
-                       <span className="w-24 text-right">Inicial</span>
-                       <span className="w-24 text-right">Recaudo</span>
+                   <div className="mt-4 space-y-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                     <div className="flex justify-between items-center px-4 py-2 text-[10px] font-mono text-on-surface-variant/70 uppercase bg-black/40 rounded-lg">
+                       <span className="flex-1 font-bold">Concepto (Col C) / Código (Col B)</span>
+                       <span className="w-20 text-right">Inicial (E)</span>
+                       <span className="w-20 text-right">Aforo (F)</span>
+                       <span className="w-20 text-right">Recaudo (G)</span>
+                       <span className="w-20 text-right">% Ejec. (G/F)</span>
                      </div>
                      {rubro.recursos.map((rec: any, idx: number) => (
-                       <div key={idx} className="flex justify-between items-center bg-white/5 hover:bg-white/10 transition-colors px-4 py-3 rounded-lg w-full">
-                         <span className="text-xs text-white truncate flex-1 mr-4" title={rec.name}>{String(rec.name || '')}</span>
-                         <span className="text-xs font-mono text-on-surface-variant w-24 text-right">${rec.aforo.toLocaleString('es-CO', {maximumFractionDigits: 1})}</span>
-                         <span className="text-xs font-bold text-primary-container w-24 text-right">${rec.recaudo.toLocaleString('es-CO', {maximumFractionDigits: 1})}</span>
+                       <div key={idx} className="flex justify-between items-center bg-white/5 hover:bg-white/10 transition-colors px-4 py-2.5 rounded-lg w-full font-mono text-xs">
+                         <div className="flex-1 mr-4 overflow-hidden">
+                           <span className="text-white font-bold block truncate" title={rec.name}>{String(rec.name || '')}</span>
+                           {rec.code && <span className="text-[10px] text-on-surface-variant/70 block">{rec.code}</span>}
+                         </div>
+                         <span className="text-on-surface-variant w-20 text-right">${rec.inicial.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                         <span className="text-sky-300 w-20 text-right">${rec.aforo.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                         <span className="text-primary-container font-bold w-20 text-right">${rec.recaudo.toLocaleString('es-CO', {maximumFractionDigits: 1})}M</span>
+                         <span className={`w-20 text-right font-bold ${rec.ejecucionPct >= 80 ? 'text-[#4ade80]' : rec.ejecucionPct >= 50 ? 'text-[#ffcc29]' : 'text-[#ff5b5b]'}`}>
+                           {rec.ejecucionPct.toFixed(1)}%
+                         </span>
                        </div>
                      ))}
                    </div>
