@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend, Line, LineChart } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Users, Calculator, Calendar, ToggleLeft, ToggleRight, ArrowLeft } from 'lucide-react';
 import { budgetData } from '../data/budgetData';
+import { fetchAndParseCSV } from '../lib/csvParser';
 
 const SPECIFIC_RESOURCES = Array.from(new Set(budgetData.filter(d => d.category === 'Ingresos').map(d => `${d.resourceCode} - ${d.description}`))).sort();
 const MAIN_CATEGORIES = ['Recursos Nación', 'Recursos Propios'] as const;
@@ -35,15 +36,28 @@ const INDICADORS_DATA: Record<number, { ipc: number; salarioMinimo: number; decr
 };
 
 export function NominaScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
-  const [selectedYear, setSelectedYear] = useState<number>(2024);
+  const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [includeHonorarios, setIncludeHonorarios] = useState<boolean>(true);
   const [selectedResourceCategory, setSelectedResourceCategory] = useState<string>(SPECIFIC_RESOURCES[0] || '');
   const [selectedMainIncomeCategory, setSelectedMainIncomeCategory] = useState<string>('Todos');
+  const [rawNomina, setRawNomina] = useState<any[]>([]);
 
   const [showVarGastos, setShowVarGastos] = useState<boolean>(true);
   const [showIpc, setShowIpc] = useState<boolean>(true);
   const [showSalarioMinimo, setShowSalarioMinimo] = useState<boolean>(true);
   const [showDecreto1278, setShowDecreto1278] = useState<boolean>(true);
+
+  useEffect(() => {
+    async function loadNominaCSV() {
+      try {
+        const rows = await fetchAndParseCSV('/data/Nomina.csv');
+        if (rows && rows.length > 0) {
+          setRawNomina(rows);
+        }
+      } catch (e) {}
+    }
+    loadNominaCSV();
+  }, []);
 
   const resourceEvolutionData = useMemo(() => {
     return YEARS.map((year) => {
@@ -64,6 +78,13 @@ export function NominaScreen({ onNavigate }: { onNavigate: (s: string) => void }
   }, [selectedResourceCategory]);
 
   const aggregatedData = useMemo(() => {
+    const csvNomina2026Total = rawNomina.reduce((acc, row) => {
+      const keys = Object.keys(row);
+      const valCol = keys.find(k => k.toLowerCase().includes('valor') || k.toLowerCase().includes('liquida')) || keys[3];
+      const valStr = String(row[valCol] || 0).replace(/[^0-9.-]+/g, '');
+      return acc + (parseFloat(valStr) || 0);
+    }, 0);
+
     return YEARS.map((year) => {
       const yearRecords = budgetData.filter((d) => d.year === year);
       
@@ -76,7 +97,10 @@ export function NominaScreen({ onNavigate }: { onNavigate: (s: string) => void }
       
       const outRecords = yearRecords.filter((d) => d.category !== 'Ingresos');
       
-      const nomina = outRecords.filter((d) => d.category === 'Nómina').reduce((acc, curr) => acc + curr.amount, 0);
+      let nomina = outRecords.filter((d) => d.category === 'Nómina').reduce((acc, curr) => acc + curr.amount, 0);
+      if (year === 2026 && csvNomina2026Total > 0) {
+        nomina = csvNomina2026Total;
+      }
       const honorarios = outRecords.filter((d) => d.category === 'Honorarios').reduce((acc, curr) => acc + curr.amount, 0);
 
       const gastosTotales = includeHonorarios ? nomina + honorarios : nomina;
@@ -91,7 +115,7 @@ export function NominaScreen({ onNavigate }: { onNavigate: (s: string) => void }
         delta,
       };
     });
-  }, [includeHonorarios, selectedMainIncomeCategory]);
+  }, [includeHonorarios, selectedMainIncomeCategory, rawNomina]);
 
   const currentYearData = aggregatedData.find((d) => d.year === selectedYear) || {
     year: selectedYear,
@@ -129,6 +153,25 @@ export function NominaScreen({ onNavigate }: { onNavigate: (s: string) => void }
   }, [aggregatedData]);
 
   const breakdownData = useMemo(() => {
+    if (selectedYear === 2026 && rawNomina.length > 0) {
+      const mapVinc: Record<string, number> = {};
+      rawNomina.forEach(row => {
+        const keys = Object.keys(row);
+        const vincCol = keys.find(k => k.toLowerCase().includes('vincula')) || keys[7] || 'Vinculacion';
+        const valCol = keys.find(k => k.toLowerCase().includes('valor') || k.toLowerCase().includes('liquida')) || keys[3] || 'Valor liquidacion';
+        
+        const vinc = String(row[vincCol] || 'Otros').trim();
+        const valStr = String(row[valCol] || 0).replace(/[^0-9.-]+/g, '');
+        const val = parseFloat(valStr) || 0;
+        
+        mapVinc[vinc] = (mapVinc[vinc] || 0) + val;
+      });
+
+      return Object.entries(mapVinc)
+        .map(([name, value]) => ({ name: `Vinculación ${name}`, value }))
+        .sort((a, b) => b.value - a.value);
+    }
+
     let records = budgetData.filter(
       (d) => d.year === selectedYear && (d.category === 'Nómina' || (includeHonorarios && d.category === 'Honorarios'))
     );
@@ -146,7 +189,7 @@ export function NominaScreen({ onNavigate }: { onNavigate: (s: string) => void }
     return Object.entries(categoryMap)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [selectedYear, includeHonorarios]);
+  }, [selectedYear, includeHonorarios, rawNomina, selectedMainIncomeCategory]);
 
   return (
     <div className="flex flex-col mb-20 max-w-7xl mx-auto space-y-8">
