@@ -7,9 +7,11 @@ export async function fetchAndParseCSV(url: string): Promise<any[]> {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
     const text = await response.text();
+    const delimiter = text.includes(';') ? ';' : ',';
     return new Promise((resolve, reject) => {
       Papa.parse(text, {
         header: true,
+        delimiter: delimiter,
         dynamicTyping: true,
         skipEmptyLines: true,
         complete: (results) => resolve(results.data),
@@ -24,13 +26,21 @@ export async function fetchAndParseCSV(url: string): Promise<any[]> {
 
 export function parseLocalCSV(file: File): Promise<any[]> {
   return new Promise((resolve, reject) => {
-    Papa.parse(file, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      complete: (results) => resolve(results.data),
-      error: (error) => reject(error),
-    });
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = (e.target?.result as string) || '';
+      const delimiter = text.includes(';') ? ';' : ',';
+      Papa.parse(text, {
+        header: true,
+        delimiter: delimiter,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: (results) => resolve(results.data),
+        error: (error) => reject(error),
+      });
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsText(file);
   });
 }
 
