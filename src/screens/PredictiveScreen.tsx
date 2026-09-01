@@ -37,7 +37,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         const bd = await fetchAndParseCSV('/data/balance.csv');
         const im = await fetchAndParseCSV('/data/ingresos_mensuales.csv');
         const co = await fetchAndParseCSV('/data/compromisos.csv');
-        const nd = await fetchAndParseCSV('/data/nomina.csv');
+        const nd = await fetchAndParseCSV('/data/Nomina.csv?v=3');
         setBalanceData(bd); setIngresosMensuales(im); setCompromisos(co); setNominaData(nd);
         setDataStage('ready');
       } catch (e: any) {
