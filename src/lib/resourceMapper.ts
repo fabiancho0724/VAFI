@@ -52,8 +52,18 @@ export function getRecursoEquivalence(recursoStr: string): string {
   return clean;
 }
 
-export function getMacroCategoriaRecurso(recursoStr: string): 'Aportes de la Nación' | 'Recursos Propios' | 'Extensión y Posgrados' | 'Estampilla Pro UPTC' {
-  const clean = String(recursoStr || '').trim();
+export function getMacroCategoriaRecurso(recursoOrRow: any): 'Aportes de la Nación' | 'Recursos Propios' | 'Extensión y Posgrados' | 'Estampilla Pro UPTC' {
+  let clean = '';
+  if (typeof recursoOrRow === 'object' && recursoOrRow !== null) {
+    const valColJ = String(recursoOrRow['Clasificación del Recurso'] || recursoOrRow['Clasificacion del Recurso'] || '').trim();
+    if (valColJ.includes('Nación') || valColJ.includes('Nacion')) return 'Aportes de la Nación';
+    if (valColJ.includes('Propios')) return 'Recursos Propios';
+    if (valColJ.includes('Extensión') || valColJ.includes('Extension') || valColJ.includes('Posgrados')) return 'Extensión y Posgrados';
+    if (valColJ.includes('Estampilla')) return 'Estampilla Pro UPTC';
+    clean = String(recursoOrRow['Recurso'] || recursoOrRow['recurso'] || '').trim();
+  } else {
+    clean = String(recursoOrRow || '').trim();
+  }
 
   // Excel Formula Logic: SI(O(D2="10.0..."; D2="10.1..."; ...); "Aportes de la Nación")
   if (
@@ -95,10 +105,13 @@ export function getMacroCategoriaRecurso(recursoStr: string): 'Aportes de la Nac
   return "Aportes de la Nación";
 }
 
-export function getCategoriaGastoFromCodigo(codigoConcepto: string): string {
-  // Excel Formula Logic:
-  // =SI(IZQUIERDA(B2;5)="2.1.1";"2.1.1 Gastos de Personal";SI(IZQUIERDA(B2;5)="2.1.2";"2.1.2 Gastos de Funcionamiento";SI(IZQUIERDA(B2;5)="2.1.3";"2.1.3 Transferencias Corrientes";SI(IZQUIERDA(B2;5)="2.1.8";"2.1.8 Tasas y Multas";SI(IZQUIERDA(B2;5)="2.2.2";"2.2.2 Servicios de la Deuda";"2.3 Gastos de Inversión")))))
-  const clean = String(codigoConcepto || '').trim();
+export function getCategoriaGastoFromCodigo(codigoOrRow: any): string {
+  if (typeof codigoOrRow === 'object' && codigoOrRow !== null) {
+    const valColB = String(codigoOrRow['Tipo de Gasto'] || codigoOrRow['Tipo de gasto'] || '').trim();
+    if (valColB.length > 3) return valColB;
+    codigoOrRow = codigoOrRow['Código concepto'] || codigoOrRow['Codigo concepto'] || codigoOrRow['codigo'] || '';
+  }
+  const clean = String(codigoOrRow || '').trim();
   const left5 = clean.substring(0, 5);
 
   if (left5 === "2.1.1") return "2.1.1 Gastos de Personal";
@@ -136,10 +149,15 @@ export function getResourceFullName(code: string): string {
   return found ? found.nombre : code;
 }
 
-export function getTipoRecursoBalance(conceptoStr: string): 'Recursos del Balance' | 'Recursos UPTC' {
-  // Excel Formula: =SI(ESNUMERO(HALLAR("Recursos del Balance"; C2 (Concepto))); "Recursos del Balance"; "Recursos UPTC")
-  const clean = String(conceptoStr || '').trim().toLowerCase();
-  if (clean.includes('recursos del balance')) {
+export function getTipoRecursoBalance(conceptoOrRow: any): 'Recursos del Balance' | 'Recursos UPTC' {
+  if (typeof conceptoOrRow === 'object' && conceptoOrRow !== null) {
+    const valColI = String(conceptoOrRow['Tipo de Recurso'] || conceptoOrRow['Tipo de recurso'] || '').trim();
+    if (valColI.toLowerCase().includes('balance')) return 'Recursos del Balance';
+    if (valColI.toLowerCase().includes('uptc')) return 'Recursos UPTC';
+    conceptoOrRow = conceptoOrRow['Concepto'] || conceptoOrRow['concepto'] || '';
+  }
+  const clean = String(conceptoOrRow || '').trim().toLowerCase();
+  if (clean.includes('recursos del balance') || clean.includes('balance')) {
     return 'Recursos del Balance';
   }
   return 'Recursos UPTC';

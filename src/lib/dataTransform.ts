@@ -56,10 +56,11 @@ export const normalizeData = (ingresosRaw: any[], gastosRaw: any[], ingresoMensu
   // Normalize Gastos
   if (gastosRaw && gastosRaw.length > 0) {
     const keys = Object.keys(gastosRaw[0]);
-    const compCol = keys.find(k => k.toLowerCase().includes('compromiso')) || keys[6] || 'Acumulado compromiso';
-    const pagoCol = keys.find(k => k.toLowerCase().includes('pago')) || keys[7] || 'Acumulado pago';
-    const recCol = keys.find(k => k.toLowerCase().includes('recurso')) || keys[3] || 'Recurso';
-    const codigoCol = keys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || keys[1] || 'Código concepto';
+    const compCol = keys.find(k => k.toLowerCase().includes('compromiso')) || keys[8] || 'Acumulado compromiso';
+    const pagoCol = keys.find(k => k.toLowerCase().includes('pago')) || keys[9] || 'Acumulado pago';
+    const recCol = keys.find(k => k.toLowerCase().includes('recurso')) || keys[5] || 'Recurso';
+    const tipoCol = keys.find(k => k.toLowerCase().includes('tipo de gasto')) || keys[1] || 'Tipo de Gasto';
+    const codigoCol = keys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || keys[3] || 'Código concepto';
     
     gastosRaw.forEach(row => {
       const pago = parseFloat(String(row[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0;
@@ -68,7 +69,7 @@ export const normalizeData = (ingresosRaw: any[], gastosRaw: any[], ingresoMensu
       let recursoText = String(row[recCol] || '');
       let recursoId = recursoText.split('-')[0].trim();
       
-      let tipoText = String(row[codigoCol] || '');
+      let tipoText = String(row[tipoCol] || row[codigoCol] || '');
       let tipoNormalizado = 'Otros Gastos';
       if (tipoText.includes('2.1.1')) tipoNormalizado = 'Gastos de Personal';
       else if (tipoText.includes('2.1.2')) tipoNormalizado = 'Gastos de Funcionamiento';

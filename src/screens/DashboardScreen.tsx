@@ -51,7 +51,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
       const filteredData = recursoFiltro === 'Todos'
         ? rawIngresos
-        : rawIngresos.filter(r => getTipoRecursoBalance(r[conceptoCol] || r['Concepto'] || '') === recursoFiltro);
+        : rawIngresos.filter(r => getTipoRecursoBalance(r) === recursoFiltro);
 
       const aforoSum = filteredData.reduce((acc, row) => acc + (parseFloat(String(row[aforoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
       const recaudoSum = filteredData.reduce((acc, row) => acc + (parseFloat(String(row[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
@@ -181,11 +181,12 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
     if (filteredGastos && filteredGastos.length > 0) {
       const firstRowKeys = Object.keys(filteredGastos[0]);
       
-      const compCol = firstRowKeys.find(k => k.toLowerCase().includes('compromiso')) || firstRowKeys[6] || 'Acumulado compromiso';
-      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago')) || firstRowKeys[7] || 'Acumulado pago';
-      const recCol = firstRowKeys.find(k => k.toLowerCase().includes('recurso')) || firstRowKeys[3] || 'Recurso';
-      const codigoCol = firstRowKeys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || firstRowKeys[1] || 'Código concepto';
-      const conceptoCol = firstRowKeys.find(k => k.toLowerCase().includes('concepto')) || firstRowKeys[2] || 'Concepto';
+      const compCol = firstRowKeys.find(k => k.toLowerCase().includes('compromiso')) || firstRowKeys[8] || 'Acumulado compromiso';
+      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago')) || firstRowKeys[9] || 'Acumulado pago';
+      const recCol = firstRowKeys.find(k => k.toLowerCase().includes('recurso')) || firstRowKeys[5] || 'Recurso';
+      const tipoCol = firstRowKeys.find(k => k.toLowerCase().includes('tipo de gasto')) || firstRowKeys[1] || 'Tipo de Gasto';
+      const codigoCol = firstRowKeys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || firstRowKeys[3] || 'Código concepto';
+      const conceptoCol = firstRowKeys.find(k => k.toLowerCase().includes('concepto')) || firstRowKeys[4] || 'Concepto';
 
       const compSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(String(row[compCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
       const pagoSum = filteredGastos.reduce((acc, row) => acc + (parseFloat(String(row[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0);
@@ -201,9 +202,9 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
       setGastosGroups(groupAndSum(filteredGastos, codigoCol, pagoCol).sort((a: any, b: any) => b.value - a.value));
 
       // Group by Tipo de Gasto (Clasificacion)
-      const gTipos = Array.from(new Set(filteredGastos.map(r => r[codigoCol]))).filter(Boolean);
+      const gTipos = Array.from(new Set(filteredGastos.map(r => r[tipoCol] || r[codigoCol]))).filter(Boolean);
       const parsedGastoTiposGroups = gTipos.map(tipo => {
-         const rows = filteredGastos.filter(r => r[codigoCol] === tipo);
+         const rows = filteredGastos.filter(r => (r[tipoCol] || r[codigoCol]) === tipo);
          const tComp = rows.reduce((acc, r) => acc + (parseFloat(String(r[compCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
          const tPago = rows.reduce((acc, r) => acc + (parseFloat(String(r[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
          

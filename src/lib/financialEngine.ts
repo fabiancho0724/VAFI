@@ -528,10 +528,10 @@ export function calculateProjections({
     return true;
   };
 
-  const isResSelected = (r: string, concepto?: string) => {
+  const isResSelected = (r: string, conceptoOrRow?: any) => {
     if (filterRecurso !== 'Todos') {
       if (filterRecurso === 'Recursos del Balance' || filterRecurso === 'Recursos UPTC') {
-        if (concepto && getTipoRecursoBalance(concepto) !== filterRecurso) return false;
+        if (conceptoOrRow && getTipoRecursoBalance(conceptoOrRow) !== filterRecurso) return false;
       } else if (r !== filterRecurso) {
         return false;
       }
