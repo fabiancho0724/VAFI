@@ -76,6 +76,37 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
       // Group by Clasificación del Recurso (Columna J - 10) -> Recursos (Col D - 4) -> Conceptos Nombres (Col C - 3)
       const validClasificaciones = ['Aportes de la Nación', 'Estampilla Pro UPTC', 'Extensión y Posgrados', 'Recursos Propios'];
       
+      const RECURSOS_ORDER: Record<string, string[]> = {
+        'Aportes de la Nación': [
+          '10.0-Aportes Nacion - Funcionamiento',
+          '10.1-Aportes Nación - PIC Convencional',
+          '10.2-Aportes Nación - PIC Territorial',
+          '10.5-Aportes Nación - Política de gratuidad',
+          '12-Estampillas Otras Universidades',
+          '13-Cooperativas',
+          '14-Matriculas FSE',
+          '16.0-Aportes inversion',
+          '16.1-Inversion PFB',
+          '16.2-Inversion PFC',
+          '17-Devolucion descuento electoral',
+          '18-Articulo 87 CESU'
+        ],
+        'Estampilla Pro UPTC': [
+          '40-Estampilla UPTC'
+        ],
+        'Extensión y Posgrados': [
+          '31-Posgrados',
+          '32-Extension',
+          '33-Convenios con derechos',
+          '34-Convenios sin derechos',
+          '35-Educacion continuada'
+        ],
+        'Recursos Propios': [
+          '20-Propios',
+          '21-Devolucion IVA'
+        ]
+      };
+
       const groupKeys = validClasificaciones.filter(groupName => 
         filteredData.some(r => String(r[clasifCol] || '').trim().toLowerCase() === groupName.toLowerCase())
       );
@@ -120,7 +151,17 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
                  ejecucionPct: parseFloat(rEjec.toFixed(1)),
                  conceptos: conceptosList
              };
-         }).sort((a, b) => b.recaudo - a.recaudo);
+         });
+
+         // Sort recursos strictly according to the official order
+         const expectedOrder = RECURSOS_ORDER[groupName] || [];
+         recursosList.sort((a, b) => {
+           const codeA = a.name.split('-')[0].trim();
+           const codeB = b.name.split('-')[0].trim();
+           const idxA = expectedOrder.findIndex(exp => exp.startsWith(codeA) || exp.toLowerCase().includes(a.name.toLowerCase()));
+           const idxB = expectedOrder.findIndex(exp => exp.startsWith(codeB) || exp.toLowerCase().includes(b.name.toLowerCase()));
+           return (idxA >= 0 ? idxA : 999) - (idxB >= 0 ? idxB : 999);
+         });
 
          const ejecucionPct = tAforo > 0 ? parseFloat(((tRecaudo / tAforo) * 100).toFixed(1)) : 0;
 
@@ -132,8 +173,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
              ejecucionPct: ejecucionPct,
              recursos: recursosList 
          };
-      }).filter(g => g.aforo > 0 || g.recaudo > 0 || g.inicial > 0)
-        .sort((a,b) => b.recaudo - a.recaudo);
+      }).filter(g => g.aforo > 0 || g.recaudo > 0 || g.inicial > 0);
       
       setIngresosTiposGroups(parsedTiposGroups);
     }
