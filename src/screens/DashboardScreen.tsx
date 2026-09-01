@@ -367,7 +367,9 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
           <p className="text-primary-container text-xs uppercase tracking-widest font-bold mb-1">UPTC - VAFI</p>
-          <h2 className="text-[32px] md:text-4xl font-bold font-display text-white">Consolidado Financiero - Corte 31 de Julio</h2>
+          <h2 className="text-[32px] md:text-4xl font-bold font-display text-white">
+            Consolidado Financiero - Corte {localStorage.getItem('vafi_fechaCorte') || '31 de Agosto de 2026'}
+          </h2>
         </div>
         <div className="flex gap-3 items-center">
           <div className="flex items-center bg-white/5 rounded-xl border border-white/10 px-3 py-2 hover:bg-white/10 transition-colors">

@@ -9,7 +9,7 @@ interface TopnavProps {
 }
 
 export function Topnav({ isThin, currentScreen, onNavigate }: TopnavProps) {
-  const [fechaCorte, setFechaCorte] = useState<string>('25 de Agosto de 2026');
+  const [fechaCorte, setFechaCorte] = useState<string>(() => localStorage.getItem('vafi_fechaCorte') || '31 de Agosto de 2026');
 
   useEffect(() => {
     const updateFecha = () => {

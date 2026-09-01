@@ -155,25 +155,25 @@ export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void })
           
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <span className="inline-flex items-center gap-1.5 bg-[#ffcc29]/10 text-[#ffcc29] px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-widest mb-2">
-                Corte Real 31 de Julio
+              <span className="inline-flex items-center gap-1.5 bg-[#4ade80]/10 text-[#4ade80] px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-widest mb-2 border border-[#4ade80]/30">
+                Corte Real 31 de Agosto de 2026
               </span>
-              <h3 className="text-lg font-bold text-white tracking-tight">Ejecución Consolidada Actual</h3>
-              <p className="text-xs text-on-surface-variant mt-1">Línea base registrada y auditada de la vigencia actual.</p>
+              <h3 className="text-lg font-bold text-white tracking-tight">Ejecución Consolidada Actual (GOOBI)</h3>
+              <p className="text-xs text-on-surface-variant mt-1">Línea base registrada y auditada al cierre de Agosto de 2026.</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full md:w-auto shrink-0 md:border-l border-white/5 md:pl-8">
               <div className="bg-white/5 px-4 py-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-mono block">Recaudo Real</span>
-                <span className="text-xl font-bold font-mono text-[#4ade80]">$337.135,1M</span>
+                <span className="text-xl font-bold font-mono text-[#4ade80]">$387.794,0M</span>
               </div>
               <div className="bg-white/5 px-4 py-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-mono block">Compromisos</span>
-                <span className="text-xl font-bold font-mono text-[#f43f5e]">$312.078,1M</span>
+                <span className="text-xl font-bold font-mono text-[#f43f5e]">$345.068,5M</span>
               </div>
               <div className="bg-white/5 px-4 py-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-mono block">Pago Efectivo</span>
-                <span className="text-xl font-bold font-mono text-[#38bdf8]">$246.751,6M</span>
+                <span className="text-xl font-bold font-mono text-[#38bdf8]">$282.311,9M</span>
               </div>
             </div>
           </div>
