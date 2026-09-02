@@ -7,7 +7,7 @@ import {
 import { 
   ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Wallet, 
   AlertCircle, AlertTriangle, CheckCircle, Info, Calendar, Filter, 
-  ChevronDown, Download, Maximize2, Coins, Activity, Target
+  ChevronDown, ChevronRight, Download, Maximize2, Coins, Activity, Target
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -106,6 +106,7 @@ const heatmapData = [
 export function CashFlowScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('2026');
   const [selectedResource, setSelectedResource] = useState('Todos');
+  const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-surface text-on-surface p-4 md:p-8 font-sans pb-24">
@@ -474,6 +475,93 @@ export function CashFlowScreen() {
                     );
                   })}
                 </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      {/* TABLA DE BALANCE Y DETALLE (Con Despliegue de Recursos) */}
+      <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mt-8">
+        <div className="mb-6 flex justify-between items-end">
+          <div>
+            <h2 className="text-xl font-display text-white">Balance Mensual y Detalle de Recursos</h2>
+            <p className="text-sm text-on-surface-variant">Clic en un mes para ver la composición por tipo de gasto y recurso.</p>
+          </div>
+          <button className="glass-card px-4 py-2 rounded-xl text-white hover:bg-white/10 transition-colors flex items-center gap-2">
+            <Download size={16} /> <span className="text-sm">XLSX</span>
+          </button>
+        </div>
+        
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr className="border-b border-white/10 text-on-surface-variant bg-white/5">
+                <th className="py-3 px-4 font-medium w-10"></th>
+                <th className="py-3 px-4 font-medium">Mes</th>
+                <th className="py-3 px-4 font-medium text-right">Personal</th>
+                <th className="py-3 px-4 font-medium text-right">Funcionamiento</th>
+                <th className="py-3 px-4 font-medium text-right">Inversión</th>
+                <th className="py-3 px-4 font-medium text-right text-red-300">Total Gastos</th>
+                <th className="py-3 px-4 font-medium text-right text-emerald-300">Total Ingresos</th>
+                <th className="py-3 px-4 font-medium text-right text-blue-300">Flujo Neto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyData.map((row, idx) => (
+                <React.Fragment key={idx}>
+                  <tr 
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                    onClick={() => setExpandedMonth(expandedMonth === row.month ? null : row.month)}
+                  >
+                    <td className="py-3 px-4 text-center text-on-surface-variant">
+                      {expandedMonth === row.month ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </td>
+                    <td className="py-3 px-4 font-bold text-white">{row.month}</td>
+                    <td className="py-3 px-4 text-right text-on-surface-variant">{formatCurrencyShort(row.gPersonal)}</td>
+                    <td className="py-3 px-4 text-right text-on-surface-variant">{formatCurrencyShort(row.gFuncionamiento)}</td>
+                    <td className="py-3 px-4 text-right text-on-surface-variant">{formatCurrencyShort(row.gInversion)}</td>
+                    <td className="py-3 px-4 text-right text-red-300 font-medium">{formatCurrencyShort(row.expense)}</td>
+                    <td className="py-3 px-4 text-right text-emerald-300 font-medium">{formatCurrencyShort(row.income)}</td>
+                    <td className={`py-3 px-4 text-right font-bold ${row.netFlow >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+                      {formatCurrencyShort(row.netFlow)}
+                    </td>
+                  </tr>
+                  
+                  {/* EXPANDED ROW (Recursos) */}
+                  {expandedMonth === row.month && (
+                    <tr className="bg-black/20 border-b border-primary-container/20">
+                      <td colSpan={8} className="p-0">
+                        <div className="p-4 pl-14">
+                          <h4 className="text-xs uppercase tracking-widest text-primary-container mb-3 font-bold flex items-center gap-2">
+                            <Target size={14} /> Desagregación por Recursos - {row.month}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm text-emerald-200">Aporte Nación (R10)</span>
+                                <span className="text-sm font-bold text-white">{formatCurrencyShort(row.rNacion)}</span>
+                              </div>
+                              <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                <div className="bg-emerald-400 h-full" style={{ width: `${(row.rNacion / row.income) * 100}%` }}></div>
+                              </div>
+                            </div>
+                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm text-blue-200">Recursos Propios (R20/R31)</span>
+                                <span className="text-sm font-bold text-white">{formatCurrencyShort(row.rPropios)}</span>
+                              </div>
+                              <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                <div className="bg-blue-400 h-full" style={{ width: `${(row.rPropios / row.income) * 100}%` }}></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

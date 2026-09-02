@@ -13,6 +13,7 @@ import { NominaScreen } from './screens/NominaScreen';
 import { PosgradosScreen } from './screens/PosgradosScreen';
 import { CoverScreen } from './screens/CoverScreen';
 import { AssistantScreen } from './screens/AssistantScreen';
+import { CashFlowScreen } from './screens/CashFlowScreen';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('cover');
@@ -31,6 +32,7 @@ export default function App() {
       {currentScreen === 'dashboard' && <DashboardScreen onNavigate={handleNavigate} />}
       {currentScreen === 'predictive' && <PredictiveScreen onNavigate={handleNavigate} />}
       {currentScreen === 'presupuesto' && <BudgetScreen onNavigate={handleNavigate} />}
+      {currentScreen === 'cashflow' && <CashFlowScreen />}
       {currentScreen === 'historical' && <HistoricalScreen onNavigate={handleNavigate} />}
       {currentScreen === 'budget' && <ProgramCostingScreen onNavigate={handleNavigate} />}
       {currentScreen === 'calendar' && <CalendarScreen onNavigate={handleNavigate} />}
