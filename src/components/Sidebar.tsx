@@ -11,7 +11,8 @@ import {
   FolderOpen,
   Users,
   GraduationCap,
-  Bot
+  Bot,
+  Coins
 } from 'lucide-react';
 
 interface SidebarProps {
