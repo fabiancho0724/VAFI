@@ -160,6 +160,7 @@ function cleanExpenseType(tipo: string): string {
 function simulateCore(
   baseData: BaseResource[],
   monthlyHist: any,
+  historicWeights: Record<string, number[]>,
   expenseTypeReal: Record<string, number>,
   expenseTypeResourceReal: Record<string, Record<string, number>>,
   nominaStats: { nominaHistTotal: number, missingMonths: number, avgMonthlyNomina: number },
@@ -342,9 +343,10 @@ function simulateCore(
          mComp += (monthlyHist.comp[r.recurso] || [])[idx] || 0;
          mPago += (monthlyHist.pago[r.recurso] || [])[idx] || 0;
       } else {
-         mIngProy += r.ingresosProyectados / 4;
-         mComp += r.gastosProyectados / 4;
-         mPago += (r.gastosProyectados * 0.9) / 4;
+         const w = historicWeights[r.recurso] ? historicWeights[r.recurso][idx] : 0.25;
+         mIngProy += r.ingresosProyectados * w;
+         mComp += r.gastosProyectados * w;
+         mPago += (r.gastosProyectados * 0.9) * w;
       }
     });
     
@@ -366,6 +368,7 @@ export function calculateStrictProjections(
   ingresosMensuales: any[],
   compromisosData: any[],
   nominaData: any[],
+  ingresosHistoricos: any[],
   config: StrictConfig
 ): StrictProjectionResult {
   
@@ -434,9 +437,28 @@ export function calculateStrictProjections(
   const nominaMonthsCount = nominaMonthsPresent.size || 1;
   const avgMonthlyNomina = nominaHistTotal / nominaMonthsCount;
   const missingMonths = 12 - nominaMonthsCount;
+  const historicWeights: Record<string, number[]> = {};
+  baseData.forEach(b => {
+    historicWeights[b.recurso] = new Array(12).fill(0.25); // default fallback
+  });
+  
+  ingresosHistoricos.forEach(row => {
+    const rec = getRecursoEquivalence(String(row['Recurso'] || row['Código recurso'] || ''));
+    if (historicWeights[rec]) {
+      const vals = MONTH_KEYS.map(mk => parseNumber(row[mk]));
+      const totalLast4 = vals.slice(8).reduce((a,b)=>a+b, 0);
+      if (totalLast4 > 0) {
+        historicWeights[rec][8] = vals[8] / totalLast4;
+        historicWeights[rec][9] = vals[9] / totalLast4;
+        historicWeights[rec][10] = vals[10] / totalLast4;
+        historicWeights[rec][11] = vals[11] / totalLast4;
+      }
+    }
+  });
+
 
   // Base Simulation
-  const baseSim = simulateCore(baseData, monthlyHist, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: 0, expenseVar: 0 });
+  const baseSim = simulateCore(baseData, monthlyHist, historicWeights, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: 0, expenseVar: 0 });
 
   // AI Suggestions
   const suggestions: AISuggestion[] = [];
@@ -479,7 +501,7 @@ export function calculateStrictProjections(
   const variations = [-0.20, -0.15, -0.10, -0.05, 0, 0.05, 0.10, 0.15, 0.20];
   
   variations.forEach(v => {
-    const sim = simulateCore(baseData, monthlyHist, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: v, expenseVar: 0 });
+    const sim = simulateCore(baseData, monthlyHist, historicWeights, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: v, expenseVar: 0 });
     let impacto: SensitivityItem['impacto'] = 'Estable';
     if (sim.totals.saldoDisponible < 0) impacto = 'Alto Riesgo';
     else if (sim.totals.saldoDisponible < baseSim.totals.saldoDisponible * 0.5) impacto = 'Medio Riesgo';

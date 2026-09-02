@@ -17,6 +17,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [ingresosMensuales, setIngresosMensuales] = useState<any[]>([]);
   const [compromisos, setCompromisos] = useState<any[]>([]);
   const [nominaData, setNominaData] = useState<any[]>([]);
+  const [ingresosHistoricos, setIngresosHistoricos] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [activeTab, setActiveTab] = useState(1);
   const [selectedResourceTrace, setSelectedResourceTrace] = useState<any>(null);
@@ -39,7 +40,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         const im = await fetchAndParseCSV('/data/ingresos_mensuales.csv');
         const co = await fetchAndParseCSV('/data/compromisos.csv');
         const nd = await fetchAndParseCSV('/data/Nomina.csv?v=3');
-        setBalanceData(bd); setIngresosMensuales(im); setCompromisos(co); setNominaData(nd);
+        const hist = await fetchAndParseCSV('/data/Ingreso Mensual 2025.csv');
+        setBalanceData(bd); setIngresosMensuales(im); setCompromisos(co); setNominaData(nd); setIngresosHistoricos(hist);
         setDataStage('ready');
       } catch (e: any) {
         setErrorMessage(e.message);
@@ -51,8 +53,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   const results: StrictProjectionResult | null = useMemo(() => {
     if (dataStage !== 'ready' || balanceData.length === 0) return null;
-    return calculateStrictProjections(balanceData, ingresosMensuales, compromisos, nominaData, config);
-  }, [dataStage, balanceData, ingresosMensuales, compromisos, nominaData, config]);
+    return calculateStrictProjections(balanceData, ingresosMensuales, compromisos, nominaData, ingresosHistoricos, config);
+  }, [dataStage, balanceData, ingresosMensuales, compromisos, nominaData, ingresosHistoricos, config]);
 
   if (dataStage === 'loading') {
     return <div className="flex items-center justify-center h-full min-h-[500px]">
