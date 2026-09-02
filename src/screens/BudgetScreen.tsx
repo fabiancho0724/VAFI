@@ -76,10 +76,10 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
   const personalesVar = ((currentPersonales - prevPersonales) / prevPersonales) * 100;
 
   // Run statistical model
-  // Proyectar GASTOS (Necesidades) en lugar de ingresos estáticos
-  const expenseValues = historicalSeries.map(d => d.gastosPersonales + d.funcionamientoEInversion);
-  const allModels = useMemo(() => getAllModels(expenseValues, YEARS), [expenseValues]);
-  const autoBestModel = useMemo(() => selectBestModel(expenseValues, YEARS), [expenseValues]);
+  // Proyectar INGRESOS (Realidad del Artículo 86 y base presupuestal)
+  const budgetValues = historicalSeries.map(d => d.totalBudget);
+  const allModels = useMemo(() => getAllModels(budgetValues, YEARS), [budgetValues]);
+  const autoBestModel = useMemo(() => selectBestModel(budgetValues, YEARS), [budgetValues]);
   
   const bestModel = useMemo(() => {
     if (userSelectedModel === 'Auto') return autoBestModel;
@@ -111,15 +111,14 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
       decreto1279: d.d1279,
       ices: d.ices,
       totalBudget: d.totalBudget,
-      totalExpenses: d.gastosPersonales + d.funcionamientoEInversion,
+      // totalExpenses removed, we graph totalBudget
       fitted: bestModel.fitted[i] || null
     };
   });
 
-  // Requerimiento de Ingresos 2027 = Gasto Proyectado 2027
-  const projectedNextExpense = bestModel.projectedValue;
-  // Cuánto tiene que crecer el Ingreso Actual (2026) para cubrir el Gasto Proyectado (2027)
-  const requiredIncomeIncrease = ((projectedNextExpense - currentBudget) / currentBudget) * 100;
+  // Incremento del Ingreso Proyectado
+  const projectedNextBudgetVal = bestModel.projectedValue;
+  const requiredIncomeIncrease = ((projectedNextBudgetVal - currentBudget) / currentBudget) * 100;
   const scenarios = useMemo(() => getScenarios(requiredIncomeIncrease), [requiredIncomeIncrease]);
 
   const getScenarioPercentage = () => {
@@ -346,7 +345,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
               <XAxis dataKey="year" stroke="currentColor" className="text-xs text-on-surface-variant" tickLine={false} axisLine={false} />
               <YAxis tickFormatter={(v) => formatCurrencyShort(v)} stroke="currentColor" className="text-xs text-on-surface-variant" tickLine={false} axisLine={false} />
               <RechartsTooltip 
-                formatter={(value: number, name: string) => [formatCurrencyShort(value), name === 'totalExpenses' ? 'Gasto Real (Necesidad)' : 'Ajuste del Modelo']}
+                formatter={(value: number, name: string) => [formatCurrencyShort(value), name === 'totalBudget' ? 'Ingreso Real (Aforo)' : 'Ajuste del Modelo']}
                 contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
                 itemStyle={{ fontSize: '12px' }}
               />
@@ -586,7 +585,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
         <div className="mt-8 text-sm text-on-surface-variant bg-black/30 p-5 rounded-xl border border-white/5 relative z-10 flex gap-4 items-start">
           <Info className="shrink-0 text-fuchsia-400 mt-0.5" size={18} />
           <p className="leading-relaxed">
-            <strong className="text-white">Coeficiente de Elasticidad Gasto/Ingreso:</strong> Por cada 1% de desviación al alza en los indicadores de costo (Nómina y Funcionamiento), el requerimiento de ingresos tracciona un impacto cuasi-elástico del <strong>~1.12%</strong> debido al desfase de caja estructural (déficit de origen) en la vigencia 2026. Bajo el escenario ácido, el crecimiento vegetativo exige un plan de contingencia inmediato enfocado en nuevas rentas o cofinanciación territorial.
+            <strong className="text-white">Sensibilidad del Ingreso (Art 86 vs ICES):</strong> Debido a que el recurso principal de la universidad está atado al IPC, escenarios de alta inflación sectorial obligan a la universidad a generar un delta de ingresos propios. Bajo el escenario ácido (crecimiento &gt;8%), se excede el umbral viable del 10% histórico, exigiendo inmediatamente planes de contingencia (reducción de funcionamiento) o cofinanciación territorial.
           </p>
         </div>
       </div>

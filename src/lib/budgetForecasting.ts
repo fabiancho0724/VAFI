@@ -160,12 +160,15 @@ export function runStructuralModel(y: number[], years: number[]): ForecastResult
     const macro = MACRO_INDICATORS[years[i]] || { ipc: 5, ices: 6 };
     // Assuming 60% of expenses grow with ICES/IPC + premium, 40% with IPC
     // Simplified elasticity factor
-    const elasticity = 1 + ((macro.ices || macro.ipc) / 100) * 1.1; 
+    // El ingreso crece orgánicamente con el IPC (Art 86) + un esfuerzo de recursos propios
+    const baseGrowth = (macro.ipc / 100) || 0.05;
+    const premium = 0.015; // 1.5% adicional por gestión y otros recursos
+    const elasticity = 1 + baseGrowth + premium; 
     fitted.push(y[i-1] * elasticity);
   }
 
-  // Project 2027 based on MFMP 2026 projection (IPC 4.4%, implies ICES ~ 5.5%)
-  const projectedElasticity = 1 + (5.5 / 100) * 1.1;
+  // Project 2027 based on MFMP 2026 projection (IPC 4.4%)
+  const projectedElasticity = 1 + 0.044 + 0.02; // 4.4% IPC + 2% esfuerzo institucional (Max ~6.4%)
   const nextVal = y[n-1] * projectedElasticity;
 
   return {
