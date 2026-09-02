@@ -1,14 +1,14 @@
 import { MACRO_INDICATORS } from './macroData';
 
-export type ModelType = 'Regresión Lineal' | 'Holt Smoothing' | 'ARIMA (1,1,0)';
+export type ModelType = 'Regresión Lineal' | 'Holt Smoothing' | 'ARIMA (1,1,0)' | 'Estructural (Marco Fiscal)';
 
 export interface ForecastResult {
   modelName: ModelType;
   projectedValue: number;
-  projectedIncreasePercent: number;
-  mape: number; // Error
+  projectedIncreasePercent: number; // vs last expense
+  mape: number;
   rmse: number;
-  r2: number;   // Grado de veracidad
+  r2: number;
   history: number[];
   fitted: number[];
 }
@@ -49,10 +49,9 @@ export function calculateR2(actual: number[], forecast: number[]): number {
   }
   if (ssTot === 0) return 1;
   const r2 = 1 - (ssRes / ssTot);
-  return Math.max(0, r2) * 100; // Return as percentage for "Veracidad"
+  return Math.max(0, r2) * 100;
 }
 
-// 1. Regresión Lineal
 export function runLinearRegression(y: number[]): ForecastResult {
   const n = y.length;
   const x = Array.from({ length: n }, (_, i) => i + 1);
@@ -79,7 +78,6 @@ export function runLinearRegression(y: number[]): ForecastResult {
   };
 }
 
-// 2. Holt Smoothing
 export function runHoltSmoothing(y: number[], alpha = 0.6, beta = 0.4): ForecastResult {
   const n = y.length;
   let level = y[0];
@@ -106,18 +104,15 @@ export function runHoltSmoothing(y: number[], alpha = 0.6, beta = 0.4): Forecast
   };
 }
 
-// 3. ARIMA (1,1,0) - Simplified AutoRegressive Integrated Moving Average
 export function runARIMA(y: number[]): ForecastResult {
   const n = y.length;
   if (n < 3) return runLinearRegression(y);
   
-  // Diff 1
   const diff1 = [];
   for (let i = 1; i < n; i++) {
     diff1.push(y[i] - y[i-1]);
   }
   
-  // AR(1) on diff1
   let sumY = 0, sumY_prev = 0, sumYY_prev = 0, sumY_prevSq = 0;
   for (let i = 1; i < diff1.length; i++) {
     sumY += diff1[i];
@@ -127,13 +122,13 @@ export function runARIMA(y: number[]): ForecastResult {
   }
   
   const m = diff1.length - 1;
-  const phi = (m * sumYY_prev - sumY_prev * sumY) / (m * sumY_prevSq - sumY_prev * sumY_prev);
-  const c = (sumY - phi * sumY_prev) / m;
+  const phi = m === 0 ? 0 : (m * sumYY_prev - sumY_prev * sumY) / (m * sumY_prevSq - sumY_prev * sumY_prev);
+  const c = m === 0 ? 0 : (sumY - phi * sumY_prev) / m;
   
   const fitted = [y[0]];
   for (let i = 1; i < n; i++) {
     if (i === 1) {
-      fitted.push(y[i]); // Seed
+      fitted.push(y[i]);
     } else {
       const prevDiff = y[i-1] - y[i-2];
       const estDiff = c + phi * prevDiff;
@@ -157,31 +152,52 @@ export function runARIMA(y: number[]): ForecastResult {
   };
 }
 
-export function selectBestModel(budgets: number[], years: number[]): ForecastResult {
-  if (budgets.length < 3) return runLinearRegression(budgets);
+export function runStructuralModel(y: number[], years: number[]): ForecastResult {
+  const n = y.length;
+  const fitted = [y[0]];
+  
+  for (let i = 1; i < n; i++) {
+    const macro = MACRO_INDICATORS[years[i]] || { ipc: 5, ices: 6 };
+    // Assuming 60% of expenses grow with ICES/IPC + premium, 40% with IPC
+    // Simplified elasticity factor
+    const elasticity = 1 + ((macro.ices || macro.ipc) / 100) * 1.1; 
+    fitted.push(y[i-1] * elasticity);
+  }
 
-  const models = [
-    runLinearRegression(budgets),
-    runHoltSmoothing(budgets),
-    runARIMA(budgets)
-  ];
+  // Project 2027 based on MFMP 2026 projection (IPC 4.4%, implies ICES ~ 5.5%)
+  const projectedElasticity = 1 + (5.5 / 100) * 1.1;
+  const nextVal = y[n-1] * projectedElasticity;
 
-  return models.reduce((prev, curr) => (prev.mape < curr.mape ? prev : curr));
+  return {
+    modelName: 'Estructural (Marco Fiscal)',
+    projectedValue: nextVal,
+    projectedIncreasePercent: ((nextVal - y[n - 1]) / y[n - 1]) * 100,
+    mape: calculateMAPE(y, fitted),
+    rmse: calculateRMSE(y, fitted),
+    r2: calculateR2(y, fitted),
+    history: y,
+    fitted
+  };
 }
 
-export function getAllModels(budgets: number[]): ForecastResult[] {
+export function getAllModels(budgets: number[], years: number[]): ForecastResult[] {
     return [
         runLinearRegression(budgets),
         runHoltSmoothing(budgets),
-        runARIMA(budgets)
+        runARIMA(budgets),
+        runStructuralModel(budgets, years)
     ];
 }
 
-export function getScenarios(bestModel: ForecastResult): ScenarioProjections {
-  const base = bestModel.projectedIncreasePercent;
+export function selectBestModel(budgets: number[], years: number[]): ForecastResult {
+  const models = getAllModels(budgets, years);
+  return models.reduce((prev, curr) => (prev.mape < curr.mape ? prev : curr));
+}
+
+export function getScenarios(basePercentage: number): ScenarioProjections {
   return {
-    conservative: Math.max(0, base - 2.5),
-    base: base,
-    pressure: base + 3.2
+    conservative: Math.max(0, basePercentage - 2.5),
+    base: basePercentage,
+    pressure: basePercentage + 3.2
   };
 }

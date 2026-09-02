@@ -31,10 +31,11 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
       let funcionamientoEInversion = 0;
 
       if (year === 2026) {
-        // Proyección 2026 aforo actual
-        totalBudget = 512232600000;
+        // Proyección 2026 aforo actual / recaudo
+        totalBudget = 544356300000;
         gastosPersonales = 360802600000;
-        funcionamientoEInversion = totalBudget - gastosPersonales;
+        // The total expenses are 596533200000 (meaning a deficit of ~52B).
+        funcionamientoEInversion = 596533200000 - gastosPersonales;
       } else {
         const incomes = budgetData.filter(d => d.year === year && d.category === 'Ingresos');
         totalBudget = incomes.reduce((acc, curr) => acc + curr.amount, 0);
@@ -71,18 +72,17 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
   const personalesVar = ((currentPersonales - prevPersonales) / prevPersonales) * 100;
 
   // Run statistical model
-  const budgetValues = historicalSeries.map(d => d.totalBudget);
-  const allModels = useMemo(() => getAllModels(budgetValues), [budgetValues]);
-  const autoBestModel = useMemo(() => selectBestModel(budgetValues, YEARS), [budgetValues]);
+  // Proyectar GASTOS (Necesidades) en lugar de ingresos estáticos
+  const expenseValues = historicalSeries.map(d => d.gastosPersonales + d.funcionamientoEInversion);
+  const allModels = useMemo(() => getAllModels(expenseValues, YEARS), [expenseValues]);
+  const autoBestModel = useMemo(() => selectBestModel(expenseValues, YEARS), [expenseValues]);
   
   const bestModel = useMemo(() => {
     if (userSelectedModel === 'Auto') return autoBestModel;
     return allModels.find(m => m.modelName === userSelectedModel) || autoBestModel;
   }, [userSelectedModel, autoBestModel, allModels]);
 
-  const scenarios = useMemo(() => getScenarios(bestModel), [bestModel]);
-
-  // Composition data for 2026
+// Composition data for 2026
   const compData = useMemo(() => {
     const incomes26 = budgetData.filter(d => d.year === 2026 && d.category === 'Ingresos');
     const grouped: Record<string, number> = {};
@@ -107,9 +107,16 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
       decreto1279: d.d1279,
       ices: d.ices,
       totalBudget: d.totalBudget,
+      totalExpenses: d.gastosPersonales + d.funcionamientoEInversion,
       fitted: bestModel.fitted[i] || null
     };
   });
+
+  // Requerimiento de Ingresos 2027 = Gasto Proyectado 2027
+  const projectedNextExpense = bestModel.projectedValue;
+  // Cuánto tiene que crecer el Ingreso Actual (2026) para cubrir el Gasto Proyectado (2027)
+  const requiredIncomeIncrease = ((projectedNextExpense - currentBudget) / currentBudget) * 100;
+  const scenarios = useMemo(() => getScenarios(requiredIncomeIncrease), [requiredIncomeIncrease]);
 
   const getScenarioPercentage = () => {
     if (selectedScenario === 'conservative') return scenarios.conservative;
@@ -376,7 +383,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
               <XAxis dataKey="year" stroke="currentColor" className="text-xs text-on-surface-variant" tickLine={false} axisLine={false} />
               <YAxis tickFormatter={(v) => formatCurrencyShort(v)} stroke="currentColor" className="text-xs text-on-surface-variant" tickLine={false} axisLine={false} />
               <RechartsTooltip 
-                formatter={(value: number, name: string) => [formatCurrencyShort(value), name === 'totalBudget' ? 'Presupuesto Real' : 'Ajuste del Modelo']}
+                formatter={(value: number, name: string) => [formatCurrencyShort(value), name === 'totalExpenses' ? 'Gasto Real (Necesidad)' : 'Ajuste del Modelo']}
                 contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
                 itemStyle={{ fontSize: '12px' }}
               />
