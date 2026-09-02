@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ResponsiveContainer, ComposedChart, AreaChart, Area, Line, BarChart, Bar, XAxis, YAxis, 
   CartesianGrid, Tooltip as RechartsTooltip, Legend, Cell
@@ -7,8 +7,11 @@ import {
   ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Wallet, 
   AlertCircle, AlertTriangle, CheckCircle, Calendar, Filter, 
   ChevronDown, ChevronRight, Download, Maximize2, Coins, Activity, Target,
-  Brain, FileText, PieChart as PieChartIcon
+  Brain, FileText, PieChart as PieChartIcon, Settings, X, Save
 } from 'lucide-react';
+import { fetchAndParseCSV } from '../lib/csvParser';
+import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
+import { RESOURCES_LIST } from '../lib/resourceMapper';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 const formatCurrencyShort = (value: number) => {
@@ -18,73 +21,130 @@ const formatCurrencyShort = (value: number) => {
   return formatCurrency(value);
 };
 
-// --- MOCK DATA (High-Fidelity) ---
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const RUBROS = ['Sueldos Básicos', 'Primas y Bonificaciones', 'Servicios Públicos', 'Mantenimiento', 'Materiales y Suministros', 'Proyectos Inversión'];
 
-const generateMonthlyData = () => {
-  let balance = 25000000000; // Saldo inicial 25.000M
-  return MONTHS.map((month, i) => {
-    const baseIncome = 42000000000;
-    const incomeSpike = (i === 1 || i === 7) ? 25000000000 : 0; 
-    const income = baseIncome + incomeSpike + (Math.random() * 8000000000);
-    
-    const baseExpense = 45000000000;
-    const expenseSpike = (i === 5 || i === 11) ? 22000000000 : 0; 
-    const expense = baseExpense + expenseSpike + (Math.random() * 4000000000);
-    
+export function CashFlowScreen() {
+  const [dataStage, setDataStage] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [csvData, setCsvData] = useState<any>({});
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const [selectedPeriod, setSelectedPeriod] = useState('2026');
+  const [selectedResource, setSelectedResource] = useState('Todos');
+  const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+
+  const [config, setConfig] = useState<StrictConfig>({
+    scenarioName: 'Proyección Institucional',
+    scenario: 'Base',
+    globalGrowthRate: 0.041,
+    globalExpenseRate: 0.8,
+    filterRecurso: 'Todos',
+    filterUnidad: 'Todos',
+    resourceOverrides: {}
+  });
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const bd = await fetchAndParseCSV('/data/balance.csv');
+        const im = await fetchAndParseCSV('/data/ingresos_mensuales.csv');
+        const co = await fetchAndParseCSV('/data/compromisos.csv');
+        const nd = await fetchAndParseCSV('/data/Nomina.csv?v=3');
+        const hist = await fetchAndParseCSV('/data/Ingreso Mensual 2025.csv');
+        setCsvData({ balanceData: bd, ingresosMensuales: im, compromisos: co, nominaData: nd, ingresosHistoricos: hist });
+        setDataStage('ready');
+      } catch (e: any) {
+        setErrorMessage(e.message);
+        setDataStage('error');
+      }
+    }
+    loadData();
+  }, []);
+
+  const results = useMemo(() => {
+    if (dataStage !== 'ready') return null;
+    const activeConfig = { ...config, filterRecurso: selectedResource };
+    return calculateStrictProjections(
+      csvData.balanceData, 
+      csvData.ingresosMensuales, 
+      csvData.compromisos, 
+      csvData.nominaData, 
+      csvData.ingresosHistoricos, 
+      activeConfig
+    );
+  }, [dataStage, csvData, config, selectedResource]);
+
+  if (dataStage === 'loading') {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[500px]">
+        <div className="flex flex-col items-center gap-4 text-slate-400">
+          <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="font-medium animate-pulse">Integrando proyecciones reales SIIF...</p>
+        </div>
+      </div>
+    );
+  }
+  if (dataStage === 'error' || !results) {
+    return <div className="p-8 text-center text-rose-500">Error cargando proyecciones: {errorMessage}</div>;
+  }
+
+  const monthlyData = results.flow.map(f => {
+    const income = f.ingresosProyectados + f.ingresosReales;
+    const expense = f.compromisos;
     const netFlow = income - expense;
-    const initialBalance = balance;
-    balance += netFlow;
-    
     return {
-      month, income, expense, netFlow, initialBalance, finalBalance: balance,
-      gPersonal: expense * 0.65, gFuncionamiento: expense * 0.25, gInversion: expense * 0.10,
-      rNacion: income * 0.65, rPropios: income * 0.30, rEstampillas: income * 0.05,
-      waterfallStart: netFlow >= 0 ? initialBalance : initialBalance + netFlow,
+      month: f.month,
+      income,
+      expense,
+      netFlow,
+      initialBalance: f.saldoInicial,
+      finalBalance: f.saldoFinal,
+      gPersonal: expense * 0.65,
+      gFuncionamiento: expense * 0.25,
+      gInversion: expense * 0.10,
+      rNacion: income * 0.65,
+      rPropios: income * 0.30,
+      rEstampillas: income * 0.05,
+      waterfallStart: netFlow >= 0 ? f.saldoInicial : f.saldoInicial + netFlow,
       waterfallEnd: Math.abs(netFlow),
       waterfallColor: netFlow >= 0 ? '#10b981' : '#f43f5e'
     };
   });
-};
 
-const monthlyData = generateMonthlyData();
-const totalIncome = monthlyData.reduce((a, b) => a + b.income, 0);
-const totalExpense = monthlyData.reduce((a, b) => a + b.expense, 0);
-const finalBalance = monthlyData[monthlyData.length - 1].finalBalance;
-const initialBalance = monthlyData[0].initialBalance;
-const netFlowTotal = totalIncome - totalExpense;
-const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
-const maxExpenseMonth = [...monthlyData].sort((a, b) => b.expense - a.expense)[0];
+  const totalIncome = results.totals.totalIngresosProyectados + results.totals.totalRecaudo;
+  const totalExpense = results.totals.totalCompromisos;
+  const finalBalance = results.totals.saldoDisponible;
+  const initialBalance = results.totals.totalRecursosIniciales;
+  const netFlowTotal = totalIncome - totalExpense;
 
-const heatmapData = RUBROS.map((rubro, idx) => ({
-  rubro,
-  data: monthlyData.map((m, i) => {
-    let base = m.expense;
-    if (idx === 0) base = m.gPersonal * 0.6;
-    if (idx === 1) base = (i === 5 || i === 11) ? m.gPersonal * 0.3 : m.gPersonal * 0.05;
-    if (idx === 2) base = m.gFuncionamiento * 0.3;
-    if (idx === 3) base = m.gFuncionamiento * 0.4;
-    if (idx === 4) base = m.gFuncionamiento * 0.2;
-    if (idx === 5) base = m.gInversion * 0.9;
-    return base * (0.8 + Math.random() * 0.4);
-  })
-}));
+  const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
+  const maxExpenseMonth = [...monthlyData].sort((a, b) => b.expense - a.expense)[0];
 
-const incomeComposition = [
-  { name: 'Aporte Nación (R10)', value: totalIncome * 0.65, fill: '#3b82f6' },
-  { name: 'Recursos Propios (R20)', value: totalIncome * 0.20, fill: '#10b981' },
-  { name: 'Recursos Propios (R31)', value: totalIncome * 0.10, fill: '#0ea5e9' },
-  { name: 'Estampillas', value: totalIncome * 0.05, fill: '#8b5cf6' }
-];
+  const heatmapData = RUBROS.map((rubro, idx) => ({
+    rubro,
+    data: monthlyData.map((m, i) => {
+      let base = m.expense;
+      if (idx === 0) base = m.gPersonal * 0.6;
+      if (idx === 1) base = (i === 5 || i === 11) ? m.gPersonal * 0.3 : m.gPersonal * 0.05;
+      if (idx === 2) base = m.gFuncionamiento * 0.3;
+      if (idx === 3) base = m.gFuncionamiento * 0.4;
+      if (idx === 4) base = m.gFuncionamiento * 0.2;
+      if (idx === 5) base = m.gInversion * 0.9;
+      return base * (0.8 + Math.random() * 0.4);
+    })
+  }));
 
-export function CashFlowScreen() {
-  const [selectedPeriod, setSelectedPeriod] = useState('2026');
-  const [selectedResource, setSelectedResource] = useState('Todos');
-  const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
+  const incomeComposition = [
+    { name: 'Aporte Nación (R10)', value: totalIncome * 0.65, fill: '#3b82f6' },
+    { name: 'Recursos Propios (R20)', value: totalIncome * 0.20, fill: '#10b981' },
+    { name: 'Recursos Propios (R31)', value: totalIncome * 0.10, fill: '#0ea5e9' },
+    { name: 'Estampillas', value: totalIncome * 0.05, fill: '#8b5cf6' }
+  ];
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface p-4 md:p-8 font-sans pb-24">
+    <div className="min-h-screen bg-surface text-on-surface p-4 md:p-8 font-sans pb-24 relative">
+      
       {/* HEADER & FILTROS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 sticky top-0 z-30 bg-[#0f172a]/90 backdrop-blur-xl py-4 border-b border-white/5">
         <div>
@@ -116,6 +176,11 @@ export function CashFlowScreen() {
             </select>
             <ChevronDown size={14} className="text-on-surface-variant ml-2" />
           </div>
+
+          <button onClick={() => setIsConfigModalOpen(true)} className="glass-card px-4 py-2 rounded-xl text-white hover:bg-emerald-500/20 transition-colors flex items-center gap-2 border border-emerald-500/30 bg-emerald-500/10">
+            <Settings size={16} className="text-emerald-400" />
+            <span className="text-sm font-medium">Configuración de Escenario</span>
+          </button>
         </div>
       </div>
 
@@ -453,6 +518,96 @@ export function CashFlowScreen() {
           </table>
         </div>
       </div>
+
+      {/* MODAL EMERGENTE DE CONFIGURACIÓN */}
+      {isConfigModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#161b22] border border-slate-700 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-[#1e293b]/50">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Settings className="text-emerald-400" size={20} />
+                Configuración del Modelo de Proyección
+              </h2>
+              <button onClick={() => setIsConfigModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-6">
+              
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex gap-3">
+                <Activity className="text-emerald-400 shrink-0 mt-1" size={18} />
+                <p className="text-sm text-emerald-200">Esta configuración impacta en tiempo real todos los cálculos y gráficos. Las restricciones de giros SIIF se conservan automáticamente por el motor.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Modelo Base de Proyección</label>
+                  <select 
+                    className="w-full text-sm border-slate-600 rounded-lg bg-slate-800 p-3 outline-none text-white focus:border-emerald-500 cursor-pointer"
+                    value={config.scenario}
+                    onChange={e => setConfig({...config, scenario: e.target.value as any})}
+                  >
+                    <option value="Base">Base Estricta (Límite IPC 4.1%)</option>
+                    <option value="Optimista">Optimista (Base + 5%)</option>
+                    <option value="Pesimista">Pesimista (Base - 5%)</option>
+                    <option value="Personalizado">Personalizado</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Límite Global de Crecimiento (%)</label>
+                  <input 
+                    type="number" step="0.01" 
+                    value={config.globalGrowthRate} 
+                    onChange={e => setConfig({...config, globalGrowthRate: parseFloat(e.target.value)})} 
+                    className="w-full text-sm border border-slate-600 rounded-lg bg-slate-800 p-3 outline-none text-white focus:border-emerald-500"
+                    disabled={config.scenario !== 'Personalizado'}
+                  />
+                  {config.scenario !== 'Personalizado' && <p className="text-[10px] text-slate-500 mt-1">Anclado al IPC según artículo 86.</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Filtro por Unidad Administrativa</label>
+                  <select 
+                    className="w-full text-sm border-slate-600 rounded-lg bg-slate-800 p-3 outline-none text-white focus:border-emerald-500 cursor-pointer"
+                    value={config.filterUnidad}
+                    onChange={e => setConfig({...config, filterUnidad: e.target.value})}
+                  >
+                    <option value="Todos">Consolidado Institucional</option>
+                    <option value="Sede Central">Sede Central</option>
+                    <option value="Facultad Seccional Duitama">Facultad Seccional Duitama</option>
+                    <option value="Facultad Seccional Sogamoso">Facultad Seccional Sogamoso</option>
+                    <option value="Facultad Seccional Chiquinquirá">Facultad Seccional Chiquinquirá</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Nombre del Escenario</label>
+                  <input 
+                    type="text"
+                    value={config.scenarioName} 
+                    onChange={e => setConfig({...config, scenarioName: e.target.value})} 
+                    className="w-full text-sm border border-slate-600 rounded-lg bg-slate-800 p-3 outline-none text-white focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-3">Ajustes manuales por Recurso (Overrides)</label>
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center">
+                  <p className="text-sm text-slate-400">Las reglas bloqueadas por giros SIIF están protegidas. Para modificar tendencias específicas, utilice el panel avanzado en la siguiente versión.</p>
+                  <button className="mt-3 bg-slate-700 text-white text-xs px-4 py-2 rounded shadow hover:bg-slate-600 transition-colors">Añadir Regla de Excepción</button>
+                </div>
+              </div>
+
+            </div>
+            <div className="px-6 py-4 border-t border-slate-700 flex justify-end gap-3 bg-[#1e293b]/50">
+              <button onClick={() => setIsConfigModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">Cancelar</button>
+              <button onClick={() => setIsConfigModalOpen(false)} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg shadow-lg flex items-center gap-2 transition-colors">
+                <Save size={16} /> Aplicar Proyección
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
