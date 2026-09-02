@@ -191,8 +191,16 @@ function simulateCore(
   const TOTAL_NOMINA_SEP_DIC = 165179055764;
   const nominaProyectadaGlobal = TOTAL_NOMINA_SEP_DIC;
 
-  const FUNCIONAMIENTO_EXACTO_SEP_DIC = [5381650891.99, 5996809970.69, 2581881333.37, 572603471.66];
-  const TOTAL_FUNC_SEP_DIC = 14532945667.71;
+  const TOTAL_FUNC_ANUAL = 131209200000;
+  const funcReal = expenseTypeReal['Funcionamiento'] || 0;
+  const TOTAL_FUNC_SEP_DIC = Math.max(0, TOTAL_FUNC_ANUAL - funcReal);
+  const funcScale = TOTAL_FUNC_SEP_DIC / 14532945667.71;
+  const FUNCIONAMIENTO_EXACTO_SEP_DIC = [
+      5381650891.99 * funcScale,
+      5996809970.69 * funcScale,
+      2581881333.37 * funcScale,
+      572603471.66 * funcScale
+  ];
 
 
   baseData.forEach(base => {
@@ -328,8 +336,10 @@ function simulateCore(
     let proj = 0;
     if (tipo === 'Personal (Nómina)') {
        proj = nominaProyectadaGlobal;
+    } else if (tipo === 'Funcionamiento') {
+       proj = TOTAL_FUNC_SEP_DIC;
     } else {
-       const totalOthers = totals.totalCompromisos - totals.totalGastosProyectados - (expenseTypeReal['Personal (Nómina)'] || 0);
+       const totalOthers = totals.totalCompromisos - totals.totalGastosProyectados - (expenseTypeReal['Personal (Nómina)'] || 0) - (expenseTypeReal['Funcionamiento'] || 0);
        const weight = totalOthers > 0 ? expenseTypeReal[tipo] / totalOthers : 0;
        proj = Math.max(0, remainingGastoProyectado * weight);
     }
