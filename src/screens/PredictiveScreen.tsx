@@ -223,6 +223,7 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                           {sugg ? (
                             <div className="flex flex-col gap-1">
                               <span className="text-[11px] text-slate-400 leading-tight" title={sugg.mensaje}>{sugg.mensaje}</span>
+                              <span className="text-[11px] text-indigo-300 font-bold">Sugerido: {fmt(sugg.valorSugeridoIngreso)}</span>
                               <button onClick={() => {
                                 setConfig(prev => ({
                                   ...prev,
@@ -231,8 +232,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                                     [r.recurso]: {
                                       ...(prev.resourceOverrides[r.recurso] || { method: 'Manual', growthRate: prev.globalGrowthRate }),
                                       method: 'Manual',
-                                      manualIncome: sugg.aiIncomeReference,
-                                      manualExpense: sugg.aiExpenseReference
+                                      manualIncome: sugg.valorSugeridoIngreso,
+                                      manualExpense: undefined // Let engine auto-calculate expense based on new income
                                     }
                                   }
                                 }));

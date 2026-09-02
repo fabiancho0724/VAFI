@@ -117,6 +117,7 @@ export interface AISuggestion {
   nombre: string;
   mensaje: string;
   tasaSugerida: number;
+  valorSugeridoIngreso: number;
   confianza: 'Alta' | 'Media' | 'Baja';
   aiIncomeReference: number;
   aiExpenseReference: number;
@@ -132,7 +133,7 @@ export interface StrictProjectionResult {
   suggestions: AISuggestion[];
 }
 
-const NACION_FIXED = ['10.0', '10.1', '10.2', '10.3', '10.5', '12', '16.0', '16.1', '16.2'];
+const NACION_FIXED = ['10.0', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16.0', '16.1', '16.2'];
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const MONTH_KEYS = ['Valor ene', 'Valor feb', 'Valor mar', 'Valor abr', 'Valor may', 'Valor jun', 'Valor jul', 'Valor ago', 'Valor sep', 'Valor oct', 'Valor nov', 'Valor dic'];
 const NOMINA_MONTHS_MAP: Record<string, number> = { 'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5, 'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11 };
@@ -377,7 +378,7 @@ export function calculateStrictProjections(
       recaudo: parseNumber(row['Recaudo 31/08']), acuerdo: parseNumber(row['Acuerdo']),
       siif: parseNumber(row['SIIF']), totalRecaudo: parseNumber(row['Total Recaudo'])
     };
-  }).filter(r => r.recurso !== 'Total general' && r.recurso !== '');
+  }).filter(r => r.recurso !== 'Total general' && r.recurso !== '' && r.recurso !== '15');
 
   const monthlyHist = { ing: {} as any, comp: {} as any, pago: {} as any };
   baseData.forEach(b => {
@@ -456,7 +457,19 @@ export function calculateStrictProjections(
            tasaSugerida = 0.05;
            msg = 'Comportamiento estable. Tasa estándar recomendada.';
         }
-        suggestions.push({ recurso: r.recurso, nombre: r.nombre, mensaje: msg, tasaSugerida, confianza: 'Alta', aiIncomeReference: r.aiIncomeReference, aiExpenseReference: r.aiExpenseReference });
+        const pendiente = Math.max(0, base.aforo - r.ingresosReales);
+        let valorSugeridoIngreso = pendiente * (1 + tasaSugerida);
+        
+        suggestions.push({ 
+          recurso: r.recurso, 
+          nombre: r.nombre, 
+          mensaje: msg, 
+          tasaSugerida, 
+          valorSugeridoIngreso,
+          confianza: 'Alta', 
+          aiIncomeReference: r.aiIncomeReference, 
+          aiExpenseReference: r.aiExpenseReference 
+        });
       }
     }
   });
