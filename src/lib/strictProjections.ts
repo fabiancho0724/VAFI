@@ -133,7 +133,7 @@ export interface StrictProjectionResult {
   suggestions: AISuggestion[];
 }
 
-const NACION_FIXED = ['10.0', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16.0', '16.1', '16.2'];
+const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.1', '16.2'];
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const MONTH_KEYS = ['Valor ene', 'Valor feb', 'Valor mar', 'Valor abr', 'Valor may', 'Valor jun', 'Valor jul', 'Valor ago', 'Valor sep', 'Valor oct', 'Valor nov', 'Valor dic'];
 const NOMINA_MONTHS_MAP: Record<string, number> = { 'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5, 'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11 };
@@ -183,7 +183,8 @@ function simulateCore(
     const isFixed = NACION_FIXED.includes(base.recurso);
     const customConfig = config.resourceOverrides[base.recurso];
     
-    const recaudoRealAcumulado = (monthlyHist.ing[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+    // Usar el valor real y fidedigno del balance (Recaudo 31/08) en lugar de sumar el histórico mensual que puede estar incompleto
+    const recaudoRealAcumulado = base.recaudo;
     const compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
     const pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
 
@@ -374,9 +375,9 @@ export function calculateStrictProjections(
   
   const baseData: BaseResource[] = balanceData.map(row => {
     const raw = String(row['Recurso'] || row['recurso'] || '').trim();
-    const code = raw.split('-')[0].trim();
     return {
-      recurso: code, nombre: raw.substring(raw.indexOf('-') + 1).trim() || raw,
+      recurso: getRecursoEquivalence(raw.split('-')[0].trim()),
+      nombre: raw.substring(raw.indexOf('-') + 1).trim() || raw,
       valorInicial: parseNumber(row['Valor inicial']), aforo: parseNumber(row['Aforo']),
       recaudo: parseNumber(row['Recaudo 31/08']), acuerdo: parseNumber(row['Acuerdo']),
       siif: parseNumber(row['SIIF']), totalRecaudo: parseNumber(row['Total Recaudo'])
