@@ -388,8 +388,16 @@ function simulateCore(
 
          const otherExpense = Math.max(0, r.gastosProyectados - nAsignada - fAsignada);
          
-         mComp += monthlyN + monthlyF + (otherExpense * w);
-         mPago += monthlyN + (monthlyF * 0.9) + (otherExpense * 0.9 * w);
+         let w_other = w;
+         if (idx === 11) {
+             w_other = 0; // Restricción: Diciembre no debe exceder nómina + func (< 600M sobre nómina)
+         } else if (idx === 10) {
+             const dec_w = historicWeights[r.recurso] ? historicWeights[r.recurso][11] : 0.25;
+             w_other += dec_w; // Trasladamos la ejecución de otros gastos a Noviembre
+         }
+
+         mComp += monthlyN + monthlyF + (otherExpense * w_other);
+         mPago += monthlyN + (monthlyF * 0.9) + (otherExpense * 0.9 * w_other);
       }
     });
     
