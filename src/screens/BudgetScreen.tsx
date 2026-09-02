@@ -34,15 +34,19 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
         // Proyección 2026 aforo actual / recaudo
         totalBudget = 531067100000;
         gastosPersonales = 360802600000;
-        // The total expenses are 596533200000 (meaning a deficit of ~52B).
+        // The total expenses are 596533200000 (meaning a deficit of ~65B).
         funcionamientoEInversion = 596533200000 - gastosPersonales;
       } else {
-        const incomes = budgetData.filter(d => d.year === year && d.category === 'Ingresos');
-        totalBudget = incomes.reduce((acc, curr) => acc + curr.amount, 0);
+        if (year === 2025) totalBudget = 510077500000;
+        else if (year === 2024) totalBudget = 443054200000;
+        else if (year === 2023) totalBudget = 413198500000;
+        else {
+          const incomes = budgetData.filter(d => d.year === year && d.category === 'Ingresos');
+          totalBudget = incomes.reduce((acc, curr) => acc + curr.amount, 0);
+        }
         
         gastosPersonales = budgetData.filter(d => d.year === year && d.category === 'Nómina').reduce((a, b) => a + b.amount, 0);
-        const honorarios = budgetData.filter(d => d.year === year && d.category === 'Honorarios').reduce((a, b) => a + b.amount, 0);
-        funcionamientoEInversion = Math.max(0, totalBudget - gastosPersonales - honorarios);
+        funcionamientoEInversion = Math.max(0, totalBudget - gastosPersonales);
       }
 
       // Safe access
