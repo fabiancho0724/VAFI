@@ -588,10 +588,20 @@ export function CashFlowScreen() {
                     onChange={e => setConfig({...config, filterUnidad: e.target.value})}
                   >
                     <option value="Todos">Consolidado Institucional</option>
-                    <option value="Sede Central">Sede Central</option>
-                    <option value="Facultad Seccional Duitama">Facultad Seccional Duitama</option>
-                    <option value="Facultad Seccional Sogamoso">Facultad Seccional Sogamoso</option>
-                    <option value="Facultad Seccional Chiquinquirá">Facultad Seccional Chiquinquirá</option>
+                    <option value="01">01 - ADMINISTRATIVA Y FINANCIERA</option>
+                    <option value="02">02 - INVESTIGACION Y EXTENSION</option>
+                    <option value="04">04 - CIENCIAS DE LA EDUCACION</option>
+                    <option value="05">05 - CIENCIAS BASICAS</option>
+                    <option value="06">06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES</option>
+                    <option value="07">07 - CIENCIAS DE LA SALUD</option>
+                    <option value="08">08 - CIENCIAS AGROPECUARIAS</option>
+                    <option value="09">09 - INGENIERIA</option>
+                    <option value="10">10 - DERECHO Y CIENCIAS SOCIALES</option>
+                    <option value="11">11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA</option>
+                    <option value="12">12 - SECCIONAL DUITAMA</option>
+                    <option value="13">13 - SECCIONAL SOGAMOSO</option>
+                    <option value="14">14 - SECCIONAL CHIQUINQUIRA</option>
+                    <option value="15">15 - SEDE REGIONAL AGUAZUL</option>
                   </select>
                 </div>
                 <div>
