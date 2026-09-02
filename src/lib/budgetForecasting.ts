@@ -197,7 +197,7 @@ export function selectBestModel(budgets: number[], years: number[]): ForecastRes
   // El usuario indicó explícitamente que el presupuesto histórico y proyectado
   // no debe saltar irracionalmente (>60,000M o >10%). 
   // Forzamos la selección del modelo Estructural o aquel que respete la banda del 4% - 7%.
-  const viableModels = models.filter(m => m.projectedIncreasePercent >= 3.0 && m.projectedIncreasePercent <= 10.0);
+  const viableModels = models.filter(m => m.projectedIncreasePercent >= 3.8 && m.projectedIncreasePercent <= 4.8);
   
   if (viableModels.length > 0) {
     return viableModels.reduce((prev, curr) => (prev.mape < curr.mape ? prev : curr));
