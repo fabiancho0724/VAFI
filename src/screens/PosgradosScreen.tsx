@@ -103,7 +103,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
   // Multi-Year projection controls
   const [numYearsProyectar, setNumYearsProyectar] = useState<number>(10); 
-  const [icesRate, setIcesRate] = useState<number>(4.5); 
+  const [icesRate, setIcesRate] = useState<number>(6.66); 
   const [ipcRate, setIpcRate] = useState<number>(4.0); 
   const [enrollmentGrowthRate, setEnrollmentGrowthRate] = useState<number>(0.5); 
 
@@ -1416,7 +1416,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                           max="10"
                           step="0.1"
                           value={icesRate}
-                          onChange={(e) => setIcesRate(parseFloat(e.target.value) || 4.5)}
+                          onChange={(e) => setIcesRate(parseFloat(e.target.value) || 6.66)}
                           className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
                         />
                       </div>
@@ -2622,7 +2622,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                       Con el fin de evaluar la sostenibilidad financiera del Fondo de Posgrados (Recurso R31) en el mediano plazo, se realizó una proyección multivigencia para el período 2027-2030, incorporando los mecanismos de actualización previstos en el artículo 5 del Proyecto de Acuerdo para la determinación del Valor Base del Crédito Académico Institucional (VBCI).
                     </p>
                     <p className="mt-2 text-justify">
-                      La proyección se desarrolló considerando supuestos macroeconómicos consistentes con las variables de indexación definidas en el proyecto normativo, aplicando una tasa de crecimiento de los ingresos equivalente al Índice de Costos de la Educación Superior (ICES) del 4,5 % anual, una actualización de los egresos basada en un Índice de Precios al Consumidor (IPC) del 4,0 % anual, así como un crecimiento estimado de la población estudiantil del 0,5 % anual.
+                      La proyección se desarrolló considerando supuestos macroeconómicos consistentes con las variables de indexación definidas en el proyecto normativo, aplicando una tasa de crecimiento de los ingresos equivalente al Índice de Costos de la Educación Superior (ICES) del 6,66 % anual, una actualización de los egresos basada en un Índice de Precios al Consumidor (IPC) del 4,0 % anual, así como un crecimiento estimado de la población estudiantil del 0,5 % anual.
                     </p>
                     <p className="mt-2 text-justify">
                       Bajo estos supuestos, el ejercicio financiero permite estimar la evolución de los ingresos, egresos y excedentes del Fondo de Posgrados, verificado la capacidad del modelo de financiación para mantener su equilibrio presupuestal, preservar la sostenibilidad financiera de los programas y garantizar la disponibilidad de recursos necesarios para el cumplimiento de las funciones académicas y administrativas durante el horizonte de evaluación.

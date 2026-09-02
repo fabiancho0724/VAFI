@@ -185,7 +185,7 @@ export function ProgramCostingScreen({ onNavigate }: { onNavigate: (s: string) =
 
   // Variables Macroeconómicas e Inversión (IAEP)
   const [macroIPC, setMacroIPC] = useState<number>(4.0);
-  const [macroICES, setMacroICES] = useState<number>(4.5);
+  const [macroICES, setMacroICES] = useState<number>(6.66);
   const [macroSMLMV, setMacroSMLMV] = useState<number>(5.0);
   const [w_IPC, setW_IPC] = useState<number>(0.3);
   const [w_ICES, setW_ICES] = useState<number>(0.5);

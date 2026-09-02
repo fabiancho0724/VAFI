@@ -44,10 +44,10 @@ export function MultiYearProjectionScreen({ onNavigate }: { onNavigate: (s: stri
       otherGrowth: new Array(20).fill(otherVal)
     });
     return {
-      base: makeDefault(4.0, 4.5, 4.0),
+      base: makeDefault(4.0, 6.66, 4.0),
       conservador: makeDefault(3.0, 3.2, 2.0),
       optimista: makeDefault(5.5, 6.0, 6.0),
-      personalizado: makeDefault(4.0, 4.5, 4.0)
+      personalizado: makeDefault(4.0, 6.66, 4.0)
     };
   });
 
@@ -960,7 +960,7 @@ export function MultiYearProjectionScreen({ onNavigate }: { onNavigate: (s: stri
             <div>
               <span className="font-bold block">Recomendación Presupuestaria:</span>
               <span>
-                Para compensar el efecto inflacionario acumulado, se sugerirá crear planes de ahorro institucional en recursos propios e indexar las matrículas de posgrado y convenios con una tasa de crecimiento de al menos el 4.5% anual.
+                Para compensar el efecto inflacionario acumulado, se sugerirá crear planes de ahorro institucional en recursos propios e indexar las matrículas de posgrado y convenios con una tasa de crecimiento de al menos el 6.66% anual.
               </span>
             </div>
           </div>
