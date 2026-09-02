@@ -30,6 +30,7 @@ export default function App() {
     <Layout currentScreen={currentScreen} onNavigate={handleNavigate}>
       {currentScreen === 'dashboard' && <DashboardScreen onNavigate={handleNavigate} />}
       {currentScreen === 'predictive' && <PredictiveScreen onNavigate={handleNavigate} />}
+      {currentScreen === 'presupuesto' && <BudgetScreen onNavigate={handleNavigate} />}
       {currentScreen === 'historical' && <HistoricalScreen onNavigate={handleNavigate} />}
       {currentScreen === 'budget' && <ProgramCostingScreen onNavigate={handleNavigate} />}
       {currentScreen === 'calendar' && <CalendarScreen onNavigate={handleNavigate} />}
