@@ -133,7 +133,16 @@ export interface StrictProjectionResult {
   suggestions: AISuggestion[];
 }
 
-const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.1', '16.2'];
+const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18'];
+
+const GIROS_SIIF_PROYECTADOS: Record<string, number[]> = {
+  '10':   [25447028176, 28905581876, 28841664885, 25447028176],
+  '10.5': [1720542062, 1720542062, 1720542062, 1720542062],
+  '18':   [179049568, 179049568, 179049568, 179049568],
+  '17':   [478844455, 478844455, 478844455, 478844455],
+  '10.1': [5623807220, 2165253520, 0, 0],
+  '10.3': [0, 0, 2229170511, 0]
+};
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const MONTH_KEYS = ['Valor ene', 'Valor feb', 'Valor mar', 'Valor abr', 'Valor may', 'Valor jun', 'Valor jul', 'Valor ago', 'Valor sep', 'Valor oct', 'Valor nov', 'Valor dic'];
 const NOMINA_MONTHS_MAP: Record<string, number> = { 'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5, 'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11 };
@@ -188,53 +197,51 @@ function simulateCore(
     const compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
     const pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
 
-    let pendiente = Math.max(0, base.aforo - recaudoRealAcumulado);
-    
-    // Calculate AI Baseline values
-    let aiIncomeReference = pendiente * (1 + effGrowth);
-    if (isFixed) aiIncomeReference = base.siif;
-    
-    let totalIngresosAI = recaudoRealAcumulado + aiIncomeReference;
-    let aiExpenseReference = Math.max(0, (totalIngresosAI - compHistorico) * effExpense);
-    
     let ingProyectado = 0;
     let gasProyectado = 0;
-    let methodUsed = '';
     let trace: TraceNode[] = [];
+    let methodUsed = 'Tendencia Histórica';
     
     trace.push({ step: 'Base', value: base.aforo, detail: 'Aforo oficial' });
     trace.push({ step: 'Recaudo Real', value: recaudoRealAcumulado, detail: 'Enero a Agosto' });
+    
+    const girosExactos = GIROS_SIIF_PROYECTADOS[base.recurso];
 
-    if (isFixed) {
-      ingProyectado = base.siif;
-      gasProyectado = aiExpenseReference;
+    if (girosExactos) {
+      ingProyectado = girosExactos.reduce((a, b) => a + b, 0);
       methodUsed = 'Fijo (SIIF)';
-      trace.push({ step: 'Proyección', value: ingProyectado, detail: 'Valor oficial SIIF (No modificable)' });
+      trace.push({ step: 'Giros Pendientes (SIIF)', value: ingProyectado, detail: 'Valores exactos provistos para Sep-Dic' });
+    } else if (isFixed) {
+      ingProyectado = Math.max(0, base.siif - recaudoRealAcumulado);
+      if (base.siif === 0) ingProyectado = 0;
+      methodUsed = 'Fijo (SIIF)';
+      trace.push({ step: 'Asignación Fija', value: ingProyectado, detail: 'Saldo restante del SIIF anual' });
     } else {
+      let pendiente = Math.max(0, base.aforo - recaudoRealAcumulado);
       let rRate = customConfig ? customConfig.growthRate : effGrowth;
-      let rMethod = customConfig ? customConfig.method : 'Tendencia Histórica';
-      methodUsed = rMethod;
+      ingProyectado = pendiente * (1 + rRate);
+      trace.push({ step: 'Cálculo Base Tendencia', value: ingProyectado, detail: `Aforo pendiente (${pendiente}) × tasa (${(rRate*100).toFixed(1)}%)` });
+    }
 
-      if (rMethod === 'Manual' && customConfig) {
-        ingProyectado = customConfig.manualIncome !== undefined ? customConfig.manualIncome : aiIncomeReference;
-        gasProyectado = customConfig.manualExpense !== undefined ? customConfig.manualExpense : aiExpenseReference;
-        trace.push({ step: 'Proyección Manual', value: ingProyectado, detail: 'Valor ingresado por el usuario' });
-      } else {
-        ingProyectado = pendiente * (1 + rRate);
-        trace.push({ step: 'Pendiente de Aforo', value: pendiente, detail: 'Aforo - Recaudo' });
-        trace.push({ step: 'Tasa Aplicada', value: `${(rRate*100).toFixed(1)}%`, detail: `Método: ${rMethod}` });
-        trace.push({ step: 'Proyección Bruta (Ingresos)', value: ingProyectado, detail: `Pendiente * (1 + Tasa)` });
-        
-        let totalIngresosCalc = recaudoRealAcumulado + ingProyectado;
-        gasProyectado = Math.max(0, (totalIngresosCalc - compHistorico) * effExpense);
-      }
+    const aiIncomeReference = ingProyectado;
+    let totalIngresosAI = recaudoRealAcumulado + aiIncomeReference;
+    let aiExpenseReference = Math.max(0, (totalIngresosAI - compHistorico) * effExpense);
+
+    if (customConfig && customConfig.method === 'Manual') {
+      ingProyectado = customConfig.manualIncome !== undefined ? customConfig.manualIncome : aiIncomeReference;
+      gasProyectado = customConfig.manualExpense !== undefined ? customConfig.manualExpense : aiExpenseReference;
+      methodUsed = 'Manual';
+      trace.push({ step: 'Proyección Manual', value: ingProyectado, detail: 'Valor ingresado por el usuario' });
+    } else {
+      gasProyectado = aiExpenseReference;
+      trace.push({ step: 'Proyección Bruta (Gastos)', value: gasProyectado, detail: 'Cálculo AI de referencia' });
     }
     
     let totalIngresos = recaudoRealAcumulado + ingProyectado;
     
     let ingresoAdmin = 0;
     if (base.recurso === '31') ingresoAdmin = totalIngresos * 0.40;
-    else if (['10.0', '10.1', '10.2', '10.5', '12', '13', '14', '16.0', '17', '18', '20', '21'].includes(base.recurso)) {
+    else if (['10', '10.1', '10.2', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18', '20', '21'].includes(base.recurso)) {
       ingresoAdmin = totalIngresos; 
     }
     
@@ -243,7 +250,7 @@ function simulateCore(
 
     if (totalComp > totalIngresos) {
       if (modifierVariations.incomeVar === 0 && modifierVariations.expenseVar === 0) {
-        alerts.push(`🔴 CRÍTICA: Déficit Proyectado en ${base.nombre}. Compromiso truncado para no superar recaudo.`);
+        alerts.push(`🚨 CRÍTICA: Déficit Proyectado en ${base.nombre}. Compromiso truncado para no superar recaudo.`);
       }
       totalComp = totalIngresos;
       trace.push({ step: 'Restricción Caja', value: totalComp, detail: 'Compromiso reducido al tope del recaudo.' });
@@ -344,8 +351,13 @@ function simulateCore(
          mComp += (monthlyHist.comp[r.recurso] || [])[idx] || 0;
          mPago += (monthlyHist.pago[r.recurso] || [])[idx] || 0;
       } else {
+         const girosExactos = GIROS_SIIF_PROYECTADOS[r.recurso];
          const w = historicWeights[r.recurso] ? historicWeights[r.recurso][idx] : 0.25;
-         mIngProy += r.ingresosProyectados * w;
+         if (girosExactos) {
+            mIngProy += girosExactos[idx - 8];
+         } else {
+            mIngProy += r.ingresosProyectados * w;
+         }
          mComp += r.gastosProyectados * w;
          mPago += (r.gastosProyectados * 0.9) * w;
       }
