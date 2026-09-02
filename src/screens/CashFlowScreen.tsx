@@ -7,7 +7,7 @@ import {
   ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Wallet, 
   AlertCircle, AlertTriangle, CheckCircle, Calendar, Filter, 
   ChevronDown, ChevronRight, Download, Maximize2, Coins, Activity, Target,
-  Brain, FileText, PieChart as PieChartIcon, Settings, X, Save
+  Brain, FileText, PieChart as PieChartIcon, Settings, X, Save, Lock
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
@@ -24,6 +24,9 @@ const formatCurrencyShort = (value: number) => {
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const RUBROS = ['Sueldos Básicos', 'Primas y Bonificaciones', 'Servicios Públicos', 'Mantenimiento', 'Materiales y Suministros', 'Proyectos Inversión'];
 
+
+const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18'];
+
 export function CashFlowScreen() {
   const [dataStage, setDataStage] = useState<'loading' | 'ready' | 'error'>('loading');
   const [csvData, setCsvData] = useState<any>({});
@@ -33,6 +36,19 @@ export function CashFlowScreen() {
   const [selectedResource, setSelectedResource] = useState('Todos');
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+
+  const handleOverrideChange = (recurso: string, field: 'manualIncome' | 'manualExpense', value: number) => {
+    setConfig(prev => ({
+      ...prev,
+      resourceOverrides: {
+        ...prev.resourceOverrides,
+        [recurso]: {
+          ...(prev.resourceOverrides[recurso] || { method: 'Manual', growthRate: 0 }),
+          [field]: value
+        }
+      }
+    }));
+  };
 
   const [config, setConfig] = useState<StrictConfig>({
     scenarioName: 'Proyección Institucional',
@@ -590,14 +606,62 @@ export function CashFlowScreen() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-3">Ajustes manuales por Recurso (Overrides)</label>
-                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center">
-                  <p className="text-sm text-slate-400">Las reglas bloqueadas por giros SIIF están protegidas. Para modificar tendencias específicas, utilice el panel avanzado en la siguiente versión.</p>
-                  <button className="mt-3 bg-slate-700 text-white text-xs px-4 py-2 rounded shadow hover:bg-slate-600 transition-colors">Añadir Regla de Excepción</button>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-3 flex justify-between items-center">
+                  <span>Ajustes manuales por Recurso (Overrides)</span>
+                  <span className="text-[10px] text-orange-400 font-normal bg-orange-400/10 px-2 py-1 rounded flex items-center gap-1">
+                    <Lock size={10} /> Valores SIIF Bloqueados
+                  </span>
+                </label>
+                <div className="bg-slate-900/50 border border-slate-700 rounded-xl overflow-hidden max-h-[300px] overflow-y-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-800 text-xs uppercase text-slate-400 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-4 py-3">Recurso</th>
+                        <th className="px-4 py-3 text-right">Ingreso Manual ($)</th>
+                        <th className="px-4 py-3 text-right">Gasto Manual ($)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(csvData.balanceData || []).map((r: any) => {
+                        const isFixed = NACION_FIXED.includes(r.recurso);
+                        const override = (config.resourceOverrides[r.recurso] || {}) as any;
+                        return (
+                          <tr key={r.recurso} className="border-t border-slate-800/50 hover:bg-slate-800/80 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="font-medium text-slate-200">{r.recurso}</div>
+                              <div className="text-[10px] text-slate-500 truncate max-w-[200px]" title={r.nombre}>{r.nombre}</div>
+                              {isFixed && <div className="text-[10px] text-orange-400/80 mt-1 flex items-center gap-1"><Lock size={10}/> Bloqueado SIIF</div>}
+                            </td>
+                            <td className="px-4 py-3">
+                              <input 
+                                type="number"
+                                disabled={isFixed}
+                                value={override.manualIncome || ''}
+                                onChange={e => handleOverrideChange(r.recurso, 'manualIncome', parseFloat(e.target.value) || 0)}
+                                className={`w-full text-sm border rounded-lg p-2 outline-none text-right ${isFixed ? 'bg-slate-800/30 border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-emerald-300 focus:border-emerald-500'}`}
+                                placeholder={isFixed ? 'Reglado' : '0.00'}
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <input 
+                                type="number"
+                                disabled={isFixed}
+                                value={override.manualExpense || ''}
+                                onChange={e => handleOverrideChange(r.recurso, 'manualExpense', parseFloat(e.target.value) || 0)}
+                                className={`w-full text-sm border rounded-lg p-2 outline-none text-right ${isFixed ? 'bg-slate-800/30 border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-rose-300 focus:border-rose-500'}`}
+                                placeholder={isFixed ? 'Reglado' : '0.00'}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
             </div>
+
             <div className="px-6 py-4 border-t border-slate-700 flex justify-end gap-3 bg-[#1e293b]/50">
               <button onClick={() => setIsConfigModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">Cancelar</button>
               <button onClick={() => setIsConfigModalOpen(false)} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg shadow-lg flex items-center gap-2 transition-colors">
