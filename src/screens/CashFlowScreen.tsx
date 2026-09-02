@@ -35,6 +35,7 @@ export function CashFlowScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('2026');
   const [selectedResource, setSelectedResource] = useState('Todos');
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
+  const [selectedMonthDetail, setSelectedMonthDetail] = useState<any>(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
   const handleOverrideChange = (recurso: string, field: 'manualIncome' | 'manualExpense', value: number) => {
@@ -105,10 +106,24 @@ export function CashFlowScreen() {
     return <div className="p-8 text-center text-rose-500">Error cargando proyecciones: {errorMessage}</div>;
   }
 
-  const monthlyData = results.flow.map(f => {
+  const breakdown = results.totals.expenseBreakdown || [];
+  const totalExpenseProj = breakdown.reduce((a: any, b: any) => a + b.total, 0) || 1;
+  const pTotal = breakdown.find((b: any) => b.tipo.includes('Personal'))?.total || (totalExpenseProj * 0.65);
+  const fTotal = breakdown.find((b: any) => b.tipo.includes('Funcionamiento'))?.total || (totalExpenseProj * 0.25);
+  const iTotal = Math.max(0, totalExpenseProj - pTotal - fTotal);
+
+  const monthlyData = results.flow.map((f, i) => {
     const income = f.ingresosProyectados + f.ingresosReales;
     const expense = f.compromisos;
     const netFlow = income - expense;
+    
+    const baseP = pTotal * (i === 5 || i === 11 ? 2/14 : 1/14);
+    const baseF = fTotal * (1/12);
+    const baseI = iTotal * (1/12);
+    
+    const monthSum = baseP + baseF + baseI;
+    const scale = monthSum > 0 ? (expense / monthSum) : 0;
+
     return {
       month: f.month,
       income,
@@ -116,19 +131,20 @@ export function CashFlowScreen() {
       netFlow,
       initialBalance: f.saldoInicial,
       finalBalance: f.saldoFinal,
-      gPersonal: expense * 0.65,
-      gFuncionamiento: expense * 0.25,
-      gInversion: expense * 0.10,
+      gPersonal: baseP * scale,
+      gFuncionamiento: baseF * scale,
+      gInversion: baseI * scale,
       rNacion: income * 0.65,
       rPropios: income * 0.30,
       rEstampillas: income * 0.05,
       waterfallStart: netFlow >= 0 ? f.saldoInicial : f.saldoInicial + netFlow,
       waterfallEnd: Math.abs(netFlow),
-      waterfallColor: netFlow >= 0 ? '#10b981' : '#f43f5e'
+      waterfallColor: netFlow >= 0 ? '#10b981' : '#f43f5e',
+      rawFlow: f
     };
   });
 
-  const totalIncome = results.totals.totalIngresosProyectados + results.totals.totalRecaudo;
+    const totalIncome = results.totals.totalIngresosProyectados + results.totals.totalRecaudo;
   const totalExpense = results.totals.totalCompromisos;
   const finalBalance = results.totals.saldoDisponible;
   const initialBalance = results.totals.totalRecursosIniciales;
@@ -259,43 +275,174 @@ export function CashFlowScreen() {
         </div>
       </div>
 
-      {/* BLOQUE 2 & 3: COMPORTAMIENTO MENSUAL Y WATERFALL */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-        <div className="glass-card p-6 rounded-[24px] xl:col-span-2 flex flex-col border border-white/5">
-          <div className="mb-6">
-            <h2 className="text-xl font-display text-white">Dinámica de Caja Mensual</h2>
+      {/* BLOQUE DE ANÁLISIS DE DINÁMICA (ACTUALIZADO PARA MAYOR IMPORTANCIA) */}
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        
+        {/* GRÁFICO PRINCIPAL GIGANTE */}
+        <div className="glass-card p-6 rounded-[24px] border border-white/5 flex flex-col relative overflow-hidden">
+          <div className="mb-6 flex justify-between items-center relative z-10">
+            <div>
+              <h2 className="text-2xl font-display text-white mb-1">Dinámica de Caja: Ingresos vs Gastos vs Flujo</h2>
+              <p className="text-sm text-slate-400">Haz clic en cualquier punto del gráfico para ver el detalle exacto del mes.</p>
+            </div>
+            {selectedMonthDetail && (
+              <button onClick={() => setSelectedMonthDetail(null)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg transition-colors border border-slate-700">
+                Ocultar Detalle
+              </button>
+            )}
           </div>
-          <div className="h-[350px] w-full mt-auto">
+          
+          <div className="flex flex-col xl:flex-row gap-6">
+            <div className={`transition-all duration-500 ease-in-out ${selectedMonthDetail ? 'w-full xl:w-2/3 h-[450px]' : 'w-full h-[500px]'}`}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart 
+                  data={monthlyData} 
+                  margin={{ top: 20, right: 20, left: 20, bottom: 0 }}
+                  onClick={(e: any) => {
+                    if (e && e.activePayload && e.activePayload.length > 0) {
+                      setSelectedMonthDetail(e.activePayload[0].payload);
+                    }
+                  }}
+                  className="cursor-pointer"
+                >
+                  <defs>
+                    <linearGradient id="netFlowGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gastoGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="month" stroke="#64748b" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="left" stroke="#64748b" tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <RechartsTooltip 
+                    formatter={(value: number, name: string) => [formatCurrency(value), name]} 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }} 
+                  />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                  <Area yAxisId="left" type="monotone" dataKey="netFlow" name="Flujo Neto" fill="url(#netFlowGrad)" stroke="#38bdf8" strokeWidth={2} />
+                  <Line yAxisId="left" type="monotone" dataKey="income" name="Ingresos" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#0f172a' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#10b981' }} />
+                  <Line yAxisId="left" type="monotone" dataKey="expense" name="Gastos" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#0f172a' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#f43f5e' }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+            
+            {/* PANEL DETALLE EMERGENTE */}
+            {selectedMonthDetail && (
+              <div className="w-full xl:w-1/3 bg-slate-900/80 border border-slate-700/50 rounded-2xl p-6 flex flex-col shadow-2xl animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex items-center gap-3 mb-6 border-b border-slate-800 pb-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xl">
+                    {selectedMonthDetail.month}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Detalle Operativo</h3>
+                    <p className="text-xs text-slate-400">Análisis proyectado del mes</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-slate-500 mb-2">Resumen del Mes</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+                        <p className="text-[10px] text-emerald-400 font-bold mb-1">INGRESOS</p>
+                        <p className="text-sm font-mono text-white">{formatCurrencyShort(selectedMonthDetail.income)}</p>
+                      </div>
+                      <div className="bg-rose-500/10 p-3 rounded-lg border border-rose-500/20">
+                        <p className="text-[10px] text-rose-400 font-bold mb-1">GASTOS</p>
+                        <p className="text-sm font-mono text-white">{formatCurrencyShort(selectedMonthDetail.expense)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-slate-500 mb-3">Estructura del Gasto</p>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-blue-300 font-bold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Personal</span>
+                          <span className="font-mono text-white">{formatCurrencyShort(selectedMonthDetail.gPersonal)}</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(selectedMonthDetail.gPersonal / selectedMonthDetail.expense) * 100}%` }}></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-purple-300 font-bold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-500"></div> Funcionamiento</span>
+                          <span className="font-mono text-white">{formatCurrencyShort(selectedMonthDetail.gFuncionamiento)}</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-purple-500 rounded-full" style={{ width: `${(selectedMonthDetail.gFuncionamiento / selectedMonthDetail.expense) * 100}%` }}></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-pink-300 font-bold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-pink-500"></div> Inversión</span>
+                          <span className="font-mono text-white">{formatCurrencyShort(selectedMonthDetail.gInversion)}</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-pink-500 rounded-full" style={{ width: `${(selectedMonthDetail.gInversion / selectedMonthDetail.expense) * 100}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-4 rounded-xl border ${selectedMonthDetail.netFlow >= 0 ? 'bg-blue-500/10 border-blue-500/20' : 'bg-orange-500/10 border-orange-500/20'} mt-auto`}>
+                    <p className={`text-xs font-bold mb-1 ${selectedMonthDetail.netFlow >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>FLUJO NETO DEL MES</p>
+                    <p className="text-2xl font-mono text-white">{formatCurrencyShort(selectedMonthDetail.netFlow)}</p>
+                    <p className="text-[10px] text-slate-400 mt-2">Saldo tras operación: {formatCurrencyShort(selectedMonthDetail.finalBalance)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="glass-card p-6 rounded-[24px] border border-white/5 flex flex-col h-[400px]">
+          <h2 className="text-xl font-display text-white mb-2">Estructura del Gasto Mensual</h2>
+          <p className="text-xs text-slate-400 mb-6">Comportamiento del gasto segregado (Clic para analizar mes)</p>
+          <div className="flex-1 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={monthlyData} margin={{ top: 20, right: 20, left: 20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="netFlowGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                <XAxis dataKey="month" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <YAxis yAxisId="left" stroke="#94a3b8" tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} />
-                <RechartsTooltip formatter={(value: number, name: string) => [formatCurrency(value), name]} contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', color: '#fff' }} />
-                <Legend />
-                <Area yAxisId="left" type="monotone" dataKey="netFlow" name="Flujo Neto" fill="url(#netFlowGrad)" stroke="#38bdf8" strokeWidth={2} />
-                <Line yAxisId="left" type="monotone" dataKey="income" name="Ingresos" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line yAxisId="left" type="monotone" dataKey="expense" name="Gastos" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-              </ComposedChart>
+              <BarChart 
+                data={monthlyData} 
+                margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                onClick={(e: any) => {
+                  if (e && e.activePayload && e.activePayload.length > 0) {
+                    setSelectedMonthDetail(e.activePayload[0].payload);
+                    window.scrollTo({ top: 300, behavior: 'smooth' });
+                  }
+                }}
+                className="cursor-pointer"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis stroke="#64748b" tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <RechartsTooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} formatter={(val: number, name: string) => [formatCurrency(val), name]} contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px' }} />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                <Bar dataKey="gPersonal" name="Personal" stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} />
+                <Bar dataKey="gFuncionamiento" name="Funcionamiento" stackId="a" fill="#a855f7" />
+                <Bar dataKey="gInversion" name="Inversión" stackId="a" fill="#ec4899" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="glass-card p-6 rounded-[24px] flex flex-col border border-white/5">
-          <div className="mb-6">
-            <h2 className="text-xl font-display text-white">Evolución de Saldo</h2>
-          </div>
-          <div className="h-[350px] w-full mt-auto">
+        
+        <div className="glass-card p-6 rounded-[24px] flex flex-col border border-white/5 h-[400px]">
+          <h2 className="text-xl font-display text-white mb-2">Evolución del Saldo Acumulado (Waterfall)</h2>
+          <p className="text-xs text-slate-400 mb-6">Variación mensual de liquidez disponible</p>
+          <div className="flex-1 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                <XAxis dataKey="month" stroke="#94a3b8" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#94a3b8" tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} domain={['auto', 'auto']} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis stroke="#64748b" tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} domain={['auto', 'auto']} axisLine={false} tickLine={false} />
                 <RechartsTooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
@@ -311,46 +458,9 @@ export function CashFlowScreen() {
                   }} />
                 <Bar dataKey="waterfallStart" stackId="a" fill="transparent" />
                 <Bar dataKey="waterfallEnd" stackId="a">
-                  {monthlyData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.waterfallColor} />))}
+                  {monthlyData.map((entry: any, index: number) => (<Cell key={`cell-${index}`} fill={entry.waterfallColor} />))}
                 </Bar>
-                <Line type="stepAfter" dataKey="finalBalance" stroke="#f59e0b" strokeWidth={2} dot={false} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* BLOQUE 4: ANÁLISIS DE INGRESOS Y GASTOS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="glass-card p-6 rounded-[24px] border border-white/5">
-          <div className="mb-6"><h2 className="text-xl font-display text-white">Composición de Ingresos</h2></div>
-          <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart layout="vertical" data={incomeComposition} margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-                <XAxis type="number" stroke="#94a3b8" tickFormatter={formatCurrencyShort} />
-                <YAxis type="category" dataKey="name" stroke="#94a3b8" width={120} tick={{ fontSize: 11 }} />
-                <RechartsTooltip formatter={(val: number) => formatCurrency(val)} contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                  {incomeComposition.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.fill} />))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="glass-card p-6 rounded-[24px] border border-white/5">
-          <div className="mb-6"><h2 className="text-xl font-display text-white">Estructura del Gasto Mensual</h2></div>
-          <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                <XAxis dataKey="month" stroke="#94a3b8" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#94a3b8" tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} />
-                <RechartsTooltip formatter={(val: number, name: string) => [formatCurrency(val), name]} contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '8px' }} />
-                <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="gPersonal" name="Personal" stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} />
-                <Bar dataKey="gFuncionamiento" name="Funcionamiento" stackId="a" fill="#8b5cf6" />
-                <Bar dataKey="gInversion" name="Inversión" stackId="a" fill="#ec4899" radius={[4, 4, 0, 0]} />
+                <Line type="stepAfter" dataKey="finalBalance" stroke="#f59e0b" strokeWidth={3} dot={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
