@@ -49,6 +49,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
          screen === 'nomina' ? 'Nómina' :
          screen === 'posgrados' ? 'Posgrados' :
          screen === 'predictive' ? 'Proyección Financiera' :
+         screen === 'cashflow' ? 'Flujo de Caja' :
          screen === 'presupuesto' ? 'Presupuesto' :
          screen === 'budget' ? 'Costeo de Programa' :
          screen === 'reports' ? 'Reportes' :
@@ -88,6 +89,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
         <IconWrapper icon={Users} screen="nomina" />
         <IconWrapper icon={GraduationCap} screen="posgrados" />
         <IconWrapper icon={BarChart3} screen="predictive" />
+        <IconWrapper icon={Coins} screen="cashflow" />
         <IconWrapper icon={Landmark} screen="presupuesto" />
                 <IconWrapper icon={Wallet} screen="budget" />
         <IconWrapper icon={FileText} screen="reports" />
