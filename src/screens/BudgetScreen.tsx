@@ -31,10 +31,10 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
       let funcionamientoEInversion = 0;
 
       if (year === 2026) {
-        // Proyección 2026 (Según análisis de gastos y recaudo)
-        totalBudget = 596533200000; // Sum of Personal + Funcionamiento + Inversion + Transferencias + Tasas
+        // Proyección 2026 aforo actual
+        totalBudget = 512232600000;
         gastosPersonales = 360802600000;
-        funcionamientoEInversion = 235730600000; // Rest
+        funcionamientoEInversion = totalBudget - gastosPersonales;
       } else {
         const incomes = budgetData.filter(d => d.year === year && d.category === 'Ingresos');
         totalBudget = incomes.reduce((acc, curr) => acc + curr.amount, 0);
@@ -44,14 +44,18 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
         funcionamientoEInversion = Math.max(0, totalBudget - gastosPersonales - honorarios);
       }
 
+      // Safe access
+      const macro = MACRO_INDICATORS[year] as any || {};
+
       return {
         year,
         totalBudget,
         gastosPersonales,
         funcionamientoEInversion,
-        ipc: MACRO_INDICATORS[year]?.ipc || 0,
-        sm: MACRO_INDICATORS[year]?.salarioMinimo || 0,
-        d1278: MACRO_INDICATORS[year]?.decreto1278 || 0,
+        ipc: macro.ipc || 0,
+        sm: macro.salarioMinimo || 0,
+        d1279: macro.decreto1279 || 0,
+        ices: macro.ices || 0,
       };
     });
   }, []);
@@ -91,8 +95,8 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
   const chartData = historicalSeries.map((d, i) => {
     let varGastos = null;
     if (i > 0) {
-      const prev = historicalSeries[i-1].gastosPersonales + historicalSeries[i-1].funcionamientoEInversion;
-      const curr = d.gastosPersonales + d.funcionamientoEInversion;
+      const prev = historicalSeries[i-1].totalBudget;
+      const curr = d.totalBudget;
       varGastos = ((curr - prev) / prev) * 100;
     }
     return {
@@ -100,7 +104,8 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
       varGastos,
       ipc: d.ipc,
       salarioMinimo: d.sm,
-      decreto1278: d.d1278,
+      decreto1279: d.d1279,
+      ices: d.ices,
       totalBudget: d.totalBudget,
       fitted: bestModel.fitted[i] || null
     };
@@ -286,7 +291,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
         <div className="lg:col-span-2 glass-card p-6 rounded-[24px]">
           <div className="mb-6">
             <h2 className="text-xl font-display text-white">Comparativa vs Indicadores Macroeconómicos</h2>
-            <p className="text-sm text-on-surface-variant">Evolución de los gastos frente al IPC, Salario Mínimo y Dcto 1278.</p>
+            <p className="text-sm text-on-surface-variant">Evolución de los gastos frente al IPC, Salario Mínimo y Dcto 1279 e ICES.</p>
           </div>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -302,7 +307,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
                 <Line type="monotone" name="Variación Gastos" dataKey="varGastos" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#fbbf24', strokeWidth: 0 }} />
                 <Line type="monotone" name="IPC" dataKey="ipc" stroke="#60a5fa" strokeWidth={3} dot={{ r: 4, fill: '#60a5fa', strokeWidth: 0 }} />
                 <Line type="monotone" name="Salario Mínimo" dataKey="salarioMinimo" stroke="#4ade80" strokeWidth={3} dot={{ r: 4, fill: '#4ade80', strokeWidth: 0 }} />
-                <Line type="monotone" name="Dcto 1278" dataKey="decreto1278" stroke="#c084fc" strokeWidth={3} dot={{ r: 4, fill: '#c084fc', strokeWidth: 0 }} />
+                <Line type="monotone" name="Dcto 1279 e ICES" dataKey="decreto1279" stroke="#c084fc" strokeWidth={3} dot={{ r: 4, fill: '#c084fc', strokeWidth: 0 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -352,6 +357,36 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
       </div>
 
       {/* Model & AI Recommendation */}
+      <div className="glass-card p-6 rounded-[24px] mt-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-display text-white">Curva de Ajuste del Modelo: {bestModel.modelName}</h2>
+          <p className="text-sm text-on-surface-variant">Comparación entre el presupuesto real (área) y el ajuste estadístico (línea) utilizado para proyectar 2027.</p>
+        </div>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorPresupuesto" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <XAxis dataKey="year" stroke="currentColor" className="text-xs text-on-surface-variant" tickLine={false} axisLine={false} />
+              <YAxis tickFormatter={(v) => formatCurrencyShort(v)} stroke="currentColor" className="text-xs text-on-surface-variant" tickLine={false} axisLine={false} />
+              <RechartsTooltip 
+                formatter={(value: number, name: string) => [formatCurrencyShort(value), name === 'totalBudget' ? 'Presupuesto Real' : 'Ajuste del Modelo']}
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
+                itemStyle={{ fontSize: '12px' }}
+              />
+              <Legend wrapperStyle={{ fontSize: '11px' }} />
+              <Area type="monotone" dataKey="totalBudget" name="Presupuesto Real" stroke="#38bdf8" fillOpacity={1} fill="url(#colorPresupuesto)" />
+              <Line type="monotone" dataKey="fitted" name="Ajuste del Modelo" stroke="#f472b6" strokeWidth={3} dot={{ r: 4, fill: '#f472b6', strokeWidth: 0 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         
         {/* The Model */}
