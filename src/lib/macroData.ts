@@ -1,5 +1,5 @@
 export const MACRO_INDICATORS: Record<number, { ipc: number; salarioMinimo: number; decreto1279: number; ices?: number }> = {
-  2020: { ipc: 1.61, salarioMinimo: 6.0, decreto1279: 5.12, ices: 4.8 },
+  2020: { ipc: 1.61, salarioMinimo: 6.0, decreto1279: 2.5, ices: 2.0 },
   2021: { ipc: 5.62, salarioMinimo: 3.5, decreto1279: 2.61, ices: 6.8 },
   2022: { ipc: 13.12, salarioMinimo: 10.07, decreto1279: 7.26, ices: 14.5 },
   2023: { ipc: 9.28, salarioMinimo: 16.0, decreto1279: 14.62, ices: 10.8 },
@@ -8,4 +8,4 @@ export const MACRO_INDICATORS: Record<number, { ipc: number; salarioMinimo: numb
   2026: { ipc: 4.0, salarioMinimo: 23.0, decreto1279: 7.0, ices: 5.4 },
 };
 
-export const YEARS = [2021, 2022, 2023, 2024, 2025, 2026];
+export const YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026];

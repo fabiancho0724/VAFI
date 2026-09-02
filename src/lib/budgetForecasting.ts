@@ -194,7 +194,17 @@ export function getAllModels(budgets: number[], years: number[]): ForecastResult
 
 export function selectBestModel(budgets: number[], years: number[]): ForecastResult {
   const models = getAllModels(budgets, years);
-  return models.reduce((prev, curr) => (prev.mape < curr.mape ? prev : curr));
+  // El usuario indicó explícitamente que el presupuesto histórico y proyectado
+  // no debe saltar irracionalmente (>60,000M o >10%). 
+  // Forzamos la selección del modelo Estructural o aquel que respete la banda del 4% - 7%.
+  const viableModels = models.filter(m => m.projectedIncreasePercent >= 3.0 && m.projectedIncreasePercent <= 10.0);
+  
+  if (viableModels.length > 0) {
+    return viableModels.reduce((prev, curr) => (prev.mape < curr.mape ? prev : curr));
+  }
+  
+  // Si ninguno entra en la banda, forzamos el modelo Estructural que está diseñado con el IPC + spread.
+  return models.find(m => m.modelName === 'Estructural (Marco Fiscal)') || models[0];
 }
 
 export function getScenarios(basePercentage: number): ScenarioProjections {

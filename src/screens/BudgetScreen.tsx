@@ -40,6 +40,9 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
         if (year === 2025) totalBudget = 510077500000;
         else if (year === 2024) totalBudget = 443054200000;
         else if (year === 2023) totalBudget = 413198500000;
+        else if (year === 2022) totalBudget = 367235856437.52;
+        else if (year === 2021) totalBudget = 338949052179.61;
+        else if (year === 2020) totalBudget = 328798133475.68;
         else {
           const incomes = budgetData.filter(d => d.year === year && d.category === 'Ingresos');
           totalBudget = incomes.reduce((acc, curr) => acc + curr.amount, 0);
