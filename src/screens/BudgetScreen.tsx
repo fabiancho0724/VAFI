@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { budgetData } from '../data/budgetData';
 import { MACRO_INDICATORS, YEARS } from '../lib/macroData';
-import { selectBestModel, getScenarios } from '../lib/budgetForecasting';
+import { selectBestModel, getScenarios, getAllModels, ModelType } from '../lib/budgetForecasting';
 
 const COLORS = ['#4ade80', '#60a5fa', '#f472b6', '#fbbf24', '#c084fc', '#38bdf8'];
 
@@ -22,20 +22,33 @@ function formatCurrencyShort(value: number) {
 
 export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [selectedScenario, setSelectedScenario] = useState<'base' | 'conservative' | 'pressure'>('base');
+  const [userSelectedModel, setUserSelectedModel] = useState<ModelType | 'Auto'>('Auto');
 
   const historicalSeries = useMemo(() => {
     return YEARS.map(year => {
-      const incomes = budgetData.filter(d => d.year === year && d.category === 'Ingresos');
-      const totalBudget = incomes.reduce((acc, curr) => acc + curr.amount, 0);
-      
-      const gastosPersonales = budgetData.filter(d => d.year === year && d.category === 'Nómina').reduce((a, b) => a + b.amount, 0);
-      const honorarios = budgetData.filter(d => d.year === year && d.category === 'Honorarios').reduce((a, b) => a + b.amount, 0);
+      let totalBudget = 0;
+      let gastosPersonales = 0;
+      let funcionamientoEInversion = 0;
+
+      if (year === 2026) {
+        // Proyección 2026 (Según análisis de gastos y recaudo)
+        totalBudget = 596533200000; // Sum of Personal + Funcionamiento + Inversion + Transferencias + Tasas
+        gastosPersonales = 360802600000;
+        funcionamientoEInversion = 235730600000; // Rest
+      } else {
+        const incomes = budgetData.filter(d => d.year === year && d.category === 'Ingresos');
+        totalBudget = incomes.reduce((acc, curr) => acc + curr.amount, 0);
+        
+        gastosPersonales = budgetData.filter(d => d.year === year && d.category === 'Nómina').reduce((a, b) => a + b.amount, 0);
+        const honorarios = budgetData.filter(d => d.year === year && d.category === 'Honorarios').reduce((a, b) => a + b.amount, 0);
+        funcionamientoEInversion = Math.max(0, totalBudget - gastosPersonales - honorarios);
+      }
 
       return {
         year,
         totalBudget,
         gastosPersonales,
-        funcionamientoEInversion: Math.max(0, totalBudget - gastosPersonales - honorarios),
+        funcionamientoEInversion,
         ipc: MACRO_INDICATORS[year]?.ipc || 0,
         sm: MACRO_INDICATORS[year]?.salarioMinimo || 0,
         d1278: MACRO_INDICATORS[year]?.decreto1278 || 0,
@@ -55,7 +68,14 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
 
   // Run statistical model
   const budgetValues = historicalSeries.map(d => d.totalBudget);
-  const bestModel = useMemo(() => selectBestModel(budgetValues, YEARS), [budgetValues]);
+  const allModels = useMemo(() => getAllModels(budgetValues), [budgetValues]);
+  const autoBestModel = useMemo(() => selectBestModel(budgetValues, YEARS), [budgetValues]);
+  
+  const bestModel = useMemo(() => {
+    if (userSelectedModel === 'Auto') return autoBestModel;
+    return allModels.find(m => m.modelName === userSelectedModel) || autoBestModel;
+  }, [userSelectedModel, autoBestModel, allModels]);
+
   const scenarios = useMemo(() => getScenarios(bestModel), [bestModel]);
 
   // Composition data for 2026
@@ -349,6 +369,20 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
           </div>
           
           <div className="p-6">
+            <div className="mb-6">
+              <label className="text-xs text-on-surface-variant mb-2 block uppercase tracking-wider">Seleccionar Modelo Predictivo</label>
+              <select 
+                className="w-full bg-surface-container-low border border-white/10 rounded-xl p-3 text-white outline-none focus:border-primary-container"
+                value={userSelectedModel}
+                onChange={(e) => setUserSelectedModel(e.target.value as ModelType | 'Auto')}
+              >
+                <option value="Auto">Selección Inteligente (IA)</option>
+                <option value="Regresión Lineal">Regresión Lineal</option>
+                <option value="ARIMA (1,1,0)">ARIMA (1,1,0)</option>
+                <option value="Holt Smoothing">Suavizado Exponencial (Holt)</option>
+              </select>
+            </div>
+            
             <div className="flex justify-between items-center mb-6 bg-surface-container-low p-1 rounded-xl">
               <button 
                 onClick={() => setSelectedScenario('conservative')}
@@ -390,8 +424,37 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
             <div className="mt-6 flex items-start gap-2 text-xs text-on-surface-variant p-3 rounded-xl bg-black/20">
               <Info size={14} className="shrink-0 mt-0.5" />
               <p>
-                El modelo estadístico arrojó un Error Porcentual Absoluto Medio (MAPE) del <strong>{bestModel.mape.toFixed(1)}%</strong> evaluando el histórico 2021-2026.
+                El modelo <strong>{bestModel.modelName}</strong> arrojó un Error (MAPE) de <strong>{bestModel.mape.toFixed(1)}%</strong> y un Grado de Veracidad (R²) del <strong>{bestModel.r2.toFixed(1)}%</strong> evaluando el histórico.
               </p>
+            </div>
+
+            <div className="mt-6">
+              <h4 className="text-sm font-bold text-white mb-3">Análisis Comparativo de Modelos</h4>
+              <div className="overflow-x-auto rounded-xl border border-white/10">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-surface-container-low text-on-surface-variant uppercase">
+                    <tr>
+                      <th className="p-3">Modelo</th>
+                      <th className="p-3">R² (Veracidad)</th>
+                      <th className="p-3">Error (MAPE)</th>
+                      <th className="p-3">Proyección 2027</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 bg-black/20">
+                    {allModels.map((m) => (
+                      <tr key={m.modelName} className={bestModel.modelName === m.modelName ? "bg-primary-container/10" : ""}>
+                        <td className="p-3 text-white font-medium flex items-center gap-2">
+                          {bestModel.modelName === m.modelName && <CheckCircle2 size={12} className="text-primary-container" />}
+                          {m.modelName}
+                        </td>
+                        <td className="p-3 text-emerald-400">{m.r2.toFixed(1)}%</td>
+                        <td className="p-3 text-red-400">{m.mape.toFixed(2)}%</td>
+                        <td className="p-3 text-white">{formatCurrencyShort(m.projectedValue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

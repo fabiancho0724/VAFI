@@ -1,13 +1,14 @@
 import { MACRO_INDICATORS } from './macroData';
 
-export type ModelType = 'Linear Regression' | 'Multivariate (IPC + SM)' | 'Holt Smoothing';
+export type ModelType = 'Regresión Lineal' | 'Holt Smoothing' | 'ARIMA (1,1,0)';
 
 export interface ForecastResult {
   modelName: ModelType;
   projectedValue: number;
   projectedIncreasePercent: number;
-  mape: number;
+  mape: number; // Error
   rmse: number;
+  r2: number;   // Grado de veracidad
   history: number[];
   fitted: number[];
 }
@@ -38,7 +39,20 @@ export function calculateRMSE(actual: number[], forecast: number[]): number {
   return Math.sqrt(sum / actual.length);
 }
 
-// 1. Simple Linear Regression
+export function calculateR2(actual: number[], forecast: number[]): number {
+  const mean = actual.reduce((a, b) => a + b, 0) / actual.length;
+  let ssTot = 0;
+  let ssRes = 0;
+  for (let i = 0; i < actual.length; i++) {
+    ssTot += Math.pow(actual[i] - mean, 2);
+    ssRes += Math.pow(actual[i] - forecast[i], 2);
+  }
+  if (ssTot === 0) return 1;
+  const r2 = 1 - (ssRes / ssTot);
+  return Math.max(0, r2) * 100; // Return as percentage for "Veracidad"
+}
+
+// 1. Regresión Lineal
 export function runLinearRegression(y: number[]): ForecastResult {
   const n = y.length;
   const x = Array.from({ length: n }, (_, i) => i + 1);
@@ -54,17 +68,18 @@ export function runLinearRegression(y: number[]): ForecastResult {
   const nextVal = intercept + slope * (n + 1);
 
   return {
-    modelName: 'Linear Regression',
+    modelName: 'Regresión Lineal',
     projectedValue: nextVal,
     projectedIncreasePercent: ((nextVal - y[n - 1]) / y[n - 1]) * 100,
     mape: calculateMAPE(y, fitted),
     rmse: calculateRMSE(y, fitted),
+    r2: calculateR2(y, fitted),
     history: y,
     fitted
   };
 }
 
-// 2. Holt's Linear Trend (Simplified)
+// 2. Holt Smoothing
 export function runHoltSmoothing(y: number[], alpha = 0.6, beta = 0.4): ForecastResult {
   const n = y.length;
   let level = y[0];
@@ -85,55 +100,81 @@ export function runHoltSmoothing(y: number[], alpha = 0.6, beta = 0.4): Forecast
     projectedIncreasePercent: ((nextVal - y[n - 1]) / y[n - 1]) * 100,
     mape: calculateMAPE(y, fitted.slice(0, n)),
     rmse: calculateRMSE(y, fitted.slice(0, n)),
+    r2: calculateR2(y, fitted.slice(0, n)),
     history: y,
     fitted: fitted.slice(0, n)
   };
 }
 
-// 3. Simple Multivariate (incorporating IPC)
-export function runMultivariate(y: number[], years: number[]): ForecastResult {
-  // Using IPC to adjust the base trend
+// 3. ARIMA (1,1,0) - Simplified AutoRegressive Integrated Moving Average
+export function runARIMA(y: number[]): ForecastResult {
   const n = y.length;
-  const fitted = [];
+  if (n < 3) return runLinearRegression(y);
   
-  // Baseline growth from inflation
-  let projectedVal = y[n - 1];
-  for (let i = 0; i < n; i++) {
-    if (i === 0) {
-      fitted.push(y[0]);
+  // Diff 1
+  const diff1 = [];
+  for (let i = 1; i < n; i++) {
+    diff1.push(y[i] - y[i-1]);
+  }
+  
+  // AR(1) on diff1
+  let sumY = 0, sumY_prev = 0, sumYY_prev = 0, sumY_prevSq = 0;
+  for (let i = 1; i < diff1.length; i++) {
+    sumY += diff1[i];
+    sumY_prev += diff1[i-1];
+    sumYY_prev += diff1[i] * diff1[i-1];
+    sumY_prevSq += diff1[i-1] * diff1[i-1];
+  }
+  
+  const m = diff1.length - 1;
+  const phi = (m * sumYY_prev - sumY_prev * sumY) / (m * sumY_prevSq - sumY_prev * sumY_prev);
+  const c = (sumY - phi * sumY_prev) / m;
+  
+  const fitted = [y[0]];
+  for (let i = 1; i < n; i++) {
+    if (i === 1) {
+      fitted.push(y[i]); // Seed
     } else {
-      const ipc = MACRO_INDICATORS[years[i]]?.ipc || 5;
-      const factor = 1 + (ipc / 100);
-      // Average historical real growth + inflation
-      fitted.push(y[i - 1] * factor * 1.02); // assuming 2% real growth historically
+      const prevDiff = y[i-1] - y[i-2];
+      const estDiff = c + phi * prevDiff;
+      fitted.push(y[i-1] + estDiff);
     }
   }
-
-  const nextIpc = MACRO_INDICATORS[years[n - 1]]?.ipc || 4; // Using last known IPC for next year proxy
-  const nextVal = y[n - 1] * (1 + (nextIpc / 100)) * 1.02;
+  
+  const lastDiff = y[n-1] - y[n-2];
+  const nextDiff = c + phi * lastDiff;
+  const nextVal = y[n-1] + nextDiff;
 
   return {
-    modelName: 'Multivariate (IPC + SM)',
+    modelName: 'ARIMA (1,1,0)',
     projectedValue: nextVal,
     projectedIncreasePercent: ((nextVal - y[n - 1]) / y[n - 1]) * 100,
     mape: calculateMAPE(y, fitted),
     rmse: calculateRMSE(y, fitted),
+    r2: calculateR2(y, fitted),
     history: y,
     fitted
   };
 }
 
 export function selectBestModel(budgets: number[], years: number[]): ForecastResult {
-  if (budgets.length < 3) return runLinearRegression(budgets); // Fallback
+  if (budgets.length < 3) return runLinearRegression(budgets);
 
   const models = [
     runLinearRegression(budgets),
     runHoltSmoothing(budgets),
-    runMultivariate(budgets, years)
+    runARIMA(budgets)
   ];
 
-  // Select the model with the lowest MAPE
   return models.reduce((prev, curr) => (prev.mape < curr.mape ? prev : curr));
+}
+
+export function getAllModels(budgets: number[]): ForecastResult[] {
+    return [
+        runLinearRegression(budgets),
+        runHoltSmoothing(budgets),
+        runARIMA(budgets)
+    ];
 }
 
 export function getScenarios(bestModel: ForecastResult): ScenarioProjections {
