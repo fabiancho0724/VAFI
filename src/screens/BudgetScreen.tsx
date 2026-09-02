@@ -307,7 +307,8 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
                 <Line type="monotone" name="Variación Gastos" dataKey="varGastos" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#fbbf24', strokeWidth: 0 }} />
                 <Line type="monotone" name="IPC" dataKey="ipc" stroke="#60a5fa" strokeWidth={3} dot={{ r: 4, fill: '#60a5fa', strokeWidth: 0 }} />
                 <Line type="monotone" name="Salario Mínimo" dataKey="salarioMinimo" stroke="#4ade80" strokeWidth={3} dot={{ r: 4, fill: '#4ade80', strokeWidth: 0 }} />
-                <Line type="monotone" name="Dcto 1279 e ICES" dataKey="decreto1279" stroke="#c084fc" strokeWidth={3} dot={{ r: 4, fill: '#c084fc', strokeWidth: 0 }} />
+                <Line type="monotone" name="Dcto 1279" dataKey="decreto1279" stroke="#c084fc" strokeWidth={3} dot={{ r: 4, fill: '#c084fc', strokeWidth: 0 }} />
+                <Line type="monotone" name="ICES" dataKey="ices" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, fill: '#f43f5e', strokeWidth: 0 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
