@@ -61,6 +61,7 @@ export interface StrictResourceProjection {
   aiIncomeReference: number;
   aiExpenseReference: number;
   trace: TraceNode[];
+  ingresosPorMesProyectado?: number[];
 }
 
 export interface ExpenseDetail {
@@ -380,11 +381,16 @@ function simulateCore(
          const girosExactos = GIROS_SIIF_PROYECTADOS[r.recurso];
          const w = historicWeights[r.recurso] ? historicWeights[r.recurso][idx] : 0.25;
          
-         if (girosExactos) {
-             mIngProy += girosExactos[idx - 8];
-         } else {
-             mIngProy += r.ingresosProyectados * w;
-         }
+         if (!r.ingresosPorMesProyectado) r.ingresosPorMesProyectado = [0,0,0,0];
+           
+           let monthIngProy = 0;
+           if (girosExactos) {
+               monthIngProy = girosExactos[idx - 8];
+           } else {
+               monthIngProy = r.ingresosProyectados * w;
+           }
+           mIngProy += monthIngProy;
+           r.ingresosPorMesProyectado[idx - 8] = monthIngProy;
          
          const totalRealNomina = expenseTypeReal['Personal (Nómina)'] || 1;
          const shareN = (expenseTypeResourceReal['Personal (Nómina)']?.[r.recurso] || 0) / totalRealNomina;

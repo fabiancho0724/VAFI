@@ -646,6 +646,58 @@ export function CashFlowScreen() {
       </div>
 
       {/* MODAL EMERGENTE DE CONFIGURACIÓN */}
+            {/* BLOQUE 6: TABLA MENSUAL DE INGRESOS POR RECURSO */}
+      <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mb-8 border border-white/5">
+        <div className="mb-6">
+          <h2 className="text-xl font-display text-white">Desglose de Ingresos por Recurso y Mes Proyectado</h2>
+          <p className="text-xs text-slate-400">Proyecci&oacute;n detallada de caja mensual (Septiembre - Diciembre) incluyendo el recaudo base</p>
+        </div>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="border-b border-white/10 text-xs text-slate-400">
+                <th className="p-3 font-medium uppercase">Recurso</th>
+                <th className="p-3 font-medium uppercase">Nombre</th>
+                <th className="p-3 font-medium uppercase text-right text-emerald-400/70">Recaudo 31/08</th>
+                <th className="p-3 font-medium uppercase text-right">Septiembre</th>
+                <th className="p-3 font-medium uppercase text-right">Octubre</th>
+                <th className="p-3 font-medium uppercase text-right">Noviembre</th>
+                <th className="p-3 font-medium uppercase text-right">Diciembre</th>
+                <th className="p-3 font-medium uppercase text-right text-white">Total Cierre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.resources.map(r => {
+                const meses = r.ingresosPorMesProyectado || [0, 0, 0, 0];
+                return (
+                  <tr key={r.recurso} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors text-sm">
+                    <td className="p-3 font-mono text-slate-300">{r.recurso}</td>
+                    <td className="p-3 text-slate-300 max-w-[200px] truncate" title={r.nombre}>{r.nombre}</td>
+                    <td className="p-3 text-right text-emerald-400 font-mono">{formatCurrencyShort(r.ingresosReales)}</td>
+                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[0])}</td>
+                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[1])}</td>
+                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[2])}</td>
+                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[3])}</td>
+                    <td className="p-3 text-right font-bold text-white font-mono bg-white/5 rounded-r-lg">{formatCurrencyShort(r.totalIngresos)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-white/20 text-sm font-bold bg-white/5">
+                <td colSpan={2} className="p-3 text-white uppercase">Totales Institucionales</td>
+                <td className="p-3 text-right text-emerald-400 font-mono">{formatCurrencyShort(results.totals.totalRecaudo)}</td>
+                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[0] || 0), 0))}</td>
+                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[1] || 0), 0))}</td>
+                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[2] || 0), 0))}</td>
+                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[3] || 0), 0))}</td>
+                <td className="p-3 text-right text-emerald-300 font-mono">{formatCurrencyShort(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
       {isConfigModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[#161b22] border border-slate-700 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
