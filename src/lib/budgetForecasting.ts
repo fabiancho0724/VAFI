@@ -167,8 +167,8 @@ export function runStructuralModel(y: number[], years: number[]): ForecastResult
     fitted.push(y[i-1] * elasticity);
   }
 
-  // Project 2027 based on MFMP 2026 projection (IPC 4.4%)
-  const projectedElasticity = 1 + 0.044 + 0.02; // 4.4% IPC + 2% esfuerzo institucional (Max ~6.4%)
+  // Project 2027 based on MFMP 2027 projection (IPC 4.1%)
+  const projectedElasticity = 1 + 0.041; // 4.1% IPC ajustado
   const nextVal = y[n-1] * projectedElasticity;
 
   return {

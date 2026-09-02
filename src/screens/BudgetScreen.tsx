@@ -1,8 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
-  BarChart, Bar, Legend, Line, LineChart 
-} from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart } from 'recharts';
 import { 
   TrendingUp, TrendingDown, DollarSign, Wallet, AlertTriangle, Lightbulb, 
   Target, Info, CheckCircle2, FileText, Scale, BarChart2, ShieldAlert, Activity 
@@ -197,7 +194,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
                 3. Variables Críticas (MFMP 2026)
               </h3>
               <p className="text-sm text-on-surface-variant mb-4">
-                El uso del IPC general (4.4%) es <strong>insuficiente</strong> y derivaría en recortes reales frente a la inercia inflacionaria. El ICES es una necesidad técnica absoluta.
+                El uso del IPC general (4.1%) es <strong>insuficiente</strong> y derivaría en recortes reales frente a la inercia inflacionaria. El ICES es una necesidad técnica absoluta.
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
@@ -206,7 +203,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
                 </div>
                 <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
                   <span className="text-xs text-on-surface-variant">Inflación (IPC)</span>
-                  <span className="text-sm font-bold text-red-400">4.4%</span>
+                  <span className="text-sm font-bold text-red-400">4.1%</span>
                 </div>
                 <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
                   <span className="text-xs text-on-surface-variant">Déficit Fiscal GNC</span>
