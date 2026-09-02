@@ -191,6 +191,9 @@ function simulateCore(
   const TOTAL_NOMINA_SEP_DIC = 165179055764;
   const nominaProyectadaGlobal = TOTAL_NOMINA_SEP_DIC;
 
+  const FUNCIONAMIENTO_EXACTO_SEP_DIC = [5381650891.99, 5996809970.69, 2581881333.37, 572603471.66];
+  const TOTAL_FUNC_SEP_DIC = 14532945667.71;
+
 
   baseData.forEach(base => {
     const isFixed = NACION_FIXED.includes(base.recurso);
@@ -201,6 +204,10 @@ function simulateCore(
     const totalRealNomina = expenseTypeReal['Personal (Nómina)'] || 1;
     const shareNomina = (expenseTypeResourceReal['Personal (Nómina)']?.[base.recurso] || 0) / totalRealNomina;
     const nominaAsignada = TOTAL_NOMINA_SEP_DIC * shareNomina;
+
+    const totalRealFunc = expenseTypeReal['Funcionamiento'] || 1;
+    const shareFunc = (expenseTypeResourceReal['Funcionamiento']?.[base.recurso] || 0) / totalRealFunc;
+    const funcAsignada = TOTAL_FUNC_SEP_DIC * shareFunc;
     const compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
     const pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
 
@@ -240,8 +247,8 @@ function simulateCore(
       methodUsed = 'Manual';
       trace.push({ step: 'Proyección Manual', value: ingProyectado, detail: 'Valor ingresado por el usuario' });
     } else {
-      gasProyectado = Math.max(aiExpenseReference, nominaAsignada);
-      trace.push({ step: 'Proyección Bruta (Gastos)', value: gasProyectado, detail: 'Garantizando Nómina' });
+      gasProyectado = Math.max(aiExpenseReference, nominaAsignada + funcAsignada);
+      trace.push({ step: 'Proyección Bruta (Gastos)', value: gasProyectado, detail: 'Garantizando Nómina y Funcionamiento' });
     }
     
     let totalIngresos = recaudoRealAcumulado + ingProyectado;
@@ -255,7 +262,7 @@ function simulateCore(
     let totalComp = compHistorico + gasProyectado;
     let totalPago = pagoHistorico + (gasProyectado * 0.9);
 
-    let minComp = compHistorico + nominaAsignada;
+    let minComp = compHistorico + nominaAsignada + funcAsignada;
     if (totalComp > totalIngresos) {
       if (modifierVariations.incomeVar === 0 && modifierVariations.expenseVar === 0) {
         alerts.push(`🚨 CRÍTICA: Déficit Proyectado en ${base.nombre}. El gasto supera el recaudo (Impulsado por Nómina).`);
@@ -263,7 +270,7 @@ function simulateCore(
       totalComp = Math.max(totalIngresos, minComp);
       trace.push({ step: 'Restricción Caja (Flexible)', value: totalComp, detail: 'Compromiso ajustado, pero garantizando Nómina.' });
     }
-    let minPago = pagoHistorico + nominaAsignada; // Nómina requires 100% pago
+    let minPago = pagoHistorico + nominaAsignada + funcAsignada; // Nómina y Func 100% pago
     if (totalPago > totalIngresos) totalPago = Math.max(totalIngresos, minPago);
     if (totalPago > totalComp) totalPago = totalComp;
 
@@ -372,11 +379,17 @@ function simulateCore(
          const totalRealNomina = expenseTypeReal['Personal (Nómina)'] || 1;
          const shareN = (expenseTypeResourceReal['Personal (Nómina)']?.[r.recurso] || 0) / totalRealNomina;
          const nAsignada = TOTAL_NOMINA_SEP_DIC * shareN;
-         const otherExpense = Math.max(0, r.gastosProyectados - nAsignada);
          const monthlyN = NOMINA_EXACTA_SEP_DIC[idx - 8] * shareN;
+
+         const totalRealFunc = expenseTypeReal['Funcionamiento'] || 1;
+         const shareF = (expenseTypeResourceReal['Funcionamiento']?.[r.recurso] || 0) / totalRealFunc;
+         const fAsignada = TOTAL_FUNC_SEP_DIC * shareF;
+         const monthlyF = FUNCIONAMIENTO_EXACTO_SEP_DIC[idx - 8] * shareF;
+
+         const otherExpense = Math.max(0, r.gastosProyectados - nAsignada - fAsignada);
          
-         mComp += monthlyN + (otherExpense * w);
-         mPago += monthlyN + (otherExpense * 0.9 * w);
+         mComp += monthlyN + monthlyF + (otherExpense * w);
+         mPago += monthlyN + (monthlyF * 0.9) + (otherExpense * 0.9 * w);
       }
     });
     
