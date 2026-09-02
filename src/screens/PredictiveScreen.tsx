@@ -67,15 +67,6 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
 
   const fmt = (v: number) => '$' + (v/1e6).toLocaleString('es-CO', { maximumFractionDigits: 1 }) + 'M';
 
-  const acceptAISuggestion = (recurso: string, tasa: number) => {
-    setConfig(prev => ({
-      ...prev,
-      resourceOverrides: {
-        ...prev.resourceOverrides,
-        [recurso]: { method: 'Tendencia Histórica', growthRate: tasa }
-      }
-    }));
-  };
 
   return (
     <div className="space-y-6">
@@ -151,35 +142,105 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
           </div>
 
           <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-700 overflow-hidden">
-            <div className="p-5 border-b border-slate-700/50 bg-slate-900/40"><h3 className="font-bold text-slate-100 text-lg">Configuración por Recurso y Sugerencias IA</h3></div>
+            <div className="p-5 border-b border-slate-700/50 bg-slate-900/40"><h3 className="font-bold text-slate-100 text-lg">Parámetros Manuales y Referencia IA</h3></div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-slate-900/50 text-slate-400 font-semibold uppercase text-xs">
-                  <tr><th className="px-4 py-3">Recurso</th><th className="px-4 py-3 text-right">Aforo</th><th className="px-4 py-3 text-right">Recaudo Real</th><th className="px-4 py-3 text-center">Método Asignado</th><th className="px-4 py-3 text-right">Tasa Aplicada</th><th className="px-4 py-3">Sugerencia IA</th></tr>
+                  <tr>
+                    <th className="px-4 py-3">Recurso</th>
+                    <th className="px-4 py-3 text-right border-l border-slate-700/50">Ingreso Proy. (IA)</th>
+                    <th className="px-4 py-3 text-right border-r border-slate-700/50">Gasto Proy. (IA)</th>
+                    <th className="px-4 py-3 text-center bg-indigo-900/20">Ingreso Manual</th>
+                    <th className="px-4 py-3 text-center bg-indigo-900/20">Gasto Manual</th>
+                    <th className="px-4 py-3">Sugerencia IA</th>
+                  </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-700/50">
                   {results.resources.map((r, i) => {
-                    const base = balanceData.find(b => b.Recurso === r.recurso || (b.Recurso && b.Recurso.startsWith(r.recurso)));
                     const isSiif = r.methodUsed === 'Fijo (SIIF)';
+                    const override = config.resourceOverrides[r.recurso];
                     const sugg = results.suggestions.find(s => s.recurso === r.recurso);
+                    const hasManualInc = override?.manualIncome !== undefined;
+                    const hasManualExp = override?.manualExpense !== undefined;
+                    
                     return (
                       <tr key={i} className="hover:bg-slate-900/50">
-                        <td className="px-4 py-3 font-medium text-slate-200">{r.recurso} - {r.nombre}</td>
-                        <td className="px-4 py-3 text-right">{fmt(base?.Aforo || 0)}</td>
-                        <td className="px-4 py-3 text-right">{fmt(r.ingresosReales)}</td>
-                        <td className="px-4 py-3 text-center">
-                          {isSiif ? <span className="bg-slate-700 text-slate-200 px-2 py-1 rounded text-xs font-bold">Fijo (SIIF)</span> : <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold">{r.methodUsed}</span>}
+                        <td className="px-4 py-3 font-medium text-slate-200">
+                          <div className="flex flex-col">
+                            <span>{r.recurso} - {r.nombre}</span>
+                            {isSiif && <span className="text-[10px] text-slate-400 font-bold">Fijo (SIIF)</span>}
+                          </div>
                         </td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-200">
-                          {isSiif ? 'N/A' : `${((config.resourceOverrides[r.recurso]?.growthRate ?? config.globalGrowthRate)*100).toFixed(1)}%`}
+                        <td className="px-4 py-3 text-right border-l border-slate-700/50 text-slate-400">{fmt(r.aiIncomeReference)}</td>
+                        <td className="px-4 py-3 text-right border-r border-slate-700/50 text-slate-400">{fmt(r.aiExpenseReference)}</td>
+                        <td className="px-4 py-2 bg-indigo-900/10 text-center">
+                          <input 
+                            type="text" 
+                            placeholder={isSiif ? 'Bloqueado' : 'Valor manual'} 
+                            disabled={isSiif}
+                            value={hasManualInc ? override.manualIncome : ''}
+                            onChange={(e) => {
+                                const val = parseFloat(e.target.value.replace(/[^0-9.-]+/g, ''));
+                                setConfig(prev => ({
+                                  ...prev,
+                                  resourceOverrides: {
+                                    ...prev.resourceOverrides,
+                                    [r.recurso]: {
+                                      ...(prev.resourceOverrides[r.recurso] || { method: 'Manual', growthRate: prev.globalGrowthRate }),
+                                      method: 'Manual',
+                                      manualIncome: isNaN(val) ? undefined : val
+                                    }
+                                  }
+                                }));
+                            }}
+                            className="w-32 bg-slate-900/50 border border-slate-700 rounded px-2 py-1 text-right text-indigo-300 disabled:opacity-50 outline-none focus:border-indigo-500 placeholder:text-slate-600"
+                          />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-2 bg-indigo-900/10 text-center">
+                          <input 
+                            type="text" 
+                            placeholder={isSiif ? 'Bloqueado' : 'Valor manual'} 
+                            disabled={isSiif}
+                            value={hasManualExp ? override.manualExpense : ''}
+                            onChange={(e) => {
+                                const val = parseFloat(e.target.value.replace(/[^0-9.-]+/g, ''));
+                                setConfig(prev => ({
+                                  ...prev,
+                                  resourceOverrides: {
+                                    ...prev.resourceOverrides,
+                                    [r.recurso]: {
+                                      ...(prev.resourceOverrides[r.recurso] || { method: 'Manual', growthRate: prev.globalGrowthRate }),
+                                      method: 'Manual',
+                                      manualExpense: isNaN(val) ? undefined : val
+                                    }
+                                  }
+                                }));
+                            }}
+                            className="w-32 bg-slate-900/50 border border-slate-700 rounded px-2 py-1 text-right text-orange-300 disabled:opacity-50 outline-none focus:border-orange-500 placeholder:text-slate-600"
+                          />
+                        </td>
+                        <td className="px-4 py-2">
                           {sugg ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-slate-300 truncate max-w-[200px]" title={sugg.mensaje}>{sugg.mensaje} ({(sugg.tasaSugerida*100).toFixed(0)}%)</span>
-                              <button onClick={() => acceptAISuggestion(r.recurso, sugg.tasaSugerida)} className="px-2 py-1 bg-indigo-500/20 text-indigo-600 text-xs font-bold rounded hover:bg-indigo-900/400/40">Aplicar</button>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[11px] text-slate-400 leading-tight" title={sugg.mensaje}>{sugg.mensaje}</span>
+                              <button onClick={() => {
+                                setConfig(prev => ({
+                                  ...prev,
+                                  resourceOverrides: {
+                                    ...prev.resourceOverrides,
+                                    [r.recurso]: {
+                                      ...(prev.resourceOverrides[r.recurso] || { method: 'Manual', growthRate: prev.globalGrowthRate }),
+                                      method: 'Manual',
+                                      manualIncome: sugg.aiIncomeReference,
+                                      manualExpense: sugg.aiExpenseReference
+                                    }
+                                  }
+                                }));
+                              }} className="px-2 py-1 bg-indigo-500/20 text-indigo-400 text-[10px] font-bold rounded hover:bg-indigo-500/40 w-max">
+                                Aplicar {(sugg.tasaSugerida*100).toFixed(0)}%
+                              </button>
                             </div>
-                          ) : <span className="text-slate-400 text-xs">Sin sugerencia</span>}
+                          ) : <span className="text-slate-500 text-xs">N/A</span>}
                         </td>
                       </tr>
                     )

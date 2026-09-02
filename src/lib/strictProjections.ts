@@ -15,6 +15,8 @@ export interface BaseResource {
 export interface ResourceConfig {
   method: 'SIIF' | 'Tendencia Histórica' | 'Manual';
   growthRate: number;
+  manualIncome?: number;
+  manualExpense?: number;
 }
 
 export interface StrictConfig {
@@ -56,6 +58,8 @@ export interface StrictResourceProjection {
   saldoDisponible: number;
   ingresoAdministrativo: number;
   methodUsed: string;
+  aiIncomeReference: number;
+  aiExpenseReference: number;
   trace: TraceNode[];
 }
 
@@ -114,6 +118,8 @@ export interface AISuggestion {
   mensaje: string;
   tasaSugerida: number;
   confianza: 'Alta' | 'Media' | 'Baja';
+  aiIncomeReference: number;
+  aiExpenseReference: number;
 }
 
 export interface StrictProjectionResult {
@@ -176,8 +182,20 @@ function simulateCore(
     const customConfig = config.resourceOverrides[base.recurso];
     
     const recaudoRealAcumulado = (monthlyHist.ing[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+    const compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+    const pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+
+    let pendiente = Math.max(0, base.aforo - recaudoRealAcumulado);
+    
+    // Calculate AI Baseline values
+    let aiIncomeReference = pendiente * (1 + effGrowth);
+    if (isFixed) aiIncomeReference = base.siif;
+    
+    let totalIngresosAI = recaudoRealAcumulado + aiIncomeReference;
+    let aiExpenseReference = Math.max(0, (totalIngresosAI - compHistorico) * effExpense);
     
     let ingProyectado = 0;
+    let gasProyectado = 0;
     let methodUsed = '';
     let trace: TraceNode[] = [];
     
@@ -186,19 +204,27 @@ function simulateCore(
 
     if (isFixed) {
       ingProyectado = base.siif;
+      gasProyectado = aiExpenseReference;
       methodUsed = 'Fijo (SIIF)';
-      trace.push({ step: 'Proyección', value: ingProyectado, detail: 'Valor oficial SIIF no proyectable estocásticamente' });
+      trace.push({ step: 'Proyección', value: ingProyectado, detail: 'Valor oficial SIIF (No modificable)' });
     } else {
-      let pendiente = Math.max(0, base.aforo - recaudoRealAcumulado);
       let rRate = customConfig ? customConfig.growthRate : effGrowth;
       let rMethod = customConfig ? customConfig.method : 'Tendencia Histórica';
-      
-      ingProyectado = pendiente * (1 + rRate);
       methodUsed = rMethod;
-      
-      trace.push({ step: 'Pendiente de Aforo', value: pendiente, detail: 'Aforo - Recaudo' });
-      trace.push({ step: 'Tasa Aplicada', value: `${(rRate*100).toFixed(1)}%`, detail: `Método: ${rMethod}` });
-      trace.push({ step: 'Proyección Bruta', value: ingProyectado, detail: `Pendiente * (1 + Tasa)` });
+
+      if (rMethod === 'Manual' && customConfig) {
+        ingProyectado = customConfig.manualIncome !== undefined ? customConfig.manualIncome : aiIncomeReference;
+        gasProyectado = customConfig.manualExpense !== undefined ? customConfig.manualExpense : aiExpenseReference;
+        trace.push({ step: 'Proyección Manual', value: ingProyectado, detail: 'Valor ingresado por el usuario' });
+      } else {
+        ingProyectado = pendiente * (1 + rRate);
+        trace.push({ step: 'Pendiente de Aforo', value: pendiente, detail: 'Aforo - Recaudo' });
+        trace.push({ step: 'Tasa Aplicada', value: `${(rRate*100).toFixed(1)}%`, detail: `Método: ${rMethod}` });
+        trace.push({ step: 'Proyección Bruta (Ingresos)', value: ingProyectado, detail: `Pendiente * (1 + Tasa)` });
+        
+        let totalIngresosCalc = recaudoRealAcumulado + ingProyectado;
+        gasProyectado = Math.max(0, (totalIngresosCalc - compHistorico) * effExpense);
+      }
     }
     
     let totalIngresos = recaudoRealAcumulado + ingProyectado;
@@ -209,10 +235,6 @@ function simulateCore(
       ingresoAdmin = totalIngresos; 
     }
     
-    let compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
-    let pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
-
-    let gasProyectado = Math.max(0, (totalIngresos - compHistorico) * effExpense);
     let totalComp = compHistorico + gasProyectado;
     let totalPago = pagoHistorico + (gasProyectado * 0.9);
 
@@ -226,6 +248,9 @@ function simulateCore(
     if (totalPago > totalIngresos) totalPago = totalIngresos;
     if (totalPago > totalComp) totalPago = totalComp;
 
+    // Recalculate gasProyectado based on truncated totalComp
+    gasProyectado = totalComp - compHistorico;
+
     resourcesObj[base.recurso] = {
       recurso: base.recurso, nombre: base.nombre,
       ingresosReales: recaudoRealAcumulado, ingresosProyectados: ingProyectado,
@@ -233,7 +258,9 @@ function simulateCore(
       totalCompromisos: totalComp, totalPagos: totalPago,
       saldoDisponible: totalIngresos - totalPago,
       ingresoAdministrativo: ingresoAdmin,
-      methodUsed, trace
+      methodUsed, 
+      aiIncomeReference, aiExpenseReference, 
+      trace
     };
   });
 
@@ -412,23 +439,25 @@ export function calculateStrictProjections(
 
   // AI Suggestions
   const suggestions: AISuggestion[] = [];
-  baseData.forEach(base => {
-    if (!NACION_FIXED.includes(base.recurso)) {
-      const recaudoReal = (monthlyHist.ing[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
-      const porcentajeCumplimiento = base.aforo > 0 ? (recaudoReal / base.aforo) : 0;
-      let tasaSugerida = 0;
-      let msg = '';
-      if (porcentajeCumplimiento > 0.8) {
-         tasaSugerida = 0.15;
-         msg = 'Excelente comportamiento histórico (>80% aforo). Sugerimos proyección optimista.';
-      } else if (porcentajeCumplimiento < 0.3) {
-         tasaSugerida = -0.10;
-         msg = 'Bajo recaudo histórico (<30% aforo). Riesgo de déficit. Sugerimos proyección conservadora.';
-      } else {
-         tasaSugerida = 0.05;
-         msg = 'Comportamiento estable. Tasa estándar recomendada.';
+  baseSim.resources.forEach(r => {
+    if (!NACION_FIXED.includes(r.recurso)) {
+      const base = baseData.find(b => b.recurso === r.recurso);
+      if (base) {
+        const porcentajeCumplimiento = base.aforo > 0 ? (r.ingresosReales / base.aforo) : 0;
+        let tasaSugerida = 0;
+        let msg = '';
+        if (porcentajeCumplimiento > 0.8) {
+           tasaSugerida = 0.15;
+           msg = 'Excelente comportamiento histórico (>80% aforo). Sugerimos proyección optimista.';
+        } else if (porcentajeCumplimiento < 0.3) {
+           tasaSugerida = -0.10;
+           msg = 'Bajo recaudo histórico (<30% aforo). Riesgo de déficit. Sugerimos proyección conservadora.';
+        } else {
+           tasaSugerida = 0.05;
+           msg = 'Comportamiento estable. Tasa estándar recomendada.';
+        }
+        suggestions.push({ recurso: r.recurso, nombre: r.nombre, mensaje: msg, tasaSugerida, confianza: 'Alta', aiIncomeReference: r.aiIncomeReference, aiExpenseReference: r.aiExpenseReference });
       }
-      suggestions.push({ recurso: base.recurso, nombre: base.nombre, mensaje: msg, tasaSugerida, confianza: 'Alta' });
     }
   });
 
@@ -455,11 +484,11 @@ export function calculateStrictProjections(
 
   // Elasticity (Delta Saldo / Delta Ingreso)
   const elasticityRanking: ElasticityItem[] = [];
-  const simBase = sensitivity.find(s => s.variationNum === 0);
+  const simBaseMatch = sensitivity.find(s => s.variationNum === 0);
   const simPlus10 = sensitivity.find(s => s.variationNum === 0.10);
-  if (simBase && simPlus10 && simBase.ingresos > 0) {
-     const pctIngreso = (simPlus10.ingresos - simBase.ingresos) / simBase.ingresos;
-     const pctSaldo = simBase.saldo !== 0 ? (simPlus10.saldo - simBase.saldo) / simBase.saldo : 0;
+  if (simBaseMatch && simPlus10 && simBaseMatch.ingresos > 0) {
+     const pctIngreso = (simPlus10.ingresos - simBaseMatch.ingresos) / simBaseMatch.ingresos;
+     const pctSaldo = simBaseMatch.saldo !== 0 ? (simPlus10.saldo - simBaseMatch.saldo) / simBaseMatch.saldo : 0;
      const eGeneral = pctIngreso !== 0 ? pctSaldo / pctIngreso : 0;
      elasticityRanking.push({ variable: 'Ingresos Globales', elasticity: eGeneral, rank: 1 });
   }
