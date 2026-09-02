@@ -11,6 +11,25 @@ import { RESOURCES_LIST } from '../lib/resourceMapper';
 
 const PIE_COLORS = ['#3b82f6', '#f97316', '#10b981', '#8b5cf6', '#ef4444', '#64748b'];
 
+
+const CircularProgress = ({ percentage, color, label, size = 120, stroke = 12 }: { percentage: number, color: string, label: string, size?: number, stroke?: number }) => {
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg className="transform -rotate-90" width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={radius} stroke="#334155" strokeWidth={stroke} fill="transparent" />
+        <circle cx={size/2} cy={size/2} r={radius} stroke={color} strokeWidth={stroke} fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className="transition-all duration-1000 ease-in-out" strokeLinecap="round" />
+      </svg>
+      <div className="absolute flex flex-col items-center justify-center">
+        <span className="text-2xl font-black text-white">{percentage.toFixed(1)}%</span>
+        <span className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{label}</span>
+      </div>
+    </div>
+  );
+}
+
 export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready' | 'error'>('loading');
   const [balanceData, setBalanceData] = useState<any[]>([]);
@@ -255,19 +274,130 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
         </div>
       )}
 
-      {/* TAB 2: BALANCE Y FLUJO */}
-      {activeTab === 2 && (
+            {/* TAB 2: BALANCE Y FLUJO */}
+      {activeTab === 2 && (() => {
+        const totalIng = results.totals.totalRecaudo + results.totals.totalIngresosProyectados;
+        const totalComp = results.totals.totalCompromisos;
+        const totalPago = results.totals.totalPagos;
+        const totalAforo = results.totals.totalAforo;
+        
+        const execComp = totalIng > 0 ? (totalComp / totalIng) * 100 : 0;
+        const execPago = totalComp > 0 ? (totalPago / totalComp) * 100 : 0;
+        const execRecaudo = totalAforo > 0 ? (totalIng / totalAforo) * 100 : 0;
+
+        const dispComp = totalIng - totalComp;
+        const dispCaja = totalIng - totalPago;
+
+        return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-sm"><p className="text-xs text-slate-400 font-semibold mb-2 uppercase">Total Aforo</p><p className="text-3xl font-black text-slate-100">{fmt(results.totals.totalAforo)}</p></div>
-            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-sm"><p className="text-xs text-slate-400 font-semibold mb-2 uppercase">Total Recaudo (Real + Proy)</p><p className="text-3xl font-black text-blue-500">{fmt(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</p></div>
-            <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-md"><p className="text-xs text-indigo-200 font-semibold mb-2 uppercase">Total Comprometido</p><p className="text-3xl font-black text-white">{fmt(results.totals.totalCompromisos)}</p></div>
-            <div className="bg-emerald-500 rounded-2xl p-6 text-white shadow-md"><p className="text-xs text-emerald-100 font-semibold mb-2 uppercase">Total Pagado</p><p className="text-3xl font-black text-white">{fmt(results.totals.totalPagos)}</p></div>
-          </div>
           
+          {/* Main Equilibrio Card */}
+          <div className="bg-[#161b22] rounded-2xl shadow-xl border border-slate-700/60 overflow-hidden relative">
+            {/* Top Gradient Border */}
+            <div className="h-1 w-full bg-gradient-to-r from-yellow-400 via-[#0ea5e9] to-emerald-400"></div>
+            
+            <div className="p-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                    <PieChart className="w-6 h-6 text-yellow-500" /> Equilibrio Presupuestal
+                  </h3>
+                  <p className="text-sm text-slate-400 mt-1">Relación entre recaudo total, compromisos y pagos efectivos</p>
+                </div>
+                <div className="bg-slate-900/80 px-6 py-4 rounded-xl border border-slate-700/50 mt-4 md:mt-0">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Recaudo Total (Real + Proyectado)</p>
+                  <p className="text-3xl font-black text-white">{fmt(totalIng)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Frente al Compromiso */}
+                <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700/40">
+                  <div className="flex justify-between items-end mb-4">
+                    <div>
+                      <p className="text-xs font-bold text-[#0ea5e9] uppercase mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#0ea5e9]"></span> Frente al Compromiso</p>
+                      <p className="text-2xl font-black text-slate-100">{fmt(totalComp)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-400 mb-1">Ejecución</p>
+                      <p className="text-xl font-bold text-slate-100">{execComp.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-2.5 mb-6 overflow-hidden">
+                    <div className="bg-[#0ea5e9] h-2.5 rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, execComp)}%` }}></div>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Valor Disponible (Comprometido)</span>
+                    <span className="font-bold text-emerald-400 bg-emerald-900/20 px-3 py-1 rounded-full">{fmt(dispComp)}</span>
+                  </div>
+                </div>
+
+                {/* Frente al Pago Efectivo */}
+                <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700/40">
+                  <div className="flex justify-between items-end mb-4">
+                    <div>
+                      <p className="text-xs font-bold text-yellow-500 uppercase mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-yellow-500"></span> Frente al Pago Efectivo</p>
+                      <p className="text-2xl font-black text-slate-100">{fmt(totalPago)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-400 mb-1">Ejecución</p>
+                      <p className="text-xl font-bold text-slate-100">{execPago.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-2.5 mb-6 overflow-hidden">
+                    <div className="bg-yellow-500 h-2.5 rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, execPago)}%` }}></div>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Valor Disponible (Caja)</span>
+                    <span className="font-bold text-emerald-400 bg-emerald-900/20 px-3 py-1 rounded-full">{fmt(dispCaja)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Radials Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-[#161b22] p-8 rounded-2xl shadow-md border border-slate-700/60 flex items-center gap-8">
+              <CircularProgress percentage={execRecaudo} color="#eab308" label="Meta" />
+              <div>
+                <p className="text-xs font-bold text-yellow-500 uppercase mb-4 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-yellow-500"></span> Recaudo Total</p>
+                <div className="flex gap-8">
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Valor Aforado</p>
+                    <p className="text-xl font-bold text-white">{fmt(totalAforo)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Recaudado</p>
+                    <p className="text-xl font-bold text-yellow-500">{fmt(totalIng)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#161b22] p-8 rounded-2xl shadow-md border border-slate-700/60 flex items-center gap-8">
+              <CircularProgress percentage={execPago} color="#0ea5e9" label="Ejecutado" />
+              <div>
+                <p className="text-xs font-bold text-[#0ea5e9] uppercase mb-4 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#0ea5e9]"></span> Total Gasto</p>
+                <div className="flex gap-8">
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Comprometido</p>
+                    <p className="text-xl font-bold text-white">{fmt(totalComp)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Pago Efectivo</p>
+                    <p className="text-xl font-bold text-[#0ea5e9]">{fmt(totalPago)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Charts Section */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+             {/* Original Flujo de Caja */}
              <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm">
-                <h3 className="text-base font-bold text-slate-100 mb-6">Flujo de Caja Mensual</h3>
+                <h3 className="text-base font-bold text-slate-100 mb-6">Flujo de Caja Mensual (Detalle)</h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={results.flow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -277,60 +407,81 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
                       <Tooltip formatter={(val: number) => fmt(val*1e6)} contentStyle={{ backgroundColor: '#1e293b', border: 'none', color: '#f8fafc', borderRadius: '8px' }} />
                       <Legend wrapperStyle={{ paddingTop: '20px' }} />
                       <Bar dataKey="ingresosReales" name="Ingreso Real" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                      <Bar dataKey="ingresosProyectados" name="Ingreso Proy." stackId="a" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="ingresosProyectados" name="Ingreso Proy." stackId="a" fill="#818cf8" radius={[4, 4, 0, 0]} />
                       <Line type="monotone" dataKey="pagos" name="Pagos Totales" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
              </div>
              
-             <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm overflow-hidden flex flex-col">
-                <h3 className="text-base font-bold text-slate-100 mb-6">Análisis de Gastos por Recurso</h3>
-                <div className="flex-1 overflow-y-auto pr-2">
-                  <div className="space-y-3">
-                    {results.totals.expenseBreakdown.map((b, idx) => (
-                      <div key={idx} className="border border-slate-700 rounded-xl overflow-hidden bg-slate-900/40">
-                        <div 
-                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/80 transition-colors"
-                          onClick={() => setExpandedRow(expandedRow === b.tipo ? null : b.tipo)}
-                        >
-                          <div className="flex items-center gap-3">
-                            {expandedRow === b.tipo ? <ChevronDown className="w-5 h-5 text-indigo-400"/> : <ChevronRight className="w-5 h-5 text-slate-400"/>}
-                            <span className="font-bold text-slate-200">{b.tipo}</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="font-black text-slate-100">{fmt(b.total)}</span>
-                          </div>
-                        </div>
-                        {expandedRow === b.tipo && b.detalles && (
-                          <div className="bg-slate-900/80 p-4 border-t border-slate-700/50">
-                            <table className="w-full text-sm text-left">
-                              <thead className="text-xs text-slate-400 uppercase border-b border-slate-700/50">
-                                <tr><th className="pb-2 font-semibold">Recurso</th><th className="pb-2 text-right font-semibold">Gasto Real</th><th className="pb-2 text-right font-semibold">Proyectado</th><th className="pb-2 text-right font-semibold">Total</th></tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-700/50">
-                                {b.detalles.map((d: any, dIdx: number) => (
-                                  <tr key={dIdx} className="hover:bg-slate-800/50">
-                                    <td className="py-2 font-medium text-slate-300">{d.recurso} - {d.nombre}</td>
-                                    <td className="py-2 text-right text-slate-400">{fmt(d.valorReal)}</td>
-                                    <td className="py-2 text-right text-indigo-400">{fmt(d.valorProyectado)}</td>
-                                    <td className="py-2 text-right font-bold text-slate-200">{fmt(d.total)}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+             {/* New Ingresos vs Gastos Chart */}
+             <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm">
+                <h3 className="text-base font-bold text-slate-100 mb-6">Ingresos vs Gastos Mensual</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={results.flow.map(f => ({ ...f, totalIng: f.ingresosReales + f.ingresosProyectados }))} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                      <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
+                      <YAxis tickFormatter={(val) => `$${val/1000}k`} fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
+                      <Tooltip formatter={(val: number) => fmt(val*1e6)} contentStyle={{ backgroundColor: '#1e293b', border: 'none', color: '#f8fafc', borderRadius: '8px' }} cursor={{fill: '#334155', opacity: 0.4}} />
+                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                      <Bar dataKey="totalIng" name="Total Ingreso" fill="#eab308" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="compromisos" name="Total Gasto (Comp)" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
              </div>
           </div>
-        </div>
-      )}
 
-      {/* TAB 3: SENSIBILIDAD */}
+          {/* Table Análisis de Gastos */}
+          <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm overflow-hidden flex flex-col">
+            <h3 className="text-base font-bold text-slate-100 mb-6">Análisis de Gastos por Recurso</h3>
+            <div className="overflow-y-auto pr-2 max-h-96">
+              <div className="space-y-3">
+                {results.totals.expenseBreakdown.map((b, idx) => (
+                  <div key={idx} className="border border-slate-700 rounded-xl overflow-hidden bg-slate-900/40">
+                    <div 
+                      className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/80 transition-colors"
+                      onClick={() => setExpandedRow(expandedRow === b.tipo ? null : b.tipo)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {expandedRow === b.tipo ? <ChevronDown className="w-5 h-5 text-indigo-400"/> : <ChevronRight className="w-5 h-5 text-slate-400"/>}
+                        <span className="font-bold text-slate-200">{b.tipo}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-black text-slate-100">{fmt(b.total)}</span>
+                      </div>
+                    </div>
+                    {expandedRow === b.tipo && b.detalles && (
+                      <div className="bg-slate-900/80 p-4 border-t border-slate-700/50">
+                        <table className="w-full text-sm text-left">
+                          <thead className="text-xs text-slate-400 uppercase border-b border-slate-700/50">
+                            <tr><th className="pb-2 font-semibold">Recurso</th><th className="pb-2 text-right font-semibold">Gasto Real</th><th className="pb-2 text-right font-semibold">Proyectado</th><th className="pb-2 text-right font-semibold">Total</th></tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-700/50">
+                            {b.detalles.map((d: any, dIdx: number) => (
+                              <tr key={dIdx} className="hover:bg-slate-800/50">
+                                <td className="py-2 font-medium text-slate-300">{d.recurso} - {d.nombre}</td>
+                                <td className="py-2 text-right text-slate-400">{fmt(d.valorReal)}</td>
+                                <td className="py-2 text-right text-indigo-400">{fmt(d.valorProyectado)}</td>
+                                <td className="py-2 text-right font-bold text-slate-200">{fmt(d.total)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+        </div>
+        );
+      })()}
+
+{/* TAB 3: SENSIBILIDAD */}
       {activeTab === 3 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
