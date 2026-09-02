@@ -12,6 +12,7 @@ import {
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
 import { RESOURCES_LIST } from '../lib/resourceMapper';
+import { RECURSOS_FINANCIEROS } from '../lib/constants';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 const formatCurrencyShort = (value: number) => {
@@ -36,6 +37,7 @@ export function CashFlowScreen() {
   const [selectedResource, setSelectedResource] = useState('Todos');
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const [selectedMonthDetail, setSelectedMonthDetail] = useState<any>(null);
+  const [expandedTiposGasto, setExpandedTiposGasto] = useState<string[]>(['2.1.1 Gastos de Personal']);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
   const handleOverrideChange = (recurso: string, field: 'manualIncome' | 'manualExpense', value: number) => {
@@ -153,19 +155,114 @@ export function CashFlowScreen() {
   const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
   const maxExpenseMonth = [...monthlyData].sort((a, b) => b.expense - a.expense)[0];
 
-  const heatmapData = RUBROS.map((rubro, idx) => ({
-    rubro,
-    data: monthlyData.map((m, i) => {
-      let base = m.expense;
-      if (idx === 0) base = m.gPersonal * 0.6;
-      if (idx === 1) base = (i === 5 || i === 11) ? m.gPersonal * 0.3 : m.gPersonal * 0.05;
-      if (idx === 2) base = m.gFuncionamiento * 0.3;
-      if (idx === 3) base = m.gFuncionamiento * 0.4;
-      if (idx === 4) base = m.gFuncionamiento * 0.2;
-      if (idx === 5) base = m.gInversion * 0.9;
-      return base * (0.8 + Math.random() * 0.4);
-    })
-  }));
+  const heatmapExpenseTypesData = useMemo(() => {
+    if (!csvData?.compromisos || !results) return [];
+
+    const NOMINA_EXACTA_SEP_DIC = [26166093098, 29651541416, 37230066396, 72131354854];
+    const FUNCIONAMIENTO_EXACTO_SEP_DIC = [5381650892, 5996809971, 2581881333, 572528786];
+
+    const resNameMap: Record<string, string> = {};
+    RECURSOS_FINANCIEROS.forEach((r: any) => {
+      resNameMap[r.codigo] = r.nombre;
+    });
+
+    const tiposMap: Record<string, {
+      name: string;
+      order: number;
+      colorBase: string;
+      monthly: number[];
+      recursos: Record<string, {
+        recurso: string;
+        nombre: string;
+        monthly: number[];
+        total: number;
+      }>;
+    }> = {
+      '2.1.1 Gastos de Personal': { name: '2.1.1 Gastos de Personal', order: 1, colorBase: '59, 130, 246', monthly: new Array(12).fill(0), recursos: {} },
+      '2.1.2 Gastos de Funcionamiento': { name: '2.1.2 Gastos de Funcionamiento', order: 2, colorBase: '168, 85, 247', monthly: new Array(12).fill(0), recursos: {} },
+      '2.3 Gastos de Inversión': { name: '2.3 Gastos de Inversión', order: 3, colorBase: '236, 72, 153', monthly: new Array(12).fill(0), recursos: {} },
+      '2.1.3 Transferencias Corrientes': { name: '2.1.3 Transferencias Corrientes', order: 4, colorBase: '245, 158, 11', monthly: new Array(12).fill(0), recursos: {} },
+      '2.1.8 Tasas y Multas': { name: '2.1.8 Tasas y Multas', order: 5, colorBase: '14, 165, 233', monthly: new Array(12).fill(0), recursos: {} }
+    };
+
+    csvData.compromisos.forEach((r: any) => {
+      let tipo = String(r['Tipo de Gasto'] || '').trim();
+      if (!tipo) return;
+      if (!tiposMap[tipo]) {
+        tiposMap[tipo] = {
+          name: tipo,
+          order: 99,
+          colorBase: '100, 116, 139',
+          monthly: new Array(12).fill(0),
+          recursos: {}
+        };
+      }
+
+      let recCode = String(r['Código recurso'] || r['Recurso'] || '').trim();
+      if (recCode.startsWith('10.0')) recCode = '10';
+      if (recCode.startsWith('16.0')) recCode = '16';
+      if (!recCode) return;
+
+      const parts = String(r['Fecha compromiso'] || '').split('/');
+      if (parts.length < 2) return;
+      const m = parseInt(parts[1], 10) - 1;
+      if (m < 0 || m >= 12) return;
+
+      let valStr = String(r['Valor compromiso'] || '0').replace(/[\$,]/g, '').trim();
+      const val = parseFloat(valStr) || 0;
+
+      tiposMap[tipo].monthly[m] += val;
+
+      if (!tiposMap[tipo].recursos[recCode]) {
+        tiposMap[tipo].recursos[recCode] = {
+          recurso: recCode,
+          nombre: resNameMap[recCode] || `Recurso ${recCode}`,
+          monthly: new Array(12).fill(0),
+          total: 0
+        };
+      }
+      tiposMap[tipo].recursos[recCode].monthly[m] += val;
+    });
+
+    // Proyecciones meses 8..11 (Sep..Dic)
+    Object.values(tiposMap).forEach(group => {
+      const tipo = group.name;
+      const histSum = group.monthly.slice(0, 8).reduce((a, b) => a + b, 0) || 1;
+
+      for (let m = 8; m < 12; m++) {
+        const pIdx = m - 8;
+        let proj = 0;
+        if (tipo.includes('Personal')) {
+          proj = NOMINA_EXACTA_SEP_DIC[pIdx];
+        } else if (tipo.includes('Funcionamiento')) {
+          proj = FUNCIONAMIENTO_EXACTO_SEP_DIC[pIdx];
+        } else if (tipo.includes('Inversión') || tipo.includes('Inversion')) {
+          proj = (18910356804 / 8) * (pIdx === 2 ? 1.5 : 0.8);
+        } else if (tipo.includes('Transferencias')) {
+          proj = (5514560720 / 8) * (pIdx === 2 ? 1.2 : 0.9);
+        } else {
+          proj = (3911313467 / 8);
+        }
+
+        group.monthly[m] = proj;
+
+        Object.values(group.recursos).forEach(rec => {
+          const recHist = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+          const share = recHist / histSum;
+          rec.monthly[m] = proj * share;
+        });
+      }
+
+      // Calculate total for each recurso
+      Object.values(group.recursos).forEach(rec => {
+        rec.total = rec.monthly.reduce((a, b) => a + b, 0);
+      });
+    });
+
+    return Object.values(tiposMap)
+      .filter(t => t.monthly.reduce((a, b) => a + b, 0) > 0)
+      .sort((a, b) => a.order - b.order);
+  }, [csvData, results]);
 
   const incomeComposition = [
     { name: 'Aporte Nación (R10)', value: totalIncome * 0.65, fill: '#3b82f6' },
@@ -467,43 +564,170 @@ export function CashFlowScreen() {
         </div>
       </div>
 
-      {/* BLOQUE 5: MATRIZ HEATMAP */}
-      <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mb-8 border border-white/5">
-        <div className="mb-6"><h2 className="text-xl font-display text-white">Matriz Mes × Rubro (Concentración del Gasto)</h2></div>
+      {/* BLOQUE 5: MATRIZ HEATMAP INTERACTIVA POR TIPO DE GASTO Y RECURSOS */}
+      <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mb-8 border border-white/5 shadow-2xl">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <h2 className="text-xl font-display text-white">Matriz Mes × Tipo de Gasto (Concentración del Gasto)</h2>
+            </div>
+            <p className="text-xs text-slate-400">
+              Haz clic en cualquier tipo de gasto para desplegar u ocultar los recursos asociados y su ejecución mensual.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (expandedTiposGasto.length === heatmapExpenseTypesData.length) {
+                  setExpandedTiposGasto([]);
+                } else {
+                  setExpandedTiposGasto(heatmapExpenseTypesData.map(t => t.name));
+                }
+              }}
+              className="text-xs bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 transition-colors"
+            >
+              {expandedTiposGasto.length === heatmapExpenseTypesData.length ? 'Colapsar Todos' : 'Expandir Todos'}
+            </button>
+          </div>
+        </div>
+
         <div className="w-full overflow-x-auto">
-          <table className="w-full min-w-[800px] text-sm text-left">
+          <table className="w-full min-w-[950px] text-sm text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/10 text-on-surface-variant">
-                <th className="py-3 px-4 font-bold sticky left-0 bg-[#0f172a] z-10 w-48 uppercase text-[10px] tracking-wider">Rubro Presupuestal</th>
-                {MONTHS.map(m => (<th key={m} className="py-3 px-2 font-bold text-center uppercase text-[10px] tracking-wider">{m}</th>))}
+              <tr className="border-b border-white/10 text-slate-400 text-xs uppercase">
+                <th className="py-3 px-4 font-bold sticky left-0 bg-[#0f172a] z-20 min-w-[260px] tracking-wider">
+                  Tipo de Gasto / Recurso
+                </th>
+                {MONTHS.map(m => (
+                  <th key={m} className="py-3 px-1.5 font-bold text-center text-[10px] tracking-wider min-w-[65px]">
+                    {m}
+                  </th>
+                ))}
+                <th className="py-3 px-3 font-bold text-right text-[10px] tracking-wider min-w-[85px] text-white">
+                  Total Anual
+                </th>
               </tr>
             </thead>
             <tbody>
-              {heatmapData.map((row, idx) => (
-                <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
-                  <td className="py-3 px-4 font-medium text-slate-300 sticky left-0 bg-[#0f172a] group-hover:bg-[#1e293b] transition-colors">{row.rubro}</td>
-                  {row.data.map((val, i) => {
-                    const max = Math.max(...row.data);
-                    const intensity = val / max; 
-                    let colorBase = '56, 189, 248';
-                    if (idx === 1) colorBase = '244, 63, 94';
-                    if (idx >= 2 && idx <= 4) colorBase = '139, 92, 246';
-                    if (idx === 5) colorBase = '236, 72, 153';
-                    return (
-                      <td key={i} className="py-1.5 px-1 text-center">
-                        <div 
-                          className="w-full h-8 rounded flex items-center justify-center text-[10px] font-mono cursor-pointer hover:ring-2 hover:ring-white/50 transition-all"
-                          style={{ backgroundColor: `rgba(${colorBase}, ${intensity * 0.8 + 0.1})`, color: intensity > 0.5 ? '#fff' : 'rgba(255,255,255,0.6)' }}
-                          title={`Valor: ${formatCurrency(val)}`}
-                        >
-                          {formatCurrencyShort(val)}
+              {heatmapExpenseTypesData.map((row) => {
+                const isExpanded = expandedTiposGasto.includes(row.name);
+                const recursosList = Object.values(row.recursos).sort((a, b) => b.total - a.total);
+                const maxVal = Math.max(...row.monthly, 1);
+                const rowTotal = row.monthly.reduce((a, b) => a + b, 0);
+
+                return (
+                  <React.Fragment key={row.name}>
+                    {/* Fila Principal: Tipo de Gasto */}
+                    <tr
+                      onClick={() => {
+                        setExpandedTiposGasto(prev =>
+                          prev.includes(row.name) ? prev.filter(n => n !== row.name) : [...prev, row.name]
+                        );
+                      }}
+                      className="border-b border-white/5 hover:bg-white/[0.04] transition-colors cursor-pointer group select-none"
+                    >
+                      <td className="py-3 px-4 font-semibold text-white sticky left-0 bg-[#0f172a] group-hover:bg-[#1e293b] transition-colors z-10">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded flex items-center justify-center bg-white/5 group-hover:bg-white/10 transition-colors text-slate-400">
+                            {isExpanded ? <ChevronDown size={14} className="text-emerald-400" /> : <ChevronRight size={14} />}
+                          </div>
+                          <span className="text-sm text-slate-100">{row.name}</span>
+                          <span className="text-[10px] font-mono text-slate-400 bg-white/5 px-2 py-0.5 rounded-full ml-auto">
+                            {recursosList.length} rec.
+                          </span>
                         </div>
                       </td>
-                    );
-                  })}
-                </tr>
-              ))}
+
+                      {row.monthly.map((val, i) => {
+                        const intensity = val / maxVal;
+                        return (
+                          <td key={i} className="py-2 px-1 text-center">
+                            <div
+                              className="w-full h-8 rounded flex items-center justify-center text-[10px] font-mono font-medium hover:ring-1 hover:ring-white/40 transition-all"
+                              style={{
+                                backgroundColor: `rgba(${row.colorBase}, ${Math.max(0.12, intensity * 0.85)})`,
+                                color: intensity > 0.4 ? '#ffffff' : 'rgba(255,255,255,0.7)'
+                              }}
+                              title={`${row.name} - ${MONTHS[i]}: ${formatCurrency(val)}`}
+                            >
+                              {val > 0 ? formatCurrencyShort(val) : '-'}
+                            </div>
+                          </td>
+                        );
+                      })}
+
+                      <td className="py-2 px-3 text-right font-mono text-xs font-bold text-emerald-400">
+                        {formatCurrencyShort(rowTotal)}
+                      </td>
+                    </tr>
+
+                    {/* Filas Secundarias Desplegables: Recursos */}
+                    {isExpanded &&
+                      recursosList.map((rec) => {
+                        const recMax = Math.max(...rec.monthly, 1);
+                        return (
+                          <tr
+                            key={`${row.name}-${rec.recurso}`}
+                            className="border-b border-white/[0.02] bg-slate-900/50 hover:bg-slate-800/40 transition-colors text-xs"
+                          >
+                            <td className="py-2.5 px-4 sticky left-0 bg-[#0a101d] z-10 border-l-2 border-emerald-500/40">
+                              <div className="pl-6 flex items-center gap-2">
+                                <span className="font-mono text-[11px] text-emerald-400/90 font-bold">R{rec.recurso}</span>
+                                <span className="text-slate-300 text-[11px] truncate max-w-[220px]" title={rec.nombre}>
+                                  {rec.nombre}
+                                </span>
+                              </div>
+                            </td>
+
+                            {rec.monthly.map((val, i) => {
+                              const intensity = val / recMax;
+                              return (
+                                <td key={i} className="py-1.5 px-1 text-center">
+                                  <div
+                                    className="w-full h-7 rounded flex items-center justify-center text-[9px] font-mono hover:ring-1 hover:ring-white/30 transition-all"
+                                    style={{
+                                      backgroundColor: val > 0 ? `rgba(${row.colorBase}, ${Math.max(0.08, intensity * 0.45)})` : 'rgba(255,255,255,0.02)',
+                                      color: val > 0 ? (intensity > 0.4 ? '#e2e8f0' : '#94a3b8') : '#475569'
+                                    }}
+                                    title={`R${rec.recurso} (${rec.nombre}) - ${MONTHS[i]}: ${formatCurrency(val)}`}
+                                  >
+                                    {val > 0 ? formatCurrencyShort(val) : '-'}
+                                  </div>
+                                </td>
+                              );
+                            })}
+
+                            <td className="py-2 px-3 text-right font-mono text-[11px] text-slate-300 font-medium">
+                              {formatCurrencyShort(rec.total)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-white/20 text-xs font-bold bg-white/5">
+                <td className="py-3 px-4 text-white uppercase sticky left-0 bg-[#0f172a] z-10">
+                  Total Gasto Institucional
+                </td>
+                {MONTHS.map((_, i) => {
+                  const monthTotal = heatmapExpenseTypesData.reduce((acc, t) => acc + (t.monthly[i] || 0), 0);
+                  return (
+                    <td key={i} className="py-3 px-1 text-center font-mono text-[10px] text-white">
+                      {formatCurrencyShort(monthTotal)}
+                    </td>
+                  );
+                })}
+                <td className="py-3 px-3 text-right font-mono text-xs text-emerald-400">
+                  {formatCurrencyShort(
+                    heatmapExpenseTypesData.reduce((acc, t) => acc + t.monthly.reduce((a, b) => a + b, 0), 0)
+                  )}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
