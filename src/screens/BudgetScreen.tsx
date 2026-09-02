@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
-  BarChart, Bar, Legend, Line, LineChart, PieChart, Pie, Cell 
+  BarChart, Bar, Legend, Line, LineChart 
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, DollarSign, Wallet, AlertTriangle, Lightbulb, 
@@ -32,7 +32,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
 
       if (year === 2026) {
         // Proyección 2026 aforo actual / recaudo
-        totalBudget = 544356300000;
+        totalBudget = 531067100000;
         gastosPersonales = 360802600000;
         // The total expenses are 596533200000 (meaning a deficit of ~52B).
         funcionamientoEInversion = 596533200000 - gastosPersonales;
@@ -292,10 +292,10 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         
         {/* Comportamiento Histórico (2 columns) */}
-        <div className="lg:col-span-2 glass-card p-6 rounded-[24px]">
+        <div className="glass-card p-6 rounded-[24px]">
           <div className="mb-6">
             <h2 className="text-xl font-display text-white">Comparativa vs Indicadores Macroeconómicos</h2>
             <p className="text-sm text-on-surface-variant">Evolución de los gastos frente al IPC, Salario Mínimo y Dcto 1279 e ICES.</p>
@@ -321,48 +321,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
           </div>
         </div>
 
-        {/* Distribución 2026 (1 column) */}
-        <div className="glass-card p-6 rounded-[24px]">
-          <div className="mb-6">
-            <h2 className="text-xl font-display text-white">Composición de Ingresos (2026)</h2>
-            <p className="text-sm text-on-surface-variant">Distribución por fuente macro.</p>
-          </div>
-          <div className="h-[250px] relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={compData}
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {compData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <RechartsTooltip 
-                  formatter={(value: number) => formatCurrencyShort(value)}
-                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-display text-white">{formatCurrencyShort(currentBudget)}</span>
-              <span className="text-[10px] text-on-surface-variant uppercase tracking-wider">Total</span>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3 mt-4 justify-center">
-            {compData.map((c, i) => (
-              <div key={c.name} className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
-                <span className="text-xs text-on-surface-variant">{c.name}</span>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* Model & AI Recommendation */}
       <div className="glass-card p-6 rounded-[24px] mt-6">
@@ -557,6 +516,75 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
           </div>
         </div>
 
+      </div>
+
+      {/* ESTUDIO DE ELASTICIDAD Y SENSIBILIDAD */}
+      <div className="glass-card p-6 md:p-8 rounded-[32px] mt-8 relative overflow-hidden shadow-2xl mb-12">
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-fuchsia-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+        
+        <div className="mb-6 flex items-center gap-3 relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/20 flex items-center justify-center text-fuchsia-400">
+            <Activity size={24} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-display text-white">Estudio de Elasticidad y Análisis de Sensibilidad</h2>
+            <p className="text-sm text-on-surface-variant">Impacto de la variabilidad macroeconómica en el incremento presupuestal (Vigencia 2027)</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+          {/* Optimista */}
+          <div className="bg-surface-container-low/50 border border-emerald-500/30 p-5 rounded-2xl flex flex-col relative overflow-hidden transition-all hover:bg-surface-container-low">
+            <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+            <span className="text-emerald-400 font-bold mb-1">Escenario Optimista</span>
+            <span className="text-xs text-on-surface-variant mb-4 leading-relaxed">Inflación controlada y políticas de gasto restrictivas (Baja presión)</span>
+            <span className="text-3xl font-display text-white mb-1">+{scenarios.conservative.toFixed(2)}%</span>
+            <div className="mt-auto">
+              <span className="text-[10px] text-on-surface-variant uppercase tracking-wider block mb-1">Ingreso Requerido</span>
+              <span className="text-sm text-emerald-300 font-mono font-bold bg-emerald-500/10 px-2 py-1 rounded inline-block">
+                {formatCurrencyShort(currentBudget * (1 + scenarios.conservative / 100))}
+              </span>
+            </div>
+          </div>
+
+          {/* Base */}
+          <div className="bg-surface-container-highest border border-blue-500/50 p-6 rounded-2xl flex flex-col relative overflow-hidden transform md:-translate-y-2 shadow-[0_8px_30px_rgb(0,0,0,0.4)]">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500"></div>
+            <span className="text-blue-400 font-bold mb-1 flex items-center justify-between">
+              Escenario Base (MFMP)
+              <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full uppercase tracking-wider">Actual</span>
+            </span>
+            <span className="text-xs text-on-surface-variant mb-4 leading-relaxed">Acorde a la directriz del modelo predictivo seleccionado actualmente</span>
+            <span className="text-4xl font-display text-white mb-2">+{scenarios.base.toFixed(2)}%</span>
+            <div className="mt-auto">
+              <span className="text-[10px] text-on-surface-variant uppercase tracking-wider block mb-1">Ingreso Requerido</span>
+              <span className="text-base text-blue-300 font-mono font-bold bg-blue-500/10 px-2 py-1 rounded inline-block">
+                {formatCurrencyShort(currentBudget * (1 + scenarios.base / 100))}
+              </span>
+            </div>
+          </div>
+
+          {/* Acido */}
+          <div className="bg-surface-container-low/50 border border-red-500/30 p-5 rounded-2xl flex flex-col relative overflow-hidden transition-all hover:bg-surface-container-low">
+            <div className="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
+            <span className="text-red-400 font-bold mb-1">Escenario Ácido</span>
+            <span className="text-xs text-on-surface-variant mb-4 leading-relaxed">Desborde del IPC e ICES por encima de metas del Banco de la República</span>
+            <span className="text-3xl font-display text-white mb-1">+{scenarios.pressure.toFixed(2)}%</span>
+            <div className="mt-auto">
+              <span className="text-[10px] text-on-surface-variant uppercase tracking-wider block mb-1">Ingreso Requerido</span>
+              <span className="text-sm text-red-300 font-mono font-bold bg-red-500/10 px-2 py-1 rounded inline-block">
+                {formatCurrencyShort(currentBudget * (1 + scenarios.pressure / 100))}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 text-sm text-on-surface-variant bg-black/30 p-5 rounded-xl border border-white/5 relative z-10 flex gap-4 items-start">
+          <Info className="shrink-0 text-fuchsia-400 mt-0.5" size={18} />
+          <p className="leading-relaxed">
+            <strong className="text-white">Coeficiente de Elasticidad Gasto/Ingreso:</strong> Por cada 1% de desviación al alza en los indicadores de costo (Nómina y Funcionamiento), el requerimiento de ingresos tracciona un impacto cuasi-elástico del <strong>~1.12%</strong> debido al desfase de caja estructural (déficit de origen) en la vigencia 2026. Bajo el escenario ácido, el crecimiento vegetativo exige un plan de contingencia inmediato enfocado en nuevas rentas o cofinanciación territorial.
+          </p>
+        </div>
       </div>
     </div>
   );
