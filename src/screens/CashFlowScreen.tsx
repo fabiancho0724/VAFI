@@ -94,67 +94,6 @@ export function CashFlowScreen() {
     );
   }, [dataStage, csvData, config, selectedResource]);
 
-  if (dataStage === 'loading') {
-    return (
-      <div className="flex items-center justify-center h-full min-h-[500px]">
-        <div className="flex flex-col items-center gap-4 text-slate-400">
-          <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="font-medium animate-pulse">Integrando proyecciones reales SIIF...</p>
-        </div>
-      </div>
-    );
-  }
-  if (dataStage === 'error' || !results) {
-    return <div className="p-8 text-center text-rose-500">Error cargando proyecciones: {errorMessage}</div>;
-  }
-
-  const breakdown = results.totals.expenseBreakdown || [];
-  const totalExpenseProj = breakdown.reduce((a: any, b: any) => a + b.total, 0) || 1;
-  const pTotal = breakdown.find((b: any) => b.tipo.includes('Personal'))?.total || (totalExpenseProj * 0.65);
-  const fTotal = breakdown.find((b: any) => b.tipo.includes('Funcionamiento'))?.total || (totalExpenseProj * 0.25);
-  const iTotal = Math.max(0, totalExpenseProj - pTotal - fTotal);
-
-  const monthlyData = results.flow.map((f, i) => {
-    const income = f.ingresosProyectados + f.ingresosReales;
-    const expense = f.compromisos;
-    const netFlow = income - expense;
-    
-    const baseP = pTotal * (i === 5 || i === 11 ? 2/14 : 1/14);
-    const baseF = fTotal * (1/12);
-    const baseI = iTotal * (1/12);
-    
-    const monthSum = baseP + baseF + baseI;
-    const scale = monthSum > 0 ? (expense / monthSum) : 0;
-
-    return {
-      month: f.month,
-      income,
-      expense,
-      netFlow,
-      initialBalance: f.saldoInicial,
-      finalBalance: f.saldoFinal,
-      gPersonal: baseP * scale,
-      gFuncionamiento: baseF * scale,
-      gInversion: baseI * scale,
-      rNacion: income * 0.65,
-      rPropios: income * 0.30,
-      rEstampillas: income * 0.05,
-      waterfallStart: netFlow >= 0 ? f.saldoInicial : f.saldoInicial + netFlow,
-      waterfallEnd: Math.abs(netFlow),
-      waterfallColor: netFlow >= 0 ? '#10b981' : '#f43f5e',
-      rawFlow: f
-    };
-  });
-
-    const totalIncome = results.totals.totalIngresosProyectados + results.totals.totalRecaudo;
-  const totalExpense = results.totals.totalCompromisos;
-  const finalBalance = results.totals.saldoDisponible;
-  const initialBalance = results.totals.totalRecursosIniciales;
-  const netFlowTotal = totalIncome - totalExpense;
-
-  const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
-  const maxExpenseMonth = [...monthlyData].sort((a, b) => b.expense - a.expense)[0];
-
   const heatmapExpenseTypesData = useMemo(() => {
     if (!csvData?.compromisos || !results) return [];
 
@@ -263,6 +202,70 @@ export function CashFlowScreen() {
       .filter(t => t.monthly.reduce((a, b) => a + b, 0) > 0)
       .sort((a, b) => a.order - b.order);
   }, [csvData, results]);
+
+  
+
+
+  if (dataStage === 'loading') {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[500px]">
+        <div className="flex flex-col items-center gap-4 text-slate-400">
+          <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="font-medium animate-pulse">Integrando proyecciones reales SIIF...</p>
+        </div>
+      </div>
+    );
+  }
+  if (dataStage === 'error' || !results) {
+    return <div className="p-8 text-center text-rose-500">Error cargando proyecciones: {errorMessage}</div>;
+  }
+
+  const breakdown = results.totals.expenseBreakdown || [];
+  const totalExpenseProj = breakdown.reduce((a: any, b: any) => a + b.total, 0) || 1;
+  const pTotal = breakdown.find((b: any) => b.tipo.includes('Personal'))?.total || (totalExpenseProj * 0.65);
+  const fTotal = breakdown.find((b: any) => b.tipo.includes('Funcionamiento'))?.total || (totalExpenseProj * 0.25);
+  const iTotal = Math.max(0, totalExpenseProj - pTotal - fTotal);
+
+  const monthlyData = results.flow.map((f, i) => {
+    const income = f.ingresosProyectados + f.ingresosReales;
+    const expense = f.compromisos;
+    const netFlow = income - expense;
+    
+    const baseP = pTotal * (i === 5 || i === 11 ? 2/14 : 1/14);
+    const baseF = fTotal * (1/12);
+    const baseI = iTotal * (1/12);
+    
+    const monthSum = baseP + baseF + baseI;
+    const scale = monthSum > 0 ? (expense / monthSum) : 0;
+
+    return {
+      month: f.month,
+      income,
+      expense,
+      netFlow,
+      initialBalance: f.saldoInicial,
+      finalBalance: f.saldoFinal,
+      gPersonal: baseP * scale,
+      gFuncionamiento: baseF * scale,
+      gInversion: baseI * scale,
+      rNacion: income * 0.65,
+      rPropios: income * 0.30,
+      rEstampillas: income * 0.05,
+      waterfallStart: netFlow >= 0 ? f.saldoInicial : f.saldoInicial + netFlow,
+      waterfallEnd: Math.abs(netFlow),
+      waterfallColor: netFlow >= 0 ? '#10b981' : '#f43f5e',
+      rawFlow: f
+    };
+  });
+
+    const totalIncome = results.totals.totalIngresosProyectados + results.totals.totalRecaudo;
+  const totalExpense = results.totals.totalCompromisos;
+  const finalBalance = results.totals.saldoDisponible;
+  const initialBalance = results.totals.totalRecursosIniciales;
+  const netFlowTotal = totalIncome - totalExpense;
+
+  const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
+  const maxExpenseMonth = [...monthlyData].sort((a, b) => b.expense - a.expense)[0];
 
   const incomeComposition = [
     { name: 'Aporte Nación (R10)', value: totalIncome * 0.65, fill: '#3b82f6' },
