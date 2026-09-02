@@ -4,6 +4,7 @@ import { DashboardScreen } from './screens/DashboardScreen';
 import { PredictiveScreen } from './screens/PredictiveScreen';
 import { HistoricalScreen } from './screens/HistoricalScreen';
 import { ProgramCostingScreen } from './screens/ProgramCostingScreen';
+import { BudgetScreen } from './screens/BudgetScreen';
 import { CalendarScreen } from './screens/CalendarScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { RepositoryScreen } from './screens/RepositoryScreen';
