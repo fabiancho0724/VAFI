@@ -24,37 +24,32 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
   const historicalSeries = useMemo(() => {
     return YEARS.map(year => {
       let totalBudget = 0;
+      let aporteNacion = 0;
       let gastosPersonales = 0;
       let funcionamientoEInversion = 0;
 
-      if (year === 2026) {
-        // Proyección 2026 aforo actual / recaudo
-        totalBudget = 531067100000;
-        gastosPersonales = 360802600000;
-        // The total expenses are 596533200000 (meaning a deficit of ~65B).
-        funcionamientoEInversion = 596533200000 - gastosPersonales;
-      } else {
-        if (year === 2025) totalBudget = 510077500000;
-        else if (year === 2024) totalBudget = 443054200000;
-        else if (year === 2023) totalBudget = 413198500000;
-        else if (year === 2022) totalBudget = 367235856437.52;
-        else if (year === 2021) totalBudget = 338949052179.61;
-        else if (year === 2020) totalBudget = 328798133475.68;
-        else {
-          const incomes = budgetData.filter(d => d.year === year && d.category === 'Ingresos');
-          totalBudget = incomes.reduce((acc, curr) => acc + curr.amount, 0);
-        }
-        
-        gastosPersonales = budgetData.filter(d => d.year === year && d.category === 'Nómina').reduce((a, b) => a + b.amount, 0);
-        funcionamientoEInversion = Math.max(0, totalBudget - gastosPersonales);
-      }
+      if (year === 2016) { totalBudget = 292882982405.00; aporteNacion = 150173676028.00; gastosPersonales = 170202660560.00; }
+      else if (year === 2017) { totalBudget = 317183402919.00; aporteNacion = 176266167583.00; gastosPersonales = 179298885672.00; }
+      else if (year === 2018) { totalBudget = 329257380990.00; aporteNacion = 188093963887.00; gastosPersonales = 194562187853.00; }
+      else if (year === 2019) { totalBudget = 332583396221.00; aporteNacion = 187848097218.00; gastosPersonales = 211867438892.00; }
+      else if (year === 2020) { totalBudget = 328798133475.00; aporteNacion = 211154363875.00; gastosPersonales = 225823344840.00; }
+      else if (year === 2021) { totalBudget = 338949052179.00; aporteNacion = 221945894347.00; gastosPersonales = 239176451764.00; }
+      else if (year === 2022) { totalBudget = 366858662747.00; aporteNacion = 245575546836.00; gastosPersonales = 264666910202.00; }
+      else if (year === 2023) { totalBudget = 414225449749.00; aporteNacion = 288608934467.00; gastosPersonales = 309972788484.00; }
+      else if (year === 2024) { totalBudget = 470372737165.00; aporteNacion = 329772592626.00; gastosPersonales = 302294420187.00; }
+      else if (year === 2025) { totalBudget = 530811870640.00; aporteNacion = 383141323232.00; gastosPersonales = 329076033503.00; }
+      else if (year === 2026) { totalBudget = 547314191553.00; aporteNacion = 404118353192.00; gastosPersonales = 369666519469.00; }
 
-      // Safe access
+      const recursosPropios = totalBudget - aporteNacion;
+      funcionamientoEInversion = totalBudget - gastosPersonales;
+
       const macro = MACRO_INDICATORS[year] as any || {};
 
       return {
         year,
         totalBudget,
+        aporteNacion,
+        recursosPropios,
         gastosPersonales,
         funcionamientoEInversion,
         ipc: macro.ipc || 0,
@@ -327,6 +322,41 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
               </div>
 
       {/* Model & AI Recommendation */}
+            <div className="glass-card p-6 rounded-[24px] mt-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-display text-white">Evolución de Aporte Nación vs Presupuesto</h2>
+          <p className="text-sm text-on-surface-variant">
+            Histórico 2016-2026 de la proporción de ingresos. En 2024 la nómina parece bajar debido al traslado de Honorarios al rubro de funcionamiento.
+          </p>
+        </div>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={historicalSeries} margin={{ top: 20, right: 20, left: 20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+              <XAxis dataKey="year" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+              <YAxis 
+                stroke="#94a3b8" 
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                tickFormatter={(value) => formatCurrencyShort(value)}
+                domain={['auto', 'auto']}
+              />
+              <RechartsTooltip 
+                formatter={(value: number, name: string) => [
+                  formatCurrencyShort(value), 
+                  name === 'totalBudget' ? 'Presupuesto Total' : (name === 'aporteNacion' ? 'Aporte Nación' : 'Recursos Propios')
+                ]}
+                contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                labelStyle={{ color: '#94a3b8', marginBottom: '8px' }}
+              />
+              <Legend />
+              <Area type="monotone" dataKey="aporteNacion" name="Aporte Nación" stroke="#10b981" fillOpacity={0.3} fill="#10b981" />
+              <Line type="monotone" dataKey="recursosPropios" name="Recursos Propios" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="totalBudget" name="Presupuesto Total" stroke="#e879f9" strokeWidth={3} dot={{ r: 4 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       <div className="glass-card p-6 rounded-[24px] mt-6">
         <div className="mb-6">
           <h2 className="text-xl font-display text-white">Curva de Ajuste del Modelo: {bestModel.modelName}</h2>
