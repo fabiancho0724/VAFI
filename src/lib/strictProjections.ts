@@ -186,7 +186,11 @@ function simulateCore(
   if (config.scenario === 'Optimista') effGrowth += 0.05;
   if (config.scenario === 'Pesimista') effGrowth -= 0.05;
   
-  const nominaProyectadaGlobal = nominaStats.avgMonthlyNomina * nominaStats.missingMonths;
+  
+  const NOMINA_EXACTA_SEP_DIC = [26166093098, 29651541416, 37230066396, 72131354854];
+  const TOTAL_NOMINA_SEP_DIC = 165179055764;
+  const nominaProyectadaGlobal = TOTAL_NOMINA_SEP_DIC;
+
 
   baseData.forEach(base => {
     const isFixed = NACION_FIXED.includes(base.recurso);
@@ -194,6 +198,9 @@ function simulateCore(
     
     // Usar el valor real y fidedigno del balance (Recaudo 31/08) en lugar de sumar el histórico mensual que puede estar incompleto
     const recaudoRealAcumulado = base.recaudo;
+    const totalRealNomina = expenseTypeReal['Personal (Nómina)'] || 1;
+    const shareNomina = (expenseTypeResourceReal['Personal (Nómina)']?.[base.recurso] || 0) / totalRealNomina;
+    const nominaAsignada = TOTAL_NOMINA_SEP_DIC * shareNomina;
     const compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
     const pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
 
@@ -233,8 +240,8 @@ function simulateCore(
       methodUsed = 'Manual';
       trace.push({ step: 'Proyección Manual', value: ingProyectado, detail: 'Valor ingresado por el usuario' });
     } else {
-      gasProyectado = aiExpenseReference;
-      trace.push({ step: 'Proyección Bruta (Gastos)', value: gasProyectado, detail: 'Cálculo AI de referencia' });
+      gasProyectado = Math.max(aiExpenseReference, nominaAsignada);
+      trace.push({ step: 'Proyección Bruta (Gastos)', value: gasProyectado, detail: 'Garantizando Nómina' });
     }
     
     let totalIngresos = recaudoRealAcumulado + ingProyectado;
@@ -248,14 +255,16 @@ function simulateCore(
     let totalComp = compHistorico + gasProyectado;
     let totalPago = pagoHistorico + (gasProyectado * 0.9);
 
+    let minComp = compHistorico + nominaAsignada;
     if (totalComp > totalIngresos) {
       if (modifierVariations.incomeVar === 0 && modifierVariations.expenseVar === 0) {
-        alerts.push(`🚨 CRÍTICA: Déficit Proyectado en ${base.nombre}. Compromiso truncado para no superar recaudo.`);
+        alerts.push(`🚨 CRÍTICA: Déficit Proyectado en ${base.nombre}. El gasto supera el recaudo (Impulsado por Nómina).`);
       }
-      totalComp = totalIngresos;
-      trace.push({ step: 'Restricción Caja', value: totalComp, detail: 'Compromiso reducido al tope del recaudo.' });
+      totalComp = Math.max(totalIngresos, minComp);
+      trace.push({ step: 'Restricción Caja (Flexible)', value: totalComp, detail: 'Compromiso ajustado, pero garantizando Nómina.' });
     }
-    if (totalPago > totalIngresos) totalPago = totalIngresos;
+    let minPago = pagoHistorico + nominaAsignada; // Nómina requires 100% pago
+    if (totalPago > totalIngresos) totalPago = Math.max(totalIngresos, minPago);
     if (totalPago > totalComp) totalPago = totalComp;
 
     // Recalculate gasProyectado based on truncated totalComp
@@ -353,13 +362,21 @@ function simulateCore(
       } else {
          const girosExactos = GIROS_SIIF_PROYECTADOS[r.recurso];
          const w = historicWeights[r.recurso] ? historicWeights[r.recurso][idx] : 0.25;
+         
          if (girosExactos) {
-            mIngProy += girosExactos[idx - 8];
+             mIngProy += girosExactos[idx - 8];
          } else {
-            mIngProy += r.ingresosProyectados * w;
+             mIngProy += r.ingresosProyectados * w;
          }
-         mComp += r.gastosProyectados * w;
-         mPago += (r.gastosProyectados * 0.9) * w;
+         
+         const totalRealNomina = expenseTypeReal['Personal (Nómina)'] || 1;
+         const shareN = (expenseTypeResourceReal['Personal (Nómina)']?.[r.recurso] || 0) / totalRealNomina;
+         const nAsignada = TOTAL_NOMINA_SEP_DIC * shareN;
+         const otherExpense = Math.max(0, r.gastosProyectados - nAsignada);
+         const monthlyN = NOMINA_EXACTA_SEP_DIC[idx - 8] * shareN;
+         
+         mComp += monthlyN + (otherExpense * w);
+         mPago += monthlyN + (otherExpense * 0.9 * w);
       }
     });
     
