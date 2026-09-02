@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, DollarSign, Wallet, AlertTriangle, Lightbulb, 
-  Target, Info, CheckCircle2 
+  Target, Info, CheckCircle2, FileText, Scale, BarChart2, ShieldAlert, Activity 
 } from 'lucide-react';
 import { budgetData } from '../data/budgetData';
 import { MACRO_INDICATORS, YEARS } from '../lib/macroData';
@@ -106,6 +106,112 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
           </p>
         </div>
       </header>
+
+      {/* INFORME TÉCNICO EJECUTIVO */}
+      <div className="mb-8 bg-gradient-to-br from-surface-container-high/80 to-background border border-primary-container/20 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary-container/10 blur-[100px] rounded-full pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
+            <div className="w-14 h-14 rounded-2xl bg-primary-container/20 flex items-center justify-center text-primary-container shrink-0 border border-primary-container/30">
+              <FileText size={28} />
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-display text-white font-bold tracking-tight">Informe Técnico: Propuesta Presupuestal Universitaria 2027</h2>
+              <p className="text-primary-container font-mono text-sm mt-1 uppercase tracking-wider">Sostenibilidad, Marco Legal y Proyecciones Macroeconómicas</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            
+            {/* 1. Contexto */}
+            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-orange-400 bg-white/5 hover:bg-white/10 transition-colors">
+              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
+                <Activity size={18} className="text-orange-400" />
+                1. Diagnóstico Fiscal 2026-2027
+              </h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                Entorno de alta complejidad fiscal que obliga a priorizar la <strong>sostenibilidad del Estado</strong>. Con un PIB en meseta (2.6%) y desaceleración en 2027, el <em>gasto inflexible</em> es la mayor amenaza estructural. La universidad debe transitar hacia un modelo de eficiencia presupuestal técnica, lejos de incrementos vegetativos.
+              </p>
+            </div>
+
+            {/* 2. Marco Normativo */}
+            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-400 bg-white/5 hover:bg-white/10 transition-colors">
+              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
+                <Scale size={18} className="text-emerald-400" />
+                2. Marco Normativo (Ley 2568)
+              </h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                Modifica el <strong>Art. 86 (Ley 30)</strong> para superar la indexación simplista del IPC, reconociendo la canasta real de costos (ICES). Tres imperativos legales para 2027:
+              </p>
+              <ul className="text-xs text-on-surface-variant mt-2 list-disc pl-4 space-y-1">
+                <li>Indexación diferencial por costos sectoriales.</li>
+                <li>Consolidación de la base (Nómina y beneficios).</li>
+                <li>Transferencias de inversión estructural.</li>
+              </ul>
+            </div>
+
+            {/* 3. Variables Macroeconómicas */}
+            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-blue-400 bg-white/5 hover:bg-white/10 transition-colors xl:row-span-2">
+              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
+                <BarChart2 size={18} className="text-blue-400" />
+                3. Variables Críticas (MFMP 2026)
+              </h3>
+              <p className="text-sm text-on-surface-variant mb-4">
+                El uso del IPC general (4.4%) es <strong>insuficiente</strong> y derivaría en recortes reales frente a la inercia inflacionaria. El ICES es una necesidad técnica absoluta.
+              </p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
+                  <span className="text-xs text-on-surface-variant">Crecimiento PIB Real</span>
+                  <span className="text-sm font-bold text-white">2.2%</span>
+                </div>
+                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
+                  <span className="text-xs text-on-surface-variant">Inflación (IPC)</span>
+                  <span className="text-sm font-bold text-red-400">4.4%</span>
+                </div>
+                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
+                  <span className="text-xs text-on-surface-variant">Déficit Fiscal GNC</span>
+                  <span className="text-sm font-bold text-orange-400">4.5% del PIB</span>
+                </div>
+                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
+                  <span className="text-xs text-on-surface-variant">Ingresos Totales GNC</span>
+                  <span className="text-sm font-bold text-emerald-400">17.3% del PIB</span>
+                </div>
+                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
+                  <span className="text-xs text-on-surface-variant">Deuda Neta GNC</span>
+                  <span className="text-sm font-bold text-red-400">58.9% del PIB</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Proyección Ingresos y Gastos */}
+            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-[#c084fc] bg-white/5 hover:bg-white/10 transition-colors">
+              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
+                <Target size={18} className="text-[#c084fc]" />
+                4. Dinámica de Ingresos y Gastos
+              </h3>
+              <ul className="text-xs text-on-surface-variant space-y-2">
+                <li><strong className="text-white">Ingresos:</strong> Requieren alineación con sectores de crecimiento (Agro 11.2%, Entretenimiento 31.2%).</li>
+                <li><strong className="text-white">Funcionamiento:</strong> Altamente impactado por el ajuste salarial redistributivo; exige optimización en gastos operativos.</li>
+                <li><strong className="text-white">Inversión:</strong> Multiplicador fiscal estimado de 0.2, justificando infraestructura como motor de productividad.</li>
+              </ul>
+            </div>
+
+            {/* 5. Riesgos y Sostenibilidad */}
+            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-red-400 bg-white/5 hover:bg-white/10 transition-colors">
+              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
+                <ShieldAlert size={18} className="text-red-400" />
+                5. Análisis de Riesgos y Sostenibilidad
+              </h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                El <em>"Pacto Fiscal"</em> es una incertidumbre política frente al historial de rechazo legislativo (2025/2026). La alta deuda del GNC (58.9%) bloquea apalancamientos externos. La universidad debe planear con resiliencia, asumiendo contingencias por menor recaudo tributario y recortes en cuotas de gasto.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
 
       {/* KPI Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
