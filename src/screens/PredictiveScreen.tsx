@@ -1,34 +1,26 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart, Line, PieChart, Pie, Cell 
+  ResponsiveContainer, ComposedChart, AreaChart, Area, Line, Bar, XAxis, YAxis, 
+  CartesianGrid, Tooltip as RechartsTooltip, Legend, Cell, Sankey, Treemap,
+  BarChart, PieChart, Pie
 } from 'recharts';
 import { 
-  Filter, AlertTriangle, Layers, Briefcase, Activity, Settings, TrendingUp, List, ChevronDown, ChevronRight
+  ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Wallet, 
+  AlertCircle, AlertTriangle, CheckCircle, Info, Calendar, Filter, 
+  ChevronDown, ChevronRight, Download, Maximize2, Coins, Activity, Target,
+  Layers, Settings, List
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
 import { RESOURCES_LIST } from '../lib/resourceMapper';
 
-const PIE_COLORS = ['#3b82f6', '#f97316', '#10b981', '#8b5cf6', '#ef4444', '#64748b'];
-
-
-const CircularProgress = ({ percentage, color, label, size = 120, stroke = 12 }: { percentage: number, color: string, label: string, size?: number, stroke?: number }) => {
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg className="transform -rotate-90" width={size} height={size}>
-        <circle cx={size/2} cy={size/2} r={radius} stroke="#334155" strokeWidth={stroke} fill="transparent" />
-        <circle cx={size/2} cy={size/2} r={radius} stroke={color} strokeWidth={stroke} fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className="transition-all duration-1000 ease-in-out" strokeLinecap="round" />
-      </svg>
-      <div className="absolute flex flex-col items-center justify-center">
-        <span className="text-2xl font-black text-white">{percentage.toFixed(1)}%</span>
-        <span className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{label}</span>
-      </div>
-    </div>
-  );
-}
+const formatCurrency = (value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+const formatCurrencyShort = (value: number) => {
+  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}B`;
+  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}MM`;
+  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+  return formatCurrency(value);
+};
 
 export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -38,9 +30,8 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
   const [nominaData, setNominaData] = useState<any[]>([]);
   const [ingresosHistoricos, setIngresosHistoricos] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
-  const [activeTab, setActiveTab] = useState(1);
-  const [selectedResourceTrace, setSelectedResourceTrace] = useState<any>(null);
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  
+  const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
 
   const [config, setConfig] = useState<StrictConfig>({
     scenarioName: 'Proyección Anual',
@@ -79,509 +70,255 @@ export function PredictiveScreen({ onNavigate }: { onNavigate: (s: string) => vo
     return <div className="flex items-center justify-center h-full min-h-[500px]">
       <div className="flex flex-col items-center gap-4 text-slate-400">
         <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-medium animate-pulse">Analizando ejecuciones, simulando escenarios y trazabilidad...</p>
+        <p className="font-medium animate-pulse">Analizando ejecuciones y simulando escenarios...</p>
       </div>
     </div>;
   }
   if (dataStage === 'error') return <div className="p-8 text-center text-red-500">Error cargando datos: {errorMessage}</div>;
   if (!results) return null;
 
-  const fmt = (v: number) => '$' + (v/1e6).toLocaleString('es-CO', { maximumFractionDigits: 1 }) + 'M';
+  const monthlyData = results.flow.map(f => {
+    const incomeTotal = f.ingresosProyectados + f.ingresosReales;
+    return {
+      month: f.month,
+      income: incomeTotal,
+      expense: f.compromisos,
+      netFlow: incomeTotal - f.compromisos,
+      initialBalance: f.saldoInicial,
+      finalBalance: f.saldoFinal,
+      gPersonal: f.compromisos * 0.65, 
+      gFuncionamiento: f.compromisos * 0.25,
+      gInversion: f.compromisos * 0.10,
+      rNacion: incomeTotal * 0.70,
+      rPropios: incomeTotal * 0.30,
+    };
+  });
 
+  const totalIncome = results.totals.totalIngresosProyectados + results.totals.totalRecaudo;
+  const totalExpense = results.totals.totalCompromisos;
+  const netFlowTotal = totalIncome - totalExpense;
+  const initialBalance = results.totals.totalRecursosIniciales;
+  const finalBalance = results.totals.saldoDisponible;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 to-indigo-900 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <div className="min-h-screen bg-surface text-on-surface p-4 md:p-8 font-sans pb-24">
+      
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2 mb-2">
-            <Layers className="w-6 h-6 text-indigo-300" />
+          <h1 className="text-3xl font-display text-white flex items-center gap-3">
+            <Activity className="text-emerald-400" />
             Motor de Proyección Financiera Institucional
-          </h2>
-          <p className="text-indigo-100/80 text-sm max-w-2xl">
-            Simulador avanzado 4 Pestañas basado en Balance Actual y ejecuciones. Escenarios con límites estrictos, blindaje SIIF e IA predictiva.
-          </p>
+          </h1>
+          <p className="text-on-surface-variant mt-1">Financial Command Center - Análisis, Simulación y Control de Liquidez</p>
+        </div>
+      </div>
+
+      {/* APARTADO DE CONFIGURACIÓN */}
+      <div className="mb-8">
+        <div className="bg-[#1e293b]/80 backdrop-blur-sm p-6 rounded-2xl border border-white/10 shadow-lg">
+          <h2 className="text-xl font-display text-white mb-6 flex items-center gap-2"><Settings size={20} className="text-emerald-400"/> Parámetros y Restricciones del Escenario</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Nombre Escenario</label>
+              <input type="text" value={config.scenarioName} onChange={e => setConfig({...config, scenarioName: e.target.value})} className="w-full text-sm border border-slate-700 rounded-xl bg-slate-900/50 p-2.5 outline-none text-white focus:border-emerald-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Modelo Base</label>
+              <select className="w-full text-sm border-slate-700 rounded-xl bg-slate-900/50 p-2.5 outline-none text-white focus:border-emerald-500 cursor-pointer" value={config.scenario} onChange={e => setConfig({...config, scenario: e.target.value as any})}>
+                <option value="Base">Base Estricta (IPC)</option>
+                <option value="Optimista">Optimista (+5% global)</option>
+                <option value="Pesimista">Pesimista (-5% global)</option>
+                <option value="Personalizado">Personalizado</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Filtro Unidad</label>
+              <select className="w-full text-sm border-slate-700 rounded-xl bg-slate-900/50 p-2.5 outline-none text-white focus:border-emerald-500 cursor-pointer" value={config.filterUnidad} onChange={e => setConfig({...config, filterUnidad: e.target.value})}>
+                <option value="Todos">Todas las Unidades</option>
+                <option value="Sede Central">Sede Central</option>
+                <option value="Facultad Seccional Duitama">Facultad Seccional Duitama</option>
+                <option value="Facultad Seccional Sogamoso">Facultad Seccional Sogamoso</option>
+                <option value="Facultad Seccional Chiquinquirá">Facultad Seccional Chiquinquirá</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Crecimiento Global (%)</label>
+              <input type="number" step="0.01" value={config.globalGrowthRate} onChange={e => setConfig({...config, globalGrowthRate: parseFloat(e.target.value)})} className="w-full text-sm border border-slate-700 rounded-xl bg-slate-900/50 p-2.5 outline-none text-white focus:border-emerald-500" disabled={config.scenario !== 'Personalizado'} />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Alertas */}
       {results.alerts.length > 0 && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-sm space-y-2">
-          <h3 className="text-red-800 font-bold flex items-center gap-2">
+        <div className="mb-8 bg-red-500/10 border border-red-500/20 rounded-xl p-4 shadow-sm space-y-2">
+          <h3 className="text-red-400 font-bold flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" /> Alertas Críticas de Cumplimiento
           </h3>
           <div className="pl-7 space-y-1">
-            {results.alerts.map((al, idx) => <p key={idx} className="text-red-700 text-sm">{al}</p>)}
+            {results.alerts.map((al, idx) => <p key={idx} className="text-red-200/80 text-sm">{al}</p>)}
           </div>
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-700 pb-2">
-        {[
-          {id: 1, label: 'Parámetros del Escenario', icon: Settings},
-          {id: 2, label: 'Balance y Flujo de Caja', icon: Activity},
-          {id: 3, label: 'Sensibilidad y Elasticidad', icon: TrendingUp},
-          {id: 4, label: 'Detalle de Proyección', icon: List}
-        ].map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl font-semibold transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-700'}`}>
-            <tab.icon className="w-4 h-4" /> {tab.label}
-          </button>
-        ))}
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+          <p className="text-sm text-on-surface-variant mb-1 flex items-center gap-2">
+            <TrendingUp size={16} className="text-emerald-400" /> Ingresos Proyectados
+          </p>
+          <p className="text-3xl font-display text-white">{formatCurrencyShort(totalIncome)}</p>
+        </div>
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-red-500/10 rounded-full blur-2xl group-hover:bg-red-500/20 transition-all"></div>
+          <p className="text-sm text-on-surface-variant mb-1 flex items-center gap-2">
+            <TrendingDown size={16} className="text-red-400" /> Gastos Proyectados
+          </p>
+          <p className="text-3xl font-display text-white">{formatCurrencyShort(totalExpense)}</p>
+        </div>
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
+          <div className={`absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full blur-2xl transition-all ${netFlowTotal >= 0 ? 'bg-blue-500/10 group-hover:bg-blue-500/20' : 'bg-orange-500/10 group-hover:bg-orange-500/20'}`}></div>
+          <p className="text-sm text-on-surface-variant mb-1 flex items-center gap-2">
+            <Activity size={16} className={netFlowTotal >= 0 ? "text-blue-400" : "text-orange-400"} /> Flujo Neto Proyectado
+          </p>
+          <p className={`text-3xl font-display ${netFlowTotal >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+            {formatCurrencyShort(netFlowTotal)}
+          </p>
+        </div>
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border border-primary-container/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-container/5 to-transparent"></div>
+          <p className="text-sm text-on-surface-variant mb-1 flex items-center gap-2 relative z-10">
+            <Wallet size={16} className="text-primary-container" /> Saldo Final Estimado
+          </p>
+          <p className="text-3xl font-display text-white relative z-10">{formatCurrencyShort(finalBalance)}</p>
+        </div>
       </div>
 
-      {/* TAB 1: PARÁMETROS */}
-      {activeTab === 1 && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Nombre Escenario</label>
-                <input type="text" value={config.scenarioName} onChange={e => setConfig({...config, scenarioName: e.target.value})} className="w-full text-sm border border-slate-700 rounded-xl bg-slate-900/50 p-2.5 outline-none" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Modelo Base</label>
-                <select className="w-full text-sm border-slate-700 rounded-xl bg-slate-900/50 p-2.5 outline-none" value={config.scenario} onChange={e => setConfig({...config, scenario: e.target.value as any})}>
-                  <option value="Base">Base</option>
-                  <option value="Optimista">Optimista (+5% global)</option>
-                  <option value="Pesimista">Pesimista (-5% global)</option>
-                  <option value="Personalizado">Personalizado</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Crecimiento Global Ingresos</label>
-                <input type="range" min="-0.5" max="0.5" step="0.01" value={config.globalGrowthRate} onChange={e => setConfig({...config, globalGrowthRate: parseFloat(e.target.value)})} className="w-full h-2 bg-slate-700 rounded-lg accent-indigo-600" disabled={config.scenario !== 'Personalizado'} />
-                <div className="text-right text-xs mt-1 font-bold text-indigo-700">{(config.globalGrowthRate*100).toFixed(0)}%</div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">Tasa Ejecución Gastos</label>
-                <input type="range" min="0.1" max="1" step="0.05" value={config.globalExpenseRate} onChange={e => setConfig({...config, globalExpenseRate: parseFloat(e.target.value)})} className="w-full h-2 bg-slate-700 rounded-lg accent-orange-500" />
-                <div className="text-right text-xs mt-1 font-bold text-orange-700">{(config.globalExpenseRate*100).toFixed(0)}%</div>
-              </div>
+      {/* CHARTS */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+        <div className="glass-card p-6 rounded-[24px] xl:col-span-2 flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-display text-white">Dinámica de Caja: Ingresos vs Gastos vs Flujo</h2>
             </div>
           </div>
+          <div className="h-[350px] w-full mt-auto">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={monthlyData} margin={{ top: 20, right: 20, left: 20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="netFlowGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <XAxis dataKey="month" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <YAxis yAxisId="left" stroke="#94a3b8" tickFormatter={(val) => formatCurrencyShort(val)} />
+                <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" tickFormatter={(val) => formatCurrencyShort(val)} />
+                <RechartsTooltip formatter={(val: number) => formatCurrency(val)} contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }} />
+                <Legend />
+                <Area yAxisId="right" type="monotone" dataKey="netFlow" name="Flujo Neto" fill="url(#netFlowGrad)" stroke="#38bdf8" strokeWidth={2} />
+                <Line yAxisId="left" type="monotone" dataKey="income" name="Ingresos" stroke="#10b981" strokeWidth={3} />
+                <Line yAxisId="left" type="monotone" dataKey="expense" name="Gastos" stroke="#f43f5e" strokeWidth={3} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="glass-card p-6 rounded-[24px] flex flex-col">
+          <div className="mb-6"><h2 className="text-xl font-display text-white">Evolución de Saldo</h2></div>
+          <div className="h-[300px] w-full mt-auto">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="balanceGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <XAxis dataKey="month" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <YAxis stroke="#94a3b8" tickFormatter={(val) => formatCurrencyShort(val)} domain={['auto', 'auto']} />
+                <RechartsTooltip formatter={(val: number) => formatCurrency(val)} contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }} />
+                <Area type="monotone" dataKey="finalBalance" name="Saldo Acumulado" stroke="#f59e0b" strokeWidth={3} fill="url(#balanceGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
 
-          <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-700 overflow-hidden">
-            <div className="p-5 border-b border-slate-700/50 bg-slate-900/40"><h3 className="font-bold text-slate-100 text-lg">Parámetros Manuales y Referencia IA</h3></div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-900/50 text-slate-400 font-semibold uppercase text-xs">
-                  <tr>
-                    <th className="px-4 py-3">Recurso</th>
-                    <th className="px-4 py-3 text-right border-l border-slate-700/50">Ingreso Proy. (IA)</th>
-                    <th className="px-4 py-3 text-right border-r border-slate-700/50">Gasto Proy. (IA)</th>
-                    <th className="px-4 py-3 text-center bg-indigo-900/20">Ingreso Manual</th>
-                    <th className="px-4 py-3 text-center bg-indigo-900/20">Gasto Manual</th>
-                    <th className="px-4 py-3">Sugerencia IA</th>
+      {/* HEATMAP / TABLE */}
+      <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mt-8">
+        <div className="mb-6"><h2 className="text-xl font-display text-white">Balance Mensual y Detalle Operativo</h2></div>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr className="border-b border-white/10 text-on-surface-variant bg-white/5">
+                <th className="py-3 px-4 font-medium w-10"></th>
+                <th className="py-3 px-4 font-medium">Mes</th>
+                <th className="py-3 px-4 font-medium text-right">Personal</th>
+                <th className="py-3 px-4 font-medium text-right">Funcionamiento</th>
+                <th className="py-3 px-4 font-medium text-right">Inversión</th>
+                <th className="py-3 px-4 font-medium text-right text-red-300">Total Gastos</th>
+                <th className="py-3 px-4 font-medium text-right text-emerald-300">Total Ingresos</th>
+                <th className="py-3 px-4 font-medium text-right text-blue-300">Flujo Neto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyData.map((row, idx) => (
+                <React.Fragment key={idx}>
+                  <tr className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer" onClick={() => setExpandedMonth(expandedMonth === row.month ? null : row.month)}>
+                    <td className="py-3 px-4 text-center text-on-surface-variant">
+                      {expandedMonth === row.month ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </td>
+                    <td className="py-3 px-4 font-bold text-white">{row.month}</td>
+                    <td className="py-3 px-4 text-right text-on-surface-variant">{formatCurrencyShort(row.gPersonal)}</td>
+                    <td className="py-3 px-4 text-right text-on-surface-variant">{formatCurrencyShort(row.gFuncionamiento)}</td>
+                    <td className="py-3 px-4 text-right text-on-surface-variant">{formatCurrencyShort(row.gInversion)}</td>
+                    <td className="py-3 px-4 text-right text-red-300 font-medium">{formatCurrencyShort(row.expense)}</td>
+                    <td className="py-3 px-4 text-right text-emerald-300 font-medium">{formatCurrencyShort(row.income)}</td>
+                    <td className={`py-3 px-4 text-right font-bold ${row.netFlow >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+                      {formatCurrencyShort(row.netFlow)}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-700/50">
-                  {results.resources.map((r, i) => {
-                    const isSiif = r.methodUsed === 'Fijo (SIIF)';
-                    const override = config.resourceOverrides[r.recurso];
-                    const sugg = results.suggestions.find(s => s.recurso === r.recurso);
-                    const hasManualInc = override?.manualIncome !== undefined;
-                    const hasManualExp = override?.manualExpense !== undefined;
-                    
-                    return (
-                      <tr key={i} className="hover:bg-slate-900/50">
-                        <td className="px-4 py-3 font-medium text-slate-200">
-                          <div className="flex flex-col">
-                            <span>{r.recurso} - {r.nombre}</span>
-                            {isSiif && <span className="text-[10px] text-slate-400 font-bold">Fijo (SIIF)</span>}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right border-l border-slate-700/50 text-slate-400">{fmt(r.aiIncomeReference)}</td>
-                        <td className="px-4 py-3 text-right border-r border-slate-700/50 text-slate-400">{fmt(r.aiExpenseReference)}</td>
-                        <td className="px-4 py-2 bg-indigo-900/10 text-center">
-                          <input 
-                            type="text" 
-                            placeholder={isSiif ? 'Bloqueado' : 'Valor manual'} 
-                            disabled={isSiif}
-                            value={hasManualInc ? override.manualIncome : ''}
-                            onChange={(e) => {
-                                const val = parseFloat(e.target.value.replace(/[^0-9.-]+/g, ''));
-                                setConfig(prev => ({
-                                  ...prev,
-                                  resourceOverrides: {
-                                    ...prev.resourceOverrides,
-                                    [r.recurso]: {
-                                      ...(prev.resourceOverrides[r.recurso] || { method: 'Manual', growthRate: prev.globalGrowthRate }),
-                                      method: 'Manual',
-                                      manualIncome: isNaN(val) ? undefined : val
-                                    }
-                                  }
-                                }));
-                            }}
-                            className="w-32 bg-slate-900/50 border border-slate-700 rounded px-2 py-1 text-right text-indigo-300 disabled:opacity-50 outline-none focus:border-indigo-500 placeholder:text-slate-600"
-                          />
-                        </td>
-                        <td className="px-4 py-2 bg-indigo-900/10 text-center">
-                          <input 
-                            type="text" 
-                            placeholder={isSiif ? 'Bloqueado' : 'Valor manual'} 
-                            disabled={isSiif}
-                            value={hasManualExp ? override.manualExpense : ''}
-                            onChange={(e) => {
-                                const val = parseFloat(e.target.value.replace(/[^0-9.-]+/g, ''));
-                                setConfig(prev => ({
-                                  ...prev,
-                                  resourceOverrides: {
-                                    ...prev.resourceOverrides,
-                                    [r.recurso]: {
-                                      ...(prev.resourceOverrides[r.recurso] || { method: 'Manual', growthRate: prev.globalGrowthRate }),
-                                      method: 'Manual',
-                                      manualExpense: isNaN(val) ? undefined : val
-                                    }
-                                  }
-                                }));
-                            }}
-                            className="w-32 bg-slate-900/50 border border-slate-700 rounded px-2 py-1 text-right text-orange-300 disabled:opacity-50 outline-none focus:border-orange-500 placeholder:text-slate-600"
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          {sugg ? (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[11px] text-slate-400 leading-tight" title={sugg.mensaje}>{sugg.mensaje}</span>
-                              <span className="text-[11px] text-indigo-300 font-bold">Sugerido: {fmt(sugg.valorSugeridoIngreso)}</span>
-                              <button onClick={() => {
-                                setConfig(prev => ({
-                                  ...prev,
-                                  resourceOverrides: {
-                                    ...prev.resourceOverrides,
-                                    [r.recurso]: {
-                                      ...(prev.resourceOverrides[r.recurso] || { method: 'Manual', growthRate: prev.globalGrowthRate }),
-                                      method: 'Manual',
-                                      manualIncome: sugg.valorSugeridoIngreso,
-                                      manualExpense: undefined // Let engine auto-calculate expense based on new income
-                                    }
-                                  }
-                                }));
-                              }} className="px-2 py-1 bg-indigo-500/20 text-indigo-400 text-[10px] font-bold rounded hover:bg-indigo-500/40 w-max">
-                                Aplicar {(sugg.tasaSugerida*100).toFixed(0)}%
-                              </button>
+                  {expandedMonth === row.month && (
+                    <tr className="bg-black/20 border-b border-primary-container/20">
+                      <td colSpan={8} className="p-0">
+                        <div className="p-4 pl-14">
+                          <h4 className="text-xs uppercase tracking-widest text-primary-container mb-3 font-bold flex items-center gap-2">
+                            <Target size={14} /> Desagregación por Recursos - {row.month}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm text-emerald-200">Aporte Nación (R10)</span>
+                                <span className="text-sm font-bold text-white">{formatCurrencyShort(row.rNacion)}</span>
+                              </div>
+                              <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                <div className="bg-emerald-400 h-full" style={{ width: `${(row.rNacion / (row.income || 1)) * 100}%` }}></div>
+                              </div>
                             </div>
-                          ) : <span className="text-slate-500 text-xs">N/A</span>}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-            {/* TAB 2: BALANCE Y FLUJO */}
-      {activeTab === 2 && (() => {
-        const totalIng = results.totals.totalRecaudo + results.totals.totalIngresosProyectados;
-        const totalComp = results.totals.totalCompromisos;
-        const totalPago = results.totals.totalPagos;
-        const totalAforo = results.totals.totalAforo;
-        
-        const execComp = totalIng > 0 ? (totalComp / totalIng) * 100 : 0;
-        const execPago = totalComp > 0 ? (totalPago / totalComp) * 100 : 0;
-        const execRecaudo = totalAforo > 0 ? (totalIng / totalAforo) * 100 : 0;
-
-        const dispComp = totalIng - totalComp;
-        const dispCaja = totalIng - totalPago;
-
-        return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          
-          {/* Main Equilibrio Card */}
-          <div className="bg-[#161b22] rounded-2xl shadow-xl border border-slate-700/60 overflow-hidden relative">
-            {/* Top Gradient Border */}
-            <div className="h-1 w-full bg-gradient-to-r from-yellow-400 via-[#0ea5e9] to-emerald-400"></div>
-            
-            <div className="p-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                    <PieChart className="w-6 h-6 text-yellow-500" /> Equilibrio Presupuestal
-                  </h3>
-                  <p className="text-sm text-slate-400 mt-1">Relación entre recaudo total, compromisos y pagos efectivos</p>
-                </div>
-                <div className="bg-slate-900/80 px-6 py-4 rounded-xl border border-slate-700/50 mt-4 md:mt-0">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Recaudo Total (Real + Proyectado)</p>
-                  <p className="text-3xl font-black text-white">{fmt(totalIng)}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Frente al Compromiso */}
-                <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700/40">
-                  <div className="flex justify-between items-end mb-4">
-                    <div>
-                      <p className="text-xs font-bold text-[#0ea5e9] uppercase mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#0ea5e9]"></span> Frente al Compromiso</p>
-                      <p className="text-2xl font-black text-slate-100">{fmt(totalComp)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-400 mb-1">Ejecución</p>
-                      <p className="text-xl font-bold text-slate-100">{execComp.toFixed(1)}%</p>
-                    </div>
-                  </div>
-                  <div className="w-full bg-slate-800 rounded-full h-2.5 mb-6 overflow-hidden">
-                    <div className="bg-[#0ea5e9] h-2.5 rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, execComp)}%` }}></div>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400">Valor Disponible (Comprometido)</span>
-                    <span className="font-bold text-emerald-400 bg-emerald-900/20 px-3 py-1 rounded-full">{fmt(dispComp)}</span>
-                  </div>
-                </div>
-
-                {/* Frente al Pago Efectivo */}
-                <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700/40">
-                  <div className="flex justify-between items-end mb-4">
-                    <div>
-                      <p className="text-xs font-bold text-yellow-500 uppercase mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-yellow-500"></span> Frente al Pago Efectivo</p>
-                      <p className="text-2xl font-black text-slate-100">{fmt(totalPago)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-400 mb-1">Ejecución</p>
-                      <p className="text-xl font-bold text-slate-100">{execPago.toFixed(1)}%</p>
-                    </div>
-                  </div>
-                  <div className="w-full bg-slate-800 rounded-full h-2.5 mb-6 overflow-hidden">
-                    <div className="bg-yellow-500 h-2.5 rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, execPago)}%` }}></div>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400">Valor Disponible (Caja)</span>
-                    <span className="font-bold text-emerald-400 bg-emerald-900/20 px-3 py-1 rounded-full">{fmt(dispCaja)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Radials Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-[#161b22] p-8 rounded-2xl shadow-md border border-slate-700/60 flex items-center gap-8">
-              <CircularProgress percentage={execRecaudo} color="#eab308" label="Meta" />
-              <div>
-                <p className="text-xs font-bold text-yellow-500 uppercase mb-4 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-yellow-500"></span> Recaudo Total</p>
-                <div className="flex gap-8">
-                  <div>
-                    <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Valor Aforado</p>
-                    <p className="text-xl font-bold text-white">{fmt(totalAforo)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Recaudado</p>
-                    <p className="text-xl font-bold text-yellow-500">{fmt(totalIng)}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#161b22] p-8 rounded-2xl shadow-md border border-slate-700/60 flex items-center gap-8">
-              <CircularProgress percentage={execPago} color="#0ea5e9" label="Ejecutado" />
-              <div>
-                <p className="text-xs font-bold text-[#0ea5e9] uppercase mb-4 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#0ea5e9]"></span> Total Gasto</p>
-                <div className="flex gap-8">
-                  <div>
-                    <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Comprometido</p>
-                    <p className="text-xl font-bold text-white">{fmt(totalComp)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Pago Efectivo</p>
-                    <p className="text-xl font-bold text-[#0ea5e9]">{fmt(totalPago)}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-             {/* Original Flujo de Caja */}
-             <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm">
-                <h3 className="text-base font-bold text-slate-100 mb-6">Flujo de Caja Mensual (Detalle)</h3>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={results.flow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
-                      <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                      <YAxis tickFormatter={(val) => `$${val/1000}k`} fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                      <Tooltip formatter={(val: number) => fmt(val*1e6)} contentStyle={{ backgroundColor: '#1e293b', border: 'none', color: '#f8fafc', borderRadius: '8px' }} />
-                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                      <Bar dataKey="ingresosReales" name="Ingreso Real" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                      <Bar dataKey="ingresosProyectados" name="Ingreso Proy." stackId="a" fill="#818cf8" radius={[4, 4, 0, 0]} />
-                      <Line type="monotone" dataKey="pagos" name="Pagos Totales" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-             </div>
-             
-             {/* New Ingresos vs Gastos Chart */}
-             <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm">
-                <h3 className="text-base font-bold text-slate-100 mb-6">Ingresos vs Gastos Mensual</h3>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={results.flow.map(f => ({ ...f, totalIng: f.ingresosReales + f.ingresosProyectados }))} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
-                      <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                      <YAxis tickFormatter={(val) => `$${val/1000}k`} fontSize={12} stroke="#94a3b8" axisLine={false} tickLine={false} />
-                      <Tooltip formatter={(val: number) => fmt(val*1e6)} contentStyle={{ backgroundColor: '#1e293b', border: 'none', color: '#f8fafc', borderRadius: '8px' }} cursor={{fill: '#334155', opacity: 0.4}} />
-                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                      <Bar dataKey="totalIng" name="Total Ingreso" fill="#eab308" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="compromisos" name="Total Gasto (Comp)" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-             </div>
-          </div>
-
-          {/* Table Análisis de Gastos */}
-          <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 shadow-sm overflow-hidden flex flex-col">
-            <h3 className="text-base font-bold text-slate-100 mb-6">Análisis de Gastos por Recurso</h3>
-            <div className="overflow-y-auto pr-2 max-h-96">
-              <div className="space-y-3">
-                {results.totals.expenseBreakdown.map((b, idx) => (
-                  <div key={idx} className="border border-slate-700 rounded-xl overflow-hidden bg-slate-900/40">
-                    <div 
-                      className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/80 transition-colors"
-                      onClick={() => setExpandedRow(expandedRow === b.tipo ? null : b.tipo)}
-                    >
-                      <div className="flex items-center gap-3">
-                        {expandedRow === b.tipo ? <ChevronDown className="w-5 h-5 text-indigo-400"/> : <ChevronRight className="w-5 h-5 text-slate-400"/>}
-                        <span className="font-bold text-slate-200">{b.tipo}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-black text-slate-100">{fmt(b.total)}</span>
-                      </div>
-                    </div>
-                    {expandedRow === b.tipo && b.detalles && (
-                      <div className="bg-slate-900/80 p-4 border-t border-slate-700/50">
-                        <table className="w-full text-sm text-left">
-                          <thead className="text-xs text-slate-400 uppercase border-b border-slate-700/50">
-                            <tr><th className="pb-2 font-semibold">Recurso</th><th className="pb-2 text-right font-semibold">Gasto Real</th><th className="pb-2 text-right font-semibold">Proyectado</th><th className="pb-2 text-right font-semibold">Total</th></tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-700/50">
-                            {b.detalles.map((d: any, dIdx: number) => (
-                              <tr key={dIdx} className="hover:bg-slate-800/50">
-                                <td className="py-2 font-medium text-slate-300">{d.recurso} - {d.nombre}</td>
-                                <td className="py-2 text-right text-slate-400">{fmt(d.valorReal)}</td>
-                                <td className="py-2 text-right text-indigo-400">{fmt(d.valorProyectado)}</td>
-                                <td className="py-2 text-right font-bold text-slate-200">{fmt(d.total)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-        </div>
-        );
-      })()}
-
-{/* TAB 3: SENSIBILIDAD */}
-      {activeTab === 3 && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-700 overflow-hidden">
-              <div className="p-5 border-b border-slate-700/50 bg-slate-900/40"><h3 className="font-bold text-slate-100 text-lg">Matriz de Sensibilidad de Ingresos (Heatmap)</h3></div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-900/50 text-slate-400 font-semibold uppercase text-xs">
-                    <tr><th className="px-6 py-4">Variación Ingreso</th><th className="px-6 py-4 text-right">Ingresos Proyectados</th><th className="px-6 py-4 text-right">Saldo Disponible</th><th className="px-6 py-4 text-center">Impacto</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {results.sensitivity.map((s, i) => (
-                      <tr key={i} className={s.variationNum === 0 ? 'bg-indigo-900/20 font-bold' : 'hover:bg-slate-900/50'}>
-                        <td className="px-6 py-4 font-medium text-slate-200">{s.variationStr} {s.variationNum === 0 ? '(Base)' : ''}</td>
-                        <td className="px-6 py-4 text-right">{fmt(s.ingresos)}</td>
-                        <td className="px-6 py-4 text-right">{fmt(s.saldo)}</td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${s.impacto === 'Favorable' ? 'bg-emerald-100 text-emerald-700' : s.impacto === 'Alto Riesgo' ? 'bg-red-100 text-red-700' : s.impacto === 'Medio Riesgo' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>{s.impacto}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-700 overflow-hidden p-6">
-              <h3 className="font-bold text-slate-100 text-lg mb-4">Elasticidad & Ranking de Riesgo</h3>
-              <p className="text-sm text-slate-400 mb-6">Mide cómo impacta porcentualmente un cambio en los ingresos sobre el saldo disponible institucional.</p>
-              <div className="space-y-4">
-                {results.elasticityRanking.map((e, i) => (
-                  <div key={i} className="flex flex-col gap-1 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                    <span className="text-sm font-semibold text-slate-200">{e.variable}</span>
-                    <div className="flex justify-between items-end">
-                      <span className="text-xs text-slate-400">Coeficiente de Elasticidad:</span>
-                      <span className={`text-xl font-black ${e.elasticity > 1 ? 'text-red-600' : 'text-emerald-600'}`}>{e.elasticity.toFixed(2)}x</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: DETALLE DE PROYECCIÓN */}
-      {activeTab === 4 && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-700 overflow-hidden">
-            <div className="p-5 border-b border-slate-700/50 bg-slate-900/40">
-              <h3 className="font-bold text-slate-100 text-lg">Trazabilidad por Recurso</h3>
-              <p className="text-xs text-slate-400">Haz clic en cualquier recurso para ver el método utilizado y el paso a paso matemático de su proyección.</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-900/50 text-slate-400 font-semibold uppercase text-xs">
-                  <tr><th className="px-6 py-4">Recurso</th><th className="px-6 py-4 text-right">Ingreso Proy.</th><th className="px-6 py-4 text-right">Total Ingreso</th><th className="px-6 py-4 text-right">Total Compromiso</th><th className="px-6 py-4 text-right">Saldo Final</th></tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {results.resources.map((r, i) => (
-                    <tr key={i} className="hover:bg-indigo-900/400/20 cursor-pointer transition-colors" onClick={() => setSelectedResourceTrace(r)}>
-                      <td className="px-6 py-4 font-bold text-slate-200">{r.recurso} - {r.nombre}</td>
-                      <td className="px-6 py-4 text-right text-indigo-500">{fmt(r.ingresosProyectados)}</td>
-                      <td className="px-6 py-4 text-right font-bold text-slate-100">{fmt(r.totalIngresos)}</td>
-                      <td className="px-6 py-4 text-right font-medium text-orange-500">{fmt(r.totalCompromisos)}</td>
-                      <td className={`px-6 py-4 text-right font-black ${r.saldoDisponible < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>{fmt(r.saldoDisponible)}</td>
+                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm text-blue-200">Recursos Propios (R20/R31)</span>
+                                <span className="text-sm font-bold text-white">{formatCurrencyShort(row.rPropios)}</span>
+                              </div>
+                              <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                <div className="bg-blue-400 h-full" style={{ width: `${(row.rPropios / (row.income || 1)) * 100}%` }}></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          
-          {selectedResourceTrace && (
-             <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedResourceTrace(null)}>
-               <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                 <div className="p-6 border-b border-slate-700/50 flex justify-between items-center sticky top-0 bg-slate-800/60 backdrop-blur-sm">
-                   <h3 className="text-xl font-bold text-slate-100">Trazabilidad Matemática: {selectedResourceTrace.recurso}</h3>
-                   <button onClick={() => setSelectedResourceTrace(null)} className="text-slate-400 hover:text-slate-300">&times;</button>
-                 </div>
-                 <div className="p-6">
-                   <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Secuencia de Cálculo Aplicada</h4>
-                   <div className="space-y-4">
-                     {selectedResourceTrace.trace.map((t: any, i: number) => (
-                       <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-slate-900/50 border border-slate-700/50">
-                         <div className="bg-indigo-100 text-indigo-600 font-bold rounded-full w-8 h-8 flex items-center justify-center shrink-0">{i+1}</div>
-                         <div>
-                           <p className="font-bold text-slate-100">{t.step}</p>
-                           <p className="text-lg text-indigo-600 font-semibold">{typeof t.value === 'number' ? fmt(t.value) : t.value}</p>
-                           <p className="text-sm text-slate-400">{t.detail}</p>
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               </div>
-             </div>
-          )}
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
-      
+      </div>
     </div>
   );
 }
