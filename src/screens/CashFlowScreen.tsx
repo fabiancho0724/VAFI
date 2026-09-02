@@ -617,46 +617,69 @@ export function CashFlowScreen() {
                     <thead className="bg-slate-800 text-xs uppercase text-slate-400 sticky top-0 z-10">
                       <tr>
                         <th className="px-4 py-3">Recurso</th>
-                        <th className="px-4 py-3 text-right">Ingreso Manual ($)</th>
-                        <th className="px-4 py-3 text-right">Gasto Manual ($)</th>
+                        <th className="px-4 py-3 text-right">Ingreso Proyectado ($)</th>
+                        <th className="px-4 py-3 text-right">Gasto Proyectado ($)</th>
+                        <th className="px-4 py-3">Análisis y Sugerencia IA</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {(csvData.balanceData || []).map((r: any) => {
+                      {(results?.resources || []).map((r: any) => {
                         const isFixed = NACION_FIXED.includes(r.recurso);
                         const override = (config.resourceOverrides[r.recurso] || {}) as any;
+                        const suggestion = results?.suggestions?.find((s: any) => s.recurso === r.recurso);
+                        
                         return (
                           <tr key={r.recurso} className="border-t border-slate-800/50 hover:bg-slate-800/80 transition-colors">
                             <td className="px-4 py-3">
-                              <div className="font-medium text-slate-200">{r.recurso}</div>
-                              <div className="text-[10px] text-slate-500 truncate max-w-[200px]" title={r.nombre}>{r.nombre}</div>
-                              {isFixed && <div className="text-[10px] text-orange-400/80 mt-1 flex items-center gap-1"><Lock size={10}/> Bloqueado SIIF</div>}
+                              <div className="font-medium text-slate-200 font-mono text-xs">{r.recurso}</div>
+                              <div className="text-[10px] text-slate-400 truncate max-w-[180px]" title={r.nombre}>{r.nombre}</div>
+                              {isFixed && <div className="text-[9px] text-orange-400/80 mt-1 flex items-center gap-1"><Lock size={10}/> Bloqueado SIIF</div>}
                             </td>
                             <td className="px-4 py-3">
+                              <div className="text-[10px] text-slate-500 mb-1 text-right">Proyectado: {formatCurrencyShort(r.ingresosProyectados)}</div>
                               <input 
                                 type="number"
                                 disabled={isFixed}
                                 value={override.manualIncome || ''}
                                 onChange={e => handleOverrideChange(r.recurso, 'manualIncome', parseFloat(e.target.value) || 0)}
-                                className={`w-full text-sm border rounded-lg p-2 outline-none text-right ${isFixed ? 'bg-slate-800/30 border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-emerald-300 focus:border-emerald-500'}`}
-                                placeholder={isFixed ? 'Reglado' : '0.00'}
+                                className={`w-full text-xs border rounded-lg p-2 outline-none text-right ${isFixed ? 'bg-slate-800/30 border-slate-700 text-slate-600 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-emerald-300 focus:border-emerald-500'}`}
+                                placeholder={isFixed ? 'Reglado' : 'Valor manual'}
                               />
                             </td>
                             <td className="px-4 py-3">
+                              <div className="text-[10px] text-slate-500 mb-1 text-right">Proyectado: {formatCurrencyShort(r.totalCompromisos)}</div>
                               <input 
                                 type="number"
                                 disabled={isFixed}
                                 value={override.manualExpense || ''}
                                 onChange={e => handleOverrideChange(r.recurso, 'manualExpense', parseFloat(e.target.value) || 0)}
-                                className={`w-full text-sm border rounded-lg p-2 outline-none text-right ${isFixed ? 'bg-slate-800/30 border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-rose-300 focus:border-rose-500'}`}
-                                placeholder={isFixed ? 'Reglado' : '0.00'}
+                                className={`w-full text-xs border rounded-lg p-2 outline-none text-right ${isFixed ? 'bg-slate-800/30 border-slate-700 text-slate-600 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-rose-300 focus:border-rose-500'}`}
+                                placeholder={isFixed ? 'Reglado' : 'Valor manual'}
                               />
+                            </td>
+                            <td className="px-4 py-3">
+                              {suggestion ? (
+                                <div className="bg-indigo-500/10 border border-indigo-500/20 p-2 rounded-lg relative overflow-hidden group min-w-[200px]">
+                                  <div className="absolute top-0 right-0 p-1">
+                                    <Brain size={12} className={suggestion.confianza === 'Alta' ? 'text-indigo-400' : 'text-slate-500'} />
+                                  </div>
+                                  <p className="text-[9px] text-indigo-300 font-bold mb-0.5">Sugerencia IA ({suggestion.confianza})</p>
+                                  <p className="text-[10px] text-slate-300 leading-tight">{suggestion.mensaje}</p>
+                                  {suggestion.valorSugeridoIngreso > 0 && (
+                                    <p className="text-[10px] text-emerald-400 mt-1 font-mono cursor-pointer hover:underline" onClick={() => handleOverrideChange(r.recurso, 'manualIncome', suggestion.valorSugeridoIngreso)}>
+                                      Sugerido: {formatCurrencyShort(suggestion.valorSugeridoIngreso)}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-slate-600 italic text-center">Sin anomalías históricas</div>
+                              )}
                             </td>
                           </tr>
                         );
                       })}
                     </tbody>
-                  </table>
+</table>
                 </div>
               </div>
 
