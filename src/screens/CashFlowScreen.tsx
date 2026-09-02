@@ -115,7 +115,7 @@ export function CashFlowScreen() {
         <div>
           <h1 className="text-3xl font-display text-white flex items-center gap-3">
             <Activity className="text-emerald-400" />
-            Flujo de Caja & Balance
+            Motor de Proyección Financiera Institucional
           </h1>
           <p className="text-on-surface-variant mt-1">Financial Command Center - Análisis y Control de Liquidez</p>
         </div>
@@ -124,9 +124,11 @@ export function CashFlowScreen() {
           <div className="glass-card px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-white/5 transition-colors">
             <Calendar size={16} className="text-primary-container" />
             <select className="bg-transparent text-white text-sm outline-none cursor-pointer appearance-none" value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)}>
-              <option value="2026" className="bg-surface">Vigencia 2026</option>
-              <option value="2025" className="bg-surface">Vigencia 2025</option>
-              <option value="2027" className="bg-surface">Proyección 2027</option>
+              <option value="Todas" className="bg-surface">Todas las Unidades</option>
+              <option value="Sede Central" className="bg-surface">Sede Central</option>
+              <option value="Facultad Seccional Duitama" className="bg-surface">Facultad Seccional Duitama</option>
+              <option value="Facultad Seccional Sogamoso" className="bg-surface">Facultad Seccional Sogamoso</option>
+              <option value="Facultad Seccional Chiquinquirá" className="bg-surface">Facultad Seccional Chiquinquirá</option>
             </select>
             <ChevronDown size={14} className="text-on-surface-variant ml-2" />
           </div>
