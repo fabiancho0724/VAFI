@@ -1032,14 +1032,14 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
               <span className="text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
                 Auditoría Operativa Gastos 2026
               </span>
-              <span className="text-xs text-slate-400 font-mono">Compromiso vs Valor Pago por Operación</span>
+              <span className="text-xs text-slate-400 font-mono">Compromiso vs Valor Pago por Referencia</span>
             </div>
             <h2 className="text-2xl font-display text-white flex items-center gap-3">
               <Layers className="text-blue-400" />
-              Tipo de Gasto por Operación y Unidad
+              Tipo de Gasto por Referencia y Unidad
             </h2>
             <p className="text-xs text-slate-300 mt-1 max-w-3xl">
-              Filtre por cualquier unidad académica o administrativa para analizar qué operaciones contractuales concentran el gasto y su cumplimiento en valor pago.
+              Filtre por cualquier unidad académica o administrativa para analizar qué referencias contractuales concentran el gasto y su cumplimiento en valor pago.
             </p>
           </div>
 
@@ -1120,14 +1120,14 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
             return isNaN(p) ? 0 : p;
           }
 
-          const opMap: Record<string, { operacion: string; tipo: string; compromiso: number; pago: number }> = {};
+          const refMap: Record<string, { referencia: string; tipo: string; compromiso: number; pago: number }> = {};
           
           if (csvData?.gastos2026 && csvData.gastos2026.length > 0) {
             csvData.gastos2026.forEach((r: any) => {
               const u = String(getCol(r, 'unidad')).trim();
               const t = String(getCol(r, 'tipo')).trim();
-              const op = String(getCol(r, 'operacion')).trim();
-              if (!op) return;
+              const ref = String(getCol(r, 'referencia')).trim() || String(getCol(r, 'operacion')).trim();
+              if (!ref) return;
 
               if (selectedUnitOps !== 'Todas' && !u.includes(selectedUnitOps)) return;
               if (selectedTipoOps !== 'Todos' && !t.includes(selectedTipoOps)) return;
@@ -1143,24 +1143,24 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                 pagoFinal = Math.min(comp, Math.max(rawPago, comp * 0.95)); // ~95%
               }
 
-              if (!opMap[op]) {
-                opMap[op] = { operacion: op, tipo: t, compromiso: 0, pago: 0 };
+              if (!refMap[ref]) {
+                refMap[ref] = { referencia: ref, tipo: t, compromiso: 0, pago: 0 };
               }
-              opMap[op].compromiso += comp;
-              opMap[op].pago += pagoFinal;
+              refMap[ref].compromiso += comp;
+              refMap[ref].pago += pagoFinal;
             });
           }
 
-          const opsList = Object.values(opMap).sort((a, b) => b.compromiso - a.compromiso);
-          const totalCompUnidad = opsList.reduce((acc, o) => acc + o.compromiso, 0);
-          const totalPagoUnidad = opsList.reduce((acc, o) => acc + o.pago, 0);
+          const refList = Object.values(refMap).sort((a, b) => b.compromiso - a.compromiso);
+          const totalCompUnidad = refList.reduce((acc, o) => acc + o.compromiso, 0);
+          const totalPagoUnidad = refList.reduce((acc, o) => acc + o.pago, 0);
           const cuentasPorPagarUnidad = Math.max(0, totalCompUnidad - totalPagoUnidad);
           const pctPagoUnidad = totalCompUnidad > 0 ? (totalPagoUnidad / totalCompUnidad) * 100 : 100;
 
-          // Top operaciones para visualización gráfica clara
-          const chartOps = opsList.slice(0, 12).map(o => ({
+          // Top referencias para visualización gráfica clara
+          const chartRefs = refList.slice(0, 15).map(o => ({
             ...o,
-            shortName: o.operacion.length > 28 ? o.operacion.substring(0, 26) + '...' : o.operacion
+            shortName: o.referencia.length > 28 ? o.referencia.substring(0, 26) + '...' : o.referencia
           }));
 
           return (
@@ -1171,7 +1171,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                 <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Compromisos Vigencia 2026</span>
                   <p className="text-xl font-mono font-bold text-rose-400 mt-1">{formatCurrencyShort(totalCompUnidad)}</p>
-                  <span className="text-[11px] text-slate-400">{opsList.length} operaciones activas</span>
+                  <span className="text-[11px] text-slate-400">{refList.length} referencias activas</span>
                 </div>
                 <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Valor Pago Proyectado</span>
@@ -1196,7 +1196,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
               <div className="bg-black/30 p-5 rounded-2xl border border-white/5">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                    Principales Operaciones: Compromiso vs Valor Pago
+                    Principales Referencias: Compromiso vs Valor Pago
                   </h3>
                   <div className="flex items-center gap-4 text-xs font-mono">
                     <span className="flex items-center gap-1.5 text-rose-300">
@@ -1210,7 +1210,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
 
                 <div className="h-[420px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartOps} layout="vertical" margin={{ top: 10, right: 30, left: 180, bottom: 10 }}>
+                    <BarChart data={chartRefs} layout="vertical" margin={{ top: 10, right: 30, left: 180, bottom: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
                       <XAxis type="number" stroke="#64748b" tickFormatter={formatCurrencyShort} tick={{ fontSize: 10 }} />
                       <YAxis type="category" dataKey="shortName" stroke="#94a3b8" tick={{ fontSize: 10 }} width={175} />
@@ -1224,7 +1224,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                             const pct = d.compromiso > 0 ? (d.pago / d.compromiso) * 100 : 100;
                             return (
                               <div className="bg-[#0f172a] border border-slate-700 p-3.5 rounded-xl shadow-2xl text-xs space-y-1.5 min-w-[240px]">
-                                <p className="font-bold text-white text-sm pb-1 border-b border-white/10">{d.operacion}</p>
+                                <p className="font-bold text-white text-sm pb-1 border-b border-white/10">{d.referencia}</p>
                                 <p className="text-[10px] text-slate-400">Tipo: {d.tipo}</p>
                                 <div className="flex justify-between text-rose-300">
                                   <span>Compromiso:</span>
@@ -1258,12 +1258,12 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
               {/* Tabla de Detalle Auditado por Operación */}
               <div className="bg-black/20 p-5 rounded-2xl border border-white/5 overflow-x-auto">
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">
-                  Detalle Auditado por Operación ({opsList.length} registros)
+                  Detalle Auditado por Referencia ({refList.length} registros)
                 </h4>
                 <table className="w-full text-left text-xs border-collapse min-w-[750px]">
                   <thead>
                     <tr className="border-b border-white/10 text-slate-400 uppercase font-mono">
-                      <th className="p-2.5">Operación</th>
+                      <th className="p-2.5">Referencia</th>
                       <th className="p-2.5">Tipo de Gasto</th>
                       <th className="p-2.5 text-right text-rose-400">Compromiso</th>
                       <th className="p-2.5 text-right text-sky-400">Valor Pago</th>
@@ -1272,13 +1272,13 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                     </tr>
                   </thead>
                   <tbody>
-                    {opsList.map((o, idx) => {
+                    {refList.map((o, idx) => {
                       const diff = Math.max(0, o.compromiso - o.pago);
                       const pct = o.compromiso > 0 ? (o.pago / o.compromiso) * 100 : 100;
                       return (
                         <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.02] font-mono text-[11px]">
-                          <td className="p-2.5 text-slate-200 font-sans font-medium max-w-[280px] truncate" title={o.operacion}>
-                            {o.operacion}
+                          <td className="p-2.5 text-slate-200 font-sans font-medium max-w-[280px] truncate" title={o.referencia}>
+                            {o.referencia}
                           </td>
                           <td className="p-2.5 text-slate-400 font-sans text-[10px] max-w-[150px] truncate" title={o.tipo}>
                             {o.tipo}
