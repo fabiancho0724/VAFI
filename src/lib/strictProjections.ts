@@ -56,12 +56,12 @@ export interface StrictResourceProjection {
   totalCompromisos: number;
   totalPagos: number;
   saldoDisponible: number;
+  ingresosPorMesProyectado: number[];
   ingresoAdministrativo: number;
   methodUsed: string;
   aiIncomeReference: number;
   aiExpenseReference: number;
   trace: TraceNode[];
-  ingresosPorMesProyectado?: number[];
 }
 
 export interface ExpenseDetail {
@@ -89,6 +89,7 @@ export interface StrictTotals {
   totalCompromisos: number;
   totalPagos: number;
   saldoDisponible: number;
+  ingresosPorMesProyectado?: number[];
   resultadoProyectado: number;
   
   nominaReal: number;
@@ -136,8 +137,9 @@ export interface StrictProjectionResult {
 
 const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18'];
 
-const GIROS_SIIF_PROYECTADOS: Record<string, number[]> = {
-  '10':   [25447028176, 28905581876, 28841664885, 25447028176],
+export const GIROS_SIIF_PROYECTADOS: Record<string, number[]> = {
+  '10':   [25447028176, 28905581876, 28841664885, 25447028175],
+  '10.0': [25447028176, 28905581876, 28841664885, 25447028175],
   '10.5': [1720542062, 1720542062, 1720542062, 1720542062],
   '18':   [179049568, 179049568, 179049568, 179049568],
   '17':   [478844455, 478844455, 478844455, 478844455],
@@ -311,12 +313,22 @@ function simulateCore(
     
     const saldoDisp = Math.max(0, totalIngresos - totalPago);
 
+    const mWeights = historicWeights[base.recurso] || [0,0,0,0,0,0,0,0, 0.25, 0.25, 0.25, 0.25];
+    const girosMatch = GIROS_SIIF_PROYECTADOS[base.recurso] || (base.recurso === '10' ? GIROS_SIIF_PROYECTADOS['10.0'] : undefined);
+    const ingresosPorMesProyectado = girosMatch ? [...girosMatch] : [
+      ingProyectado * (mWeights[8] || 0.25),
+      ingProyectado * (mWeights[9] || 0.25),
+      ingProyectado * (mWeights[10] || 0.25),
+      ingProyectado * (mWeights[11] || 0.25)
+    ];
+
     resourcesObj[base.recurso] = {
       recurso: base.recurso, nombre: base.nombre,
       ingresosReales: recaudoRealAcumulado, ingresosProyectados: ingProyectado,
       totalIngresos, gastosProyectados: gasProyectado,
       totalCompromisos: totalComp, totalPagos: totalPago,
       saldoDisponible: saldoDisp,
+      ingresosPorMesProyectado,
       ingresoAdministrativo: ingresoAdmin,
       methodUsed, 
       aiIncomeReference, aiExpenseReference, 
@@ -340,6 +352,12 @@ function simulateCore(
     totalCompromisos: targetResources.reduce((acc, r) => acc + r.totalCompromisos, 0),
     totalPagos: targetResources.reduce((acc, r) => acc + r.totalPagos, 0),
     saldoDisponible: targetResources.reduce((acc, r) => acc + r.saldoDisponible, 0),
+    ingresosPorMesProyectado: [
+      targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[0] || 0), 0),
+      targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[1] || 0), 0),
+      targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[2] || 0), 0),
+      targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[3] || 0), 0),
+    ],
     resultadoProyectado: 0,
     nominaReal: nominaStats.nominaHistTotal,
     nominaProyectada: nominaProyectadaGlobal,
