@@ -71,7 +71,8 @@ export function CashFlowScreen() {
         const co = await fetchAndParseCSV('/data/compromisos.csv');
         const nd = await fetchAndParseCSV('/data/Nomina.csv?v=3');
         const hist = await fetchAndParseCSV('/data/Ingreso Mensual 2025.csv');
-        setCsvData({ balanceData: bd, ingresosMensuales: im, compromisos: co, nominaData: nd, ingresosHistoricos: hist });
+        const g26 = await fetchAndParseCSV('/data/gastos_2026.csv');
+        setCsvData({ balanceData: bd, ingresosMensuales: im, compromisos: co, nominaData: nd, ingresosHistoricos: hist, gastos2026: g26 });
         setDataStage('ready');
       } catch (e: any) {
         setErrorMessage(e.message);
@@ -90,20 +91,40 @@ export function CashFlowScreen() {
       csvData.compromisos, 
       csvData.nominaData, 
       csvData.ingresosHistoricos, 
-      activeConfig
+      activeConfig,
+      csvData.gastos2026
     );
   }, [dataStage, csvData, config, selectedResource]);
 
   const heatmapExpenseTypesData = useMemo(() => {
     if (!csvData?.compromisos || !results) return [];
 
-    const NOMINA_EXACTA_SEP_DIC = [26166093098, 29651541416, 37230066396, 72131354854];
-    const FUNCIONAMIENTO_EXACTO_SEP_DIC = [5381650892, 5996809971, 2581881333, 572528786];
-
     const resNameMap: Record<string, string> = {};
     RECURSOS_FINANCIEROS.forEach((r: any) => {
       resNameMap[r.codigo] = r.nombre;
     });
+
+    function cleanNum(val: any) {
+      if (!val) return 0;
+      const s = String(val).replace(/[\$,\s]/g, '').trim();
+      return parseFloat(s) || 0;
+    }
+
+    function getCol(row: any, keyPart: string) {
+      const k = Object.keys(row).find(x => x.toLowerCase().includes(keyPart.toLowerCase()));
+      return k ? row[k] : '';
+    }
+
+    function cleanType(tipo: string): string {
+      if (!tipo) return 'Otros';
+      const low = tipo.toLowerCase();
+      if (low.includes('funcionamiento')) return '2.1.2 Gastos de Funcionamiento';
+      if (low.includes('personal')) return '2.1.1 Gastos de Personal';
+      if (low.includes('invers')) return '2.3 Gastos de Inversión';
+      if (low.includes('transferencias')) return '2.1.3 Transferencias Corrientes';
+      if (low.includes('tasas')) return '2.1.8 Tasas y Multas';
+      return tipo;
+    }
 
     const tiposMap: Record<string, {
       name: string;
@@ -114,6 +135,8 @@ export function CashFlowScreen() {
         recurso: string;
         nombre: string;
         monthly: number[];
+        totalCompG26: number;
+        pagoAgoG26: number;
         total: number;
       }>;
     }> = {
@@ -124,18 +147,10 @@ export function CashFlowScreen() {
       '2.1.8 Tasas y Multas': { name: '2.1.8 Tasas y Multas', order: 5, colorBase: '14, 165, 233', monthly: new Array(12).fill(0), recursos: {} }
     };
 
+    // 1. Fill real executed months 0..7 (Ene - Ago) from compromisos.csv
     csvData.compromisos.forEach((r: any) => {
-      let tipo = String(r['Tipo de Gasto'] || '').trim();
-      if (!tipo) return;
-      if (!tiposMap[tipo]) {
-        tiposMap[tipo] = {
-          name: tipo,
-          order: 99,
-          colorBase: '100, 116, 139',
-          monthly: new Array(12).fill(0),
-          recursos: {}
-        };
-      }
+      let tipo = cleanType(String(r['Tipo de Gasto'] || ''));
+      if (!tiposMap[tipo]) return;
 
       let recCode = String(r['Código recurso'] || r['Recurso'] || '').trim();
       if (recCode.startsWith('10.0')) recCode = '10';
@@ -145,11 +160,9 @@ export function CashFlowScreen() {
       const parts = String(r['Fecha compromiso'] || '').split('/');
       if (parts.length < 2) return;
       const m = parseInt(parts[1], 10) - 1;
-      if (m < 0 || m >= 12) return;
+      if (m < 0 || m >= 8) return;
 
-      let valStr = String(r['Valor compromiso'] || '0').replace(/[\$,]/g, '').trim();
-      const val = parseFloat(valStr) || 0;
-
+      const val = cleanNum(r['Valor compromiso']);
       tiposMap[tipo].monthly[m] += val;
 
       if (!tiposMap[tipo].recursos[recCode]) {
@@ -157,43 +170,58 @@ export function CashFlowScreen() {
           recurso: recCode,
           nombre: resNameMap[recCode] || `Recurso ${recCode}`,
           monthly: new Array(12).fill(0),
+          totalCompG26: 0,
+          pagoAgoG26: 0,
           total: 0
         };
       }
       tiposMap[tipo].recursos[recCode].monthly[m] += val;
     });
 
-    // Proyecciones meses 8..11 (Sep..Dic)
-    Object.values(tiposMap).forEach(group => {
-      const tipo = group.name;
-      const histSum = group.monthly.slice(0, 8).reduce((a, b) => a + b, 0) || 1;
+    // 2. Read full commitments and payments up to Aug 31 from Gastos 2026.csv
+    if (csvData.gastos2026 && csvData.gastos2026.length > 0) {
+      csvData.gastos2026.forEach((r: any) => {
+        let tipo = cleanType(String(getCol(r, 'tipo')));
+        if (!tiposMap[tipo]) return;
 
-      for (let m = 8; m < 12; m++) {
-        const pIdx = m - 8;
-        let proj = 0;
-        if (tipo.includes('Personal')) {
-          proj = NOMINA_EXACTA_SEP_DIC[pIdx];
-        } else if (tipo.includes('Funcionamiento')) {
-          proj = FUNCIONAMIENTO_EXACTO_SEP_DIC[pIdx];
-        } else if (tipo.includes('Inversión') || tipo.includes('Inversion')) {
-          proj = (18910356804 / 8) * (pIdx === 2 ? 1.5 : 0.8);
-        } else if (tipo.includes('Transferencias')) {
-          proj = (5514560720 / 8) * (pIdx === 2 ? 1.2 : 0.9);
-        } else {
-          proj = (3911313467 / 8);
+        let recCode = String(getCol(r, 'recurso')).trim();
+        if (recCode.startsWith('10.0')) recCode = '10';
+        if (recCode.startsWith('16.0')) recCode = '16';
+        if (!recCode) return;
+
+        const comp = cleanNum(getCol(r, 'compromiso'));
+        const pago = cleanNum(getCol(r, 'pago'));
+
+        if (!tiposMap[tipo].recursos[recCode]) {
+          tiposMap[tipo].recursos[recCode] = {
+            recurso: recCode,
+            nombre: resNameMap[recCode] || `Recurso ${recCode}`,
+            monthly: new Array(12).fill(0),
+            totalCompG26: 0,
+            pagoAgoG26: 0,
+            total: 0
+          };
         }
+        tiposMap[tipo].recursos[recCode].totalCompG26 += comp;
+        tiposMap[tipo].recursos[recCode].pagoAgoG26 += pago;
+      });
+    }
 
-        group.monthly[m] = proj;
+    // 3. Project months 8..11 (Sep..Dic) so that the full annual commitment equals Gastos 2026 without adding extra commitments
+    const weightsStd = [0.20, 0.22, 0.26, 0.32];
+    const weightsPersonal = [0.15, 0.17, 0.22, 0.46];
 
-        Object.values(group.recursos).forEach(rec => {
-          const recHist = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
-          const share = recHist / histSum;
-          rec.monthly[m] = proj * share;
-        });
-      }
-
-      // Calculate total for each recurso
-      Object.values(group.recursos).forEach(rec => {
+    Object.values(tiposMap).forEach(t => {
+      const w = t.name.includes('Personal') ? weightsPersonal : weightsStd;
+      Object.values(t.recursos).forEach(rec => {
+        const histSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+        const targetComp = rec.totalCompG26 > 0 ? rec.totalCompG26 : histSum;
+        const remaining = Math.max(0, targetComp - histSum);
+        for (let m = 8; m < 12; m++) {
+          const pVal = remaining * w[m - 8];
+          rec.monthly[m] = pVal;
+          t.monthly[m] += pVal;
+        }
         rec.total = rec.monthly.reduce((a, b) => a + b, 0);
       });
     });
@@ -202,9 +230,6 @@ export function CashFlowScreen() {
       .filter(t => t.monthly.reduce((a, b) => a + b, 0) > 0)
       .sort((a, b) => a.order - b.order);
   }, [csvData, results]);
-
-  
-
 
   if (dataStage === 'loading') {
     return (
@@ -228,7 +253,7 @@ export function CashFlowScreen() {
 
   const monthlyData = results.flow.map((f, i) => {
     const income = f.ingresosProyectados + f.ingresosReales;
-    const expense = f.compromisos;
+    const expense = f.pagos;
     const netFlow = income - expense;
     
     const baseP = pTotal * (i === 5 || i === 11 ? 2/14 : 1/14);
@@ -242,6 +267,8 @@ export function CashFlowScreen() {
       month: f.month,
       income,
       expense,
+      compromisos: f.compromisos,
+      pagos: f.pagos,
       netFlow,
       initialBalance: f.saldoInicial,
       finalBalance: f.saldoFinal,
@@ -258,11 +285,11 @@ export function CashFlowScreen() {
     };
   });
 
-    const totalIncome = results.totals.totalIngresosProyectados + results.totals.totalRecaudo;
+  const totalIncome = results.totals.totalIngresosProyectados + results.totals.totalRecaudo;
   const totalExpense = results.totals.totalCompromisos;
   const finalBalance = results.totals.saldoDisponible;
   const initialBalance = results.totals.totalRecursosIniciales;
-  const netFlowTotal = totalIncome - totalExpense;
+  const netFlowTotal = totalIncome - results.totals.totalPagos;
 
   const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
   const maxExpenseMonth = [...monthlyData].sort((a, b) => b.expense - a.expense)[0];
@@ -316,35 +343,36 @@ export function CashFlowScreen() {
         </div>
       </div>
 
-      {/* BLOQUE 1: NIVEL EJECUTIVO (KPIs) */}
+      {/* BLOQUE 1: NIVEL EJECUTIVO (KPIs CON GASTOS 2026 OFICIAL) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-emerald-500">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Ingresos Proyectados</p>
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Ingresos Totales Estimados</p>
           <p className="text-2xl md:text-3xl font-display text-white">{formatCurrencyShort(totalIncome)}</p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">▲ 8.4%</span>
-            <span className="text-on-surface-variant">vs. año anterior</span>
+            <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Recaudo Ago: {formatCurrencyShort(results.totals.totalRecaudo)}</span>
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-rose-500">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Gastos Proyectados</p>
-          <p className="text-2xl md:text-3xl font-display text-white">{formatCurrencyShort(totalExpense)}</p>
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Compromisos Vigencia (Gastos 2026)</p>
+          <p className="text-2xl md:text-3xl font-display text-white">{formatCurrencyShort(results.totals.totalCompromisos)}</p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-bold">▲ 6.1%</span>
-            <span className="text-on-surface-variant">vs. año anterior</span>
+            <span className="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-bold">Cierre oficial sin adiciones</span>
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-blue-500">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Flujo Neto</p>
-          <p className={`text-2xl md:text-3xl font-display ${netFlowTotal >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
-            {formatCurrencyShort(netFlowTotal)}
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Pagos Proyectados Cierre</p>
+          <p className="text-2xl md:text-3xl font-display text-blue-400">
+            {formatCurrencyShort(results.totals.totalPagos)}
           </p>
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span className="text-blue-300 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% de compromisos pagados</span>
+          </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-primary-container bg-primary-container/5">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Saldo Final Estimado</p>
-          <p className="text-2xl md:text-3xl font-display text-white">{formatCurrencyShort(finalBalance)}</p>
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Saldo Disponible Estimado</p>
+          <p className="text-2xl md:text-3xl font-display text-white">{formatCurrencyShort(results.totals.saldoDisponible)}</p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-primary-container font-bold">Saldo Inicial: {formatCurrencyShort(initialBalance)}</span>
+            <span className="text-primary-container font-bold">Superávit protegido en caja</span>
           </div>
         </div>
       </div>
@@ -882,30 +910,47 @@ export function CashFlowScreen() {
         <div className="w-full overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="border-b border-white/10 text-xs text-slate-400">
-                <th className="p-3 font-medium uppercase">Recurso</th>
-                <th className="p-3 font-medium uppercase">Nombre</th>
-                <th className="p-3 font-medium uppercase text-right text-emerald-400/70">Recaudo 31/08</th>
-                <th className="p-3 font-medium uppercase text-right">Septiembre</th>
-                <th className="p-3 font-medium uppercase text-right">Octubre</th>
-                <th className="p-3 font-medium uppercase text-right">Noviembre</th>
-                <th className="p-3 font-medium uppercase text-right">Diciembre</th>
-                <th className="p-3 font-medium uppercase text-right text-white">Total Cierre</th>
+              <tr className="border-b border-white/10 text-xs text-slate-400 uppercase tracking-wider">
+                <th className="p-3 font-medium">Recurso</th>
+                <th className="p-3 font-medium">Nombre</th>
+                <th className="p-3 font-medium text-right text-emerald-400/70">Recaudo 31/08</th>
+                <th className="p-3 font-medium text-right">Sep</th>
+                <th className="p-3 font-medium text-right">Oct</th>
+                <th className="p-3 font-medium text-right">Nov</th>
+                <th className="p-3 font-medium text-right">Dic</th>
+                <th className="p-3 font-medium text-right text-emerald-400">Ingreso Total</th>
+                <th className="p-3 font-medium text-right text-rose-400">Compromiso 2026</th>
+                <th className="p-3 font-medium text-right text-blue-400">Pago Cierre</th>
+                <th className="p-3 font-medium text-right text-white">Saldo Disp.</th>
+                <th className="p-3 font-medium text-center">Estado Cobertura</th>
               </tr>
             </thead>
             <tbody>
               {results.resources.map(r => {
                 const meses = r.ingresosPorMesProyectado || [0, 0, 0, 0];
+                const pctPagado = r.totalCompromisos > 0 ? (r.totalPagos / r.totalCompromisos) * 100 : 100;
                 return (
                   <tr key={r.recurso} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors text-sm">
-                    <td className="p-3 font-mono text-slate-300">{r.recurso}</td>
-                    <td className="p-3 text-slate-300 max-w-[200px] truncate" title={r.nombre}>{r.nombre}</td>
+                    <td className="p-3 font-mono text-slate-300 font-bold">R{r.recurso}</td>
+                    <td className="p-3 text-slate-300 max-w-[180px] truncate" title={r.nombre}>{r.nombre}</td>
                     <td className="p-3 text-right text-emerald-400 font-mono">{formatCurrencyShort(r.ingresosReales)}</td>
                     <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[0])}</td>
                     <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[1])}</td>
                     <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[2])}</td>
                     <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[3])}</td>
-                    <td className="p-3 text-right font-bold text-white font-mono bg-white/5 rounded-r-lg">{formatCurrencyShort(r.totalIngresos)}</td>
+                    <td className="p-3 text-right font-bold text-emerald-300 font-mono">{formatCurrencyShort(r.totalIngresos)}</td>
+                    <td className="p-3 text-right font-mono text-rose-300">{formatCurrencyShort(r.totalCompromisos)}</td>
+                    <td className="p-3 text-right font-mono text-blue-300">{formatCurrencyShort(r.totalPagos)}</td>
+                    <td className="p-3 text-right font-mono font-bold text-white bg-white/5">{formatCurrencyShort(r.saldoDisponible)}</td>
+                    <td className="p-3 text-center">
+                      {pctPagado >= 99.9 ? (
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">100% Cubierto</span>
+                      ) : (
+                        <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold" title={`Pagos topados a recaudo: ${pctPagado.toFixed(1)}%`}>
+                          {pctPagado.toFixed(0)}% (Tope Recaudo)
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
@@ -919,6 +964,10 @@ export function CashFlowScreen() {
                 <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[2] || 0), 0))}</td>
                 <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[3] || 0), 0))}</td>
                 <td className="p-3 text-right text-emerald-300 font-mono">{formatCurrencyShort(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</td>
+                <td className="p-3 text-right text-rose-400 font-mono">{formatCurrencyShort(results.totals.totalCompromisos)}</td>
+                <td className="p-3 text-right text-blue-400 font-mono">{formatCurrencyShort(results.totals.totalPagos)}</td>
+                <td className="p-3 text-right text-white font-mono bg-white/10">{formatCurrencyShort(results.totals.saldoDisponible)}</td>
+                <td className="p-3 text-center text-xs text-emerald-400 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% Global</td>
               </tr>
             </tfoot>
           </table>

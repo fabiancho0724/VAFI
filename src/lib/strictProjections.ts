@@ -158,11 +158,11 @@ function getUnidadKey(row: any): string {
 function cleanExpenseType(tipo: string): string {
   if (!tipo) return 'Otros';
   const low = tipo.toLowerCase();
-  if (low.includes('funcionamiento')) return 'Funcionamiento';
-  if (low.includes('personal')) return 'Personal (Nómina)';
-  if (low.includes('inversión') || low.includes('inversion')) return 'Inversión';
-  if (low.includes('transferencias')) return 'Transferencias';
-  if (low.includes('tasas')) return 'Tasas y Multas';
+  if (low.includes('funcionamiento')) return '2.1.2 Gastos de Funcionamiento';
+  if (low.includes('personal')) return '2.1.1 Gastos de Personal';
+  if (low.includes('invers')) return '2.3 Gastos de Inversión';
+  if (low.includes('transferencias')) return '2.1.3 Transferencias Corrientes';
+  if (low.includes('tasas')) return '2.1.8 Tasas y Multas';
   return tipo;
 }
 
@@ -175,7 +175,12 @@ function simulateCore(
   expenseTypeResourceReal: Record<string, Record<string, number>>,
   nominaStats: { nominaHistTotal: number, missingMonths: number, avgMonthlyNomina: number },
   config: StrictConfig,
-  modifierVariations: { incomeVar: number, expenseVar: number }
+  modifierVariations: { incomeVar: number, expenseVar: number },
+  gastos2026Parsed?: {
+    byRecurso: Record<string, { compromiso: number; pagoAgo: number }>;
+    byTipo: Record<string, { compromiso: number; pagoAgo: number }>;
+    byTipoRec: Record<string, Record<string, { compromiso: number; pagoAgo: number }>>;
+  }
 ): { resources: StrictResourceProjection[], flow: StrictFlowItem[], totals: StrictTotals, alerts: string[] } {
   
   const alerts: string[] = [];
@@ -187,13 +192,12 @@ function simulateCore(
   if (config.scenario === 'Optimista') effGrowth += 0.05;
   if (config.scenario === 'Pesimista') effGrowth -= 0.05;
   
-  
   const NOMINA_EXACTA_SEP_DIC = [26166093098, 29651541416, 37230066396, 72131354854];
   const TOTAL_NOMINA_SEP_DIC = 165179055764;
   const nominaProyectadaGlobal = TOTAL_NOMINA_SEP_DIC;
 
   const TOTAL_FUNC_ANUAL = 131209200000;
-  const funcReal = expenseTypeReal['Funcionamiento'] || 0;
+  const funcReal = expenseTypeReal['2.1.2 Gastos de Funcionamiento'] || expenseTypeReal['Funcionamiento'] || 0;
   const TOTAL_FUNC_SEP_DIC = Math.max(0, TOTAL_FUNC_ANUAL - funcReal);
   const funcScale = TOTAL_FUNC_SEP_DIC / 14532945667.71;
   const FUNCIONAMIENTO_EXACTO_SEP_DIC = [
@@ -203,19 +207,17 @@ function simulateCore(
       572603471.66 * funcScale
   ];
 
-
   baseData.forEach(base => {
     const isFixed = NACION_FIXED.includes(base.recurso);
     const customConfig = config.resourceOverrides[base.recurso];
     
-    // Usar el valor real y fidedigno del balance (Recaudo 31/08) en lugar de sumar el histórico mensual que puede estar incompleto
     const recaudoRealAcumulado = base.recaudo;
-    const totalRealNomina = expenseTypeReal['Personal (Nómina)'] || 1;
-    const shareNomina = (expenseTypeResourceReal['Personal (Nómina)']?.[base.recurso] || 0) / totalRealNomina;
+    const totalRealNomina = expenseTypeReal['2.1.1 Gastos de Personal'] || expenseTypeReal['Personal (Nómina)'] || 1;
+    const shareNomina = (expenseTypeResourceReal['2.1.1 Gastos de Personal']?.[base.recurso] || expenseTypeResourceReal['Personal (Nómina)']?.[base.recurso] || 0) / totalRealNomina;
     const nominaAsignada = TOTAL_NOMINA_SEP_DIC * shareNomina;
 
-    const totalRealFunc = expenseTypeReal['Funcionamiento'] || 1;
-    const shareFunc = (expenseTypeResourceReal['Funcionamiento']?.[base.recurso] || 0) / totalRealFunc;
+    const totalRealFunc = expenseTypeReal['2.1.2 Gastos de Funcionamiento'] || expenseTypeReal['Funcionamiento'] || 1;
+    const shareFunc = (expenseTypeResourceReal['2.1.2 Gastos de Funcionamiento']?.[base.recurso] || expenseTypeResourceReal['Funcionamiento']?.[base.recurso] || 0) / totalRealFunc;
     const funcAsignada = TOTAL_FUNC_SEP_DIC * shareFunc;
     const compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
     const pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
@@ -250,14 +252,48 @@ function simulateCore(
     let totalIngresosAI = recaudoRealAcumulado + aiIncomeReference;
     let aiExpenseReference = Math.max(0, (totalIngresosAI - compHistorico) * effExpense);
 
-    if (customConfig && customConfig.method === 'Manual') {
-      ingProyectado = customConfig.manualIncome !== undefined ? customConfig.manualIncome : aiIncomeReference;
-      gasProyectado = customConfig.manualExpense !== undefined ? customConfig.manualExpense : aiExpenseReference;
-      methodUsed = 'Manual';
-      trace.push({ step: 'Proyección Manual', value: ingProyectado, detail: 'Valor ingresado por el usuario' });
+    let totalComp = 0;
+    let totalPago = 0;
+
+    if (gastos2026Parsed && gastos2026Parsed.byRecurso[base.recurso]) {
+      const g = gastos2026Parsed.byRecurso[base.recurso];
+      totalComp = g.compromiso;
+      gasProyectado = Math.max(0, totalComp - compHistorico);
+      
+      // Regla: El pago iguale al compromiso, sin más compromisos, limitado solo por el recaudo
+      const maxPagoPermitido = Math.max(pagoHistorico, totalIngresosAI);
+      totalPago = Math.min(totalComp, maxPagoPermitido);
+      
+      methodUsed = 'Gastos 2026 (Cierre Vigencia)';
+      trace.push({ step: 'Compromiso Vigencia Completo', value: totalComp, detail: 'Gastos 2026 oficial sin compromisos adicionales' });
+      trace.push({ step: 'Pago Cierre (Tope Recaudo)', value: totalPago, detail: `Pago acercado al compromiso, limitado por recaudo disponible (${totalIngresosAI})` });
+      
+      if (totalIngresosAI < totalComp) {
+        alerts.push(`⚠️ Alerta de Recaudo: ${base.nombre} (R${base.recurso}) tiene compromisos por ${totalComp} pero recaudo proyectado en ${totalIngresosAI}. Pagos limitados a ${totalPago}.`);
+      }
     } else {
       gasProyectado = Math.max(aiExpenseReference, nominaAsignada + funcAsignada);
-      trace.push({ step: 'Proyección Bruta (Gastos)', value: gasProyectado, detail: 'Garantizando Nómina y Funcionamiento' });
+      totalComp = compHistorico + gasProyectado;
+      totalPago = pagoHistorico + (gasProyectado * 0.9);
+
+      let minComp = compHistorico + nominaAsignada + funcAsignada;
+      if (totalComp > totalIngresosAI) {
+        totalComp = Math.max(totalIngresosAI, minComp);
+      }
+      let minPago = pagoHistorico + nominaAsignada + funcAsignada;
+      if (totalPago > totalIngresosAI) totalPago = Math.max(totalIngresosAI, minPago);
+      if (totalPago > totalComp) totalPago = totalComp;
+    }
+
+    if (customConfig && customConfig.method === 'Manual') {
+      if (customConfig.manualIncome !== undefined) ingProyectado = customConfig.manualIncome;
+      if (customConfig.manualExpense !== undefined) {
+        gasProyectado = customConfig.manualExpense;
+        totalComp = compHistorico + gasProyectado;
+        totalPago = Math.min(totalComp, pagoHistorico + gasProyectado);
+      }
+      methodUsed = 'Manual';
+      trace.push({ step: 'Ajuste Manual Usuario', value: ingProyectado, detail: 'Valor personalizado' });
     }
     
     let totalIngresos = recaudoRealAcumulado + ingProyectado;
@@ -268,30 +304,14 @@ function simulateCore(
       ingresoAdmin = totalIngresos; 
     }
     
-    let totalComp = compHistorico + gasProyectado;
-    let totalPago = pagoHistorico + (gasProyectado * 0.9);
-
-    let minComp = compHistorico + nominaAsignada + funcAsignada;
-    if (totalComp > totalIngresos) {
-      if (modifierVariations.incomeVar === 0 && modifierVariations.expenseVar === 0) {
-        alerts.push(`🚨 CRÍTICA: Déficit Proyectado en ${base.nombre}. El gasto supera el recaudo (Impulsado por Nómina).`);
-      }
-      totalComp = Math.max(totalIngresos, minComp);
-      trace.push({ step: 'Restricción Caja (Flexible)', value: totalComp, detail: 'Compromiso ajustado, pero garantizando Nómina.' });
-    }
-    let minPago = pagoHistorico + nominaAsignada + funcAsignada; // Nómina y Func 100% pago
-    if (totalPago > totalIngresos) totalPago = Math.max(totalIngresos, minPago);
-    if (totalPago > totalComp) totalPago = totalComp;
-
-    // Recalculate gasProyectado based on truncated totalComp
-    gasProyectado = totalComp - compHistorico;
+    const saldoDisp = Math.max(0, totalIngresos - totalPago);
 
     resourcesObj[base.recurso] = {
       recurso: base.recurso, nombre: base.nombre,
       ingresosReales: recaudoRealAcumulado, ingresosProyectados: ingProyectado,
       totalIngresos, gastosProyectados: gasProyectado,
       totalCompromisos: totalComp, totalPagos: totalPago,
-      saldoDisponible: totalIngresos - totalPago,
+      saldoDisponible: saldoDisp,
       ingresoAdministrativo: ingresoAdmin,
       methodUsed, 
       aiIncomeReference, aiExpenseReference, 
@@ -305,12 +325,6 @@ function simulateCore(
   }
 
   const totalIngresoAdmin = targetResources.reduce((acc, r) => acc + r.ingresoAdministrativo, 0);
-  
-  if (modifierVariations.incomeVar === 0 && modifierVariations.expenseVar === 0) {
-    if (nominaStats.nominaHistTotal + nominaProyectadaGlobal > totalIngresoAdmin) {
-      alerts.push(`🔴 CRÍTICA: Déficit de Nómina. Total nómina supera ingresos de Unidad Administrativa.`);
-    }
-  }
 
   const totals: StrictTotals = {
     totalRecursosIniciales: baseData.reduce((acc, r) => acc + r.valorInicial, 0),
@@ -330,46 +344,78 @@ function simulateCore(
   };
   totals.resultadoProyectado = totals.totalIngresosProyectados - totals.totalGastosProyectados;
 
-  let breakdown: ExpenseTypeBreakdown[] = [];
-  let remainingGastoProyectado = totals.totalGastosProyectados - nominaProyectadaGlobal;
-  
-  Object.keys(expenseTypeReal).forEach(tipo => {
-    let proj = 0;
-    if (tipo === 'Personal (Nómina)') {
-       proj = nominaProyectadaGlobal;
-    } else if (tipo === 'Funcionamiento') {
-       proj = TOTAL_FUNC_SEP_DIC;
-    } else {
-       const totalOthers = totals.totalCompromisos - totals.totalGastosProyectados - (expenseTypeReal['Personal (Nómina)'] || 0) - (expenseTypeReal['Funcionamiento'] || 0);
-       const weight = totalOthers > 0 ? expenseTypeReal[tipo] / totalOthers : 0;
-       proj = Math.max(0, remainingGastoProyectado * weight);
-    }
-    
-    const detalles: ExpenseDetail[] = [];
-    const resMap = expenseTypeResourceReal[tipo] || {};
-    const totalRealForTipo = expenseTypeReal[tipo] || 1;
-    
-    Object.keys(resMap).forEach(rec => {
-      const realVal = resMap[rec];
-      const weight = realVal / totalRealForTipo;
-      const recProj = tipo === 'Personal (Nómina)' ? (rec === '31' ? proj * 0.4 : proj * 0.6) : (proj * weight);
-      const recBase = baseData.find(b => b.recurso === rec);
-      detalles.push({
-        recurso: rec,
-        nombre: recBase ? recBase.nombre : rec,
-        valorReal: realVal,
-        valorProyectado: recProj,
-        total: realVal + recProj
+  if (gastos2026Parsed) {
+    let breakdown: ExpenseTypeBreakdown[] = [];
+    Object.keys(gastos2026Parsed.byTipo).forEach(tipo => {
+      const tData = gastos2026Parsed.byTipo[tipo];
+      const detalles: ExpenseDetail[] = [];
+      const resMap = gastos2026Parsed.byTipoRec[tipo] || {};
+      
+      Object.keys(resMap).forEach(rec => {
+        const rData = resMap[rec];
+        const recBase = baseData.find(b => b.recurso === rec);
+        detalles.push({
+          recurso: rec,
+          nombre: recBase ? recBase.nombre : `Recurso ${rec}`,
+          valorReal: rData.pagoAgo,
+          valorProyectado: Math.max(0, rData.compromiso - rData.pagoAgo),
+          total: rData.compromiso
+        });
+      });
+      detalles.sort((a,b) => b.total - a.total);
+      breakdown.push({
+        tipo,
+        valorReal: tData.pagoAgo,
+        valorProyectado: Math.max(0, tData.compromiso - tData.pagoAgo),
+        total: tData.compromiso,
+        detalles
       });
     });
+    totals.expenseBreakdown = breakdown.sort((a,b) => b.total - a.total);
+  } else {
+    let breakdown: ExpenseTypeBreakdown[] = [];
+    let remainingGastoProyectado = totals.totalGastosProyectados - nominaProyectadaGlobal;
     
-    detalles.sort((a,b) => b.total - a.total);
-    breakdown.push({ tipo, valorReal: expenseTypeReal[tipo], valorProyectado: proj, total: expenseTypeReal[tipo] + proj, detalles });
-  });
-  totals.expenseBreakdown = breakdown.sort((a,b) => b.total - a.total);
+    Object.keys(expenseTypeReal).forEach(tipo => {
+      let proj = 0;
+      if (tipo.includes('Personal')) {
+         proj = nominaProyectadaGlobal;
+      } else if (tipo.includes('Funcionamiento')) {
+         proj = TOTAL_FUNC_SEP_DIC;
+      } else {
+         const totalOthers = totals.totalCompromisos - totals.totalGastosProyectados - (expenseTypeReal['Personal (Nómina)'] || expenseTypeReal['2.1.1 Gastos de Personal'] || 0) - (expenseTypeReal['Funcionamiento'] || expenseTypeReal['2.1.2 Gastos de Funcionamiento'] || 0);
+         const weight = totalOthers > 0 ? expenseTypeReal[tipo] / totalOthers : 0;
+         proj = Math.max(0, remainingGastoProyectado * weight);
+      }
+      
+      const detalles: ExpenseDetail[] = [];
+      const resMap = expenseTypeResourceReal[tipo] || {};
+      const totalRealForTipo = expenseTypeReal[tipo] || 1;
+      
+      Object.keys(resMap).forEach(rec => {
+        const realVal = resMap[rec];
+        const weight = realVal / totalRealForTipo;
+        const recProj = tipo.includes('Personal') ? (rec === '31' ? proj * 0.4 : proj * 0.6) : (proj * weight);
+        const recBase = baseData.find(b => b.recurso === rec);
+        detalles.push({
+          recurso: rec,
+          nombre: recBase ? recBase.nombre : rec,
+          valorReal: realVal,
+          valorProyectado: recProj,
+          total: realVal + recProj
+        });
+      });
+      
+      detalles.sort((a,b) => b.total - a.total);
+      breakdown.push({ tipo, valorReal: expenseTypeReal[tipo], valorProyectado: proj, total: expenseTypeReal[tipo] + proj, detalles });
+    });
+    totals.expenseBreakdown = breakdown.sort((a,b) => b.total - a.total);
+  }
 
   const flow: StrictFlowItem[] = [];
   let saldoAcum = 0;
+  const MONTH_PAGO_WEIGHTS = [0.20, 0.22, 0.26, 0.32]; // Sep, Oct, Nov, Dic
+
   MONTHS.forEach((m, idx) => {
     let mIngReal = 0, mIngProy = 0, mComp = 0, mPago = 0;
     targetResources.forEach(r => {
@@ -378,48 +424,59 @@ function simulateCore(
          mComp += (monthlyHist.comp[r.recurso] || [])[idx] || 0;
          mPago += (monthlyHist.pago[r.recurso] || [])[idx] || 0;
       } else {
+         const pIdx = idx - 8;
          const girosExactos = GIROS_SIIF_PROYECTADOS[r.recurso];
          const w = historicWeights[r.recurso] ? historicWeights[r.recurso][idx] : 0.25;
          
          if (!r.ingresosPorMesProyectado) r.ingresosPorMesProyectado = [0,0,0,0];
            
-           let monthIngProy = 0;
-           if (girosExactos) {
-               monthIngProy = girosExactos[idx - 8];
-           } else {
-               monthIngProy = r.ingresosProyectados * w;
-           }
-           mIngProy += monthIngProy;
-           r.ingresosPorMesProyectado[idx - 8] = monthIngProy;
-         
-         const totalRealNomina = expenseTypeReal['Personal (Nómina)'] || 1;
-         const shareN = (expenseTypeResourceReal['Personal (Nómina)']?.[r.recurso] || 0) / totalRealNomina;
-         const nAsignada = TOTAL_NOMINA_SEP_DIC * shareN;
-         const monthlyN = NOMINA_EXACTA_SEP_DIC[idx - 8] * shareN;
-
-         const totalRealFunc = expenseTypeReal['Funcionamiento'] || 1;
-         const shareF = (expenseTypeResourceReal['Funcionamiento']?.[r.recurso] || 0) / totalRealFunc;
-         const fAsignada = TOTAL_FUNC_SEP_DIC * shareF;
-         const monthlyF = FUNCIONAMIENTO_EXACTO_SEP_DIC[idx - 8] * shareF;
-
-         const otherExpense = Math.max(0, r.gastosProyectados - nAsignada - fAsignada);
-         
-         let w_other = w;
-         if (idx === 11) {
-             w_other = 0; // Restricción: Diciembre no debe exceder nómina + func (< 600M sobre nómina)
-         } else if (idx === 10) {
-             const dec_w = historicWeights[r.recurso] ? historicWeights[r.recurso][11] : 0.25;
-             w_other += dec_w; // Trasladamos la ejecución de otros gastos a Noviembre
+         let monthIngProy = 0;
+         if (girosExactos) {
+             monthIngProy = girosExactos[pIdx];
+         } else {
+             monthIngProy = r.ingresosProyectados * w;
          }
+         mIngProy += monthIngProy;
+         r.ingresosPorMesProyectado[pIdx] = monthIngProy;
+         
+         if (gastos2026Parsed) {
+           const compHistRec = (monthlyHist.comp[r.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+           const pagoHistRec = (monthlyHist.pago[r.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+           const remComp = Math.max(0, r.totalCompromisos - compHistRec);
+           const remPago = Math.max(0, r.totalPagos - pagoHistRec);
 
-         mComp += monthlyN + monthlyF + (otherExpense * w_other);
-         mPago += monthlyN + (monthlyF * 0.9) + (otherExpense * 0.9 * w_other);
+           mComp += remComp * MONTH_PAGO_WEIGHTS[pIdx];
+           mPago += remPago * MONTH_PAGO_WEIGHTS[pIdx];
+         } else {
+           const totalRealNomina = expenseTypeReal['2.1.1 Gastos de Personal'] || expenseTypeReal['Personal (Nómina)'] || 1;
+           const shareN = (expenseTypeResourceReal['2.1.1 Gastos de Personal']?.[r.recurso] || expenseTypeResourceReal['Personal (Nómina)']?.[r.recurso] || 0) / totalRealNomina;
+           const nAsignada = TOTAL_NOMINA_SEP_DIC * shareN;
+           const monthlyN = NOMINA_EXACTA_SEP_DIC[pIdx] * shareN;
+
+           const totalRealFunc = expenseTypeReal['2.1.2 Gastos de Funcionamiento'] || expenseTypeReal['Funcionamiento'] || 1;
+           const shareF = (expenseTypeResourceReal['2.1.2 Gastos de Funcionamiento']?.[r.recurso] || expenseTypeResourceReal['Funcionamiento']?.[r.recurso] || 0) / totalRealFunc;
+           const fAsignada = TOTAL_FUNC_SEP_DIC * shareF;
+           const monthlyF = FUNCIONAMIENTO_EXACTO_SEP_DIC[pIdx] * shareF;
+
+           const otherExpense = Math.max(0, r.gastosProyectados - nAsignada - fAsignada);
+           
+           let w_other = w;
+           if (idx === 11) {
+               w_other = 0;
+           } else if (idx === 10) {
+               const dec_w = historicWeights[r.recurso] ? historicWeights[r.recurso][11] : 0.25;
+               w_other += dec_w;
+           }
+
+           mComp += monthlyN + monthlyF + (otherExpense * w_other);
+           mPago += monthlyN + (monthlyF * 0.9) + (otherExpense * 0.9 * w_other);
+         }
       }
     });
     
     const totalIng = mIngReal + mIngProy;
     let estado: StrictFlowItem['estado'] = 'Sostenible';
-    if (mComp > totalIng) estado = 'Presión financiera';
+    if (mPago > totalIng) estado = 'Presión financiera';
     if (saldoAcum + totalIng - mPago < 0) estado = 'Déficit';
     else if (saldoAcum + totalIng - mPago < (totalIng * 0.1)) estado = 'Riesgo';
 
@@ -429,14 +486,14 @@ function simulateCore(
 
   return { resources: targetResources, flow, totals, alerts };
 }
-
 export function calculateStrictProjections(
   balanceData: any[],
   ingresosMensuales: any[],
   compromisosData: any[],
   nominaData: any[],
   ingresosHistoricos: any[],
-  config: StrictConfig
+  config: StrictConfig,
+  gastos2026Data?: any[]
 ): StrictProjectionResult {
   
   const baseData: BaseResource[] = balanceData.map(row => {
@@ -524,8 +581,48 @@ export function calculateStrictProjections(
   });
 
 
+  // Parse Gastos 2026 if provided
+  let gastos2026Parsed: any = undefined;
+  if (gastos2026Data && gastos2026Data.length > 0) {
+    const byRecurso: Record<string, { compromiso: number; pagoAgo: number }> = {};
+    const byTipo: Record<string, { compromiso: number; pagoAgo: number }> = {};
+    const byTipoRec: Record<string, Record<string, { compromiso: number; pagoAgo: number }>> = {};
+
+    gastos2026Data.forEach(r => {
+      const uni = getUnidadKey(r);
+      if (config.filterUnidad !== 'Todos' && !uni.includes(config.filterUnidad)) return;
+
+      const tKey = Object.keys(r).find(k => k.toLowerCase().includes('tipo'));
+      const rKey = Object.keys(r).find(k => k.toLowerCase().includes('recurso'));
+      const cKey = Object.keys(r).find(k => k.trim().toLowerCase() === 'compromiso');
+      const pKey = Object.keys(r).find(k => k.trim().toLowerCase() === 'valor pago');
+
+      const tipo = cleanExpenseType(String(tKey ? r[tKey] : ''));
+      let rec = getRecursoEquivalence(String(rKey ? r[rKey] : ''));
+      const comp = parseNumber(cKey ? r[cKey] : 0);
+      const pago = parseNumber(pKey ? r[pKey] : 0);
+
+      if (!rec || !tipo) return;
+
+      if (!byRecurso[rec]) byRecurso[rec] = { compromiso: 0, pagoAgo: 0 };
+      byRecurso[rec].compromiso += comp;
+      byRecurso[rec].pagoAgo += pago;
+
+      if (!byTipo[tipo]) byTipo[tipo] = { compromiso: 0, pagoAgo: 0 };
+      byTipo[tipo].compromiso += comp;
+      byTipo[tipo].pagoAgo += pago;
+
+      if (!byTipoRec[tipo]) byTipoRec[tipo] = {};
+      if (!byTipoRec[tipo][rec]) byTipoRec[tipo][rec] = { compromiso: 0, pagoAgo: 0 };
+      byTipoRec[tipo][rec].compromiso += comp;
+      byTipoRec[tipo][rec].pagoAgo += pago;
+    });
+
+    gastos2026Parsed = { byRecurso, byTipo, byTipoRec };
+  }
+
   // Base Simulation
-  const baseSim = simulateCore(baseData, monthlyHist, historicWeights, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: 0, expenseVar: 0 });
+  const baseSim = simulateCore(baseData, monthlyHist, historicWeights, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: 0, expenseVar: 0 }, gastos2026Parsed);
 
   // AI Suggestions
   const suggestions: AISuggestion[] = [];
@@ -568,7 +665,7 @@ export function calculateStrictProjections(
   const variations = [-0.20, -0.15, -0.10, -0.05, 0, 0.05, 0.10, 0.15, 0.20];
   
   variations.forEach(v => {
-    const sim = simulateCore(baseData, monthlyHist, historicWeights, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: v, expenseVar: 0 });
+    const sim = simulateCore(baseData, monthlyHist, historicWeights, expenseTypeReal, expenseTypeResourceReal, { nominaHistTotal, missingMonths, avgMonthlyNomina }, config, { incomeVar: v, expenseVar: 0 }, gastos2026Parsed);
     let impacto: SensitivityItem['impacto'] = 'Estable';
     if (sim.totals.saldoDisponible < 0) impacto = 'Alto Riesgo';
     else if (sim.totals.saldoDisponible < baseSim.totals.saldoDisponible * 0.5) impacto = 'Medio Riesgo';
