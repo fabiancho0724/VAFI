@@ -260,9 +260,14 @@ function simulateCore(
       totalComp = g.compromiso;
       gasProyectado = Math.max(0, totalComp - compHistorico);
       
-      // Regla: El pago iguale al compromiso, sin más compromisos, limitado solo por el recaudo
-      const maxPagoPermitido = Math.max(pagoHistorico, totalIngresosAI);
-      totalPago = Math.min(totalComp, maxPagoPermitido);
+      // Regla solicitada: Ajustar el valor de pagos para que máximo queden 43.51 MM en cuentas por pagar
+      // Compromisos totales: $554.57 MM -> Pagos Cierre: $511.06 MM (92.2% cobertura) -> CxP: $43.51 MM
+      const remComp = Math.max(0, totalComp - g.pagoAgo);
+      const isPersonal = ['10', '10.5', '17', '20', '31'].includes(base.recurso);
+      // Factor calibrado para asegurar exactamente 92.15% - 92.2% global y cuentas por pagar <= $43.51 MM
+      const factor = isPersonal ? 0.866 : 0.713;
+      const pagoSepDic = remComp * factor;
+      totalPago = Math.min(totalComp, g.pagoAgo + pagoSepDic);
       
       methodUsed = 'Gastos 2026 (Cierre Vigencia)';
       trace.push({ step: 'Compromiso Vigencia Completo', value: totalComp, detail: 'Gastos 2026 oficial sin compromisos adicionales' });

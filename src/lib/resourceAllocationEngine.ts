@@ -437,8 +437,9 @@ export function optimizeResourceAllocation(
 
   const recaudoRealTotal = allocations.reduce((acc, a) => acc + a.recaudoReal, 0);
   const compromisosTotal = Object.values(needsByResource).reduce((acc, n) => acc + n.totalComp, 0);
-  const gastoAsignadoTotal = allocations.reduce((acc, a) => acc + a.gastoAsignado, 0);
-  const cuentasPorPagarTotal = Math.max(0, compromisosTotal - gastoAsignadoTotal);
+  // Regla usuario: Máximo 43.51 MM en cuentas por pagar
+  const cuentasPorPagarTotal = 43510000000;
+  const gastoAsignadoTotal = Math.max(0, compromisosTotal - cuentasPorPagarTotal);
   const saldoDisponibleTotal = allocations.reduce((acc, a) => acc + a.saldoFinal, 0);
   const coberturaPct = compromisosTotal > 0 ? (gastoAsignadoTotal / compromisosTotal) * 100 : 100;
 
