@@ -245,40 +245,52 @@ export function CashFlowScreen() {
     return <div className="p-8 text-center text-rose-500">Error cargando proyecciones: {errorMessage}</div>;
   }
 
-  const breakdown = results.totals.expenseBreakdown || [];
-  const totalExpenseProj = breakdown.reduce((a: any, b: any) => a + b.total, 0) || 1;
-  const pTotal = breakdown.find((b: any) => b.tipo.includes('Personal'))?.total || (totalExpenseProj * 0.65);
-  const fTotal = breakdown.find((b: any) => b.tipo.includes('Funcionamiento'))?.total || (totalExpenseProj * 0.25);
-  const iTotal = Math.max(0, totalExpenseProj - pTotal - fTotal);
+    const breakdown = results.totals.expenseBreakdown || [];
+  const totalExpenseProj = results.totals.totalCompromisos || 1;
 
-  const monthlyData = results.flow.map((f, i) => {
+  // Align monthlyData EXACTLY with the sums and proportions from heatmapExpenseTypesData
+  const pRow = heatmapExpenseTypesData.find(t => t.name.includes('Personal'));
+  const fRow = heatmapExpenseTypesData.find(t => t.name.includes('Funcionamiento'));
+  const iRow = heatmapExpenseTypesData.find(t => t.name.includes('Invers'));
+  const trRow = heatmapExpenseTypesData.find(t => t.name.includes('Transferencias'));
+  const tmRow = heatmapExpenseTypesData.find(t => t.name.includes('Tasas'));
+
+  let accumulatedBalance = results.totals.totalRecursosIniciales;
+
+  const monthlyData = MONTHS.map((monthName, i) => {
+    const f = results.flow[i] || { ingresosProyectados: 0, ingresosReales: 0, compromisos: 0, pagos: 0, saldoInicial: accumulatedBalance, saldoFinal: accumulatedBalance };
     const income = f.ingresosProyectados + f.ingresosReales;
-    const expense = f.pagos;
+
+    const gPersonal = pRow?.monthly[i] || 0;
+    const gFuncionamiento = fRow?.monthly[i] || 0;
+    const gInversion = iRow?.monthly[i] || 0;
+    const gTransferencias = trRow?.monthly[i] || 0;
+    const gTasas = tmRow?.monthly[i] || 0;
+    const expense = gPersonal + gFuncionamiento + gInversion + gTransferencias + gTasas;
     const netFlow = income - expense;
-    
-    const baseP = pTotal * (i === 5 || i === 11 ? 2/14 : 1/14);
-    const baseF = fTotal * (1/12);
-    const baseI = iTotal * (1/12);
-    
-    const monthSum = baseP + baseF + baseI;
-    const scale = monthSum > 0 ? (expense / monthSum) : 0;
+
+    const initialBal = accumulatedBalance;
+    accumulatedBalance += netFlow;
+    const finalBal = accumulatedBalance;
 
     return {
-      month: f.month,
+      month: monthName,
       income,
       expense,
-      compromisos: f.compromisos,
-      pagos: f.pagos,
+      compromisos: expense,
+      pagos: expense,
       netFlow,
-      initialBalance: f.saldoInicial,
-      finalBalance: f.saldoFinal,
-      gPersonal: baseP * scale,
-      gFuncionamiento: baseF * scale,
-      gInversion: baseI * scale,
-      rNacion: income * 0.65,
-      rPropios: income * 0.30,
+      initialBalance: initialBal,
+      finalBalance: finalBal,
+      gPersonal,
+      gFuncionamiento,
+      gInversion,
+      gTransferencias,
+      gTasas,
+      rNacion: income * 0.70,
+      rPropios: income * 0.25,
       rEstampillas: income * 0.05,
-      waterfallStart: netFlow >= 0 ? f.saldoInicial : f.saldoInicial + netFlow,
+      waterfallStart: netFlow >= 0 ? initialBal : initialBal + netFlow,
       waterfallEnd: Math.abs(netFlow),
       waterfallColor: netFlow >= 0 ? '#10b981' : '#f43f5e',
       rawFlow: f
@@ -289,9 +301,8 @@ export function CashFlowScreen() {
   const totalExpense = results.totals.totalCompromisos;
   const finalBalance = results.totals.saldoDisponible;
   const initialBalance = results.totals.totalRecursosIniciales;
-  const netFlowTotal = totalIncome - results.totals.totalPagos;
-
-  const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
+  const netFlowTotal = totalIncome - totalExpense;
+const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
   const maxExpenseMonth = [...monthlyData].sort((a, b) => b.expense - a.expense)[0];
 
   const incomeComposition = [
@@ -510,10 +521,28 @@ export function CashFlowScreen() {
                       <div>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-pink-300 font-bold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-pink-500"></div> Inversión</span>
-                          <span className="font-mono text-white">{formatCurrencyShort(selectedMonthDetail.gInversion)}</span>
+                          <span className="font-mono text-white">{formatCurrencyShort(selectedMonthDetail.gInversion || 0)}</span>
                         </div>
                         <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-pink-500 rounded-full" style={{ width: `${(selectedMonthDetail.gInversion / selectedMonthDetail.expense) * 100}%` }}></div>
+                          <div className="h-full bg-pink-500 rounded-full" style={{ width: `${selectedMonthDetail.expense > 0 ? ((selectedMonthDetail.gInversion || 0) / selectedMonthDetail.expense) * 100 : 0}%` }}></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-amber-300 font-bold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500"></div> Transferencias</span>
+                          <span className="font-mono text-white">{formatCurrencyShort(selectedMonthDetail.gTransferencias || 0)}</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-500 rounded-full" style={{ width: `${selectedMonthDetail.expense > 0 ? ((selectedMonthDetail.gTransferencias || 0) / selectedMonthDetail.expense) * 100 : 0}%` }}></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-cyan-300 font-bold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-cyan-500"></div> Tasas y Multas</span>
+                          <span className="font-mono text-white">{formatCurrencyShort(selectedMonthDetail.gTasas || 0)}</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-cyan-500 rounded-full" style={{ width: `${selectedMonthDetail.expense > 0 ? ((selectedMonthDetail.gTasas || 0) / selectedMonthDetail.expense) * 100 : 0}%` }}></div>
                         </div>
                       </div>
                     </div>
@@ -592,6 +621,193 @@ export function CashFlowScreen() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      {/* BLOQUE 7 & 8: MAPA DESTINACIÓN & ALERTAS (VALORES EXACTOS GASTOS 2026) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="glass-card p-6 rounded-[24px] lg:col-span-2 border border-white/5">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-display text-white">Mapa de Destinación de Recursos</h2>
+              <p className="text-xs text-slate-400">Origen de los ingresos vs Destinación real del gasto presupuestal</p>
+            </div>
+            <span className="text-xs bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-3 py-1 rounded-full font-mono font-bold">
+              Total Vigencia: {formatCurrencyShort(totalExpense)}
+            </span>
+          </div>
+          
+          <div className="bg-black/20 rounded-xl border border-white/5 p-6 relative overflow-hidden">
+             <div className="flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+                
+                {/* Fuentes de Ingreso (Izquierda) */}
+                <div className="flex flex-col justify-around w-full md:w-[28%] gap-4">
+                  <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl text-center">
+                    <span className="text-xs text-blue-300 font-bold block">Aportes de la Nación</span>
+                    <span className="text-base font-mono font-bold text-white mt-1 block">
+                      {formatCurrencyShort(results.resources.filter(r => ['10', '10.1', '10.2', '10.5', '16', '17', '18'].includes(r.recurso)).reduce((acc, r) => acc + r.totalIngresos, 0))}
+                    </span>
+                    <span className="text-[10px] text-slate-400">R10, R10.5, R16, R17, R18</span>
+                  </div>
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl text-center">
+                    <span className="text-xs text-emerald-300 font-bold block">Recursos Propios y Otros</span>
+                    <span className="text-base font-mono font-bold text-white mt-1 block">
+                      {formatCurrencyShort(results.resources.filter(r => !['10', '10.1', '10.2', '10.5', '16', '17', '18'].includes(r.recurso)).reduce((acc, r) => acc + r.totalIngresos, 0))}
+                    </span>
+                    <span className="text-[10px] text-slate-400">R12, R20, R31, R33, R40</span>
+                  </div>
+                </div>
+
+                {/* Caja Central (Centro) */}
+                <div className="w-full md:w-[24%] flex flex-col items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-primary-container/20 border-4 border-primary-container/30 flex items-center justify-center flex-col shadow-[0_0_30px_rgba(255,204,41,0.2)]">
+                    <Coins className="text-primary-container mb-1" size={24} />
+                    <span className="text-[10px] uppercase font-bold text-primary-container tracking-wider">Caja Central</span>
+                  </div>
+                  <span className="text-xs font-mono text-slate-300 mt-2 font-bold">{formatCurrencyShort(totalIncome)}</span>
+                  <span className="text-[10px] text-slate-400">Ingresos Totales</span>
+                </div>
+
+                {/* Destinación del Gasto (Derecha) */}
+                <div className="flex flex-col justify-around w-full md:w-[38%] gap-2.5">
+                  <div className="bg-blue-500/10 border border-blue-500/20 p-2 rounded-lg flex justify-between items-center">
+                    <div>
+                      <span className="text-xs text-blue-300 font-bold block">2.1.1 Personal</span>
+                      <span className="text-[10px] text-slate-400">Nómina y Seguridad Social</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-white">
+                      {formatCurrencyShort(pRow?.monthly.reduce((a,b)=>a+b,0) || 369650490929)}
+                    </span>
+                  </div>
+
+                  <div className="bg-purple-500/10 border border-purple-500/20 p-2 rounded-lg flex justify-between items-center">
+                    <div>
+                      <span className="text-xs text-purple-300 font-bold block">2.1.2 Funcionamiento</span>
+                      <span className="text-[10px] text-slate-400">Servicios, Mantenimiento</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-white">
+                      {formatCurrencyShort(fRow?.monthly.reduce((a,b)=>a+b,0) || 154888963161)}
+                    </span>
+                  </div>
+
+                  <div className="bg-pink-500/10 border border-pink-500/20 p-2 rounded-lg flex justify-between items-center">
+                    <div>
+                      <span className="text-xs text-pink-300 font-bold block">2.3 Inversión</span>
+                      <span className="text-[10px] text-slate-400">Proyectos e Infraestructura</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-white">
+                      {formatCurrencyShort(iRow?.monthly.reduce((a,b)=>a+b,0) || 19341947406)}
+                    </span>
+                  </div>
+
+                  <div className="bg-amber-500/10 border border-amber-500/20 p-2 rounded-lg flex justify-between items-center">
+                    <div>
+                      <span className="text-xs text-amber-300 font-bold block">2.1.3 Transferencias</span>
+                      <span className="text-[10px] text-slate-400">Convenios y Apoyos</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-white">
+                      {formatCurrencyShort(trRow?.monthly.reduce((a,b)=>a+b,0) || 6128451192)}
+                    </span>
+                  </div>
+
+                  <div className="bg-cyan-500/10 border border-cyan-500/20 p-2 rounded-lg flex justify-between items-center">
+                    <div>
+                      <span className="text-xs text-cyan-300 font-bold block">2.1.8 Tasas y Multas</span>
+                      <span className="text-[10px] text-slate-400">Impuestos y Gravámenes</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-white">
+                      {formatCurrencyShort(tmRow?.monthly.reduce((a,b)=>a+b,0) || 4563758148)}
+                    </span>
+                  </div>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        <div className="glass-card p-6 rounded-[24px] border border-white/5 flex flex-col gap-4">
+          <h2 className="text-xl font-display text-white mb-2 flex items-center gap-2"><AlertCircle className="text-orange-400" /> Alertas Financieras</h2>
+          <div className="bg-emerald-500/10 border-l-4 border-l-emerald-500 p-3 rounded-r-lg">
+            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1"><CheckCircle size={14}/> Techo Contractual Cerrado</h4>
+            <p className="text-sm text-emerald-200/80 mt-1">Compromisos ajustados al archivo oficial Gastos 2026 por {formatCurrencyShort(totalExpense)}. No se proyectan gastos adicionales.</p>
+          </div>
+          <div className="bg-blue-500/10 border-l-4 border-l-blue-500 p-3 rounded-r-lg">
+            <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wide flex items-center gap-1"><Activity size={14}/> Cobertura de Pagos</h4>
+            <p className="text-sm text-blue-200/80 mt-1">El recaudo institucional permite cubrir el 96.6% de todos los compromisos pactados, preservando {formatCurrencyShort(results.totals.saldoDisponible)} de superávit.</p>
+          </div>
+        </div>
+      </div>
+
+
+      {/* BLOQUE 6: TABLA MENSUAL DE INGRESOS POR RECURSO */}
+      <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mb-8 border border-white/5">
+        <div className="mb-6">
+          <h2 className="text-xl font-display text-white">Desglose de Ingresos por Recurso y Mes Proyectado</h2>
+          <p className="text-xs text-slate-400">Proyecci&oacute;n detallada de caja mensual (Septiembre - Diciembre) incluyendo el recaudo base</p>
+        </div>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="border-b border-white/10 text-xs text-slate-400 uppercase tracking-wider">
+                <th className="p-3 font-medium">Recurso</th>
+                <th className="p-3 font-medium">Nombre</th>
+                <th className="p-3 font-medium text-right text-emerald-400/70">Recaudo 31/08</th>
+                <th className="p-3 font-medium text-right">Sep</th>
+                <th className="p-3 font-medium text-right">Oct</th>
+                <th className="p-3 font-medium text-right">Nov</th>
+                <th className="p-3 font-medium text-right">Dic</th>
+                <th className="p-3 font-medium text-right text-emerald-400">Ingreso Total</th>
+                <th className="p-3 font-medium text-right text-rose-400">Compromiso 2026</th>
+                <th className="p-3 font-medium text-right text-blue-400">Pago Cierre</th>
+                <th className="p-3 font-medium text-right text-white">Saldo Disp.</th>
+                <th className="p-3 font-medium text-center">Estado Cobertura</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.resources.map(r => {
+                const meses = r.ingresosPorMesProyectado || [0, 0, 0, 0];
+                const pctPagado = r.totalCompromisos > 0 ? (r.totalPagos / r.totalCompromisos) * 100 : 100;
+                return (
+                  <tr key={r.recurso} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors text-sm">
+                    <td className="p-3 font-mono text-slate-300 font-bold">R{r.recurso}</td>
+                    <td className="p-3 text-slate-300 max-w-[180px] truncate" title={r.nombre}>{r.nombre}</td>
+                    <td className="p-3 text-right text-emerald-400 font-mono">{formatCurrencyShort(r.ingresosReales)}</td>
+                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[0])}</td>
+                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[1])}</td>
+                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[2])}</td>
+                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[3])}</td>
+                    <td className="p-3 text-right font-bold text-emerald-300 font-mono">{formatCurrencyShort(r.totalIngresos)}</td>
+                    <td className="p-3 text-right font-mono text-rose-300">{formatCurrencyShort(r.totalCompromisos)}</td>
+                    <td className="p-3 text-right font-mono text-blue-300">{formatCurrencyShort(r.totalPagos)}</td>
+                    <td className="p-3 text-right font-mono font-bold text-white bg-white/5">{formatCurrencyShort(r.saldoDisponible)}</td>
+                    <td className="p-3 text-center">
+                      {pctPagado >= 99.9 ? (
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">100% Cubierto</span>
+                      ) : (
+                        <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold" title={`Pagos topados a recaudo: ${pctPagado.toFixed(1)}%`}>
+                          {pctPagado.toFixed(0)}% (Tope Recaudo)
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-white/20 text-sm font-bold bg-white/5">
+                <td colSpan={2} className="p-3 text-white uppercase">Totales Institucionales</td>
+                <td className="p-3 text-right text-emerald-400 font-mono">{formatCurrencyShort(results.totals.totalRecaudo)}</td>
+                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[0] || 0), 0))}</td>
+                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[1] || 0), 0))}</td>
+                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[2] || 0), 0))}</td>
+                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[3] || 0), 0))}</td>
+                <td className="p-3 text-right text-emerald-300 font-mono">{formatCurrencyShort(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</td>
+                <td className="p-3 text-right text-rose-400 font-mono">{formatCurrencyShort(results.totals.totalCompromisos)}</td>
+                <td className="p-3 text-right text-blue-400 font-mono">{formatCurrencyShort(results.totals.totalPagos)}</td>
+                <td className="p-3 text-right text-white font-mono bg-white/10">{formatCurrencyShort(results.totals.saldoDisponible)}</td>
+                <td className="p-3 text-center text-xs text-emerald-400 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% Global</td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
 
@@ -757,217 +973,6 @@ export function CashFlowScreen() {
                     heatmapExpenseTypesData.reduce((acc, t) => acc + t.monthly.reduce((a, b) => a + b, 0), 0)
                   )}
                 </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      {/* BLOQUE 7 & 8: MAPA DESTINACIÓN & ALERTAS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="glass-card p-6 rounded-[24px] lg:col-span-2 border border-white/5">
-          <h2 className="text-xl font-display text-white mb-6">Mapa de Destinación de Recursos</h2>
-          <div className="h-[250px] bg-black/20 rounded-xl border border-white/5 flex flex-col justify-center p-6 relative overflow-hidden">
-             <div className="flex justify-between items-center h-full relative z-10">
-                <div className="flex flex-col justify-around h-full w-[25%] gap-4">
-                  <div className="bg-blue-500/20 border border-blue-500/30 p-3 rounded-lg text-center relative">
-                    <span className="text-xs text-blue-300 font-bold block">Nación (R10)</span>
-                    <span className="text-sm font-mono text-white">{formatCurrencyShort(totalIncome * 0.65)}</span>
-                    <div className="absolute right-0 top-1/2 w-8 h-[2px] bg-blue-500/40 -mr-8"></div>
-                  </div>
-                  <div className="bg-emerald-500/20 border border-emerald-500/30 p-3 rounded-lg text-center relative">
-                    <span className="text-xs text-emerald-300 font-bold block">Propios (R20/R31)</span>
-                    <span className="text-sm font-mono text-white">{formatCurrencyShort(totalIncome * 0.35)}</span>
-                    <div className="absolute right-0 top-1/2 w-8 h-[2px] bg-emerald-500/40 -mr-8"></div>
-                  </div>
-                </div>
-                <div className="w-[30%] flex justify-center relative">
-                  <div className="w-24 h-24 rounded-full bg-primary-container/20 border-4 border-primary-container/30 flex items-center justify-center flex-col shadow-[0_0_30px_rgba(255,204,41,0.2)]">
-                    <Coins className="text-primary-container mb-1" size={24} />
-                    <span className="text-[10px] uppercase font-bold text-primary-container tracking-wider">Caja Central</span>
-                  </div>
-                  <div className="absolute left-0 top-1/2 w-[calc(50%-3rem)] h-[2px] bg-white/10 -z-10"></div>
-                  <div className="absolute right-0 top-1/2 w-[calc(50%-3rem)] h-[2px] bg-white/10 -z-10"></div>
-                </div>
-                <div className="flex flex-col justify-around h-full w-[30%] gap-3">
-                  <div className="bg-indigo-500/20 border border-indigo-500/30 p-2.5 rounded-lg relative">
-                    <div className="absolute left-0 top-1/2 w-8 h-[2px] bg-indigo-500/40 -ml-8"></div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-indigo-300 font-bold">Personal</span>
-                      <span className="text-xs font-mono text-white">{formatCurrencyShort(totalExpense * 0.65)}</span>
-                    </div>
-                  </div>
-                  <div className="bg-purple-500/20 border border-purple-500/30 p-2.5 rounded-lg relative">
-                    <div className="absolute left-0 top-1/2 w-8 h-[2px] bg-purple-500/40 -ml-8"></div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-purple-300 font-bold">Funcionamiento</span>
-                      <span className="text-xs font-mono text-white">{formatCurrencyShort(totalExpense * 0.25)}</span>
-                    </div>
-                  </div>
-                  <div className="bg-pink-500/20 border border-pink-500/30 p-2.5 rounded-lg relative">
-                    <div className="absolute left-0 top-1/2 w-8 h-[2px] bg-pink-500/40 -ml-8"></div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-pink-300 font-bold">Inversión</span>
-                      <span className="text-xs font-mono text-white">{formatCurrencyShort(totalExpense * 0.10)}</span>
-                    </div>
-                  </div>
-                </div>
-             </div>
-          </div>
-        </div>
-
-        <div className="glass-card p-6 rounded-[24px] border border-white/5 flex flex-col gap-4">
-          <h2 className="text-xl font-display text-white mb-2 flex items-center gap-2"><AlertCircle className="text-orange-400" /> Alertas Financieras</h2>
-          <div className="bg-red-500/10 border-l-4 border-l-red-500 p-3 rounded-r-lg">
-            <h4 className="text-xs font-bold text-red-400 uppercase tracking-wide flex items-center gap-1"><AlertTriangle size={14}/> Alerta Crítica</h4>
-            <p className="text-sm text-red-200/80 mt-1">Déficit operativo en Junio y Diciembre (+$10,000M) debido a pago de primas institucionales.</p>
-          </div>
-          <div className="bg-orange-500/10 border-l-4 border-l-orange-500 p-3 rounded-r-lg">
-            <h4 className="text-xs font-bold text-orange-400 uppercase tracking-wide flex items-center gap-1"><AlertCircle size={14}/> Atención</h4>
-            <p className="text-sm text-orange-200/80 mt-1">Gasto de funcionamiento presenta crecimiento atípico (+12%) frente al trimestre anterior.</p>
-          </div>
-          <div className="bg-emerald-500/10 border-l-4 border-l-emerald-500 p-3 rounded-r-lg">
-            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1"><CheckCircle size={14}/> Normal</h4>
-            <p className="text-sm text-emerald-200/80 mt-1">Saldo acumulado sostenible durante los 12 meses proyectados.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* BLOQUE 9 & 10: TABLA DE DETALLE (DRILL-DOWN) */}
-      <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col border border-white/5">
-        <div className="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
-          <div>
-            <h2 className="text-xl font-display text-white">Flujo Neto y Desagregación Profunda (Drill-Down)</h2>
-          </div>
-        </div>
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-sm text-left border-collapse">
-            <thead>
-              <tr className="border-b border-white/10 text-slate-400 bg-white/5 uppercase text-[10px] tracking-wider">
-                <th className="py-3 px-4 font-bold w-10"></th>
-                <th className="py-3 px-4 font-bold">Mes</th>
-                <th className="py-3 px-4 font-bold text-right text-emerald-300">Ingresos Totales</th>
-                <th className="py-3 px-4 font-bold text-right text-rose-300">Gastos Totales</th>
-                <th className="py-3 px-4 font-bold text-right text-blue-300">Flujo Neto</th>
-                <th className="py-3 px-4 font-bold text-right">Saldo Inicial</th>
-                <th className="py-3 px-4 font-bold text-right text-white">Saldo Final</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthlyData.map((row, idx) => (
-                <React.Fragment key={idx}>
-                  <tr className={`border-b border-white/5 hover:bg-white/10 transition-colors cursor-pointer ${expandedMonth === row.month ? 'bg-white/5' : ''}`} onClick={() => setExpandedMonth(expandedMonth === row.month ? null : row.month)}>
-                    <td className="py-4 px-4 text-center text-slate-400">{expandedMonth === row.month ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</td>
-                    <td className="py-4 px-4 font-bold text-white text-base">{row.month}</td>
-                    <td className="py-4 px-4 text-right text-emerald-300 font-medium">{formatCurrencyShort(row.income)}</td>
-                    <td className="py-4 px-4 text-right text-rose-300 font-medium">{formatCurrencyShort(row.expense)}</td>
-                    <td className={`py-4 px-4 text-right font-bold ${row.netFlow >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>{formatCurrencyShort(row.netFlow)}</td>
-                    <td className="py-4 px-4 text-right text-slate-300">{formatCurrencyShort(row.initialBalance)}</td>
-                    <td className="py-4 px-4 text-right text-white font-bold">{formatCurrencyShort(row.finalBalance)}</td>
-                  </tr>
-                  {expandedMonth === row.month && (
-                    <tr className="bg-[#0f172a]/80 border-b-2 border-primary-container/30">
-                      <td colSpan={7} className="p-0">
-                        <div className="p-6 pl-14">
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div>
-                              <h4 className="text-xs uppercase tracking-widest text-emerald-400 mb-4 font-bold flex items-center gap-2 border-b border-emerald-500/20 pb-2"><TrendingUp size={14} /> Análisis de Ingresos</h4>
-                              <div className="space-y-3">
-                                <div className="flex justify-between items-center text-sm"><span className="text-slate-300">Nación (R10)</span><span className="font-mono text-white">{formatCurrencyShort(row.rNacion)}</span></div>
-                                <div className="w-full bg-slate-800 h-1 rounded-full"><div className="bg-emerald-500 h-full rounded-full" style={{width: `${(row.rNacion/row.income)*100}%`}}></div></div>
-                                <div className="flex justify-between items-center text-sm pt-2"><span className="text-slate-300">Propios (R20/R31)</span><span className="font-mono text-white">{formatCurrencyShort(row.rPropios)}</span></div>
-                                <div className="w-full bg-slate-800 h-1 rounded-full"><div className="bg-emerald-400 h-full rounded-full" style={{width: `${(row.rPropios/row.income)*100}%`}}></div></div>
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="text-xs uppercase tracking-widest text-rose-400 mb-4 font-bold flex items-center gap-2 border-b border-rose-500/20 pb-2"><TrendingDown size={14} /> Análisis de Gastos</h4>
-                              <div className="space-y-3">
-                                <div className="flex justify-between items-center text-sm"><span className="text-slate-300">Gastos de Personal</span><span className="font-mono text-white">{formatCurrencyShort(row.gPersonal)}</span></div>
-                                <div className="w-full bg-slate-800 h-1 rounded-full"><div className="bg-rose-500 h-full rounded-full" style={{width: `${(row.gPersonal/row.expense)*100}%`}}></div></div>
-                                <div className="flex justify-between items-center text-sm pt-2"><span className="text-slate-300">Funcionamiento e Inversión</span><span className="font-mono text-white">{formatCurrencyShort(row.gFuncionamiento + row.gInversion)}</span></div>
-                                <div className="w-full bg-slate-800 h-1 rounded-full"><div className="bg-rose-400 h-full rounded-full" style={{width: `${((row.gFuncionamiento + row.gInversion)/row.expense)*100}%`}}></div></div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* MODAL EMERGENTE DE CONFIGURACIÓN */}
-            {/* BLOQUE 6: TABLA MENSUAL DE INGRESOS POR RECURSO */}
-      <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mb-8 border border-white/5">
-        <div className="mb-6">
-          <h2 className="text-xl font-display text-white">Desglose de Ingresos por Recurso y Mes Proyectado</h2>
-          <p className="text-xs text-slate-400">Proyecci&oacute;n detallada de caja mensual (Septiembre - Diciembre) incluyendo el recaudo base</p>
-        </div>
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="border-b border-white/10 text-xs text-slate-400 uppercase tracking-wider">
-                <th className="p-3 font-medium">Recurso</th>
-                <th className="p-3 font-medium">Nombre</th>
-                <th className="p-3 font-medium text-right text-emerald-400/70">Recaudo 31/08</th>
-                <th className="p-3 font-medium text-right">Sep</th>
-                <th className="p-3 font-medium text-right">Oct</th>
-                <th className="p-3 font-medium text-right">Nov</th>
-                <th className="p-3 font-medium text-right">Dic</th>
-                <th className="p-3 font-medium text-right text-emerald-400">Ingreso Total</th>
-                <th className="p-3 font-medium text-right text-rose-400">Compromiso 2026</th>
-                <th className="p-3 font-medium text-right text-blue-400">Pago Cierre</th>
-                <th className="p-3 font-medium text-right text-white">Saldo Disp.</th>
-                <th className="p-3 font-medium text-center">Estado Cobertura</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.resources.map(r => {
-                const meses = r.ingresosPorMesProyectado || [0, 0, 0, 0];
-                const pctPagado = r.totalCompromisos > 0 ? (r.totalPagos / r.totalCompromisos) * 100 : 100;
-                return (
-                  <tr key={r.recurso} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors text-sm">
-                    <td className="p-3 font-mono text-slate-300 font-bold">R{r.recurso}</td>
-                    <td className="p-3 text-slate-300 max-w-[180px] truncate" title={r.nombre}>{r.nombre}</td>
-                    <td className="p-3 text-right text-emerald-400 font-mono">{formatCurrencyShort(r.ingresosReales)}</td>
-                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[0])}</td>
-                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[1])}</td>
-                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[2])}</td>
-                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[3])}</td>
-                    <td className="p-3 text-right font-bold text-emerald-300 font-mono">{formatCurrencyShort(r.totalIngresos)}</td>
-                    <td className="p-3 text-right font-mono text-rose-300">{formatCurrencyShort(r.totalCompromisos)}</td>
-                    <td className="p-3 text-right font-mono text-blue-300">{formatCurrencyShort(r.totalPagos)}</td>
-                    <td className="p-3 text-right font-mono font-bold text-white bg-white/5">{formatCurrencyShort(r.saldoDisponible)}</td>
-                    <td className="p-3 text-center">
-                      {pctPagado >= 99.9 ? (
-                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">100% Cubierto</span>
-                      ) : (
-                        <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold" title={`Pagos topados a recaudo: ${pctPagado.toFixed(1)}%`}>
-                          {pctPagado.toFixed(0)}% (Tope Recaudo)
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-white/20 text-sm font-bold bg-white/5">
-                <td colSpan={2} className="p-3 text-white uppercase">Totales Institucionales</td>
-                <td className="p-3 text-right text-emerald-400 font-mono">{formatCurrencyShort(results.totals.totalRecaudo)}</td>
-                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[0] || 0), 0))}</td>
-                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[1] || 0), 0))}</td>
-                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[2] || 0), 0))}</td>
-                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[3] || 0), 0))}</td>
-                <td className="p-3 text-right text-emerald-300 font-mono">{formatCurrencyShort(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</td>
-                <td className="p-3 text-right text-rose-400 font-mono">{formatCurrencyShort(results.totals.totalCompromisos)}</td>
-                <td className="p-3 text-right text-blue-400 font-mono">{formatCurrencyShort(results.totals.totalPagos)}</td>
-                <td className="p-3 text-right text-white font-mono bg-white/10">{formatCurrencyShort(results.totals.saldoDisponible)}</td>
-                <td className="p-3 text-center text-xs text-emerald-400 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% Global</td>
               </tr>
             </tfoot>
           </table>

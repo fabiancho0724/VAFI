@@ -80,11 +80,28 @@ export function parseNumber(val: any): number {
   if (typeof val === 'number') return isNaN(val) ? 0 : val;
   let s = String(val).trim();
   if (!s) return 0;
-  s = s.replace(/[$ ]/g, '');
+  s = s.replace(/[\$ ]/g, '');
+  
   if (s.includes(',') && s.includes('.')) {
-    s = s.replace(/,/g, '');
-  } else if (s.includes(',') && !s.includes('.')) {
-    s = s.replace(/,/g, '.');
+    const lastComma = s.lastIndexOf(',');
+    const lastDot = s.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+      s = s.replace(/,/g, '');
+    }
+  } else if (s.includes(',')) {
+    const commaCount = (s.match(/,/g) || []).length;
+    if (commaCount > 1) {
+      s = s.replace(/,/g, '');
+    } else {
+      const parts = s.split(',');
+      if (parts[1] && parts[1].length === 3 && parts[0].length >= 1) {
+        s = s.replace(/,/g, '');
+      } else {
+        s = s.replace(',', '.');
+      }
+    }
   }
   const parsed = parseFloat(s);
   return isNaN(parsed) ? 0 : parsed;
