@@ -7,7 +7,8 @@ import {
   ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Wallet, 
   AlertCircle, AlertTriangle, CheckCircle, Calendar, Filter, 
   ChevronDown, ChevronRight, Download, Maximize2, Coins, Activity, Target,
-  Brain, FileText, PieChart as PieChartIcon, Settings, X, Save, Lock, Award
+  Brain, FileText, PieChart as PieChartIcon, Settings, X, Save, Lock, Award,
+  Layers, Building2
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
@@ -39,6 +40,8 @@ export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => voi
   const [selectedMonthDetail, setSelectedMonthDetail] = useState<any>(null);
   const [expandedTiposGasto, setExpandedTiposGasto] = useState<string[]>(['2.1.1 Gastos de Personal']);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [selectedUnitOps, setSelectedUnitOps] = useState('Todas');
+  const [selectedTipoOps, setSelectedTipoOps] = useState('Todos');
 
   const handleOverrideChange = (recurso: string, field: 'manualIncome' | 'manualExpense', value: number) => {
     setConfig(prev => ({
@@ -389,11 +392,16 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
             <span className="text-blue-300 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% de compromisos pagados</span>
           </div>
         </div>
-        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-primary-container bg-primary-container/5">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Saldo Disponible Estimado</p>
-          <p className="text-2xl md:text-3xl font-display text-white">{formatCurrencyShort(results.totals.saldoDisponible)}</p>
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-amber-500 bg-amber-500/5">
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Cuentas por Pagar Siguiente Vigencia</p>
+          <p className="text-2xl md:text-3xl font-display text-amber-300">
+            {formatCurrencyShort(Math.max(0, results.totals.totalCompromisos - results.totals.totalPagos))}
+          </p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-primary-container font-bold">Superávit protegido en caja</span>
+            <span className="text-emerald-400 font-bold">
+              {((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% pagado en vigencia
+            </span>
+            <span className="text-slate-400">• Menor valor posible</span>
           </div>
         </div>
       </div>
@@ -602,33 +610,57 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
         </div>
         
         <div className="glass-card p-6 rounded-[24px] flex flex-col border border-white/5 h-[400px]">
-          <h2 className="text-xl font-display text-white mb-2">Evolución del Saldo Acumulado (Waterfall)</h2>
-          <p className="text-xs text-slate-400 mb-6">Variación mensual de liquidez disponible</p>
-          <div className="flex-1 w-full">
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <h2 className="text-xl font-display text-white">Evolución del Flujo y Estado de la Caja</h2>
+              <p className="text-xs text-slate-400">Ingresos vs Pagos mensuales y evolución del saldo en bancos</p>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] font-mono">
+              <span className="flex items-center gap-1 text-emerald-400"><div className="w-2.5 h-2.5 bg-emerald-500 rounded"></div> Ingresos</span>
+              <span className="flex items-center gap-1 text-rose-400"><div className="w-2.5 h-2.5 bg-rose-500 rounded"></div> Pagos</span>
+              <span className="flex items-center gap-1 text-amber-300"><div className="w-2.5 h-1 bg-amber-400"></div> Saldo Caja</span>
+            </div>
+          </div>
+          <div className="flex-1 w-full mt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+              <ComposedChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="#64748b" tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} domain={['auto', 'auto']} axisLine={false} tickLine={false} />
-                <RechartsTooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} content={({ active, payload }) => {
+                <YAxis stroke="#64748b" tickFormatter={formatCurrencyShort} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <RechartsTooltip 
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
+                  content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-[#0f172a] border border-slate-700 p-3 rounded-xl shadow-xl">
-                          <p className="font-bold text-white mb-2">{data.month}</p>
-                          <p className="text-sm text-slate-300">Flujo del mes: <span className={data.netFlow >= 0 ? 'text-emerald-400' : 'text-rose-400'}>{formatCurrency(data.netFlow)}</span></p>
-                          <p className="text-sm text-slate-300">Saldo Final: <span className="font-bold text-white">{formatCurrency(data.finalBalance)}</span></p>
+                        <div className="bg-[#0f172a] border border-slate-700 p-3.5 rounded-xl shadow-2xl font-sans text-xs space-y-1.5 min-w-[200px]">
+                          <p className="font-bold text-white text-sm pb-1 border-b border-white/10">{data.month}</p>
+                          <div className="flex justify-between text-emerald-300">
+                            <span>Ingresos:</span>
+                            <span className="font-mono font-bold">{formatCurrency(data.income)}</span>
+                          </div>
+                          <div className="flex justify-between text-rose-300">
+                            <span>Pagos:</span>
+                            <span className="font-mono font-bold">{formatCurrency(data.expense)}</span>
+                          </div>
+                          <div className="flex justify-between pt-1 border-t border-white/10 font-bold">
+                            <span className={data.netFlow >= 0 ? 'text-blue-300' : 'text-orange-300'}>Flujo Neto:</span>
+                            <span className={`font-mono ${data.netFlow >= 0 ? 'text-blue-300' : 'text-orange-300'}`}>{formatCurrency(data.netFlow)}</span>
+                          </div>
+                          <div className="flex justify-between text-amber-300 font-bold pt-1 bg-white/5 p-1 rounded">
+                            <span>Estado de Caja:</span>
+                            <span className="font-mono">{formatCurrency(data.finalBalance)}</span>
+                          </div>
                         </div>
                       );
                     }
                     return null;
-                  }} />
-                <Bar dataKey="waterfallStart" stackId="a" fill="transparent" />
-                <Bar dataKey="waterfallEnd" stackId="a">
-                  {monthlyData.map((entry: any, index: number) => (<Cell key={`cell-${index}`} fill={entry.waterfallColor} />))}
-                </Bar>
-                <Line type="stepAfter" dataKey="finalBalance" stroke="#f59e0b" strokeWidth={3} dot={false} />
-              </BarChart>
+                  }} 
+                />
+                <Bar dataKey="income" name="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} opacity={0.85} />
+                <Bar dataKey="expense" name="Pagos" fill="#f43f5e" radius={[4, 4, 0, 0]} opacity={0.85} />
+                <Line type="monotone" dataKey="finalBalance" name="Saldo de Caja" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3, fill: '#f59e0b' }} />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -989,6 +1021,301 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
         </div>
       </div>
 
+      {/* NUEVO BLOQUE: EJECUCIÓN PRESUPUESTAL TIPO DE GASTO POR OPERACIÓN CON FILTRO POR UNIDAD */}
+      <div className="glass-card p-6 md:p-8 rounded-[24px] border border-white/10 mb-8 bg-slate-900/60 shadow-2xl">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 pb-6 border-b border-white/10">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                Auditoría Operativa Gastos 2026
+              </span>
+              <span className="text-xs text-slate-400 font-mono">Compromiso vs Valor Pago por Operación</span>
+            </div>
+            <h2 className="text-2xl font-display text-white flex items-center gap-3">
+              <Layers className="text-blue-400" />
+              Tipo de Gasto por Operación y Unidad
+            </h2>
+            <p className="text-xs text-slate-300 mt-1 max-w-3xl">
+              Filtre por cualquier unidad académica o administrativa para analizar qué operaciones contractuales concentran el gasto y su cumplimiento en valor pago.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 self-end lg:self-center">
+            {/* Filtro por Unidad */}
+            <div className="bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-1.5 flex items-center gap-2">
+              <Building2 size={15} className="text-blue-400" />
+              <span className="text-[10px] text-slate-400 font-bold uppercase">Unidad:</span>
+              <select
+                value={selectedUnitOps}
+                onChange={e => setSelectedUnitOps(e.target.value)}
+                className="bg-transparent text-white text-xs outline-none cursor-pointer pr-2 font-medium"
+              >
+                <option value="Todas" className="bg-[#0f172a]">Todas las Unidades (Institucional)</option>
+                <option value="01 - ADMINISTRATIVA Y FINANCIERA" className="bg-[#0f172a]">01 - ADMINISTRATIVA Y FINANCIERA</option>
+                <option value="02 - INVESTIGACION Y EXTENSION" className="bg-[#0f172a]">02 - INVESTIGACION Y EXTENSION</option>
+                <option value="04 - CIENCIAS DE LA EDUCACION" className="bg-[#0f172a]">04 - CIENCIAS DE LA EDUCACION</option>
+                <option value="05 - CIENCIAS BASICAS" className="bg-[#0f172a]">05 - CIENCIAS BASICAS</option>
+                <option value="06 - CIENCIAS ECONOMICAS" className="bg-[#0f172a]">06 - CIENCIAS ECONOMICAS</option>
+                <option value="07 - CIENCIAS DE LA SALUD" className="bg-[#0f172a]">07 - CIENCIAS DE LA SALUD</option>
+                <option value="08 - CIENCIAS AGROPECUARIAS" className="bg-[#0f172a]">08 - CIENCIAS AGROPECUARIAS</option>
+                <option value="09 - INGENIERIA" className="bg-[#0f172a]">09 - INGENIERIA</option>
+                <option value="10 - DERECHO Y CIENCIAS SOCIALES" className="bg-[#0f172a]">10 - DERECHO Y CIENCIAS SOCIALES</option>
+                <option value="11 - ESTUDIOS TECNOLOGICOS" className="bg-[#0f172a]">11 - ESTUDIOS TECNOLOGICOS</option>
+                <option value="12 - SECCIONAL DUITAMA" className="bg-[#0f172a]">12 - SECCIONAL DUITAMA</option>
+                <option value="13 - SECCIONAL SOGAMOSO" className="bg-[#0f172a]">13 - SECCIONAL SOGAMOSO</option>
+                <option value="14 - SECCIONAL CHIQUINQUIRA" className="bg-[#0f172a]">14 - SECCIONAL CHIQUINQUIRA</option>
+                <option value="15 - SEDE REGIONAL AGUAZUL" className="bg-[#0f172a]">15 - SEDE REGIONAL AGUAZUL</option>
+              </select>
+            </div>
+
+            {/* Filtro por Tipo de Gasto */}
+            <div className="bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-1.5 flex items-center gap-2">
+              <Filter size={15} className="text-emerald-400" />
+              <span className="text-[10px] text-slate-400 font-bold uppercase">Tipo:</span>
+              <select
+                value={selectedTipoOps}
+                onChange={e => setSelectedTipoOps(e.target.value)}
+                className="bg-transparent text-white text-xs outline-none cursor-pointer pr-2 font-medium"
+              >
+                <option value="Todos" className="bg-[#0f172a]">Todos los Tipos de Gasto</option>
+                <option value="Personal" className="bg-[#0f172a]">2.1.1 Gastos de Personal</option>
+                <option value="Funcionamiento" className="bg-[#0f172a]">2.1.2 Gastos de Funcionamiento</option>
+                <option value="Invers" className="bg-[#0f172a]">2.3 Gastos de Inversión</option>
+                <option value="Transferencias" className="bg-[#0f172a]">2.1.3 Transferencias Corrientes</option>
+                <option value="Tasas" className="bg-[#0f172a]">2.1.8 Tasas y Multas</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Procesamiento de Operaciones Filtradas */}
+        {(() => {
+          function getCol(row: any, keyPart: string) {
+            const k = Object.keys(row).find(x => x.toLowerCase().includes(keyPart.toLowerCase()));
+            return k ? row[k] : '';
+          }
+
+          function cleanNum(val: any) {
+            if (val === undefined || val === null) return 0;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            let s = String(val).trim().replace(/[\$ ]/g, '');
+            if (s.includes(',') && s.includes('.')) {
+              const lastComma = s.lastIndexOf(',');
+              const lastDot = s.lastIndexOf('.');
+              if (lastComma > lastDot) s = s.replace(/\./g, '').replace(',', '.');
+              else s = s.replace(/,/g, '');
+            } else if (s.includes(',')) {
+              const count = (s.match(/,/g) || []).length;
+              if (count > 1) s = s.replace(/,/g, '');
+              else {
+                const parts = s.split(',');
+                if (parts[1] && parts[1].length === 3 && parts[0].length >= 1) s = s.replace(/,/g, '');
+                else s = s.replace(',', '.');
+              }
+            }
+            const p = parseFloat(s);
+            return isNaN(p) ? 0 : p;
+          }
+
+          const opMap: Record<string, { operacion: string; tipo: string; compromiso: number; pago: number }> = {};
+          
+          if (csvData?.gastos2026 && csvData.gastos2026.length > 0) {
+            csvData.gastos2026.forEach((r: any) => {
+              const u = String(getCol(r, 'unidad')).trim();
+              const t = String(getCol(r, 'tipo')).trim();
+              const op = String(getCol(r, 'operacion')).trim();
+              if (!op) return;
+
+              if (selectedUnitOps !== 'Todas' && !u.includes(selectedUnitOps)) return;
+              if (selectedTipoOps !== 'Todos' && !t.includes(selectedTipoOps)) return;
+
+              const comp = cleanNum(getCol(r, 'compromiso'));
+              const rawPago = cleanNum(getCol(r, 'pago'));
+
+              // Regla: Nómina se paga al 100% en la vigencia; resto proyectado ~95%
+              let pagoFinal = rawPago;
+              if (t.toLowerCase().includes('personal')) {
+                pagoFinal = comp; // 100% pago de nómina en la vigencia
+              } else {
+                pagoFinal = Math.min(comp, Math.max(rawPago, comp * 0.95)); // ~95%
+              }
+
+              if (!opMap[op]) {
+                opMap[op] = { operacion: op, tipo: t, compromiso: 0, pago: 0 };
+              }
+              opMap[op].compromiso += comp;
+              opMap[op].pago += pagoFinal;
+            });
+          }
+
+          const opsList = Object.values(opMap).sort((a, b) => b.compromiso - a.compromiso);
+          const totalCompUnidad = opsList.reduce((acc, o) => acc + o.compromiso, 0);
+          const totalPagoUnidad = opsList.reduce((acc, o) => acc + o.pago, 0);
+          const cuentasPorPagarUnidad = Math.max(0, totalCompUnidad - totalPagoUnidad);
+          const pctPagoUnidad = totalCompUnidad > 0 ? (totalPagoUnidad / totalCompUnidad) * 100 : 100;
+
+          // Top operaciones para visualización gráfica clara
+          const chartOps = opsList.slice(0, 12).map(o => ({
+            ...o,
+            shortName: o.operacion.length > 28 ? o.operacion.substring(0, 26) + '...' : o.operacion
+          }));
+
+          return (
+            <div className="space-y-6">
+              
+              {/* Tarjetas KPI de la Selección */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Compromisos Vigencia 2026</span>
+                  <p className="text-xl font-mono font-bold text-rose-400 mt-1">{formatCurrencyShort(totalCompUnidad)}</p>
+                  <span className="text-[11px] text-slate-400">{opsList.length} operaciones activas</span>
+                </div>
+                <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Valor Pago Proyectado</span>
+                  <p className="text-xl font-mono font-bold text-blue-400 mt-1">{formatCurrencyShort(totalPagoUnidad)}</p>
+                  <span className="text-[11px] text-blue-300 font-bold">{pctPagoUnidad.toFixed(1)}% de cumplimiento</span>
+                </div>
+                <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Cuentas por Pagar Siguiente Vigencia</span>
+                  <p className="text-xl font-mono font-bold text-amber-300 mt-1">{formatCurrencyShort(cuentasPorPagarUnidad)}</p>
+                  <span className="text-[11px] text-slate-400">Diferencia comprometida</span>
+                </div>
+                <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Unidad Seleccionada</span>
+                  <p className="text-sm font-bold text-white mt-1 truncate" title={selectedUnitOps}>
+                    {selectedUnitOps}
+                  </p>
+                  <span className="text-[11px] text-emerald-400 font-bold">Nómina pagada al 100%</span>
+                </div>
+              </div>
+
+              {/* Gráfica Comparativa Compromiso vs Valor Pago */}
+              <div className="bg-black/30 p-5 rounded-2xl border border-white/5">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                    Principales Operaciones: Compromiso vs Valor Pago
+                  </h3>
+                  <div className="flex items-center gap-4 text-xs font-mono">
+                    <span className="flex items-center gap-1.5 text-rose-300">
+                      <div className="w-3 h-3 bg-rose-500 rounded"></div> Compromiso
+                    </span>
+                    <span className="flex items-center gap-1.5 text-sky-300">
+                      <div className="w-3 h-3 bg-sky-400 rounded"></div> Valor Pago
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-[420px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartOps} layout="vertical" margin={{ top: 10, right: 30, left: 180, bottom: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                      <XAxis type="number" stroke="#64748b" tickFormatter={formatCurrencyShort} tick={{ fontSize: 10 }} />
+                      <YAxis type="category" dataKey="shortName" stroke="#94a3b8" tick={{ fontSize: 10 }} width={175} />
+                      <RechartsTooltip
+                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                        formatter={(val: number, name: string) => [formatCurrency(val), name === 'compromiso' ? 'Compromiso' : 'Valor Pago']}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const d = payload[0].payload;
+                            const diff = Math.max(0, d.compromiso - d.pago);
+                            const pct = d.compromiso > 0 ? (d.pago / d.compromiso) * 100 : 100;
+                            return (
+                              <div className="bg-[#0f172a] border border-slate-700 p-3.5 rounded-xl shadow-2xl text-xs space-y-1.5 min-w-[240px]">
+                                <p className="font-bold text-white text-sm pb-1 border-b border-white/10">{d.operacion}</p>
+                                <p className="text-[10px] text-slate-400">Tipo: {d.tipo}</p>
+                                <div className="flex justify-between text-rose-300">
+                                  <span>Compromiso:</span>
+                                  <span className="font-mono font-bold">{formatCurrency(d.compromiso)}</span>
+                                </div>
+                                <div className="flex justify-between text-sky-300">
+                                  <span>Valor Pago:</span>
+                                  <span className="font-mono font-bold">{formatCurrency(d.pago)}</span>
+                                </div>
+                                <div className="flex justify-between text-amber-300 pt-1 border-t border-white/10">
+                                  <span>Cuentas por Pagar:</span>
+                                  <span className="font-mono font-bold">{formatCurrency(diff)}</span>
+                                </div>
+                                <div className="flex justify-between text-emerald-300 font-bold">
+                                  <span>% Pagado:</span>
+                                  <span>{pct.toFixed(1)}%</span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="compromiso" name="Compromiso" fill="#f43f5e" radius={[0, 4, 4, 0]} barSize={12} />
+                      <Bar dataKey="pago" name="Valor Pago" fill="#38bdf8" radius={[0, 4, 4, 0]} barSize={12} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Tabla de Detalle Auditado por Operación */}
+              <div className="bg-black/20 p-5 rounded-2xl border border-white/5 overflow-x-auto">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">
+                  Detalle Auditado por Operación ({opsList.length} registros)
+                </h4>
+                <table className="w-full text-left text-xs border-collapse min-w-[750px]">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-400 uppercase font-mono">
+                      <th className="p-2.5">Operación</th>
+                      <th className="p-2.5">Tipo de Gasto</th>
+                      <th className="p-2.5 text-right text-rose-400">Compromiso</th>
+                      <th className="p-2.5 text-right text-sky-400">Valor Pago</th>
+                      <th className="p-2.5 text-right text-amber-300">Cuentas por Pagar</th>
+                      <th className="p-2.5 text-center">% Pago</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {opsList.map((o, idx) => {
+                      const diff = Math.max(0, o.compromiso - o.pago);
+                      const pct = o.compromiso > 0 ? (o.pago / o.compromiso) * 100 : 100;
+                      return (
+                        <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.02] font-mono text-[11px]">
+                          <td className="p-2.5 text-slate-200 font-sans font-medium max-w-[280px] truncate" title={o.operacion}>
+                            {o.operacion}
+                          </td>
+                          <td className="p-2.5 text-slate-400 font-sans text-[10px] max-w-[150px] truncate" title={o.tipo}>
+                            {o.tipo}
+                          </td>
+                          <td className="p-2.5 text-right text-rose-300 font-bold">{formatCurrencyShort(o.compromiso)}</td>
+                          <td className="p-2.5 text-right text-sky-300 font-bold">{formatCurrencyShort(o.pago)}</td>
+                          <td className="p-2.5 text-right text-amber-300 font-bold bg-white/5">{formatCurrencyShort(diff)}</td>
+                          <td className="p-2.5 text-center">
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                              pct >= 99.9 
+                                ? 'bg-emerald-500/20 text-emerald-300' 
+                                : pct >= 94.9 
+                                ? 'bg-blue-500/20 text-blue-300' 
+                                : 'bg-amber-500/20 text-amber-300'
+                            }`}>
+                              {pct.toFixed(0)}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-white/20 font-bold text-xs bg-white/5 font-mono">
+                      <td colSpan={2} className="p-3 text-white uppercase font-sans">
+                        Totales de la Selección ({selectedUnitOps})
+                      </td>
+                      <td className="p-3 text-right text-rose-400">{formatCurrencyShort(totalCompUnidad)}</td>
+                      <td className="p-3 text-right text-sky-400">{formatCurrencyShort(totalPagoUnidad)}</td>
+                      <td className="p-3 text-right text-amber-300 bg-white/10">{formatCurrencyShort(cuentasPorPagarUnidad)}</td>
+                      <td className="p-3 text-center text-emerald-400">{pctPagoUnidad.toFixed(1)}%</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+            </div>
+          );
+        })()}
+      </div>
       {isConfigModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[#161b22] border border-slate-700 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
