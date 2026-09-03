@@ -7,7 +7,7 @@ import {
   ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Wallet, 
   AlertCircle, AlertTriangle, CheckCircle, Calendar, Filter, 
   ChevronDown, ChevronRight, Download, Maximize2, Coins, Activity, Target,
-  Brain, FileText, PieChart as PieChartIcon, Settings, X, Save, Lock
+  Brain, FileText, PieChart as PieChartIcon, Settings, X, Save, Lock, Award
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
@@ -28,7 +28,7 @@ const RUBROS = ['Sueldos Básicos', 'Primas y Bonificaciones', 'Servicios Públi
 
 const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18'];
 
-export function CashFlowScreen() {
+export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => void } = {}) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready' | 'error'>('loading');
   const [csvData, setCsvData] = useState<any>({});
   const [errorMessage, setErrorMessage] = useState('');
@@ -351,6 +351,16 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
             <Settings size={16} className="text-emerald-400" />
             <span className="text-sm font-medium">Configuración de Escenario</span>
           </button>
+
+          {onNavigate && (
+            <button 
+              onClick={() => onNavigate('informe-gerencial')}
+              className="px-4 py-2 bg-primary-container text-on-primary-container hover:bg-yellow-400 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg shadow-yellow-500/10 transition-all cursor-pointer"
+            >
+              <Award size={16} />
+              Informe Técnico Gerencial
+            </button>
+          )}
         </div>
       </div>
 
