@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
+import { ResourceAllocationSection } from '../components/ResourceAllocationSection';
 import { RESOURCES_LIST } from '../lib/resourceMapper';
 import { RECURSOS_FINANCIEROS } from '../lib/constants';
 
@@ -779,6 +780,8 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
         </div>
       </div>
 
+      {/* BLOQUE ASIGNACIÓN: DISTRIBUCIÓN OPTIMIZADA DE RECURSOS PARA EL CIERRE */}
+      <ResourceAllocationSection balanceData={csvData.balanceData} gastos2026Data={csvData.gastos2026} />
 
       {/* BLOQUE 6: TABLA MENSUAL DE INGRESOS POR RECURSO */}
       <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mb-8 border border-white/5">
