@@ -167,8 +167,8 @@ export function runStructuralModel(y: number[], years: number[]): ForecastResult
     fitted.push(y[i-1] * elasticity);
   }
 
-  // Project 2027 based on MFMP 2027 projection (IPC 4.1%)
-  const projectedElasticity = 1 + 0.041; // 4.1% IPC ajustado
+  // Project 2027 based on MFMP 2027 projection (IPC 7.0% y Techos Presupuestales = IPC)
+  const projectedElasticity = 1 + 0.070; // 7.0% IPC proyectado 2027
   const nextVal = y[n-1] * projectedElasticity;
 
   return {
@@ -194,23 +194,26 @@ export function getAllModels(budgets: number[], years: number[]): ForecastResult
 
 export function selectBestModel(budgets: number[], years: number[]): ForecastResult {
   const models = getAllModels(budgets, years);
-  // El usuario indicó explícitamente que el presupuesto histórico y proyectado
-  // no debe saltar irracionalmente (>60,000M o >10%). 
-  // Forzamos la selección del modelo Estructural o aquel que respete la banda del 4% - 7%.
-  const viableModels = models.filter(m => m.projectedIncreasePercent >= 3.8 && m.projectedIncreasePercent <= 4.8);
+  // El usuario especificó: proyectar IPC para 2027 en 7.0%, con Proyección del Incremento Presupuestal cercana a ese valor (~7%).
+  // Se filtran los modelos que converjan en la vecindad del 7.0% (6.5% - 7.5%)
+  const viableModels = models.filter(m => m.projectedIncreasePercent >= 6.5 && m.projectedIncreasePercent <= 7.5);
   
   if (viableModels.length > 0) {
     return viableModels.reduce((prev, curr) => (prev.mape < curr.mape ? prev : curr));
   }
   
-  // Si ninguno entra en la banda, forzamos el modelo Estructural que está diseñado con el IPC + spread.
+  // Si ninguno de los estadísticos puros converge en la banda macroeconómica, seleccionamos el modelo Estructural basado en MFMP.
   return models.find(m => m.modelName === 'Estructural (Marco Fiscal)') || models[0];
 }
 
 export function getScenarios(basePercentage: number): ScenarioProjections {
+  // Escenarios fundamentados en los Supuestos Macroeconómicos del MFMP:
+  // - Escenario Conservador: Línea base inflacionaria anterior (5.8% / 6.0%)
+  // - Escenario Base: Proyección central vinculada al IPC 2027 (7.00%)
+  // - Escenario de Presión: Indexación de nómina según regla SMMLV (IPC + 2.2% = 9.20%)
   return {
-    conservative: Math.max(0, basePercentage - 2.5),
-    base: basePercentage,
-    pressure: basePercentage + 3.2
+    conservative: Math.max(0, Number((basePercentage - 1.2).toFixed(2))),
+    base: Number(basePercentage.toFixed(2)),
+    pressure: Number((basePercentage + 2.2).toFixed(2))
   };
 }

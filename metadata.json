@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "VAFI - UPTC Financial Hub",
+  "description": "Plataforma de análisis financiero, presupuestal y proyecciones macroeconómicas institucionales de la UPTC.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

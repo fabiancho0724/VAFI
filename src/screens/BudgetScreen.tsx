@@ -1,11 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart } from 'recharts';
+import { 
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+  Tooltip as RechartsTooltip, PieChart, Pie, Cell, LineChart, Line, Legend, 
+  ComposedChart 
+} from 'recharts';
 import { 
   TrendingUp, TrendingDown, DollarSign, Wallet, AlertTriangle, Lightbulb, 
-  Target, Info, CheckCircle2, FileText, Scale, BarChart2, ShieldAlert, Activity 
+  Target, Info, CheckCircle2, FileText, Scale, BarChart2, ShieldAlert, Activity,
+  Sliders, ArrowUpRight, Award, Compass, Eye, Building2
 } from 'lucide-react';
 import { budgetData } from '../data/budgetData';
-import { MACRO_INDICATORS, YEARS } from '../lib/macroData';
+import { MACRO_INDICATORS, YEARS, SUPUESTOS_MACROECONOMICOS_MFMP } from '../lib/macroData';
 import { selectBestModel, getScenarios, getAllModels, ModelType } from '../lib/budgetForecasting';
 
 const COLORS = ['#4ade80', '#60a5fa', '#f472b6', '#fbbf24', '#c084fc', '#38bdf8'];
@@ -106,12 +111,11 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
       decreto1279: d.d1279,
       ices: d.ices,
       totalBudget: d.totalBudget,
-      // totalExpenses removed, we graph totalBudget
       fitted: bestModel.fitted[i] || null
     };
   });
 
-  // Incremento del Ingreso Proyectado
+  // Incremento del Ingreso Proyectado (Alineado con IPC 7.0%)
   const projectedNextBudgetVal = bestModel.projectedValue;
   const requiredIncomeIncrease = ((projectedNextBudgetVal - currentBudget) / currentBudget) * 100;
   const scenarios = useMemo(() => getScenarios(requiredIncomeIncrease), [requiredIncomeIncrease]);
@@ -126,119 +130,230 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
   const projectedNextBudget = currentBudget * (1 + projectedIncrease / 100);
   const addRequired = projectedNextBudget - currentBudget;
 
+  // Proyección y Rango 2027 frente al Histórico (2016 - 2027)
+  const projectionRangeSeries = useMemo(() => {
+    const basePct = 7.00; // IPC proyectado 2027 y regla Techos = IPC
+    const lowerPct = scenarios.conservative; // 5.80%
+    const upperPct = scenarios.pressure;     // 9.20% (IPC + 2.2% SMMLV MFMP)
+
+    const projectedBase = currentBudget * (1 + basePct / 100);
+    const projectedLower = currentBudget * (1 + lowerPct / 100);
+    const projectedUpper = currentBudget * (1 + upperPct / 100);
+
+    const points = historicalSeries.map((d, idx) => {
+      const isAnchor = idx === historicalSeries.length - 1; // 2026
+      let prevVal = idx > 0 ? historicalSeries[idx - 1].totalBudget : null;
+      let annualChange = prevVal ? ((d.totalBudget - prevVal) / prevVal) * 100 : null;
+
+      return {
+        year: `${d.year}`,
+        numericYear: d.year,
+        presupuestoReal: d.totalBudget,
+        // Anchor points for seamless connection to 2027
+        proyeccionBase: isAnchor ? d.totalBudget : null,
+        rangoInferior: isAnchor ? d.totalBudget : null,
+        rangoSuperior: isAnchor ? d.totalBudget : null,
+        bandaRango: isAnchor ? [d.totalBudget, d.totalBudget] : null,
+        ipc: d.ipc,
+        annualChange,
+        isProjection: false
+      };
+    });
+
+    // 2027 projected point with full range
+    points.push({
+      year: '2027 (Proy.)',
+      numericYear: 2027,
+      presupuestoReal: null,
+      proyeccionBase: projectedBase,
+      rangoInferior: projectedLower,
+      rangoSuperior: projectedUpper,
+      bandaRango: [projectedLower, projectedUpper],
+      ipc: 7.0,
+      annualChange: basePct,
+      isProjection: true
+    });
+
+    return points;
+  }, [historicalSeries, currentBudget, scenarios]);
+
+  const CustomProjectionTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || !payload.length) return null;
+
+    const dataPoint = payload[0]?.payload;
+    if (!dataPoint) return null;
+
+    const isProj = dataPoint.isProjection;
+
+    return (
+      <div className="bg-[#0f172a]/95 border border-white/20 p-4 rounded-xl shadow-2xl backdrop-blur-md max-w-sm text-xs">
+        <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+          <span className="font-bold text-sm text-white">{dataPoint.year}</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono uppercase ${isProj ? 'bg-primary-container/20 text-primary-container border border-primary-container/30' : 'bg-emerald-500/20 text-emerald-300'}`}>
+            {isProj ? 'Proyección Vigencia 2027' : 'Histórico Ejecutado'}
+          </span>
+        </div>
+
+        {isProj ? (
+          <div className="space-y-2">
+            <div className="p-2.5 rounded-lg bg-primary-container/15 border border-primary-container/30">
+              <span className="text-on-surface-variant block text-[10px] uppercase font-semibold">Proyección Base (IPC 7.0%):</span>
+              <div className="flex items-baseline gap-2 mt-0.5">
+                <span className="text-base font-bold text-white font-mono">{formatCurrencyShort(dataPoint.proyeccionBase)}</span>
+                <span className="text-emerald-400 font-bold">(+7.00%)</span>
+              </div>
+              <div className="text-[10px] text-on-surface-variant mt-0.5">
+                Adición requerida: +{formatCurrencyShort(dataPoint.proyeccionBase - currentBudget)}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <span className="text-emerald-400 block text-[10px] font-semibold">Límite Inferior (5.8%):</span>
+                <span className="font-mono text-white font-bold">{formatCurrencyShort(dataPoint.rangoInferior)}</span>
+                <span className="text-[10px] text-on-surface-variant block mt-0.5">Escenario Conservador</span>
+              </div>
+              <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                <span className="text-red-400 block text-[10px] font-semibold">Límite Superior (9.2%):</span>
+                <span className="font-mono text-white font-bold">{formatCurrencyShort(dataPoint.rangoSuperior)}</span>
+                <span className="text-[10px] text-on-surface-variant block mt-0.5">Presión SMMLV (IPC+2.2)</span>
+              </div>
+            </div>
+
+            <div className="text-[10px] text-on-surface-variant pt-1 border-t border-white/10 flex justify-between items-center">
+              <span>Amplitud de Incertidumbre:</span>
+              <span className="font-mono text-amber-300 font-semibold">
+                {formatCurrencyShort(dataPoint.rangoSuperior - dataPoint.rangoInferior)} (3.40 pp)
+              </span>
+            </div>
+            <div className="text-[10px] text-primary-container bg-black/40 p-2 rounded border border-primary-container/20">
+              Supuesto vinculante: Techos presupuestales = IPC (7.0%) según el MFMP.
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="text-on-surface-variant">Presupuesto Aforado:</span>
+              <span className="font-bold text-white font-mono">{formatCurrencyShort(dataPoint.presupuestoReal)}</span>
+            </div>
+            {dataPoint.annualChange !== null && (
+              <div className="flex justify-between items-center">
+                <span className="text-on-surface-variant">Variación Anual:</span>
+                <span className={`font-mono font-bold ${dataPoint.annualChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {dataPoint.annualChange >= 0 ? '+' : ''}{dataPoint.annualChange.toFixed(2)}%
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="text-on-surface-variant">IPC del Año:</span>
+              <span className="font-mono text-blue-400">{dataPoint.ipc}%</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 pb-20 fade-in max-w-[1600px] mx-auto">
       <header className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-display font-medium text-white tracking-tight">Presupuesto Institucional</h1>
           <p className="text-on-surface-variant mt-2 text-sm max-w-2xl">
-            Análisis histórico, impacto macroeconómico y proyección predictiva para el próximo ciclo presupuestal, impulsado por IA.
+            Análisis histórico, impacto macroeconómico y modelación predictiva 2027 bajo supuestos del Marco Fiscal de Mediano Plazo (MFMP).
           </p>
         </div>
       </header>
 
-      {/* INFORME TÉCNICO EJECUTIVO */}
-      <div className="mb-8 bg-gradient-to-br from-surface-container-high/80 to-background border border-primary-container/20 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
+      {/* SECCIÓN OFICIAL: SUPUESTOS MACROECONÓMICOS (MFMP - MINISTERIO DE HACIENDA) */}
+      <div className="mb-8 bg-gradient-to-br from-surface-container-high/90 to-background border border-primary-container/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary-container/10 blur-[100px] rounded-full pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-amber-500/5 blur-[100px] rounded-full pointer-events-none"></div>
 
         <div className="relative z-10">
-          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-primary-container/20 flex items-center justify-center text-primary-container shrink-0 border border-primary-container/30">
-              <FileText size={28} />
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-display text-white font-bold tracking-tight">Informe Técnico: Propuesta Presupuestal Universitaria 2027</h2>
-              <p className="text-primary-container font-mono text-sm mt-1 uppercase tracking-wider">Sostenibilidad, Marco Legal y Proyecciones Macroeconómicas</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            
-            {/* 1. Contexto */}
-            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-orange-400 bg-white/5 hover:bg-white/10 transition-colors">
-              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
-                <Activity size={18} className="text-orange-400" />
-                1. Diagnóstico Fiscal 2026-2027
-              </h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                Entorno de alta complejidad fiscal que obliga a priorizar la <strong>sostenibilidad del Estado</strong>. Con un PIB en meseta (2.6%) y desaceleración en 2027, el <em>gasto inflexible</em> es la mayor amenaza estructural. La universidad debe transitar hacia un modelo de eficiencia presupuestal técnica, lejos de incrementos vegetativos.
-              </p>
-            </div>
-
-            {/* 2. Marco Normativo */}
-            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-400 bg-white/5 hover:bg-white/10 transition-colors">
-              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
-                <Scale size={18} className="text-emerald-400" />
-                2. Marco Normativo (Ley 2568)
-              </h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                Modifica el <strong>Art. 86 (Ley 30)</strong> para superar la indexación simplista del IPC, reconociendo la canasta real de costos (ICES). Tres imperativos legales para 2027:
-              </p>
-              <ul className="text-xs text-on-surface-variant mt-2 list-disc pl-4 space-y-1">
-                <li>Indexación diferencial por costos sectoriales.</li>
-                <li>Consolidación de la base (Nómina y beneficios).</li>
-                <li>Transferencias de inversión estructural.</li>
-              </ul>
-            </div>
-
-            {/* 3. Variables Macroeconómicas */}
-            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-blue-400 bg-white/5 hover:bg-white/10 transition-colors xl:row-span-2">
-              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
-                <BarChart2 size={18} className="text-blue-400" />
-                3. Variables Críticas (MFMP 2026)
-              </h3>
-              <p className="text-sm text-on-surface-variant mb-4">
-                El uso del IPC general (4.1%) es <strong>insuficiente</strong> y derivaría en recortes reales frente a la inercia inflacionaria. El ICES es una necesidad técnica absoluta.
-              </p>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
-                  <span className="text-xs text-on-surface-variant">Crecimiento PIB Real</span>
-                  <span className="text-sm font-bold text-white">2.2%</span>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-white/10 pb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary-container/20 flex items-center justify-center text-primary-container shrink-0 border border-primary-container/30">
+                <Building2 size={28} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider text-primary-container font-semibold">
+                    Ministerio de Hacienda y Crédito Público • Viceministerio
+                  </span>
                 </div>
-                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
-                  <span className="text-xs text-on-surface-variant">Inflación (IPC)</span>
-                  <span className="text-sm font-bold text-red-400">4.1%</span>
-                </div>
-                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
-                  <span className="text-xs text-on-surface-variant">Déficit Fiscal GNC</span>
-                  <span className="text-sm font-bold text-orange-400">4.5% del PIB</span>
-                </div>
-                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
-                  <span className="text-xs text-on-surface-variant">Ingresos Totales GNC</span>
-                  <span className="text-sm font-bold text-emerald-400">17.3% del PIB</span>
-                </div>
-                <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg">
-                  <span className="text-xs text-on-surface-variant">Deuda Neta GNC</span>
-                  <span className="text-sm font-bold text-red-400">58.9% del PIB</span>
-                </div>
+                <h2 className="text-2xl md:text-3xl font-display text-white font-bold tracking-tight mt-0.5">
+                  Supuestos Macroeconómicos
+                </h2>
+                <p className="text-on-surface-variant font-sans text-xs md:text-sm mt-1">
+                  Marco Fiscal de Mediano Plazo (MFMP) — Lineamientos oficiales y proyección técnica de indexación 2027
+                </p>
               </div>
             </div>
 
-            {/* 4. Proyección Ingresos y Gastos */}
-            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-[#c084fc] bg-white/5 hover:bg-white/10 transition-colors">
-              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
-                <Target size={18} className="text-[#c084fc]" />
-                4. Dinámica de Ingresos y Gastos
-              </h3>
-              <ul className="text-xs text-on-surface-variant space-y-2">
-                <li><strong className="text-white">Ingresos:</strong> Requieren alineación con sectores de crecimiento (Agro 11.2%, Entretenimiento 31.2%).</li>
-                <li><strong className="text-white">Funcionamiento:</strong> Altamente impactado por el ajuste salarial redistributivo; exige optimización en gastos operativos.</li>
-                <li><strong className="text-white">Inversión:</strong> Multiplicador fiscal estimado de 0.2, justificando infraestructura como motor de productividad.</li>
-              </ul>
+            <div className="flex items-center gap-3">
+              <div className="bg-black/30 px-4 py-2 rounded-xl border border-white/10 text-right">
+                <span className="text-[10px] text-on-surface-variant uppercase block">IPC Proyectado 2027</span>
+                <span className="text-lg font-bold font-mono text-primary-container">7,0%</span>
+              </div>
+              <div className="bg-black/30 px-4 py-2 rounded-xl border border-white/10 text-right">
+                <span className="text-[10px] text-on-surface-variant uppercase block">Techo Presupuestal</span>
+                <span className="text-lg font-bold font-mono text-emerald-400">IPC (7,0%)</span>
+              </div>
             </div>
+          </div>
 
-            {/* 5. Riesgos y Sostenibilidad */}
-            <div className="glass-card p-5 rounded-2xl border-l-4 border-l-red-400 bg-white/5 hover:bg-white/10 transition-colors">
-              <h3 className="text-white font-bold flex items-center gap-2 mb-3">
-                <ShieldAlert size={18} className="text-red-400" />
-                5. Análisis de Riesgos y Sostenibilidad
-              </h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                El <em>"Pacto Fiscal"</em> es una incertidumbre política frente al historial de rechazo legislativo (2025/2026). La alta deuda del GNC (58.9%) bloquea apalancamientos externos. La universidad debe planear con resiliencia, asumiendo contingencias por menor recaudo tributario y recortes en cuotas de gasto.
-              </p>
-            </div>
+          {/* Contexto literal de la diapositiva */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 mb-6 text-xs md:text-sm text-on-surface-variant leading-relaxed">
+            <p>
+              <strong className="text-white">Definición y Alcance:</strong> El Marco Fiscal de Mediano Plazo (MFMP) es un documento que enfatiza en los resultados y propósitos de la política fiscal. Allí se hace un recuento general de los hechos más importantes en materia de comportamiento de la actividad económica y fiscal del país en el año anterior, el año en curso y un panorama de la próxima vigencia.
+            </p>
+          </div>
 
+          {/* Tabla Comparativa de Supuestos Macroeconómicos */}
+          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+            <table className="w-full text-left text-xs md:text-sm">
+              <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                <tr>
+                  <th className="p-4 font-semibold text-white">Supuestos Macroeconómicos</th>
+                  <th className="p-4 font-semibold text-center text-blue-300">2026 (MFMP)</th>
+                  <th className="p-4 font-semibold text-center text-primary-container">2027 (Proyectado)</th>
+                  <th className="p-4 font-semibold text-amber-300">Fórmula / Referencia</th>
+                  <th className="p-4 font-semibold text-on-surface-variant">Regla e Impacto Presupuestal UPTC</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {SUPUESTOS_MACROECONOMICOS_MFMP.map((item, index) => (
+                  <tr key={index} className="hover:bg-white/5 transition-colors">
+                    <td className="p-4 font-medium text-white flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary-container shrink-0"></span>
+                      {item.indicador}
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-blue-300 bg-blue-500/5">
+                      {item.valor2026}
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-primary-container bg-primary-container/10">
+                      {item.valor2027}
+                    </td>
+                    <td className="p-4 font-mono text-xs text-amber-300">
+                      {item.formula}
+                    </td>
+                    <td className="p-4 text-xs text-on-surface-variant leading-relaxed">
+                      {item.impacto}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-on-surface-variant gap-2 pt-2">
+            <span className="italic">
+              Fuente: Ministerio de Hacienda y Crédito Público - Viceministerio
+            </span>
+            <span className="bg-primary-container/10 text-primary-container px-3 py-1 rounded-full border border-primary-container/20 font-mono">
+              Directriz vinculante: Proyección del Incremento Presupuestal ≈ IPC (7,0%)
+            </span>
           </div>
         </div>
       </div>
@@ -246,7 +361,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
       {/* KPI Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-card p-5 rounded-2xl border-l-4 border-l-primary-container">
-          <p className="text-xs font-mono text-on-surface-variant uppercase tracking-wider mb-2">Presupuesto 2026</p>
+          <p className="text-xs font-mono text-on-surface-variant uppercase tracking-wider mb-2">Presupuesto Actual (2026)</p>
           <div className="flex items-baseline gap-2">
             <h3 className="text-2xl font-display text-white">{formatCurrencyShort(currentBudget)}</h3>
           </div>
@@ -256,43 +371,211 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
           </p>
         </div>
         
-        <div className="glass-card p-5 rounded-2xl border-l-4 border-l-[#f472b6]">
-          <p className="text-xs font-mono text-on-surface-variant uppercase tracking-wider mb-2">Gastos de Personal</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-2xl font-display text-white">{formatCurrencyShort(currentPersonales)}</h3>
-          </div>
-          <p className="text-xs text-on-surface-variant mt-2 flex items-center gap-1">
-            <TrendingUp size={14} className="text-[#f472b6]" />
-            <span className="text-[#f472b6]">+{personalesVar.toFixed(1)}%</span> vs 2025
-          </p>
-        </div>
-
-        <div className="glass-card p-5 rounded-2xl border-l-4 border-l-[#60a5fa]">
-          <p className="text-xs font-mono text-on-surface-variant uppercase tracking-wider mb-2">Recursos Propios (Participación)</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-2xl font-display text-white">
-              {((compData.find(c => c.name === 'Recursos Propios')?.value || 0) / currentBudget * 100).toFixed(1)}%
-            </h3>
-          </div>
-          <p className="text-xs text-on-surface-variant mt-2">
-            Del total de ingresos 2026
-          </p>
-        </div>
-
         <div className="glass-card p-5 rounded-2xl border-l-4 border-l-[#fbbf24]">
-          <p className="text-xs font-mono text-on-surface-variant uppercase tracking-wider mb-2">IPC Proyectado</p>
+          <p className="text-xs font-mono text-on-surface-variant uppercase tracking-wider mb-2">IPC Proyectado 2027</p>
           <div className="flex items-baseline gap-2">
-            <h3 className="text-2xl font-display text-white">{historicalSeries[latestIndex].ipc}%</h3>
+            <h3 className="text-2xl font-display text-amber-300">7.0%</h3>
           </div>
           <p className="text-xs text-on-surface-variant mt-2">
-            Variable macro clave de presión
+            Techo presupuestal según MFMP (MinHacienda)
+          </p>
+        </div>
+
+        <div className="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-400">
+          <p className="text-xs font-mono text-on-surface-variant uppercase tracking-wider mb-2">Incremento Presupuestal Base</p>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-2xl font-display text-emerald-400">+7.00%</h3>
+          </div>
+          <p className="text-xs text-emerald-400/80 mt-2">
+            +{formatCurrencyShort(currentBudget * 0.07)} adicionales requeridos
+          </p>
+        </div>
+
+        <div className="glass-card p-5 rounded-2xl border-l-4 border-l-[#c084fc]">
+          <p className="text-xs font-mono text-on-surface-variant uppercase tracking-wider mb-2">Presupuesto Proyectado 2027</p>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-2xl font-display text-white">{formatCurrencyShort(currentBudget * 1.07)}</h3>
+          </div>
+          <p className="text-xs text-on-surface-variant mt-2">
+            Rango: {formatCurrencyShort(currentBudget * (1 + scenarios.conservative / 100))} - {formatCurrencyShort(currentBudget * (1 + scenarios.pressure / 100))}
           </p>
         </div>
       </div>
 
+      {/* NUEVA GRÁFICA DESTACADA: PROYECCIÓN DEL VALOR Y SU RANGO FRENTE AL HISTÓRICO */}
+      <div className="glass-card p-6 md:p-8 rounded-[32px] border border-primary-container/30 relative overflow-hidden shadow-2xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="px-3 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-primary-container/20 text-primary-container border border-primary-container/30">
+                PROYECCIÓN VIGENCIA 2027
+              </span>
+              <span className="px-3 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                IPC 7,0% (MFMP)
+              </span>
+            </div>
+            <h2 className="text-xl md:text-2xl font-display font-bold text-white tracking-tight">
+              Proyección del Valor Presupuestal y Rango de Incertidumbre frente al Histórico
+            </h2>
+            <p className="text-xs md:text-sm text-on-surface-variant mt-1 max-w-3xl">
+              Comportamiento histórico 2016-2026 y modelación prospectiva 2027: proyección base atada al IPC (7,0%) con abanico de dispersión según presiones salariales (5,8% - 9,2%).
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-xl border border-white/10 text-on-surface-variant">
+              <span className="w-3 h-3 rounded-full bg-[#38bdf8]"></span>
+              <span>Histórico (2016-2026)</span>
+            </div>
+            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-xl border border-white/10 text-on-surface-variant">
+              <span className="w-3 h-3 rounded-full bg-[#ffcc29]"></span>
+              <span>Proyección Base (7.0%)</span>
+            </div>
+            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-xl border border-white/10 text-on-surface-variant">
+              <span className="w-3 h-3 rounded-sm bg-amber-500/40 border border-amber-400"></span>
+              <span>Rango (5.8% - 9.2%)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Resumen numérico del rango */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="p-3.5 rounded-xl bg-surface-container-low/60 border border-white/5">
+            <span className="text-[10px] text-on-surface-variant uppercase tracking-wider block">Presupuesto Base 2026</span>
+            <span className="text-base font-bold font-mono text-white">{formatCurrencyShort(currentBudget)}</span>
+            <span className="text-[10px] text-on-surface-variant block mt-0.5">Aforo Vigente</span>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+            <span className="text-[10px] text-emerald-400 uppercase tracking-wider block font-semibold">Límite Inferior (5.8%)</span>
+            <span className="text-base font-bold font-mono text-emerald-300">
+              {formatCurrencyShort(currentBudget * (1 + scenarios.conservative / 100))}
+            </span>
+            <span className="text-[10px] text-emerald-400/80 block mt-0.5">Escenario Conservador</span>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-primary-container/20 border border-primary-container/40 ring-1 ring-primary-container/30">
+            <span className="text-[10px] text-primary-container uppercase tracking-wider block font-semibold">Proyección Base (7.0%)</span>
+            <span className="text-base font-bold font-mono text-white">
+              {formatCurrencyShort(currentBudget * (1 + scenarios.base / 100))}
+            </span>
+            <span className="text-[10px] text-emerald-400 block mt-0.5 font-semibold">+$38.312M (+7.00%)</span>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20">
+            <span className="text-[10px] text-red-400 uppercase tracking-wider block font-semibold">Límite Superior (9.2%)</span>
+            <span className="text-base font-bold font-mono text-red-300">
+              {formatCurrencyShort(currentBudget * (1 + scenarios.pressure / 100))}
+            </span>
+            <span className="text-[10px] text-red-400/80 block mt-0.5">Presión SMMLV (IPC+2.2)</span>
+          </div>
+        </div>
+
+        {/* Gráfica ComposedChart con abanico de rango */}
+        <div className="h-[380px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={projectionRangeSeries} margin={{ top: 20, right: 25, left: 15, bottom: 5 }}>
+              <defs>
+                <linearGradient id="histAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
+                </linearGradient>
+                <linearGradient id="rangeAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.10} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+              <XAxis 
+                dataKey="year" 
+                stroke="#94a3b8" 
+                tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                axisLine={{ stroke: 'rgba(255,255,255,0.1)' }} 
+                tickLine={false} 
+              />
+              <YAxis 
+                stroke="#94a3b8" 
+                tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                tickFormatter={(v) => formatCurrencyShort(v)} 
+                domain={['auto', 'auto']}
+                axisLine={false}
+                tickLine={false}
+              />
+              <RechartsTooltip content={<CustomProjectionTooltip />} />
+              
+              {/* Sombreado de Banda de Rango 2026-2027 */}
+              <Area 
+                type="monotone" 
+                dataKey="bandaRango" 
+                name="Rango de Incertidumbre" 
+                fill="url(#rangeAreaGrad)" 
+                stroke="#f59e0b"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+              />
+
+              {/* Área y Línea Histórica (2016-2026) */}
+              <Area 
+                type="monotone" 
+                dataKey="presupuestoReal" 
+                name="Presupuesto Histórico" 
+                fill="url(#histAreaGrad)" 
+                stroke="#38bdf8" 
+                strokeWidth={3.5} 
+                dot={{ r: 4, fill: '#38bdf8', strokeWidth: 1.5, stroke: '#0f172a' }}
+              />
+
+              {/* Línea Límite Superior (9.2%) */}
+              <Line 
+                type="monotone" 
+                dataKey="rangoSuperior" 
+                name="Límite Superior (Presión 9.2%)" 
+                stroke="#f87171" 
+                strokeWidth={2} 
+                strokeDasharray="4 4" 
+                dot={{ r: 4, fill: '#f87171' }} 
+              />
+
+              {/* Línea Proyección Base (IPC 7.0%) */}
+              <Line 
+                type="monotone" 
+                dataKey="proyeccionBase" 
+                name="Proyección Base 2027 (IPC 7.0%)" 
+                stroke="#ffcc29" 
+                strokeWidth={4} 
+                strokeDasharray="6 4" 
+                dot={{ r: 6, fill: '#ffcc29', stroke: '#0f172a', strokeWidth: 2 }} 
+              />
+
+              {/* Línea Límite Inferior (5.8%) */}
+              <Line 
+                type="monotone" 
+                dataKey="rangoInferior" 
+                name="Límite Inferior (Conservador 5.8%)" 
+                stroke="#34d399" 
+                strokeWidth={2} 
+                strokeDasharray="4 4" 
+                dot={{ r: 4, fill: '#34d399' }} 
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-on-surface-variant">
+          <div className="flex items-center gap-2">
+            <Info size={14} className="text-primary-container shrink-0" />
+            <span>
+              La dispersión proyectada entre el límite inferior ($579.1B) y superior ($597.7B) es de <strong>$18.608M</strong>, determinada por la elasticidad de los incrementos salariales (IPC+1,9% y IPC+2,2%).
+            </span>
+          </div>
+          <span className="font-mono text-white bg-white/5 px-2.5 py-1 rounded-lg shrink-0">
+            Amplitud de Banda: $18.6B (3.40 pp)
+          </span>
+        </div>
+      </div>
+
+      {/* Comportamiento Histórico */}
       <div className="grid grid-cols-1 gap-6">
-        
-        {/* Comportamiento Histórico (2 columns) */}
         <div className="glass-card p-6 rounded-[24px]">
           <div className="mb-6">
             <h2 className="text-xl font-display text-white">Comparativa vs Indicadores Macroeconómicos</h2>
@@ -318,8 +601,7 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
             </ResponsiveContainer>
           </div>
         </div>
-
-              </div>
+      </div>
 
       {/* Model & AI Recommendation */}
             <div className="glass-card p-6 rounded-[24px] mt-6">
