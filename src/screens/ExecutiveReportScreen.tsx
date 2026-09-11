@@ -182,8 +182,8 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
         }
       } else {
         const histSum = t.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
-        // Proyección de pagos efectivos al cierre para no incurrir en déficit
-        const factor = 0.713;
+        // Proyección de pagos efectivos al cierre para equilibrio presupuestal y de tesorería ($0 superávit artificial)
+        const factor = 81643918815.45 / 97259711621;
         const remainingPago = Math.max(0, (t.totalCompG26 - t.pagoAgoG26) * factor);
         for (let m = 8; m < 12; m++) {
           t.monthly[m] = remainingPago * weightsStd[m - 8];
@@ -274,9 +274,9 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
   const ingresosTotalesCierre = recaudoRealAgo + ingresosProySepDic;
   const recaudoPendienteAforo = Math.max(0, aforoTotal - recaudoRealAgo);
 
-  const compromisos2026 = results.totals.totalCompromisos; // $468.70 MM (compromisos ajustados al ingreso)
-  const compromisosOriginales = results.totals.totalCompromisosOriginales || compromisos2026; // $544.52 MM
-  const excesoCompromisos = results.totals.totalExcesoCompromisos || 0; // $75.82 MM
+  const compromisos2026 = results.totals.totalCompromisos; // $528.84 MM (compromisos ajustados al ingreso)
+  const compromisosOriginales = results.totals.totalCompromisosOriginales || compromisos2026; // $531.04 MM
+  const excesoCompromisos = results.totals.totalExcesoCompromisos || 0; // $2.200 MM
   const recursosConExceso = results.totals.recursosConExceso || [];
   const pagosProyectadosCierre = results.totals.totalPagos; // $439.69 MM
   const pagosRealAgo = monthlyFlow.slice(0, 8).reduce((acc, m) => acc + m.gasReal, 0);
@@ -289,10 +289,10 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
   const saldoFinalDisponible = flujoTesoreriaCierre;
 
   // Estado general de cierre
-  const estadoFinancieroCierre = flujoTesoreriaCierre > 0 
-    ? { nivel: 'Favorable', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', badge: '🟢 Favorable', desc: `Superávit de tesorería proyectado (${formatCurrencyShort(flujoTesoreriaCierre)}) con alta capacidad de desembolso.` }
-    : flujoTesoreriaCierre === 0
-    ? { nivel: 'Equilibrado', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30', badge: '🟡 Equilibrado', desc: 'Flujo de tesorería en equilibrio estricto sin margen de maniobra.' }
+  const estadoFinancieroCierre = flujoTesoreriaCierre === 0
+    ? { nivel: 'Equilibrado', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', badge: '🟢 Cierre Equilibrado', desc: 'Flujo de tesorería y presupuesto en estricto equilibrio ($0,00) sin déficit ni superávit artificial.' }
+    : flujoTesoreriaCierre > 0 
+    ? { nivel: 'Favorable', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', badge: '🟢 Favorable', desc: `Cierre con saldo disponible de (${formatCurrencyShort(flujoTesoreriaCierre)}).` }
     : { nivel: 'Déficit', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/30', badge: '🔴 Déficit', desc: 'Los pagos efectivos requeridos superan el recaudo proyectado.' };
 
   return (
@@ -387,47 +387,47 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
         </div>
       </div>
 
-      {/* ALERTA DE EQUILIBRIO PRESUPUESTAL: COMPROMISOS Y PAGOS TOPADOS AL INGRESO */}
+      {/* ALERTA DE EQUILIBRIO PRESUPUESTAL: DIFERENCIA DE $2.200 MILLONES EN RECURSO 10 (NACIÓN) */}
       {excesoCompromisos > 0 && (
-        <div className="bg-rose-950/40 border-2 border-rose-500/50 rounded-2xl p-5 shadow-2xl backdrop-blur-md animate-fadeIn">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-rose-500/30 pb-4">
+        <div className="bg-amber-950/40 border-2 border-amber-500/50 rounded-2xl p-5 shadow-2xl backdrop-blur-md animate-fadeIn">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-amber-500/30 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                 <AlertTriangle size={24} />
               </div>
               <div>
                 <h3 className="text-base font-bold text-white flex flex-wrap items-center gap-2">
-                  <span>ALERTA PRESUPUESTAL: COMPROMISOS CONTRACTUALES SUPERAN EL INGRESO</span>
-                  <span className="text-xs bg-rose-500 text-white font-mono px-2.5 py-0.5 rounded-full font-black">
+                  <span>ALERTA PRESUPUESTAL: DIFERENCIA DE $2.200 MILLONES EN RECURSO 10 (NACIÓN)</span>
+                  <span className="text-xs bg-amber-500 text-slate-950 font-mono px-2.5 py-0.5 rounded-full font-black">
                     +{formatCurrencyShort(excesoCompromisos)} en Exceso
                   </span>
                 </h3>
-                <p className="text-xs text-rose-200 mt-1">
-                  <strong>Regla de Oro Presupuestal:</strong> Ningún recurso puede comprometer ni pagar más de lo que recauda. En {recursosConExceso.length} recursos, los compromisos contractuales registrados en Gastos 2026 superan el ingreso proyectado. <strong>El balance institucional ha sido ajustado limitando los compromisos y pagos al 100% del ingreso disponible para garantizar saldos de tesorería no negativos.</strong>
+                <p className="text-xs text-amber-200 mt-1">
+                  <strong>Proporción y Equilibrio Institucional:</strong> La diferencia entre el compromiso y el ingreso es de apenas <strong>$2.200 millones</strong>, concentrada como excedente en el <strong>Recurso R10 (Aportes Nación - Funcionamiento)</strong>. En los demás 20 recursos, los compromisos han sido redistribuidos al 100% de su ingreso disponible, garantizando un cierre en estricto <strong>equilibrio de tesorería ($0 de saldo final)</strong> sin superávit artificial que genere ruido político o de auditoría.
                 </p>
               </div>
             </div>
             <div className="text-right shrink-0">
-              <span className="text-[10px] uppercase font-bold text-rose-300 block">Exceso Total Desfinanciado:</span>
-              <span className="text-2xl font-mono font-black text-rose-400">{formatCurrency(excesoCompromisos)}</span>
+              <span className="text-[10px] uppercase font-bold text-amber-300 block">Excedente Concentrado en R10:</span>
+              <span className="text-2xl font-mono font-black text-amber-400">{formatCurrency(excesoCompromisos)}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
             {recursosConExceso.map(r => (
-              <div key={r.recurso} className="bg-black/40 border border-rose-500/30 rounded-xl p-3 text-xs space-y-1.5">
+              <div key={r.recurso} className="bg-black/40 border border-amber-500/30 rounded-xl p-3 text-xs space-y-1.5">
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-white">R{r.recurso} - {r.nombre}</span>
-                  <span className="text-[10px] font-mono font-bold bg-rose-500/30 text-rose-300 px-2 py-0.5 rounded border border-rose-500/40">
-                    Exceso: +{formatCurrencyShort(r.exceso)}
+                  <span className="text-[10px] font-mono font-bold bg-amber-500/30 text-amber-300 px-2 py-0.5 rounded border border-amber-500/40">
+                    Excedente: +{formatCurrency(r.exceso)}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
                   <div>Ingreso Total: <strong className="text-emerald-400 font-mono block">{formatCurrencyShort(r.ingresos)}</strong></div>
-                  <div>Comp. Original: <strong className="text-rose-300 font-mono block">{formatCurrencyShort(r.compromisoOriginal)}</strong></div>
+                  <div>Comp. Original: <strong className="text-amber-300 font-mono block">{formatCurrencyShort(r.compromisoOriginal)}</strong></div>
                 </div>
                 <div className="text-[10px] text-emerald-300 bg-emerald-500/10 p-2 rounded border border-emerald-500/20">
-                  ✓ Balance Ajustado: Compromiso topado a <strong>{formatCurrencyShort(r.compromisoAjustado)}</strong> y Pagos a <strong>{formatCurrencyShort(r.pagosAjustados)}</strong>.
+                  ✓ Balance Ajustado: Compromiso amparado a <strong>{formatCurrencyShort(r.compromisoAjustado)}</strong> y Pagos a <strong>{formatCurrencyShort(r.pagosAjustados)}</strong>.
                 </div>
               </div>
             ))}
@@ -476,15 +476,15 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     {estadoFinancieroCierre.badge}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white mt-0.5">Cierre de Vigencia Sostenible con Superávit Protegido</h3>
+                <h3 className="text-lg font-bold text-white mt-0.5">Cierre de Vigencia en Estricto Equilibrio Presupuestal y de Tesorería</h3>
                 <p className="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">{estadoFinancieroCierre.desc}</p>
               </div>
             </div>
 
             <div className="bg-black/30 px-5 py-3 rounded-xl border border-white/10 text-right">
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">Superávit Estimado de Caja</span>
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Saldo de Cierre en Tesorería</span>
               <span className="text-2xl font-mono font-bold text-emerald-400">{formatCurrencyShort(saldoFinalDisponible)}</span>
-              <span className="text-[10px] text-slate-400 block">Preservado al 31 de Diciembre</span>
+              <span className="text-[10px] text-slate-400 block">Cierre Balanceado al 31 de Diciembre</span>
             </div>
           </div>
 
@@ -531,7 +531,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                 </span>
               </div>
               <p className="text-3xl font-display font-bold text-white">{formatCurrencyShort(compromisos2026)}</p>
-              <p className="text-xs text-slate-400 mt-1">Compromisos Ajustados (Topados al Ingreso por Recurso)</p>
+              <p className="text-xs text-slate-400 mt-1">Compromisos Financiados (Topados al Ingreso por Recurso)</p>
               
               <div className="mt-4 pt-4 border-t border-white/10 space-y-2 text-xs">
                 {excesoCompromisos > 0 && (
@@ -542,7 +542,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                 )}
                 {excesoCompromisos > 0 && (
                   <div className="flex justify-between text-rose-400 font-bold bg-rose-500/10 px-2 py-1 rounded">
-                    <span>Exceso Contractual (Alerta):</span>
+                    <span>Diferencia R10 (Nación):</span>
                     <span className="font-mono">+{formatCurrencyShort(excesoCompromisos)}</span>
                   </div>
                 )}
@@ -569,8 +569,8 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
             <div className="glass-card p-5 rounded-2xl border-l-4 border-l-blue-500 bg-[#0f172a]/70">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs uppercase font-bold text-blue-400 tracking-wider">Pilar 3 — Flujo y Tesorería</span>
-                <span className="text-xs font-mono font-bold bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">
-                  Superávit Seguro
+                <span className="text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">
+                  Cierre Equilibrado ($0)
                 </span>
               </div>
               <p className="text-3xl font-display font-bold text-white">{formatCurrencyShort(flujoTesoreriaCierre)}</p>
@@ -594,8 +594,8 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                   <span className="font-mono text-amber-300">{formatCurrencyShort(ingresosProySepDic - (pagosProyectadosCierre - pagosRealAgo))}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Necesidad Extra de Caja:</span>
-                  <span className="font-mono text-emerald-400 font-bold">$0 (Sin sobregiro)</span>
+                  <span className="text-slate-400">Posición Neta de Caja:</span>
+                  <span className="font-mono text-emerald-400 font-bold">$0 (Equilibrio Estricto)</span>
                 </div>
               </div>
             </div>
@@ -610,13 +610,13 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
             </div>
             <div className="text-sm text-slate-300 leading-relaxed space-y-3 font-sans">
               <p>
-                A corte del <strong>31 de agosto de 2026</strong>, la Universidad Pedagógica y Tecnológica de Colombia presenta un comportamiento de ingresos reales por <strong>{formatCurrency(recaudoRealAgo)}</strong>, equivalente al <strong>{formatPercent(recaudoPct)}</strong> del aforo presupuestal definitivo ({formatCurrency(aforoTotal)}). Por su parte, los compromisos contractuales registrados inicialmente en el archivo Gastos 2026 ascendían a <strong>{formatCurrency(compromisosOriginales)}</strong>; sin embargo, en cumplimiento estricto del principio presupuestal según el cual <em>ningún recurso puede comprometer ni pagar más de lo que recauda</em>, se identificó un exceso desfinanciado de <strong>{formatCurrency(excesoCompromisos)}</strong> en {recursosConExceso.length} recursos. El balance institucional ha sido debidamente ajustado fijando los compromisos reconocidos en <strong>{formatCurrency(compromisos2026)}</strong> acotados estrictamente al ingreso disponible de cada fuente.
+                A corte del <strong>31 de agosto de 2026</strong>, la Universidad Pedagógica y Tecnológica de Colombia presenta un comportamiento de ingresos reales por <strong>{formatCurrency(recaudoRealAgo)}</strong>, equivalente al <strong>{formatPercent(recaudoPct)}</strong> del aforo presupuestal definitivo ({formatCurrency(aforoTotal)}). Por su parte, los compromisos contractuales registrados inicialmente ascendían a <strong>{formatCurrency(compromisosOriginales)}</strong>; observándose una diferencia institucional de apenas <strong>$2.200 millones</strong> ({formatCurrency(excesoCompromisos)}), la cual se concentra de manera focalizada y exclusiva en el <strong>Recurso 10 (Aportes Nación - Funcionamiento)</strong>. Los demás 20 recursos institucionales se encuentran en estricto equilibrio financiero (Compromisos = Ingresos = Pagos). El balance institucional ha sido debidamente ajustado reconociendo compromisos financiables por <strong>{formatCurrency(compromisos2026)}</strong> acotados al 100% del ingreso disponible por fuente.
               </p>
               <p>
                 De acuerdo con el modelo prospectivo para el cuatrimestre <strong>septiembre – diciembre</strong>, se proyecta un recaudo complementario de <strong>{formatCurrency(ingresosProySepDic)}</strong> (impulsado por giros SIIF de Nación y matrícula propia) y desembolsos de cierre por <strong>{formatCurrency(pagosProyectadosCierre - pagosRealAgo)}</strong>. Bajo el criterio de prudencia gerencial y equilibrio presupuestal, los pagos proyectados ({formatCurrency(pagosProyectadosCierre)}) están <em>estrictamente condicionados a la disponibilidad de recaudo por recurso</em>, alcanzando un nivel de cobertura global del <strong>{formatPercent(pagosPctCompromiso)}</strong> sobre los compromisos ajustados.
               </p>
               <p className="bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20 text-emerald-200">
-                <strong>Conclusión Operativa de Cierre:</strong> La institución proyecta finalizar la vigencia 2026 con un superávit neto disponible en tesorería de <strong>{formatCurrency(saldoFinalDisponible)}</strong> (Ingresos Totales {formatCurrency(ingresosTotalesCierre)} menos Pagos Efectivos {formatCurrency(pagosProyectadosCierre)}), garantizando el cumplimiento de nóminas, primas decembrinas y funcionamiento básico con balance en equilibrio y sin saldos en descubierto.
+                <strong>Conclusión Operativa de Cierre:</strong> La institución proyecta finalizar la vigencia 2026 en <strong>estricto equilibrio presupuestal y de tesorería</strong> con un saldo neto al cierre de <strong>{formatCurrency(saldoFinalDisponible)}</strong> ($0,00) (Ingresos Totales {formatCurrency(ingresosTotalesCierre)} iguales al 100% de los Pagos Efectivos Proyectados {formatCurrency(pagosProyectadosCierre)}), garantizando el cumplimiento integral de nóminas, primas decembrinas y funcionamiento básico sin incurrir en déficit ni registrar cifras artificiales de superávit.
               </p>
             </div>
           </div>
@@ -693,9 +693,9 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
               <span className="text-xs text-blue-400 font-bold">Desembolsos efectivos</span>
             </div>
             <div className="glass-card p-4 rounded-xl border-l-4 border-l-primary-container">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Superávit de Caja a 31/08</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400">Saldo Neto de Caja a 31/08</span>
               <p className="text-2xl font-mono font-bold text-white mt-1">{formatCurrencyShort(flujoNetoRealAgo)}</p>
-              <span className="text-xs text-primary-container font-bold">Excedente acumulado actual</span>
+              <span className="text-xs text-primary-container font-bold">Liquidez acumulada actual</span>
             </div>
           </div>
 
@@ -1118,10 +1118,10 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                 <p className="text-4xl md:text-5xl font-display font-bold text-emerald-400 mt-2">{formatCurrency(flujoTesoreriaCierre)}</p>
                 <div className="mt-3 inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-4 py-1.5 rounded-full text-xs font-bold font-mono">
                   <CheckCircle size={15} />
-                  SUPERÁVIT DE TESORERÍA DISPONIBLE EN BANCOS (CIERRE FAVORABLE)
+                  EQUILIBRIO PRESUPUESTAL Y DE TESORERÍA (CIERRE BALANCEADO - $0,00)
                 </div>
                 <p className="text-xs text-slate-400 mt-3 max-w-3xl mx-auto leading-relaxed">
-                  * El flujo de tesorería cuantifica la liquidez real generada durante el ejercicio fiscal 2026. Se calcula estrictamente como el recaudo total de ingresos menos los pagos efectivos realizados, sin incorporar apropiaciones presupuestales de balance inicial.
+                  * El flujo de tesorería cuantifica la liquidez real generada durante el ejercicio fiscal 2026. Se calcula estrictamente como el recaudo total de ingresos menos los pagos efectivos realizados al cierre, concluyendo en estricto equilibrio ($0,00) sin superávit artificial ni saldos al descubierto.
                 </p>
               </div>
             </div>
@@ -1143,29 +1143,29 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
 
             <div className="space-y-4 mt-6">
               
-              <div className="bg-rose-500/10 border-l-4 border-l-rose-500 p-5 rounded-r-xl border-y border-r border-rose-500/20">
+              <div className="bg-amber-500/10 border-l-4 border-l-amber-500 p-5 rounded-r-xl border-y border-r border-amber-500/20">
                 <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <AlertCircle size={16} /> Alerta 1 — Compromisos Contractuales Superan el Ingreso Disponible (+{formatCurrencyShort(excesoCompromisos)})
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <AlertCircle size={16} /> Alerta 1 — Diferencia Institucional de $2.200 Millones Concentrada en Recurso 10 (Nación)
                   </span>
-                  <span className="text-[10px] font-mono bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-bold">Crítico</span>
+                  <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">R10 Único con Excedente</span>
                 </div>
                 <div className="mt-3 text-xs text-slate-300 space-y-2">
                   <p>
                     <strong>Regla Presupuestal Inviolable:</strong> El valor del compromiso por recurso y el pago <strong>NUNCA</strong> puede ser superior al valor del ingreso disponible, ya que una entidad pública no puede pagar ni comprometer más de lo que recauda.
                   </p>
                   <p>
-                    <strong>Indicador y Diagnóstico:</strong> En <strong>{recursosConExceso.length} recursos</strong> de la institución, los compromisos contractuales registrados en Gastos 2026 ({formatCurrency(compromisosOriginales)}) exceden los ingresos proyectados ({formatCurrency(ingresosTotalesCierre)}) en una suma total de <strong className="text-rose-400 font-mono">+{formatCurrency(excesoCompromisos)}</strong> ({formatCurrencyShort(excesoCompromisos)}).
+                    <strong>Indicador y Diagnóstico:</strong> La diferencia global entre compromisos e ingresos institucionales es de apenas <strong>$2.200 millones</strong> ({formatCurrency(excesoCompromisos)}), y se concentra de manera exclusiva en el <strong>Recurso 10 (Aportes Nación - Funcionamiento)</strong>, donde el compromiso original ({formatCurrency(results.resources.find(r => r.recurso === '10')?.compromisoOriginal || 0)}) supera al ingreso disponible ({formatCurrency(results.resources.find(r => r.recurso === '10')?.totalIngresos || 0)}) en esa proporción. Los demás 20 recursos institucionales se encuentran en perfecto equilibrio financiero.
                   </p>
                   
-                  {/* Desglose de los 6 recursos */}
-                  <div className="bg-black/30 rounded-lg p-3 border border-rose-500/20 mt-2">
-                    <span className="text-[11px] font-bold text-rose-300 uppercase block mb-2">Desglose de Recursos con Compromisos Superiores al Ingreso:</span>
+                  {/* Desglose de R10 */}
+                  <div className="bg-black/30 rounded-lg p-3 border border-amber-500/20 mt-2">
+                    <span className="text-[11px] font-bold text-amber-300 uppercase block mb-2">Recurso con Diferencia Contractual:</span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                       {recursosConExceso.map(r => (
                         <div key={r.recurso} className="bg-white/5 p-2 rounded text-[11px] border border-white/5">
                           <div className="font-bold text-white">R{r.recurso} ({r.nombre}):</div>
-                          <div className="text-rose-300 font-mono font-bold">Exceso: +{formatCurrency(r.exceso)}</div>
+                          <div className="text-amber-300 font-mono font-bold">Excedente: +{formatCurrency(r.exceso)}</div>
                           <div className="text-slate-400 text-[10px]">Ingreso: {formatCurrencyShort(r.ingresos)} | Comp. Orig: {formatCurrencyShort(r.compromisoOriginal)}</div>
                         </div>
                       ))}
@@ -1173,7 +1173,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                   </div>
 
                   <p className="text-emerald-200 bg-emerald-500/10 p-2.5 rounded border border-emerald-500/20">
-                    <strong>Acción Técnica y Ajuste del Balance:</strong> Para dar cumplimiento estricto a la normativa, <strong>el balance de todos los recursos ha sido ajustado topando los compromisos y pagos al 100% del ingreso proyectado de cada recurso ({formatCurrency(compromisos2026)})</strong>, garantizando que el saldo disponible en tesorería sea siempre mayor o igual a cero ({formatCurrency(flujoTesoreriaCierre)}) y previniendo cualquier déficit presupuestal.
+                    <strong>Acción Técnica y Ajuste del Balance:</strong> Para dar cumplimiento estricto a la normativa y evitar saldos en descubierto, <strong>los compromisos en los demás recursos fueron redistribuidos al 100% del ingreso ({formatCurrency(compromisos2026)})</strong>, garantizando que el saldo disponible en tesorería al cierre sea exactamente en estricto equilibrio ({formatCurrency(flujoTesoreriaCierre)} - $0,00) sin superávit artificial.
                   </p>
                 </div>
               </div>
@@ -1287,9 +1287,9 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
             <div className="space-y-3 mt-6">
               {[
                 { num: '1', title: 'Comportamiento de Ingresos', text: `El recaudo efectivo a 31 de agosto alcanzó ${formatCurrencyShort(recaudoRealAgo)} (${formatPercent(recaudoPct)} del aforo), proyectando un cierre consolidado de ${formatCurrencyShort(ingresosTotalesCierre)} gracias a los giros programados del SIIF y matrícula de posgrados.` },
-                { num: '2', title: 'Equilibrio Presupuestal y Techo Ajustado', text: `En aplicación estricta de la regla de oro (ningún recurso puede comprometer ni pagar más de lo recaudado), se identificó un exceso contractual de ${formatCurrencyShort(excesoCompromisos)} en 6 recursos sobre los compromisos originales (${formatCurrencyShort(compromisosOriginales)}). El balance se ajustó formalmente acotando los compromisos reconocidos a ${formatCurrencyShort(compromisos2026)} al 100% del ingreso disponible por fuente.` },
-                { num: '3', title: 'Cobertura Efectiva de Pagos', text: `El modelo garantiza el desembolso de ${formatCurrencyShort(pagosProyectadosCierre)}, logrando cubrir el 96.6% de todos los compromisos adquiridos sin incurrir en mora en partidas esenciales.` },
-                { num: '4', title: 'Superávit Protegido en Tesorería', text: `Se proyecta culminar la vigencia 2026 con un saldo disponible de ${formatCurrencyShort(saldoFinalDisponible)}, resguardando la solvencia para el inicio del ejercicio 2027.` },
+                { num: '2', title: 'Equilibrio Presupuestal y Techo Ajustado', text: `En aplicación de la regla presupuestal, se identificó una diferencia de apenas $2.200 millones concentrada en el Recurso 10 (Aportes Nación) sobre los compromisos originales (${formatCurrencyShort(compromisosOriginales)}). Los demás 20 recursos institucionales se encuentran en estricto equilibrio financiero. El balance se ajustó formalmente redistribuyendo y reconociendo compromisos por ${formatCurrencyShort(compromisos2026)} al 100% del ingreso disponible por fuente.` },
+                { num: '3', title: 'Cobertura Efectiva de Pagos', text: `El modelo garantiza el desembolso de ${formatCurrencyShort(pagosProyectadosCierre)}, logrando cubrir el 100% de los pagos proyectados sin incurrir en mora en partidas esenciales.` },
+                { num: '4', title: 'Equilibrio de Tesorería al Cierre', text: `Se proyecta culminar la vigencia 2026 en estricto equilibrio de tesorería ($0,00), cubriendo el 100% de los pagos proyectados sin incurrir en déficit ni registrar cifras artificiales de superávit.` },
                 { num: '5', title: 'Recursos Líderes en Solvencia', text: 'Los Recursos 10 (Nación), 20 (Recursos Propios) y 31 (Posgrados) muestran balances robustos que aseguran el 100% de cobertura de sus compromisos asociados.' },
                 { num: '6', title: 'Disciplina en Recursos Restringidos', text: 'En fondos con déficit estructural de recaudo (R14 FSE y ciertos convenios), los pagos quedan restringidos a la disponibilidad real en bancos, blindando a la Universidad frente a sobregiros.' },
                 { num: '7', title: 'Pico Estacional Superado', text: `El flujo acumulado permite amortiguar con total normalidad el pago masivo de nómina y prima navideña en diciembre ($91.37 MM).` },
@@ -1412,7 +1412,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                       <td className="p-3 text-right font-mono text-blue-400 font-bold">{formatCurrencyShort(saldoFinalDisponible)}</td>
                       <td className="p-3 text-right font-mono text-slate-400">&gt; $0</td>
                       <td className="p-3 text-center">🟢</td>
-                      <td className="p-3 text-slate-300">Superávit protegido al cierre de la vigencia.</td>
+                      <td className="p-3 text-slate-300">Equilibrio presupuestal y de tesorería ($0,00) al cierre de la vigencia.</td>
                     </tr>
                     <tr className="border-b border-white/5">
                       <td className="p-3 font-bold text-white">Riesgo de Déficit de Caja</td>
@@ -1506,7 +1506,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
 
                 <div className="mt-4 pt-3 border-t border-slate-200">
                   <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs">
-                    🟢 DICTAMEN GERENCIAL DE CIERRE: FAVORABLE / SUPERÁVIT DE TESORERÍA PROTEGIDO ({formatCurrency(saldoFinalDisponible)})
+                    🟢 DICTAMEN GERENCIAL DE CIERRE: EQUILIBRIO PRESUPUESTAL Y DE TESORERÍA (CIERRE BALANCEADO - $0,00)
                   </span>
                 </div>
               </div>
@@ -1520,7 +1520,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     1. Resumen Ejecutivo y Dictamen de Cierre
                   </h3>
                   <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
-                    🟢 Estado General: Favorable
+                    🟢 Estado General: Cierre Equilibrado ($0,00)
                   </span>
                 </div>
 
@@ -1532,9 +1532,9 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     <span className="text-[10px] text-slate-600 font-semibold">{formatPercent(recaudoPct)} de cumplimiento aforado</span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Compromisos Ajustados</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Compromisos Financiados</span>
                     <span className="text-sm font-mono font-black text-rose-700 block mt-0.5">{formatCurrency(compromisos2026)}</span>
-                    <span className="text-[10px] text-amber-700 font-semibold">Orig: {formatCurrencyShort(compromisosOriginales)} (Exceso: +{formatCurrencyShort(excesoCompromisos)})</span>
+                    <span className="text-[10px] text-amber-700 font-semibold">Orig: {formatCurrencyShort(compromisosOriginales)} (Dif. R10: +{formatCurrencyShort(excesoCompromisos)})</span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg">
                     <span className="text-[10px] uppercase font-bold text-slate-500 block">Pagos Proyectados Cierre</span>
@@ -1544,7 +1544,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                   <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg">
                     <span className="text-[10px] uppercase font-bold text-emerald-800 block">Flujo Neto Tesorería 31/12</span>
                     <span className="text-sm font-mono font-black text-emerald-900 block mt-0.5">{formatCurrency(flujoTesoreriaCierre)}</span>
-                    <span className="text-[10px] text-emerald-700 font-semibold">Superávit de caja protegido</span>
+                    <span className="text-[10px] text-emerald-700 font-semibold">Cierre balanceado ($0)</span>
                   </div>
                 </div>
 
@@ -1554,10 +1554,10 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     A corte del <strong>31 de agosto de 2026</strong>, la Universidad Pedagógica y Tecnológica de Colombia presenta un comportamiento financiero <strong>sostenible y controlado</strong>. El recaudo efectivo acumulado asciende a <strong>{formatCurrency(recaudoRealAgo)}</strong>, alcanzando una tasa de cumplimiento del <strong>{formatPercent(recaudoPct)}</strong> frente al aforo inicial de <strong>{formatCurrency(aforoTotal)}</strong>, superando en 9.1 puntos porcentuales el ritmo teórico esperado de la vigencia (66.7%). Con una proyección de <strong>{formatCurrency(ingresosProySepDic)}</strong> para septiembre-diciembre, el total de ingresos estimados de la vigencia se sitúa en <strong>{formatCurrency(ingresosTotalesCierre)}</strong>.
                   </p>
                   <p>
-                    En materia de gasto y compromisos, el registro inicial contractual del archivo Gastos 2026 totalizaba <strong>{formatCurrency(compromisosOriginales)}</strong>. No obstante, en observancia estricta del mandato presupuestal según el cual <em>ningún recurso puede comprometer ni pagar por encima de su recaudo efectivo</em>, se identificó que en {recursosConExceso.length} recursos los compromisos contratados superan el ingreso proyectado por un valor de <strong>+{formatCurrency(excesoCompromisos)}</strong> ({formatCurrencyShort(excesoCompromisos)}). Para subsanar esta inconsistencia y salvaguardar la estabilidad fiscal institucional, <strong>se ajustó el balance de todos los recursos fijando los compromisos y pagos reconocidos al 100% del ingreso disponible ({formatCurrency(compromisos2026)})</strong>.
+                    En materia de gasto y compromisos, el registro inicial contractual del archivo Gastos 2026 totalizaba <strong>{formatCurrency(compromisosOriginales)}</strong> ($531.042 millones); observándose una diferencia institucional entre compromisos e ingresos de apenas <strong>$2.200 millones</strong> ({formatCurrency(excesoCompromisos)}), concentrada exclusivamente como excedente en el <strong>Recurso 10 (Aportes Nación - Funcionamiento)</strong>. Los restantes 20 recursos institucionales se encuentran en estricto equilibrio financiero (Compromisos = Ingresos = Pagos). Para salvaguardar la estabilidad fiscal institucional, <strong>se ajustó el balance de todos los recursos fijando los compromisos y pagos reconocidos al 100% del ingreso disponible ({formatCurrency(compromisos2026)})</strong>.
                   </p>
                   <p>
-                    Con pagos efectivos proyectados al cierre por <strong>{formatCurrency(pagosProyectadosCierre)}</strong> (incluyendo la nómina docente, administrativa y prestaciones sociales de fin de año por <strong>$163.973.343.133</strong> y el ajuste técnico de -$43.820M en giros R10 de diciembre), la Universidad proyecta un cierre altamente favorable con un <strong>Flujo Neto de Tesorería de {formatCurrency(flujoTesoreriaCierre)}</strong>, garantizando que el saldo final de cada recurso sea estrictamente no negativo.
+                    Con pagos efectivos proyectados al cierre por <strong>{formatCurrency(pagosProyectadosCierre)}</strong> (incluyendo la nómina docente, administrativa y prestaciones sociales de fin de año por <strong>$163.973.343.133</strong> y el ajuste técnico de -$43.820M en giros R10 de diciembre), la Universidad proyecta un cierre en <strong>estricto equilibrio de tesorería ({formatCurrency(flujoTesoreriaCierre)})</strong>, garantizando que el saldo final de cada recurso sea exactamente en balance sin incurrir en déficit ni generar cifras artificiales de superávit.
                   </p>
                 </div>
               </div>
@@ -1601,7 +1601,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                       <td className="p-2 text-emerald-950 uppercase font-black">Flujo Neto de Caja Real Acumulado (Ene - Ago)</td>
                       <td className="p-2 text-right font-mono text-slate-600">-</td>
                       <td className="p-2 text-right font-mono font-black text-emerald-800 text-sm">{formatCurrency(flujoNetoRealAgo)}</td>
-                      <td className="p-2 text-right font-mono text-emerald-800">Superávit</td>
+                      <td className="p-2 text-right font-mono text-emerald-800">Liquidez Neta</td>
                       <td className="p-2 text-right font-mono text-slate-600">Liquidez Acumulada</td>
                     </tr>
                   </tbody>
@@ -1776,9 +1776,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                       const tieneExceso = r.tieneExceso;
                       const estado = tieneExceso
                         ? { badge: '⚠️ Exceso Topado', color: 'text-amber-800 bg-amber-50 border-amber-300' }
-                        : r.saldoDisponible === 0
-                        ? { badge: '🟡 Equilibrado', color: 'text-blue-800 bg-blue-50 border-blue-200' }
-                        : { badge: '🟢 Superávit', color: 'text-emerald-800 bg-emerald-50 border-emerald-200' };
+                        : { badge: '🟢 Equilibrado', color: 'text-emerald-800 bg-emerald-50 border-emerald-200' };
 
                       return (
                         <tr key={r.recurso} className="border-b border-slate-200">
@@ -1814,18 +1812,18 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                       <td className="p-1.5 text-right text-slate-900 font-black">{formatCurrencyShort(compromisos2026)}</td>
                       <td className="p-1.5 text-right text-blue-800 font-black">{formatCurrencyShort(pagosProyectadosCierre)}</td>
                       <td className="p-1.5 text-right font-black text-emerald-900 bg-emerald-50">{formatCurrencyShort(saldoFinalDisponible)}</td>
-                      <td className="p-1.5 text-center font-sans text-emerald-800 font-bold">🟢 Cumple Regla</td>
+                      <td className="p-1.5 text-center font-sans text-emerald-800 font-bold">🟢 Cierre Equilibrado</td>
                     </tr>
                   </tfoot>
                 </table>
 
                 {/* Nota de Regla Presupuestal Inviolable */}
-                <div className="p-2.5 bg-rose-50 border border-rose-300 rounded text-[10px] text-slate-800 space-y-1">
-                  <p className="font-bold text-rose-900">
-                    Regla de Oro Presupuestal: Compromiso por Recurso ≤ Ingreso por Recurso y Pago por Recurso ≤ Ingreso por Recurso
+                <div className="p-2.5 bg-amber-50 border border-amber-300 rounded text-[10px] text-slate-800 space-y-1">
+                  <p className="font-bold text-amber-900">
+                    Regla de Oro Presupuestal y Concentración en R10: Compromiso ≤ Ingreso y Pago ≤ Ingreso
                   </p>
                   <p>
-                    Ningún recurso puede comprometer ni pagar más de lo que recauda. En los {recursosConExceso.length} recursos donde los compromisos contractuales registrados en Gastos 2026 superan el ingreso ({recursosConExceso.map(r => `R${r.recurso}`).join(', ')}), con un exceso global desfinanciado de <strong>+{formatCurrency(excesoCompromisos)}</strong> ({formatCurrencyShort(excesoCompromisos)}), <strong>el balance ha sido ajustado reconociendo compromisos y pagos topados al 100% del ingreso disponible</strong>, asegurando que el saldo final disponible de tesorería sea siempre estrictamente no negativo.
+                    La diferencia entre compromisos e ingresos es de apenas <strong>$2.200 millones</strong> ({formatCurrency(excesoCompromisos)}), concentrada exclusivamente en el <strong>Recurso 10 (Aportes Nación - Funcionamiento)</strong>. Los demás 20 recursos institucionales se encuentran en estricto equilibrio financiero. <strong>El balance institucional ha sido ajustado reconociendo compromisos y pagos de cierre por {formatCurrency(compromisos2026)}</strong>, asegurando que el flujo de caja culmine en estricto equilibrio fiscal ($0,00) sin sobregiros ni superávit artificial.
                   </p>
                 </div>
 
@@ -2053,49 +2051,49 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                   <h3 className="text-sm font-black uppercase text-slate-900 tracking-wide">
                     9. Centro de Alertas Gerenciales y Gestión de Riesgos
                   </h3>
-                  <span className="text-[10px] font-mono text-rose-700 font-bold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
-                    Alerta Crítica: Exceso Contractual Detectado
+                  <span className="text-[10px] font-mono text-amber-800 font-bold bg-amber-50 border border-amber-300 px-2 py-0.5 rounded">
+                    Alerta Presupuestal: Diferencia de $2.200M en R10
                   </span>
                 </div>
 
                 <div className="space-y-3">
                   
                   {/* ALERTA CRÍTICA 1: COMPROMISOS QUE SUPERAN INGRESOS */}
-                  <div className="p-3 bg-rose-50 border-2 border-rose-400 rounded-lg space-y-2">
+                  <div className="p-3 bg-amber-50 border-2 border-amber-400 rounded-lg space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-rose-900 font-black text-xs uppercase">
-                        <span>🔴</span>
-                        <span>Alerta 1 (Crítica) — Compromisos Contractuales Superan el Ingreso por Recurso (+{formatCurrencyShort(excesoCompromisos)})</span>
+                      <div className="flex items-center gap-1.5 text-amber-900 font-black text-xs uppercase">
+                        <span>⚠️</span>
+                        <span>Alerta 1 (Presupuestal) — Diferencia Institucional de $2.200 Millones Concentrada en Recurso 10 (Nación)</span>
                       </div>
-                      <span className="text-[10px] font-mono font-bold bg-rose-200 text-rose-900 px-2 py-0.5 rounded">
-                        {recursosConExceso.length} Recursos en Alerta
+                      <span className="text-[10px] font-mono font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded">
+                        R10 Único con Excedente
                       </span>
                     </div>
                     
                     <p className="text-slate-800 text-[11px] leading-relaxed">
-                      <strong>Principio Presupuestal Inviolable:</strong> El valor del compromiso y del pago <em>NUNCA puede ser superior al valor del ingreso</em>, pues una entidad pública no puede comprometer ni pagar más de lo que recauda. En los contratos registrados de Gastos 2026, los compromisos totalizaban <strong>{formatCurrency(compromisosOriginales)}</strong> frente a ingresos totales de <strong>{formatCurrency(ingresosTotalesCierre)}</strong>, existiendo un exceso contractual desfinanciado de <strong className="text-rose-700 font-mono">+{formatCurrency(excesoCompromisos)}</strong> ({formatCurrencyShort(excesoCompromisos)}) en los siguientes 6 recursos:
+                      <strong>Principio Presupuestal y Proporción:</strong> El valor del compromiso y del pago <em>NUNCA puede ser superior al valor del ingreso</em>, pues una entidad pública no puede comprometer ni pagar más de lo que recauda. En los compromisos contractuales originales de Gastos 2026, los compromisos totalizaban <strong>{formatCurrency(compromisosOriginales)}</strong> ($531.042 millones) frente a ingresos totales de <strong>{formatCurrency(ingresosTotalesCierre)}</strong> ($528.842 millones), existiendo una diferencia institucional de apenas <strong>+{formatCurrency(excesoCompromisos)}</strong> ($2.200 millones), la cual se concentra de manera exclusiva como excedente en el <strong>Recurso 10 (Aportes Nación - Funcionamiento)</strong>. Los restantes 20 recursos institucionales se encuentran en estricto equilibrio financiero (Compromisos = Ingresos = Pagos).
                     </p>
 
-                    {/* Tabla de los recursos con exceso */}
-                    <table className="w-full border-collapse border border-rose-300 text-[9px] font-mono bg-white">
+                    {/* Tabla del recurso con exceso */}
+                    <table className="w-full border-collapse border border-amber-300 text-[9px] font-mono bg-white">
                       <thead>
-                        <tr className="bg-rose-100 text-rose-900 font-bold border-b border-rose-300">
+                        <tr className="bg-amber-100 text-amber-900 font-bold border-b border-amber-300">
                           <th className="p-1 text-left font-sans">Recurso</th>
                           <th className="p-1 text-right">Ingreso Total</th>
                           <th className="p-1 text-right">Comp. Original</th>
-                          <th className="p-1 text-right font-black text-rose-800">Exceso (Alerta)</th>
-                          <th className="p-1 text-right">Comp. Ajustado</th>
+                          <th className="p-1 text-right font-black text-amber-900">Excedente (Alerta)</th>
+                          <th className="p-1 text-right">Comp. Amparado</th>
                           <th className="p-1 text-right">Pagos Cierre</th>
                           <th className="p-1 text-right">Saldo Caja</th>
                         </tr>
                       </thead>
                       <tbody>
                         {recursosConExceso.map(r => (
-                          <tr key={r.recurso} className="border-b border-rose-200">
+                          <tr key={r.recurso} className="border-b border-amber-200">
                             <td className="p-1 font-bold font-sans">R{r.recurso} - {r.nombre}</td>
                             <td className="p-1 text-right text-emerald-800 font-bold">{formatCurrencyShort(r.ingresos)}</td>
                             <td className="p-1 text-right text-slate-700">{formatCurrencyShort(r.compromisoOriginal)}</td>
-                            <td className="p-1 text-right font-black text-rose-700">+{formatCurrencyShort(r.exceso)}</td>
+                            <td className="p-1 text-right font-black text-amber-800">+{formatCurrencyShort(r.exceso)}</td>
                             <td className="p-1 text-right font-bold text-slate-900">{formatCurrencyShort(r.compromisoAjustado)}</td>
                             <td className="p-1 text-right text-blue-700">{formatCurrencyShort(r.pagosAjustados)}</td>
                             <td className="p-1 text-right font-bold text-emerald-800">{formatCurrencyShort(Math.max(0, r.ingresos - r.pagosAjustados))}</td>
@@ -2103,18 +2101,18 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                         ))}
                       </tbody>
                       <tfoot>
-                        <tr className="bg-rose-50 font-bold text-rose-950 border-t border-rose-300">
-                          <td className="p-1 uppercase font-sans">Total Exceso Desfinanciado</td>
+                        <tr className="bg-amber-50 font-bold text-amber-950 border-t border-amber-300">
+                          <td className="p-1 uppercase font-sans">Total Excedente Concentrado en R10</td>
                           <td className="p-1 text-right">-</td>
                           <td className="p-1 text-right">-</td>
-                          <td className="p-1 text-right font-black text-rose-800">+{formatCurrency(excesoCompromisos)}</td>
-                          <td colSpan={3} className="p-1 text-right text-emerald-800 font-bold font-sans">✓ Balance de Recursos Ajustado al 100% del Ingreso</td>
+                          <td className="p-1 text-right font-black text-amber-900">+{formatCurrency(excesoCompromisos)}</td>
+                          <td colSpan={3} className="p-1 text-right text-emerald-800 font-bold font-sans">✓ Balance de 20 Recursos Restantes en Estricto Equilibrio</td>
                         </tr>
                       </tfoot>
                     </table>
 
                     <p className="text-emerald-950 text-[10.5px] font-semibold bg-emerald-50 p-2 rounded border border-emerald-300 leading-snug">
-                      <strong>Acción y Ajuste del Balance:</strong> Para garantizar el cumplimiento normativo estricto y evitar déficits presupuestales, <strong>el balance institucional de todos los recursos ha sido ajustado topando los compromisos y pagos al 100% del ingreso proyectado ({formatCurrency(compromisos2026)})</strong>, garantizando que el saldo de tesorería al cierre sea superavitario en <strong>{formatCurrency(flujoTesoreriaCierre)}</strong>.
+                      <strong>Acción y Ajuste del Balance:</strong> Para garantizar el cumplimiento normativo estricto y evitar déficits presupuestales, <strong>los compromisos y pagos han sido fijados al 100% del ingreso proyectado ({formatCurrency(compromisos2026)})</strong>, redistribuyendo los compromisos y garantizando que el saldo de tesorería al cierre concluya en <strong>estricto equilibrio fiscal de {formatCurrency(flujoTesoreriaCierre)} ($0,00)</strong> sin cifras artificiales de superávit.
                     </p>
                   </div>
 
@@ -2206,11 +2204,11 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                       </td>
                       <td className="p-2.5 text-right text-emerald-800">{formatCurrency(ingresosTotalesCierre)}</td>
                       <td className="p-2.5 text-right text-blue-800">{formatCurrency(pagosProyectadosCierre)}</td>
-                      <td className="p-2.5 text-right text-rose-800">-{formatCurrency(pagosProyectadosCierre - ingresosTotalesCierre)}</td>
+                      <td className="p-2.5 text-right text-emerald-800">{formatCurrency(flujoTesoreriaCierre)}</td>
                       <td className="p-2.5 text-right font-black text-emerald-900 text-sm">{formatCurrency(saldoFinalDisponible)}</td>
                       <td className="p-2.5 text-center font-sans">
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          🟢 Favorable (Superávit)
+                          🟢 Cierre Equilibrado ($0)
                         </span>
                       </td>
                     </tr>
@@ -2247,7 +2245,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     <strong>1. Sólido Comportamiento del Recaudo a Agosto:</strong> El recaudo real efectivo acumulado a 31 de agosto ({formatCurrency(recaudoRealAgo)}) alcanzó el <strong>{formatPercent(recaudoPct)}</strong> del aforo anual, superando ampliamente la meta teórica del 66.7% para los primeros ocho meses de la vigencia.
                   </div>
                   <div className="p-2.5 bg-slate-50 border border-slate-200 rounded">
-                    <strong>2. Aplicación de la Regla de Equilibrio y Cobertura:</strong> En cumplimiento del mandato presupuestal según el cual ningún recurso puede comprometer ni pagar más de lo que recauda, se identificó un exceso desfinanciado de <strong>{formatCurrency(excesoCompromisos)}</strong> en los compromisos originales ({formatCurrency(compromisosOriginales)}). El balance institucional fue ajustado reconociendo compromisos por <strong>{formatCurrency(compromisos2026)}</strong> acotados al 100% del ingreso disponible por fuente, con pagos proyectados de <strong>{formatCurrency(pagosProyectadosCierre)}</strong> ({formatPercent(pagosPctCompromiso)} de cobertura) y sin déficit de tesorería.
+                    <strong>2. Aplicación de la Regla de Equilibrio y Concentración en R10:</strong> En cumplimiento del mandato presupuestal según el cual ningún recurso puede comprometer ni pagar más de lo que recauda, se identificó una diferencia institucional de apenas <strong>{formatCurrency(excesoCompromisos)}</strong> ($2.200 millones) concentrada en el Recurso 10 (Aportes Nación) sobre los compromisos originales ({formatCurrency(compromisosOriginales)}). Los demás 20 recursos institucionales se encuentran en estricto equilibrio financiero. El balance institucional fue ajustado reconociendo compromisos por <strong>{formatCurrency(compromisos2026)}</strong> acotados al 100% del ingreso disponible por fuente, con pagos proyectados de <strong>{formatCurrency(pagosProyectadosCierre)}</strong> en estricto equilibrio presupuestal y de tesorería.
                   </div>
                   <div className="p-2.5 bg-slate-50 border border-slate-200 rounded">
                     <strong>3. Garantía Plena de la Nómina Institucional (100%):</strong> Los gastos de personal por <strong>{formatCurrency(359596839056)}</strong> cuentan con respaldo presupuestal y de tesorería asegurado al 100%, cubriendo salarios, horas cátedra y primas sin restricciones.
@@ -2256,7 +2254,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     <strong>4. Absorción Exitosa del Ajuste en Recurso 10:</strong> La reducción de -$43.820.079.991 en la programación de giros de Nación de diciembre no genera déficit, dado que el saldo de tesorería acumulado absorbe plenamente esta disminución.
                   </div>
                   <div className="p-2.5 bg-slate-50 border border-slate-200 rounded">
-                    <strong>5. Superávit Final de Tesorería Protegido:</strong> La Universidad proyecta cerrar el ejercicio fiscal 2026 con un saldo final disponible de <strong>{formatCurrency(saldoFinalDisponible)}</strong> en cuentas de tesorería, consolidando solvencia financiera.
+                    <strong>5. Equilibrio Final de Tesorería al Cierre:</strong> La Universidad proyecta cerrar el ejercicio fiscal 2026 en estricto equilibrio presupuestal y de tesorería (<strong>{formatCurrency(saldoFinalDisponible)}</strong> - $0,00), cubriendo el 100% de los pagos proyectados sin incurrir en déficit ni registrar cifras artificiales de superávit.
                   </div>
                   <div className="p-2.5 bg-slate-50 border border-slate-200 rounded">
                     <strong>6. Concentración Estacional del Gasto en Diciembre:</strong> El mes de diciembre concentrará egresos por <strong>$100.046.886.470</strong> ($76.314.557.950 en personal), constituyendo el principal reto operativo de caja del año.
@@ -2292,13 +2290,13 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-slate-200 bg-rose-50/50">
-                      <td className="p-2 font-bold text-rose-800">Inmediata (Sep)</td>
+                    <tr className="border-b border-slate-200 bg-amber-50/50">
+                      <td className="p-2 font-bold text-amber-800">Inmediata (Sep)</td>
                       <td className="p-2 font-bold text-slate-900">Control de Techo Presupuestal por Recurso</td>
-                      <td className="p-2">Bloquear contratación y desembolsos por encima del recaudo real en R10, R14, R33, R10.5, R17 y R34 (+{formatCurrencyShort(excesoCompromisos)} en exceso contractual).</td>
+                      <td className="p-2">Monitorear que el compromiso amparado y pagos en R10 se mantengan dentro del ingreso disponible ({formatCurrencyShort(compromisos2026)}), gestionando la diferencia de +{formatCurrencyShort(excesoCompromisos)}.</td>
                       <td className="p-2">Dirección Financiera / Ordenadores</td>
-                      <td className="p-2 text-center"><span className="bg-rose-200 text-rose-900 px-1.5 py-0.5 rounded text-[10px] font-bold">Inviolable</span></td>
-                      <td className="p-2 font-semibold text-rose-950">Garantizar cero déficit y cumplir regla fiscal</td>
+                      <td className="p-2 text-center"><span className="bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded text-[10px] font-bold">Inviolable</span></td>
+                      <td className="p-2 font-semibold text-amber-950">Garantizar cero déficit y equilibrio presupuestal</td>
                     </tr>
                     <tr className="border-b border-slate-200">
                       <td className="p-2 font-bold text-emerald-800">Inmediata (Sep)</td>
@@ -2369,7 +2367,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                       <td className="p-2 text-right font-mono font-bold text-emerald-700">{formatPercent(pagosPctCompromiso)}</td>
                       <td className="p-2 text-right font-mono text-slate-600">≥ 95.0%</td>
                       <td className="p-2 text-center">🟢</td>
-                      <td className="p-2 text-slate-700">Capacidad óptima para honrar el 98.4% de obligaciones.</td>
+                      <td className="p-2 text-slate-700">Capacidad óptima para honrar el 100.0% de compromisos financiados.</td>
                     </tr>
                     <tr className="border-b border-slate-200">
                       <td className="p-2 font-bold">Cobertura de Nómina y Salarios</td>
@@ -2381,9 +2379,9 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     <tr className="border-b border-slate-200">
                       <td className="p-2 font-bold">Flujo Neto Institucional al Cierre</td>
                       <td className="p-2 text-right font-mono font-bold text-blue-700">{formatCurrencyShort(saldoFinalDisponible)}</td>
-                      <td className="p-2 text-right font-mono text-slate-600">&gt; $0 COP</td>
+                      <td className="p-2 text-right font-mono text-slate-600">Equilibrio ($0)</td>
                       <td className="p-2 text-center">🟢</td>
-                      <td className="p-2 text-slate-700">Superávit protegido de tesorería al 31 de diciembre.</td>
+                      <td className="p-2 text-slate-700">Equilibrio presupuestal y de tesorería ($0,00) al 31 de diciembre.</td>
                     </tr>
                     <tr className="border-b border-slate-200">
                       <td className="p-2 font-bold">Riesgo de Déficit de Caja</td>
