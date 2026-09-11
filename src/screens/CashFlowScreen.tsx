@@ -211,23 +211,39 @@ export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => voi
       });
     }
 
-    // 3. Project months 8..11 (Sep..Dic) so that the full annual commitment equals Gastos 2026 without adding extra commitments
+    // 3. Project months 8..11 (Sep..Dic) for Personal with exact attached flow; other expenses according to Gastos 2026 without adding extra commitments
     const weightsStd = [0.20, 0.22, 0.26, 0.32];
-    const weightsPersonal = [0.15, 0.17, 0.22, 0.46];
+    const PERSONAL_EXACTO_SEP_DIC = [28740288969, 27877151499, 31041344714, 76314557950];
+
+    const pType = tiposMap['2.1.1 Gastos de Personal'];
+    const totalHistPersonal = pType ? Object.values(pType.recursos).reduce((acc, r) => acc + r.monthly.slice(0, 8).reduce((a, b) => a + b, 0), 0) || 1 : 1;
 
     Object.values(tiposMap).forEach(t => {
-      const w = t.name.includes('Personal') ? weightsPersonal : weightsStd;
-      Object.values(t.recursos).forEach(rec => {
-        const histSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
-        const targetComp = rec.totalCompG26 > 0 ? rec.totalCompG26 : histSum;
-        const remaining = Math.max(0, targetComp - histSum);
-        for (let m = 8; m < 12; m++) {
-          const pVal = remaining * w[m - 8];
-          rec.monthly[m] = pVal;
-          t.monthly[m] += pVal;
-        }
-        rec.total = rec.monthly.reduce((a, b) => a + b, 0);
-      });
+      const isPersonal = t.name.includes('Personal');
+      if (isPersonal) {
+        Object.values(t.recursos).forEach(rec => {
+          const histSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+          const share = histSum / totalHistPersonal;
+          for (let m = 8; m < 12; m++) {
+            const pVal = PERSONAL_EXACTO_SEP_DIC[m - 8] * share;
+            rec.monthly[m] = pVal;
+            t.monthly[m] += pVal;
+          }
+          rec.total = rec.monthly.reduce((a, b) => a + b, 0);
+        });
+      } else {
+        Object.values(t.recursos).forEach(rec => {
+          const histSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+          const targetComp = rec.totalCompG26 > 0 ? rec.totalCompG26 : histSum;
+          const remaining = Math.max(0, targetComp - histSum);
+          for (let m = 8; m < 12; m++) {
+            const pVal = remaining * weightsStd[m - 8];
+            rec.monthly[m] = pVal;
+            t.monthly[m] += pVal;
+          }
+          rec.total = rec.monthly.reduce((a, b) => a + b, 0);
+        });
+      }
     });
 
     return Object.values(tiposMap)
@@ -719,7 +735,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                       <span className="text-[10px] text-slate-400">Nómina y Seguridad Social</span>
                     </div>
                     <span className="text-xs font-mono font-bold text-white">
-                      {formatCurrencyShort(pRow?.monthly.reduce((a,b)=>a+b,0) || 369650490929)}
+                      {formatCurrencyShort(pRow?.monthly.reduce((a,b)=>a+b,0) || 359596839056)}
                     </span>
                   </div>
 

@@ -173,14 +173,19 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
     }
 
     const weightsStd = [0.20, 0.22, 0.26, 0.32];
-    const weightsPersonal = [0.15, 0.17, 0.22, 0.46];
+    const PERSONAL_EXACTO_SEP_DIC = [28740288969, 27877151499, 31041344714, 76314557950];
 
     Object.values(tiposMap).forEach(t => {
-      const w = t.name.includes('Personal') ? weightsPersonal : weightsStd;
-      const histSum = t.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
-      const remaining = Math.max(0, t.totalCompG26 - histSum);
-      for (let m = 8; m < 12; m++) {
-        t.monthly[m] = remaining * w[m - 8];
+      if (t.name.includes('Personal')) {
+        for (let m = 8; m < 12; m++) {
+          t.monthly[m] = PERSONAL_EXACTO_SEP_DIC[m - 8];
+        }
+      } else {
+        const histSum = t.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+        const remaining = Math.max(0, t.totalCompG26 - histSum);
+        for (let m = 8; m < 12; m++) {
+          t.monthly[m] = remaining * weightsStd[m - 8];
+        }
       }
     });
 
