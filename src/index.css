@@ -87,3 +87,36 @@
     @apply bg-white/10;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-executive-report,
+  #printable-executive-report * {
+    visibility: visible;
+  }
+  #printable-executive-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 24px;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11px;
+  }
+  .page-break-before {
+    page-break-before: always;
+    break-before: page;
+  }
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
