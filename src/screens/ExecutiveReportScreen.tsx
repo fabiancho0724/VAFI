@@ -274,8 +274,11 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
   const ingresosTotalesCierre = recaudoRealAgo + ingresosProySepDic;
   const recaudoPendienteAforo = Math.max(0, aforoTotal - recaudoRealAgo);
 
-  const compromisos2026 = results.totals.totalCompromisos; // $554.58 MM
-  const pagosProyectadosCierre = results.totals.totalPagos; // $535.81 MM
+  const compromisos2026 = results.totals.totalCompromisos; // $468.70 MM (compromisos ajustados al ingreso)
+  const compromisosOriginales = results.totals.totalCompromisosOriginales || compromisos2026; // $544.52 MM
+  const excesoCompromisos = results.totals.totalExcesoCompromisos || 0; // $75.82 MM
+  const recursosConExceso = results.totals.recursosConExceso || [];
+  const pagosProyectadosCierre = results.totals.totalPagos; // $439.69 MM
   const pagosRealAgo = monthlyFlow.slice(0, 8).reduce((acc, m) => acc + m.gasReal, 0);
   const pagosPctCompromiso = compromisos2026 > 0 ? (pagosProyectadosCierre / compromisos2026) : 0;
   const saldoPendientePago = Math.max(0, compromisos2026 - pagosRealAgo);
@@ -384,6 +387,54 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
         </div>
       </div>
 
+      {/* ALERTA DE EQUILIBRIO PRESUPUESTAL: COMPROMISOS Y PAGOS TOPADOS AL INGRESO */}
+      {excesoCompromisos > 0 && (
+        <div className="bg-rose-950/40 border-2 border-rose-500/50 rounded-2xl p-5 shadow-2xl backdrop-blur-md animate-fadeIn">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-rose-500/30 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white flex flex-wrap items-center gap-2">
+                  <span>ALERTA PRESUPUESTAL: COMPROMISOS CONTRACTUALES SUPERAN EL INGRESO</span>
+                  <span className="text-xs bg-rose-500 text-white font-mono px-2.5 py-0.5 rounded-full font-black">
+                    +{formatCurrencyShort(excesoCompromisos)} en Exceso
+                  </span>
+                </h3>
+                <p className="text-xs text-rose-200 mt-1">
+                  <strong>Regla de Oro Presupuestal:</strong> Ningún recurso puede comprometer ni pagar más de lo que recauda. En {recursosConExceso.length} recursos, los compromisos contractuales registrados en Gastos 2026 superan el ingreso proyectado. <strong>El balance institucional ha sido ajustado limitando los compromisos y pagos al 100% del ingreso disponible para garantizar saldos de tesorería no negativos.</strong>
+                </p>
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <span className="text-[10px] uppercase font-bold text-rose-300 block">Exceso Total Desfinanciado:</span>
+              <span className="text-2xl font-mono font-black text-rose-400">{formatCurrency(excesoCompromisos)}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+            {recursosConExceso.map(r => (
+              <div key={r.recurso} className="bg-black/40 border border-rose-500/30 rounded-xl p-3 text-xs space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-white">R{r.recurso} - {r.nombre}</span>
+                  <span className="text-[10px] font-mono font-bold bg-rose-500/30 text-rose-300 px-2 py-0.5 rounded border border-rose-500/40">
+                    Exceso: +{formatCurrencyShort(r.exceso)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
+                  <div>Ingreso Total: <strong className="text-emerald-400 font-mono block">{formatCurrencyShort(r.ingresos)}</strong></div>
+                  <div>Comp. Original: <strong className="text-rose-300 font-mono block">{formatCurrencyShort(r.compromisoOriginal)}</strong></div>
+                </div>
+                <div className="text-[10px] text-emerald-300 bg-emerald-500/10 p-2 rounded border border-emerald-500/20">
+                  ✓ Balance Ajustado: Compromiso topado a <strong>{formatCurrencyShort(r.compromisoAjustado)}</strong> y Pagos a <strong>{formatCurrencyShort(r.pagosAjustados)}</strong>.
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* NAVEGACIÓN EN PESTAÑAS DEL INFORME (12 PESTAÑAS OFICIALES) */}
       <div className="flex overflow-x-auto gap-2 pb-2 border-b border-white/10 no-scrollbar">
         {TABS.map(tab => {
@@ -480,9 +531,21 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                 </span>
               </div>
               <p className="text-3xl font-display font-bold text-white">{formatCurrencyShort(compromisos2026)}</p>
-              <p className="text-xs text-slate-400 mt-1">Compromisos Vigencia (Gastos 2026 Cerrado)</p>
+              <p className="text-xs text-slate-400 mt-1">Compromisos Ajustados (Topados al Ingreso por Recurso)</p>
               
               <div className="mt-4 pt-4 border-t border-white/10 space-y-2 text-xs">
+                {excesoCompromisos > 0 && (
+                  <div className="flex justify-between text-amber-300 font-semibold bg-amber-500/10 px-2 py-1 rounded">
+                    <span>Compromisos Originales:</span>
+                    <span className="font-mono">{formatCurrencyShort(compromisosOriginales)}</span>
+                  </div>
+                )}
+                {excesoCompromisos > 0 && (
+                  <div className="flex justify-between text-rose-400 font-bold bg-rose-500/10 px-2 py-1 rounded">
+                    <span>Exceso Contractual (Alerta):</span>
+                    <span className="font-mono">+{formatCurrencyShort(excesoCompromisos)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-slate-400">Pagos a 31/08 (Real):</span>
                   <span className="font-mono text-white font-bold">{formatCurrencyShort(pagosRealAgo)}</span>
@@ -547,13 +610,13 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
             </div>
             <div className="text-sm text-slate-300 leading-relaxed space-y-3 font-sans">
               <p>
-                A corte del <strong>31 de agosto de 2026</strong>, la Universidad Pedagógica y Tecnológica de Colombia presenta un comportamiento de ingresos reales por <strong>{formatCurrency(recaudoRealAgo)}</strong>, equivalente al <strong>{formatPercent(recaudoPct)}</strong> del aforo presupuestal definitivo ({formatCurrency(aforoTotal)}). Por su parte, los compromisos consolidados para cerrar la vigencia se fijaron en <strong>{formatCurrency(compromisos2026)}</strong> con pagos ejecutados a la fecha por <strong>{formatCurrency(pagosRealAgo)}</strong> (51.1% de ejecución efectiva de desembolsos).
+                A corte del <strong>31 de agosto de 2026</strong>, la Universidad Pedagógica y Tecnológica de Colombia presenta un comportamiento de ingresos reales por <strong>{formatCurrency(recaudoRealAgo)}</strong>, equivalente al <strong>{formatPercent(recaudoPct)}</strong> del aforo presupuestal definitivo ({formatCurrency(aforoTotal)}). Por su parte, los compromisos contractuales registrados inicialmente en el archivo Gastos 2026 ascendían a <strong>{formatCurrency(compromisosOriginales)}</strong>; sin embargo, en cumplimiento estricto del principio presupuestal según el cual <em>ningún recurso puede comprometer ni pagar más de lo que recauda</em>, se identificó un exceso desfinanciado de <strong>{formatCurrency(excesoCompromisos)}</strong> en {recursosConExceso.length} recursos. El balance institucional ha sido debidamente ajustado fijando los compromisos reconocidos en <strong>{formatCurrency(compromisos2026)}</strong> acotados estrictamente al ingreso disponible de cada fuente.
               </p>
               <p>
-                De acuerdo con el modelo prospectivo para el cuatrimestre <strong>septiembre – diciembre</strong>, se proyecta un recaudo complementario de <strong>{formatCurrency(ingresosProySepDic)}</strong> (impulsado por giros SIIF de Nación y matrícula propia) y desembolsos de cierre por <strong>{formatCurrency(pagosProyectadosCierre - pagosRealAgo)}</strong>. Bajo el criterio de prudencia gerencial, los pagos se aproximan al compromiso contractual pero están <em>estrictamente condicionados a la disponibilidad de recaudo por recurso</em>, alcanzando un nivel de cobertura global del <strong>{formatPercent(pagosPctCompromiso)}</strong>.
+                De acuerdo con el modelo prospectivo para el cuatrimestre <strong>septiembre – diciembre</strong>, se proyecta un recaudo complementario de <strong>{formatCurrency(ingresosProySepDic)}</strong> (impulsado por giros SIIF de Nación y matrícula propia) y desembolsos de cierre por <strong>{formatCurrency(pagosProyectadosCierre - pagosRealAgo)}</strong>. Bajo el criterio de prudencia gerencial y equilibrio presupuestal, los pagos proyectados ({formatCurrency(pagosProyectadosCierre)}) están <em>estrictamente condicionados a la disponibilidad de recaudo por recurso</em>, alcanzando un nivel de cobertura global del <strong>{formatPercent(pagosPctCompromiso)}</strong> sobre los compromisos ajustados.
               </p>
               <p className="bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20 text-emerald-200">
-                <strong>Conclusión Operativa de Cierre:</strong> La institución proyecta finalizar la vigencia 2026 con un saldo final disponible en tesorería de <strong>{formatCurrency(saldoFinalDisponible)}</strong>, garantizando el cumplimiento de nóminas, primas decembrinas y funcionamiento básico sin incurrir en déficit operativo ni compromisos en descubierto.
+                <strong>Conclusión Operativa de Cierre:</strong> La institución proyecta finalizar la vigencia 2026 con un superávit neto disponible en tesorería de <strong>{formatCurrency(saldoFinalDisponible)}</strong> (Ingresos Totales {formatCurrency(ingresosTotalesCierre)} menos Pagos Efectivos {formatCurrency(pagosProyectadosCierre)}), garantizando el cumplimiento de nóminas, primas decembrinas y funcionamiento básico con balance en equilibrio y sin saldos en descubierto.
               </p>
             </div>
           </div>
@@ -837,46 +900,51 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
             <div className="w-full overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-white/10 text-slate-400 uppercase font-mono">
+                  <tr className="border-b border-white/10 text-slate-400 uppercase font-mono text-[11px]">
                     <th className="p-3">Recurso</th>
                     <th className="p-3">Denominación</th>
                     <th className="p-3 text-right">Aforo</th>
                     <th className="p-3 text-right text-emerald-400">Recaudo 31/08</th>
-                    <th className="p-3 text-right">% Recaudo</th>
-                    <th className="p-3 text-right">Proy Sep-Dic</th>
-                    <th className="p-3 text-right text-emerald-300">Ingreso Total</th>
-                    <th className="p-3 text-right text-rose-400">Compromiso 2026</th>
+                    <th className="p-3 text-right text-emerald-300 font-bold">Ingreso Total</th>
+                    <th className="p-3 text-right text-slate-300">Comp. Contractual</th>
+                    <th className="p-3 text-right text-rose-400">Exceso (Alerta)</th>
+                    <th className="p-3 text-right text-indigo-300 font-bold">Comp. Ajustado</th>
                     <th className="p-3 text-right text-blue-400">Pago Cierre</th>
                     <th className="p-3 text-right text-white font-bold">Saldo Cierre</th>
-                    <th className="p-3 text-center">Riesgo</th>
+                    <th className="p-3 text-center">Estado Balance</th>
                   </tr>
                 </thead>
                 <tbody>
                   {results.resources.map(r => {
-                    const pctRec = (aforoMap[r.recurso] || 0) > 0 ? r.ingresosReales / (aforoMap[r.recurso] || 0) : 1;
-                    const pctPagado = r.totalCompromisos > 0 ? (r.totalPagos / r.totalCompromisos) * 100 : 100;
-                    const isDeficit = r.totalIngresos < r.totalCompromisos;
-                    const riesgo = isDeficit 
-                      ? { badge: '🔴 Alto', desc: 'Recaudo topa pagos' } 
-                      : r.saldoDisponible < 1e9 
-                      ? { badge: '🟡 Medio', desc: 'Saldo ajustado' } 
-                      : { badge: '🟢 Bajo', desc: '100% Cubierto' };
+                    const aforo = aforoMap[r.recurso] || 0;
+                    const tieneExceso = (r.excesoCompromiso || 0) > 0;
+                    const estado = tieneExceso 
+                      ? { badge: '🔴 Ajustado a Ingreso', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' } 
+                      : { badge: '🟢 100% Cubierto', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
 
                     return (
-                      <tr key={r.recurso} className="border-b border-white/5 hover:bg-white/[0.02] font-mono text-[11px]">
+                      <tr key={r.recurso} className={`border-b border-white/5 hover:bg-white/[0.03] font-mono text-[11px] ${tieneExceso ? 'bg-rose-500/[0.04]' : ''}`}>
                         <td className="p-3 font-bold text-slate-300">R{r.recurso}</td>
-                        <td className="p-3 text-slate-300 font-sans max-w-[180px] truncate">{r.nombre}</td>
-                        <td className="p-3 text-right text-slate-400">{formatCurrencyShort((aforoMap[r.recurso] || 0))}</td>
+                        <td className="p-3 text-slate-300 font-sans max-w-[170px] truncate" title={r.nombre}>{r.nombre}</td>
+                        <td className="p-3 text-right text-slate-400">{formatCurrencyShort(aforo)}</td>
                         <td className="p-3 text-right text-emerald-400 font-bold">{formatCurrencyShort(r.ingresosReales)}</td>
-                        <td className="p-3 text-right text-slate-300">{formatPercent(pctRec)}</td>
-                        <td className="p-3 text-right text-slate-400">{formatCurrencyShort(r.ingresosProyectados)}</td>
                         <td className="p-3 text-right text-emerald-300 font-bold">{formatCurrencyShort(r.totalIngresos)}</td>
-                        <td className="p-3 text-right text-rose-300 font-bold">{formatCurrencyShort(r.totalCompromisos)}</td>
+                        <td className="p-3 text-right text-slate-300">{formatCurrencyShort(r.compromisoOriginal || r.totalCompromisos)}</td>
+                        <td className="p-3 text-right">
+                          {tieneExceso ? (
+                            <span className="text-rose-400 font-bold bg-rose-500/20 px-2 py-0.5 rounded">
+                              +{formatCurrencyShort(r.excesoCompromiso)}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">-</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right text-indigo-300 font-bold bg-indigo-500/5">{formatCurrencyShort(r.totalCompromisos)}</td>
                         <td className="p-3 text-right text-blue-300 font-bold">{formatCurrencyShort(r.totalPagos)}</td>
                         <td className="p-3 text-right font-bold text-white bg-white/5">{formatCurrencyShort(r.saldoDisponible)}</td>
-                        <td className="p-3 text-center" title={riesgo.desc}>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-white/5 border border-white/10">
-                            {riesgo.badge}
+                        <td className="p-3 text-center">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${estado.color}`}>
+                            {estado.badge}
                           </span>
                         </td>
                       </tr>
@@ -888,13 +956,13 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     <td colSpan={2} className="p-3 text-white uppercase font-sans">Totales Institucionales</td>
                     <td className="p-3 text-right text-slate-400">{formatCurrencyShort(aforoTotal)}</td>
                     <td className="p-3 text-right text-emerald-400">{formatCurrencyShort(recaudoRealAgo)}</td>
-                    <td className="p-3 text-right text-white">{formatPercent(recaudoPct)}</td>
-                    <td className="p-3 text-right text-slate-300">{formatCurrencyShort(ingresosProySepDic)}</td>
-                    <td className="p-3 text-right text-emerald-300">{formatCurrencyShort(ingresosTotalesCierre)}</td>
-                    <td className="p-3 text-right text-rose-400">{formatCurrencyShort(compromisos2026)}</td>
-                    <td className="p-3 text-right text-blue-400">{formatCurrencyShort(pagosProyectadosCierre)}</td>
-                    <td className="p-3 text-right text-white bg-white/10">{formatCurrencyShort(saldoFinalDisponible)}</td>
-                    <td className="p-3 text-center text-emerald-400">96.6% Global</td>
+                    <td className="p-3 text-right text-emerald-300 font-black">{formatCurrencyShort(ingresosTotalesCierre)}</td>
+                    <td className="p-3 text-right text-slate-300">{formatCurrencyShort(results.totals.totalCompromisosOriginales)}</td>
+                    <td className="p-3 text-right text-rose-400 font-black">{formatCurrencyShort(results.totals.totalExcesoCompromisos)}</td>
+                    <td className="p-3 text-right text-indigo-300 font-black bg-indigo-500/10">{formatCurrencyShort(results.totals.totalCompromisos)}</td>
+                    <td className="p-3 text-right text-blue-400 font-black">{formatCurrencyShort(results.totals.totalPagos)}</td>
+                    <td className="p-3 text-right text-white font-black bg-white/10">{formatCurrencyShort(results.totals.saldoDisponible)}</td>
+                    <td className="p-3 text-center text-emerald-400 font-sans">🟢 Balance Equilibrado</td>
                   </tr>
                 </tfoot>
               </table>
@@ -1075,17 +1143,38 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
 
             <div className="space-y-4 mt-6">
               
-              <div className="bg-rose-500/10 border-l-4 border-l-rose-500 p-4 rounded-r-xl border-y border-r border-rose-500/20">
+              <div className="bg-rose-500/10 border-l-4 border-l-rose-500 p-5 rounded-r-xl border-y border-r border-rose-500/20">
                 <div className="flex justify-between items-start">
                   <span className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <AlertCircle size={16} /> Alerta 1 — Compromisos Exceden Recaudo en Recursos Específicos
+                    <AlertCircle size={16} /> Alerta 1 — Compromisos Contractuales Superan el Ingreso Disponible (+{formatCurrencyShort(excesoCompromisos)})
                   </span>
                   <span className="text-[10px] font-mono bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-bold">Crítico</span>
                 </div>
-                <div className="mt-2 text-xs text-slate-300 space-y-1">
-                  <p><strong>Indicador:</strong> Recursos con recaudo inferior a compromisos contratados (Fondo Especial R14, R10.5 Gratuidad, R33 Convenios).</p>
-                  <p><strong>Impacto:</strong> Si se pagaran al 100%, se generaría déficit de caja por <strong>$18.763 MM</strong>.</p>
-                  <p className="text-rose-200"><strong>Acción de Mitigación:</strong> Aplicar estrictamente la regla de tope de pagos al recaudo real disponible. No autorizar desembolsos adicionales sin ingreso efectivo en bancos.</p>
+                <div className="mt-3 text-xs text-slate-300 space-y-2">
+                  <p>
+                    <strong>Regla Presupuestal Inviolable:</strong> El valor del compromiso por recurso y el pago <strong>NUNCA</strong> puede ser superior al valor del ingreso disponible, ya que una entidad pública no puede pagar ni comprometer más de lo que recauda.
+                  </p>
+                  <p>
+                    <strong>Indicador y Diagnóstico:</strong> En <strong>{recursosConExceso.length} recursos</strong> de la institución, los compromisos contractuales registrados en Gastos 2026 ({formatCurrency(compromisosOriginales)}) exceden los ingresos proyectados ({formatCurrency(ingresosTotalesCierre)}) en una suma total de <strong className="text-rose-400 font-mono">+{formatCurrency(excesoCompromisos)}</strong> ({formatCurrencyShort(excesoCompromisos)}).
+                  </p>
+                  
+                  {/* Desglose de los 6 recursos */}
+                  <div className="bg-black/30 rounded-lg p-3 border border-rose-500/20 mt-2">
+                    <span className="text-[11px] font-bold text-rose-300 uppercase block mb-2">Desglose de Recursos con Compromisos Superiores al Ingreso:</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {recursosConExceso.map(r => (
+                        <div key={r.recurso} className="bg-white/5 p-2 rounded text-[11px] border border-white/5">
+                          <div className="font-bold text-white">R{r.recurso} ({r.nombre}):</div>
+                          <div className="text-rose-300 font-mono font-bold">Exceso: +{formatCurrency(r.exceso)}</div>
+                          <div className="text-slate-400 text-[10px]">Ingreso: {formatCurrencyShort(r.ingresos)} | Comp. Orig: {formatCurrencyShort(r.compromisoOriginal)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <p className="text-emerald-200 bg-emerald-500/10 p-2.5 rounded border border-emerald-500/20">
+                    <strong>Acción Técnica y Ajuste del Balance:</strong> Para dar cumplimiento estricto a la normativa, <strong>el balance de todos los recursos ha sido ajustado topando los compromisos y pagos al 100% del ingreso proyectado de cada recurso ({formatCurrency(compromisos2026)})</strong>, garantizando que el saldo disponible en tesorería sea siempre mayor o igual a cero ({formatCurrency(flujoTesoreriaCierre)}) y previniendo cualquier déficit presupuestal.
+                  </p>
                 </div>
               </div>
 
@@ -1198,7 +1287,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
             <div className="space-y-3 mt-6">
               {[
                 { num: '1', title: 'Comportamiento de Ingresos', text: `El recaudo efectivo a 31 de agosto alcanzó ${formatCurrencyShort(recaudoRealAgo)} (${formatPercent(recaudoPct)} del aforo), proyectando un cierre consolidado de ${formatCurrencyShort(ingresosTotalesCierre)} gracias a los giros programados del SIIF y matrícula de posgrados.` },
-                { num: '2', title: 'Techo Contractual Cerrado', text: `Los compromisos institucionales están formalmente acotados a ${formatCurrencyShort(compromisos2026)} (archivo oficial Gastos 2026). No se deben tramitar compromisos adicionales que desbalanceen la posición de caja.` },
+                { num: '2', title: 'Equilibrio Presupuestal y Techo Ajustado', text: `En aplicación estricta de la regla de oro (ningún recurso puede comprometer ni pagar más de lo recaudado), se identificó un exceso contractual de ${formatCurrencyShort(excesoCompromisos)} en 6 recursos sobre los compromisos originales (${formatCurrencyShort(compromisosOriginales)}). El balance se ajustó formalmente acotando los compromisos reconocidos a ${formatCurrencyShort(compromisos2026)} al 100% del ingreso disponible por fuente.` },
                 { num: '3', title: 'Cobertura Efectiva de Pagos', text: `El modelo garantiza el desembolso de ${formatCurrencyShort(pagosProyectadosCierre)}, logrando cubrir el 96.6% de todos los compromisos adquiridos sin incurrir en mora en partidas esenciales.` },
                 { num: '4', title: 'Superávit Protegido en Tesorería', text: `Se proyecta culminar la vigencia 2026 con un saldo disponible de ${formatCurrencyShort(saldoFinalDisponible)}, resguardando la solvencia para el inicio del ejercicio 2027.` },
                 { num: '5', title: 'Recursos Líderes en Solvencia', text: 'Los Recursos 10 (Nación), 20 (Recursos Propios) y 31 (Posgrados) muestran balances robustos que aseguran el 100% de cobertura de sus compromisos asociados.' },
@@ -1443,32 +1532,32 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     <span className="text-[10px] text-slate-600 font-semibold">{formatPercent(recaudoPct)} de cumplimiento aforado</span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Compromisos Vigencia</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Compromisos Ajustados</span>
                     <span className="text-sm font-mono font-black text-rose-700 block mt-0.5">{formatCurrency(compromisos2026)}</span>
-                    <span className="text-[10px] text-slate-600 font-semibold">Gastos 2026 aprobados</span>
+                    <span className="text-[10px] text-amber-700 font-semibold">Orig: {formatCurrencyShort(compromisosOriginales)} (Exceso: +{formatCurrencyShort(excesoCompromisos)})</span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg">
                     <span className="text-[10px] uppercase font-bold text-slate-500 block">Pagos Proyectados Cierre</span>
                     <span className="text-sm font-mono font-black text-blue-700 block mt-0.5">{formatCurrency(pagosProyectadosCierre)}</span>
-                    <span className="text-[10px] text-emerald-700 font-bold">{formatPercent(pagosPctCompromiso)} de cobertura contractual</span>
+                    <span className="text-[10px] text-emerald-700 font-bold">{formatPercent(pagosPctCompromiso)} de cobertura de compromisos</span>
                   </div>
                   <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg">
-                    <span className="text-[10px] uppercase font-bold text-emerald-800 block">Superávit Proyectado 31/12</span>
-                    <span className="text-sm font-mono font-black text-emerald-900 block mt-0.5">{formatCurrency(saldoFinalDisponible)}</span>
-                    <span className="text-[10px] text-emerald-700 font-semibold">Saldo de caja y bancos</span>
+                    <span className="text-[10px] uppercase font-bold text-emerald-800 block">Flujo Neto Tesorería 31/12</span>
+                    <span className="text-sm font-mono font-black text-emerald-900 block mt-0.5">{formatCurrency(flujoTesoreriaCierre)}</span>
+                    <span className="text-[10px] text-emerald-700 font-semibold">Superávit de caja protegido</span>
                   </div>
                 </div>
 
                 {/* Narrativa Gerencial Automática */}
                 <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200 text-xs text-slate-800 leading-relaxed text-justify space-y-2">
                   <p>
-                    A corte del <strong>31 de agosto de 2026</strong>, la Universidad Pedagógica y Tecnológica de Colombia presenta un comportamiento financiero <strong>sostenible y controlado</strong>. El recaudo efectivo acumulado asciende a <strong>{formatCurrency(recaudoRealAgo)}</strong>, alcanzando una tasa de cumplimiento del <strong>{formatPercent(recaudoPct)}</strong> frente al aforo inicial de <strong>{formatCurrency(aforoTotal)}</strong>, superando en 9.1 puntos porcentuales el ritmo teórico esperado de la vigencia (66.7%).
+                    A corte del <strong>31 de agosto de 2026</strong>, la Universidad Pedagógica y Tecnológica de Colombia presenta un comportamiento financiero <strong>sostenible y controlado</strong>. El recaudo efectivo acumulado asciende a <strong>{formatCurrency(recaudoRealAgo)}</strong>, alcanzando una tasa de cumplimiento del <strong>{formatPercent(recaudoPct)}</strong> frente al aforo inicial de <strong>{formatCurrency(aforoTotal)}</strong>, superando en 9.1 puntos porcentuales el ritmo teórico esperado de la vigencia (66.7%). Con una proyección de <strong>{formatCurrency(ingresosProySepDic)}</strong> para septiembre-diciembre, el total de ingresos estimados de la vigencia se sitúa en <strong>{formatCurrency(ingresosTotalesCierre)}</strong>.
                   </p>
                   <p>
-                    En materia de gasto, la institución presenta compromisos presupuestales aprobados por <strong>{formatCurrency(compromisos2026)}</strong>, de los cuales ya se han girado de manera efectiva <strong>{formatCurrency(pagosRealAgo)}</strong> en los primeros 8 meses. Para el cuatrimestre septiembre-diciembre, el flujo financiero incorpora un ajuste técnico en el Recurso 10 (Aportes Nación) con un descuento de <strong>$43.820.079.991</strong> en diciembre, consolidando giros por transferencias externas de <strong>$108.641.303.113</strong> en el periodo. Asimismo, la nómina mensual proyectada se encuentra estrictamente fijada en <strong>$163.973.343.133</strong> ($28.740M en Sep, $27.877M en Oct, $31.041M en Nov y $76.314M en Dic por prestaciones sociales y primas legales).
+                    En materia de gasto y compromisos, el registro inicial contractual del archivo Gastos 2026 totalizaba <strong>{formatCurrency(compromisosOriginales)}</strong>. No obstante, en observancia estricta del mandato presupuestal según el cual <em>ningún recurso puede comprometer ni pagar por encima de su recaudo efectivo</em>, se identificó que en {recursosConExceso.length} recursos los compromisos contratados superan el ingreso proyectado por un valor de <strong>+{formatCurrency(excesoCompromisos)}</strong> ({formatCurrencyShort(excesoCompromisos)}). Para subsanar esta inconsistencia y salvaguardar la estabilidad fiscal institucional, <strong>se ajustó el balance de todos los recursos fijando los compromisos y pagos reconocidos al 100% del ingreso disponible ({formatCurrency(compromisos2026)})</strong>.
                   </p>
                   <p>
-                    Con una cobertura de desembolsos del <strong>{formatPercent(pagosPctCompromiso)}</strong> sobre los compromisos adquiridos y la garantía del 100% en los pagos laborales, la Universidad proyecta un cierre equilibrado con un saldo neto disponible de tesorería de <strong>{formatCurrency(saldoFinalDisponible)}</strong>, salvaguardando la liquidez institucional y la estabilidad del ejercicio fiscal.
+                    Con pagos efectivos proyectados al cierre por <strong>{formatCurrency(pagosProyectadosCierre)}</strong> (incluyendo la nómina docente, administrativa y prestaciones sociales de fin de año por <strong>$163.973.343.133</strong> y el ajuste técnico de -$43.820M en giros R10 de diciembre), la Universidad proyecta un cierre altamente favorable con un <strong>Flujo Neto de Tesorería de {formatCurrency(flujoTesoreriaCierre)}</strong>, garantizando que el saldo final de cada recurso sea estrictamente no negativo.
                   </p>
                 </div>
               </div>
@@ -1664,46 +1753,50 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                   <span className="text-[10px] font-mono text-slate-500">Cifras en Pesos Colombianos (COP)</span>
                 </div>
 
-                <table className="w-full border-collapse border border-slate-300 text-[10px] font-mono">
+                <table className="w-full border-collapse border border-slate-300 text-[9px] font-mono">
                   <thead>
                     <tr className="bg-slate-100 text-slate-900 border-b border-slate-300 font-bold">
-                      <th className="p-1.5 text-left font-sans">Rec</th>
-                      <th className="p-1.5 text-left font-sans">Denominación del Recurso</th>
-                      <th className="p-1.5 text-right">Aforo</th>
-                      <th className="p-1.5 text-right">Recaudo 31/08</th>
-                      <th className="p-1.5 text-right">% Rec</th>
-                      <th className="p-1.5 text-right">Proy Sep-Dic</th>
-                      <th className="p-1.5 text-right">Compromisos</th>
-                      <th className="p-1.5 text-right">Pagos Cierre</th>
-                      <th className="p-1.5 text-right">Saldo Caja</th>
-                      <th className="p-1.5 text-center font-sans">Riesgo</th>
+                      <th className="p-1 text-left font-sans">Rec</th>
+                      <th className="p-1 text-left font-sans">Denominación del Recurso</th>
+                      <th className="p-1 text-right">Aforo</th>
+                      <th className="p-1 text-right">Recaudo 31/08</th>
+                      <th className="p-1 text-right">Ingreso Total</th>
+                      <th className="p-1 text-right">Comp. Original</th>
+                      <th className="p-1 text-right">Exceso (Alerta)</th>
+                      <th className="p-1 text-right">Comp. Ajustado</th>
+                      <th className="p-1 text-right">Pagos Cierre</th>
+                      <th className="p-1 text-right">Saldo Disp.</th>
+                      <th className="p-1 text-center font-sans">Estado Balance</th>
                     </tr>
                   </thead>
                   <tbody>
                     {results.resources.map(r => {
                       const aforo = aforoMap[r.recurso] || 0;
-                      const pctRec = aforo > 0 ? r.ingresosReales / aforo : 1;
-                      const isDeficit = r.totalIngresos < r.totalCompromisos;
-                      const riesgo = isDeficit 
-                        ? { badge: '🔴 Alto', color: 'text-rose-700 bg-rose-50 border-rose-200' } 
-                        : r.saldoDisponible < 1e9 
-                        ? { badge: '🟡 Medio', color: 'text-amber-700 bg-amber-50 border-amber-200' } 
-                        : { badge: '🟢 Bajo', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+                      const exceso = r.excesoCompromiso || 0;
+                      const tieneExceso = r.tieneExceso;
+                      const estado = tieneExceso
+                        ? { badge: '⚠️ Exceso Topado', color: 'text-amber-800 bg-amber-50 border-amber-300' }
+                        : r.saldoDisponible === 0
+                        ? { badge: '🟡 Equilibrado', color: 'text-blue-800 bg-blue-50 border-blue-200' }
+                        : { badge: '🟢 Superávit', color: 'text-emerald-800 bg-emerald-50 border-emerald-200' };
 
                       return (
                         <tr key={r.recurso} className="border-b border-slate-200">
-                          <td className="p-1.5 font-bold">R{r.recurso}</td>
-                          <td className="p-1.5 font-sans truncate max-w-[140px] text-slate-800">{r.nombre}</td>
-                          <td className="p-1.5 text-right text-slate-600">{formatCurrencyShort(aforo)}</td>
-                          <td className="p-1.5 text-right font-bold text-emerald-800">{formatCurrencyShort(r.ingresosReales)}</td>
-                          <td className="p-1.5 text-right">{formatPercent(pctRec)}</td>
-                          <td className="p-1.5 text-right text-slate-600">{formatCurrencyShort(r.ingresosProyectados)}</td>
-                          <td className="p-1.5 text-right text-rose-700">{formatCurrencyShort(r.totalCompromisos)}</td>
-                          <td className="p-1.5 text-right text-blue-700">{formatCurrencyShort(r.totalPagos)}</td>
-                          <td className="p-1.5 text-right font-bold text-slate-900 bg-slate-50">{formatCurrencyShort(r.saldoDisponible)}</td>
-                          <td className="p-1.5 text-center font-sans">
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold ${riesgo.color}`}>
-                              {riesgo.badge}
+                          <td className="p-1 font-bold">R{r.recurso}</td>
+                          <td className="p-1 font-sans truncate max-w-[120px] text-slate-800">{r.nombre}</td>
+                          <td className="p-1 text-right text-slate-600">{formatCurrencyShort(aforo)}</td>
+                          <td className="p-1 text-right font-bold text-emerald-800">{formatCurrencyShort(r.ingresosReales)}</td>
+                          <td className="p-1 text-right font-bold text-emerald-700">{formatCurrencyShort(r.totalIngresos)}</td>
+                          <td className="p-1 text-right text-slate-700">{formatCurrencyShort(r.compromisoOriginal || r.totalCompromisos)}</td>
+                          <td className="p-1 text-right font-bold text-rose-700">
+                            {exceso > 0 ? `+${formatCurrencyShort(exceso)}` : '$0'}
+                          </td>
+                          <td className="p-1 text-right font-bold text-slate-900 bg-slate-50">{formatCurrencyShort(r.totalCompromisos)}</td>
+                          <td className="p-1 text-right text-blue-700">{formatCurrencyShort(r.totalPagos)}</td>
+                          <td className="p-1 text-right font-bold text-emerald-800 bg-emerald-50/50">{formatCurrencyShort(r.saldoDisponible)}</td>
+                          <td className="p-1 text-center font-sans">
+                            <span className={`text-[8px] px-1 py-0.5 rounded border font-bold ${estado.color}`}>
+                              {estado.badge}
                             </span>
                           </td>
                         </tr>
@@ -1711,19 +1804,30 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     })}
                   </tbody>
                   <tfoot>
-                    <tr className="bg-slate-100 font-bold border-t-2 border-slate-400 font-mono text-[11px]">
-                      <td colSpan={2} className="p-2 font-sans uppercase font-black">Totales Vigencia</td>
-                      <td className="p-2 text-right">{formatCurrencyShort(aforoTotal)}</td>
-                      <td className="p-2 text-right text-emerald-800 font-black">{formatCurrencyShort(recaudoRealAgo)}</td>
-                      <td className="p-2 text-right">{formatPercent(recaudoPct)}</td>
-                      <td className="p-2 text-right">{formatCurrencyShort(ingresosProySepDic)}</td>
-                      <td className="p-2 text-right text-rose-800">{formatCurrencyShort(compromisos2026)}</td>
-                      <td className="p-2 text-right text-blue-800">{formatCurrencyShort(pagosProyectadosCierre)}</td>
-                      <td className="p-2 text-right font-black text-emerald-900 bg-emerald-50">{formatCurrencyShort(saldoFinalDisponible)}</td>
-                      <td className="p-2 text-center font-sans text-emerald-800 font-bold">🟢 Favorable</td>
+                    <tr className="bg-slate-100 font-bold border-t-2 border-slate-400 font-mono text-[9.5px]">
+                      <td colSpan={2} className="p-1.5 font-sans uppercase font-black">Totales Vigencia</td>
+                      <td className="p-1.5 text-right">{formatCurrencyShort(aforoTotal)}</td>
+                      <td className="p-1.5 text-right text-emerald-800 font-black">{formatCurrencyShort(recaudoRealAgo)}</td>
+                      <td className="p-1.5 text-right text-emerald-800 font-black">{formatCurrencyShort(ingresosTotalesCierre)}</td>
+                      <td className="p-1.5 text-right text-slate-800">{formatCurrencyShort(compromisosOriginales)}</td>
+                      <td className="p-1.5 text-right text-rose-800 font-black">+{formatCurrencyShort(excesoCompromisos)}</td>
+                      <td className="p-1.5 text-right text-slate-900 font-black">{formatCurrencyShort(compromisos2026)}</td>
+                      <td className="p-1.5 text-right text-blue-800 font-black">{formatCurrencyShort(pagosProyectadosCierre)}</td>
+                      <td className="p-1.5 text-right font-black text-emerald-900 bg-emerald-50">{formatCurrencyShort(saldoFinalDisponible)}</td>
+                      <td className="p-1.5 text-center font-sans text-emerald-800 font-bold">🟢 Cumple Regla</td>
                     </tr>
                   </tfoot>
                 </table>
+
+                {/* Nota de Regla Presupuestal Inviolable */}
+                <div className="p-2.5 bg-rose-50 border border-rose-300 rounded text-[10px] text-slate-800 space-y-1">
+                  <p className="font-bold text-rose-900">
+                    Regla de Oro Presupuestal: Compromiso por Recurso ≤ Ingreso por Recurso y Pago por Recurso ≤ Ingreso por Recurso
+                  </p>
+                  <p>
+                    Ningún recurso puede comprometer ni pagar más de lo que recauda. En los {recursosConExceso.length} recursos donde los compromisos contractuales registrados en Gastos 2026 superan el ingreso ({recursosConExceso.map(r => `R${r.recurso}`).join(', ')}), con un exceso global desfinanciado de <strong>+{formatCurrency(excesoCompromisos)}</strong> ({formatCurrencyShort(excesoCompromisos)}), <strong>el balance ha sido ajustado reconociendo compromisos y pagos topados al 100% del ingreso disponible</strong>, asegurando que el saldo final disponible de tesorería sea siempre estrictamente no negativo.
+                  </p>
+                </div>
 
                 {/* Explicación de Recursos Críticos */}
                 <div className="mt-3 space-y-2">
@@ -1945,66 +2049,118 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
               {/* 9. CENTRO DE ALERTAS Y GESTIÓN DE RIESGOS                 */}
               {/* ========================================================= */}
               <div className="space-y-4 page-break-inside-avoid page-break-before">
-                <div className="border-b-2 border-slate-900 pb-1.5">
+                <div className="border-b-2 border-slate-900 pb-1.5 flex justify-between items-center">
                   <h3 className="text-sm font-black uppercase text-slate-900 tracking-wide">
                     9. Centro de Alertas Gerenciales y Gestión de Riesgos
                   </h3>
+                  <span className="text-[10px] font-mono text-rose-700 font-bold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
+                    Alerta Crítica: Exceso Contractual Detectado
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div className="space-y-3">
                   
-                  <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-lg space-y-1">
-                    <div className="flex items-center gap-1.5 text-rose-800 font-bold">
-                      <span>🔴</span>
-                      <span>Alerta 1: Cúspide de Pagos de Personal en Diciembre</span>
+                  {/* ALERTA CRÍTICA 1: COMPROMISOS QUE SUPERAN INGRESOS */}
+                  <div className="p-3 bg-rose-50 border-2 border-rose-400 rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-rose-900 font-black text-xs uppercase">
+                        <span>🔴</span>
+                        <span>Alerta 1 (Crítica) — Compromisos Contractuales Superan el Ingreso por Recurso (+{formatCurrencyShort(excesoCompromisos)})</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold bg-rose-200 text-rose-900 px-2 py-0.5 rounded">
+                        {recursosConExceso.length} Recursos en Alerta
+                      </span>
                     </div>
-                    <p className="text-slate-800 text-[11px]"><strong>Indicador:</strong> Desembolso de Nómina y Prestaciones en Dic 2026</p>
-                    <p className="text-slate-800 text-[11px]"><strong>Valor:</strong> {formatCurrency(76314557950)} (46.5% de la nómina Sep-Dic)</p>
-                    <p className="text-slate-800 text-[11px]"><strong>Impacto:</strong> Máxima exigencia de liquidez en las semanas previas al cierre fiscal.</p>
-                    <p className="text-emerald-900 text-[11px] font-semibold bg-emerald-50 p-1.5 rounded border border-emerald-200">
-                      <strong>Recomendación:</strong> Programar reservas de liquidez desde noviembre y conciliar giros bancarios antes del 15 de diciembre.
+                    
+                    <p className="text-slate-800 text-[11px] leading-relaxed">
+                      <strong>Principio Presupuestal Inviolable:</strong> El valor del compromiso y del pago <em>NUNCA puede ser superior al valor del ingreso</em>, pues una entidad pública no puede comprometer ni pagar más de lo que recauda. En los contratos registrados de Gastos 2026, los compromisos totalizaban <strong>{formatCurrency(compromisosOriginales)}</strong> frente a ingresos totales de <strong>{formatCurrency(ingresosTotalesCierre)}</strong>, existiendo un exceso contractual desfinanciado de <strong className="text-rose-700 font-mono">+{formatCurrency(excesoCompromisos)}</strong> ({formatCurrencyShort(excesoCompromisos)}) en los siguientes 6 recursos:
+                    </p>
+
+                    {/* Tabla de los recursos con exceso */}
+                    <table className="w-full border-collapse border border-rose-300 text-[9px] font-mono bg-white">
+                      <thead>
+                        <tr className="bg-rose-100 text-rose-900 font-bold border-b border-rose-300">
+                          <th className="p-1 text-left font-sans">Recurso</th>
+                          <th className="p-1 text-right">Ingreso Total</th>
+                          <th className="p-1 text-right">Comp. Original</th>
+                          <th className="p-1 text-right font-black text-rose-800">Exceso (Alerta)</th>
+                          <th className="p-1 text-right">Comp. Ajustado</th>
+                          <th className="p-1 text-right">Pagos Cierre</th>
+                          <th className="p-1 text-right">Saldo Caja</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recursosConExceso.map(r => (
+                          <tr key={r.recurso} className="border-b border-rose-200">
+                            <td className="p-1 font-bold font-sans">R{r.recurso} - {r.nombre}</td>
+                            <td className="p-1 text-right text-emerald-800 font-bold">{formatCurrencyShort(r.ingresos)}</td>
+                            <td className="p-1 text-right text-slate-700">{formatCurrencyShort(r.compromisoOriginal)}</td>
+                            <td className="p-1 text-right font-black text-rose-700">+{formatCurrencyShort(r.exceso)}</td>
+                            <td className="p-1 text-right font-bold text-slate-900">{formatCurrencyShort(r.compromisoAjustado)}</td>
+                            <td className="p-1 text-right text-blue-700">{formatCurrencyShort(r.pagosAjustados)}</td>
+                            <td className="p-1 text-right font-bold text-emerald-800">{formatCurrencyShort(Math.max(0, r.ingresos - r.pagosAjustados))}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-rose-50 font-bold text-rose-950 border-t border-rose-300">
+                          <td className="p-1 uppercase font-sans">Total Exceso Desfinanciado</td>
+                          <td className="p-1 text-right">-</td>
+                          <td className="p-1 text-right">-</td>
+                          <td className="p-1 text-right font-black text-rose-800">+{formatCurrency(excesoCompromisos)}</td>
+                          <td colSpan={3} className="p-1 text-right text-emerald-800 font-bold font-sans">✓ Balance de Recursos Ajustado al 100% del Ingreso</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+
+                    <p className="text-emerald-950 text-[10.5px] font-semibold bg-emerald-50 p-2 rounded border border-emerald-300 leading-snug">
+                      <strong>Acción y Ajuste del Balance:</strong> Para garantizar el cumplimiento normativo estricto y evitar déficits presupuestales, <strong>el balance institucional de todos los recursos ha sido ajustado topando los compromisos y pagos al 100% del ingreso proyectado ({formatCurrency(compromisos2026)})</strong>, garantizando que el saldo de tesorería al cierre sea superavitario en <strong>{formatCurrency(flujoTesoreriaCierre)}</strong>.
                     </p>
                   </div>
 
-                  <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg space-y-1">
-                    <div className="flex items-center gap-1.5 text-amber-800 font-bold">
-                      <span>🟡</span>
-                      <span>Alerta 2: Ajuste de Giros SIIF Nación (R10) en Diciembre</span>
+                  {/* Resto de Alertas en cuadrícula */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    
+                    <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg space-y-1">
+                      <div className="flex items-center gap-1.5 text-amber-800 font-bold">
+                        <span>🟡</span>
+                        <span>Alerta 2: Cúspide de Pagos de Personal en Diciembre</span>
+                      </div>
+                      <p className="text-slate-800 text-[11px]"><strong>Indicador:</strong> Nómina, primas y cesantías en Dic</p>
+                      <p className="text-slate-800 text-[11px]"><strong>Valor:</strong> {formatCurrency(76314557950)} (46.5% de nómina Sep-Dic)</p>
+                      <p className="text-slate-800 text-[11px]"><strong>Impacto:</strong> Exigencia máxima de liquidez en fin de año.</p>
+                      <p className="text-emerald-900 text-[11px] font-semibold bg-emerald-50 p-1 rounded border border-emerald-200">
+                        <strong>Medida:</strong> Pre-fondear con giros de noviembre.
+                      </p>
                     </div>
-                    <p className="text-slate-800 text-[11px]"><strong>Indicador:</strong> Descuento en Programación SIIF Dic</p>
-                    <p className="text-slate-800 text-[11px]"><strong>Valor:</strong> -$43.820.079.991 ($25.447.028.176 neto programado)</p>
-                    <p className="text-slate-800 text-[11px]"><strong>Impacto:</strong> Menor entrada externa en el mes de mayor egreso laboral.</p>
-                    <p className="text-emerald-900 text-[11px] font-semibold bg-emerald-50 p-1.5 rounded border border-emerald-200">
-                      <strong>Recomendación:</strong> Respaldar obligaciones con recursos propios y saldos de balance, manteniendo cobertura del 100%.
-                    </p>
-                  </div>
 
-                  <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg space-y-1">
-                    <div className="flex items-center gap-1.5 text-amber-800 font-bold">
-                      <span>🟡</span>
-                      <span>Alerta 3: Desembolso y Legalización en Funcionamiento</span>
+                    <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg space-y-1">
+                      <div className="flex items-center gap-1.5 text-amber-800 font-bold">
+                        <span>🟡</span>
+                        <span>Alerta 3: Ajuste Giros SIIF Nación (R10)</span>
+                      </div>
+                      <p className="text-slate-800 text-[11px]"><strong>Indicador:</strong> Reducción en programación SIIF Dic</p>
+                      <p className="text-slate-800 text-[11px]"><strong>Valor:</strong> -$43.820.079.991 ($25.447M neto programado)</p>
+                      <p className="text-slate-800 text-[11px]"><strong>Impacto:</strong> Menor entrada externa en el mes de mayor desembolso.</p>
+                      <p className="text-emerald-900 text-[11px] font-semibold bg-emerald-50 p-1 rounded border border-emerald-200">
+                        <strong>Medida:</strong> Respaldar con recursos propios.
+                      </p>
                     </div>
-                    <p className="text-slate-800 text-[11px]"><strong>Indicador:</strong> Saldo de Compromisos de Bienes y Servicios</p>
-                    <p className="text-slate-800 text-[11px]"><strong>Valor:</strong> $77.326.712.045 proyectados a girar en Sep-Dic</p>
-                    <p className="text-slate-800 text-[11px]"><strong>Impacto:</strong> Riesgo de congestión administrativa y constitución indebida de reservas de caja.</p>
-                    <p className="text-emerald-900 text-[11px] font-semibold bg-emerald-50 p-1.5 rounded border border-emerald-200">
-                      <strong>Recomendación:</strong> Fijar el 5 de diciembre como fecha límite improrrogable para radicación de facturas y actas de recibo.
-                    </p>
-                  </div>
 
-                  <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg space-y-1">
-                    <div className="flex items-center gap-1.5 text-blue-800 font-bold">
-                      <span>🔵</span>
-                      <span>Alerta 4: Estacionalidad de Recaudo en Estampillas y Convenios</span>
+                    <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg space-y-1">
+                      <div className="flex items-center gap-1.5 text-blue-800 font-bold">
+                        <span>🔵</span>
+                        <span>Alerta 4: Legalización de Gastos Operativos</span>
+                      </div>
+                      <p className="text-slate-800 text-[11px]"><strong>Indicador:</strong> Contratos de compras y servicios</p>
+                      <p className="text-slate-800 text-[11px]"><strong>Valor:</strong> Pagos proyectados de cierre en funcionamiento</p>
+                      <p className="text-slate-800 text-[11px]"><strong>Impacto:</strong> Riesgo de reservas de caja excesivas.</p>
+                      <p className="text-emerald-900 text-[11px] font-semibold bg-emerald-50 p-1 rounded border border-emerald-200">
+                        <strong>Medida:</strong> Radicación improrrogable al 5 de dic.
+                      </p>
                     </div>
-                    <p className="text-slate-800 text-[11px]"><strong>Indicador:</strong> Recaudo de Rentas con Destinación Específica</p>
-                    <p className="text-slate-800 text-[11px]"><strong>Valor:</strong> 75.8% acumulado global al 31/08/2026</p>
-                    <p className="text-slate-800 text-[11px]"><strong>Impacto:</strong> Desfase temporal en convenios y proyectos de investigación.</p>
-                    <p className="text-emerald-900 text-[11px] font-semibold bg-emerald-50 p-1.5 rounded border border-emerald-200">
-                      <strong>Recomendación:</strong> Realizar cobro preventivo a secretarías de hacienda departamentales y municipales en octubre.
-                    </p>
-                  </div>
 
+                  </div>
                 </div>
               </div>
 
@@ -2091,7 +2247,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     <strong>1. Sólido Comportamiento del Recaudo a Agosto:</strong> El recaudo real efectivo acumulado a 31 de agosto ({formatCurrency(recaudoRealAgo)}) alcanzó el <strong>{formatPercent(recaudoPct)}</strong> del aforo anual, superando ampliamente la meta teórica del 66.7% para los primeros ocho meses de la vigencia.
                   </div>
                   <div className="p-2.5 bg-slate-50 border border-slate-200 rounded">
-                    <strong>2. Capacidad de Cobertura Contractual del 98.4%:</strong> De los compromisos totales por <strong>{formatCurrency(compromisos2026)}</strong>, se proyecta un desembolso efectivo de <strong>{formatCurrency(pagosProyectadosCierre)}</strong>, garantizando la cobertura de prácticamente la totalidad de las obligaciones adquiridas.
+                    <strong>2. Aplicación de la Regla de Equilibrio y Cobertura:</strong> En cumplimiento del mandato presupuestal según el cual ningún recurso puede comprometer ni pagar más de lo que recauda, se identificó un exceso desfinanciado de <strong>{formatCurrency(excesoCompromisos)}</strong> en los compromisos originales ({formatCurrency(compromisosOriginales)}). El balance institucional fue ajustado reconociendo compromisos por <strong>{formatCurrency(compromisos2026)}</strong> acotados al 100% del ingreso disponible por fuente, con pagos proyectados de <strong>{formatCurrency(pagosProyectadosCierre)}</strong> ({formatPercent(pagosPctCompromiso)} de cobertura) y sin déficit de tesorería.
                   </div>
                   <div className="p-2.5 bg-slate-50 border border-slate-200 rounded">
                     <strong>3. Garantía Plena de la Nómina Institucional (100%):</strong> Los gastos de personal por <strong>{formatCurrency(359596839056)}</strong> cuentan con respaldo presupuestal y de tesorería asegurado al 100%, cubriendo salarios, horas cátedra y primas sin restricciones.
@@ -2136,6 +2292,14 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     </tr>
                   </thead>
                   <tbody>
+                    <tr className="border-b border-slate-200 bg-rose-50/50">
+                      <td className="p-2 font-bold text-rose-800">Inmediata (Sep)</td>
+                      <td className="p-2 font-bold text-slate-900">Control de Techo Presupuestal por Recurso</td>
+                      <td className="p-2">Bloquear contratación y desembolsos por encima del recaudo real en R10, R14, R33, R10.5, R17 y R34 (+{formatCurrencyShort(excesoCompromisos)} en exceso contractual).</td>
+                      <td className="p-2">Dirección Financiera / Ordenadores</td>
+                      <td className="p-2 text-center"><span className="bg-rose-200 text-rose-900 px-1.5 py-0.5 rounded text-[10px] font-bold">Inviolable</span></td>
+                      <td className="p-2 font-semibold text-rose-950">Garantizar cero déficit y cumplir regla fiscal</td>
+                    </tr>
                     <tr className="border-b border-slate-200">
                       <td className="p-2 font-bold text-emerald-800">Inmediata (Sep)</td>
                       <td className="p-2">Conciliación SIIF de Nación</td>

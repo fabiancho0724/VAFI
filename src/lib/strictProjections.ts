@@ -56,6 +56,9 @@ export interface StrictResourceProjection {
   totalCompromisos: number;
   totalPagos: number;
   saldoDisponible: number;
+  compromisoOriginal: number;
+  excesoCompromiso: number;
+  tieneExceso: boolean;
   ingresosPorMesProyectado: number[];
   ingresoAdministrativo: number;
   methodUsed: string;
@@ -80,17 +83,30 @@ export interface ExpenseTypeBreakdown {
   detalles: ExpenseDetail[];
 }
 
+export interface RecursoExcesoItem {
+  recurso: string;
+  nombre: string;
+  ingresos: number;
+  compromisoOriginal: number;
+  compromisoAjustado: number;
+  exceso: number;
+  pagosAjustados: number;
+}
+
 export interface StrictTotals {
   totalRecursosIniciales: number;
   totalAforo: number;
   totalRecaudo: number;
   totalIngresosProyectados: number;
   totalGastosProyectados: number;
-  totalCompromisos: number;
+  totalCompromisos: number; // Total compromisos ajustados (<= ingresos)
+  totalCompromisosOriginales: number; // Total compromisos contractuales registrados
+  totalExcesoCompromisos: number; // Suma de excesos de compromisos sobre ingresos
   totalPagos: number;
   saldoDisponible: number;
   ingresosPorMesProyectado?: number[];
   resultadoProyectado: number;
+  recursosConExceso: RecursoExcesoItem[];
   
   nominaReal: number;
   nominaProyectada: number;
@@ -251,59 +267,65 @@ function simulateCore(
     }
 
     const aiIncomeReference = ingProyectado;
-    let totalIngresosAI = recaudoRealAcumulado + aiIncomeReference;
+    let totalIngresos = recaudoRealAcumulado + ingProyectado;
+    let totalIngresosAI = totalIngresos;
     let aiExpenseReference = Math.max(0, (totalIngresosAI - compHistorico) * effExpense);
 
     let totalComp = 0;
     let totalPago = 0;
+    let compromisoOriginal = 0;
+    let excesoCompromiso = 0;
 
     if (gastos2026Parsed && gastos2026Parsed.byRecurso[base.recurso]) {
       const g = gastos2026Parsed.byRecurso[base.recurso];
-      totalComp = g.compromiso;
+      compromisoOriginal = g.compromiso;
+      excesoCompromiso = Math.max(0, compromisoOriginal - totalIngresos);
+
+      // REGLA FUNDAMENTAL DE EQUILIBRIO PRESUPUESTAL Y DE TESORERÍA:
+      // El valor del compromiso por recurso y el pago NUNCA va a poder ser superior al valor del ingreso,
+      // porque no puedo pagar más de lo que recaudo, y tampoco puedo comprometer más.
+      const compromisoAjustado = Math.min(compromisoOriginal, totalIngresos);
+      totalComp = compromisoAjustado;
       gasProyectado = Math.max(0, totalComp - compHistorico);
       
-      // Regla solicitada: Ajustar el valor de pagos para que máximo queden 43.51 MM en cuentas por pagar
-      // Compromisos totales: $554.57 MM -> Pagos Cierre: $511.06 MM (92.2% cobertura) -> CxP: $43.51 MM
       const remComp = Math.max(0, totalComp - g.pagoAgo);
       const isPersonal = ['10', '10.5', '17', '20', '31'].includes(base.recurso);
-      // Factor calibrado para asegurar exactamente 92.15% - 92.2% global y cuentas por pagar <= $43.51 MM
       const factor = isPersonal ? 0.866 : 0.713;
       const pagoSepDic = remComp * factor;
-      totalPago = Math.min(totalComp, g.pagoAgo + pagoSepDic);
+
+      // El pago nunca puede ser superior al total de ingresos ni al compromiso ajustado
+      totalPago = Math.min(totalIngresos, totalComp, g.pagoAgo + pagoSepDic);
       
-      methodUsed = 'Gastos 2026 (Cierre Vigencia)';
-      trace.push({ step: 'Compromiso Vigencia Completo', value: totalComp, detail: 'Gastos 2026 oficial sin compromisos adicionales' });
-      trace.push({ step: 'Pago Cierre (Tope Recaudo)', value: totalPago, detail: `Pago acercado al compromiso, limitado por recaudo disponible (${totalIngresosAI})` });
-      
-      if (totalIngresosAI < totalComp) {
-        alerts.push(`⚠️ Alerta de Recaudo: ${base.nombre} (R${base.recurso}) tiene compromisos por ${totalComp} pero recaudo proyectado en ${totalIngresosAI}. Pagos limitados a ${totalPago}.`);
+      methodUsed = excesoCompromiso > 0 ? 'Gastos 2026 (Ajustado a Tope Ingreso)' : 'Gastos 2026 (Cierre Vigencia)';
+      trace.push({ step: 'Compromiso Contractual Original', value: compromisoOriginal, detail: 'Gastos 2026 oficial' });
+      if (excesoCompromiso > 0) {
+        trace.push({ step: 'Ajuste de Balance (Tope Ingreso)', value: compromisoAjustado, detail: `Compromiso limitado a ingresos (${totalIngresos}). Exceso no amparado: ${excesoCompromiso}` });
+        alerts.push(`🚨 ALERTA FINANCIERA: En ${base.nombre} (R${base.recurso}) los compromisos contratados ($${compromisoOriginal.toLocaleString('es-CO')}) superan el ingreso total ($${totalIngresos.toLocaleString('es-CO')}) en $${excesoCompromiso.toLocaleString('es-CO')}. Se ajustó el balance al tope del ingreso.`);
       }
+      trace.push({ step: 'Pago Cierre Ajustado', value: totalPago, detail: `Pago limitado al compromiso ajustado y recaudo disponible (${totalIngresos})` });
     } else {
       gasProyectado = Math.max(aiExpenseReference, nominaAsignada + funcAsignada);
-      totalComp = compHistorico + gasProyectado;
-      totalPago = pagoHistorico + (gasProyectado * 0.9);
-
-      let minComp = compHistorico + nominaAsignada + funcAsignada;
-      if (totalComp > totalIngresosAI) {
-        totalComp = Math.max(totalIngresosAI, minComp);
-      }
-      let minPago = pagoHistorico + nominaAsignada + funcAsignada;
-      if (totalPago > totalIngresosAI) totalPago = Math.max(totalIngresosAI, minPago);
-      if (totalPago > totalComp) totalPago = totalComp;
+      compromisoOriginal = compHistorico + gasProyectado;
+      excesoCompromiso = Math.max(0, compromisoOriginal - totalIngresos);
+      totalComp = Math.min(totalIngresos, compromisoOriginal);
+      totalPago = Math.min(totalIngresos, totalComp, pagoHistorico + (gasProyectado * 0.9));
     }
 
     if (customConfig && customConfig.method === 'Manual') {
-      if (customConfig.manualIncome !== undefined) ingProyectado = customConfig.manualIncome;
+      if (customConfig.manualIncome !== undefined) {
+        ingProyectado = customConfig.manualIncome;
+        totalIngresos = recaudoRealAcumulado + ingProyectado;
+      }
       if (customConfig.manualExpense !== undefined) {
         gasProyectado = customConfig.manualExpense;
-        totalComp = compHistorico + gasProyectado;
-        totalPago = Math.min(totalComp, pagoHistorico + gasProyectado);
+        compromisoOriginal = compHistorico + gasProyectado;
+        excesoCompromiso = Math.max(0, compromisoOriginal - totalIngresos);
+        totalComp = Math.min(totalIngresos, compromisoOriginal);
+        totalPago = Math.min(totalIngresos, totalComp, pagoHistorico + gasProyectado);
       }
       methodUsed = 'Manual';
       trace.push({ step: 'Ajuste Manual Usuario', value: ingProyectado, detail: 'Valor personalizado' });
     }
-    
-    let totalIngresos = recaudoRealAcumulado + ingProyectado;
     
     let ingresoAdmin = 0;
     if (base.recurso === '31') ingresoAdmin = totalIngresos * 0.40;
@@ -326,8 +348,12 @@ function simulateCore(
       recurso: base.recurso, nombre: base.nombre,
       ingresosReales: recaudoRealAcumulado, ingresosProyectados: ingProyectado,
       totalIngresos, gastosProyectados: gasProyectado,
-      totalCompromisos: totalComp, totalPagos: totalPago,
+      totalCompromisos: totalComp, 
+      totalPagos: totalPago,
       saldoDisponible: saldoDisp,
+      compromisoOriginal: compromisoOriginal || totalComp,
+      excesoCompromiso,
+      tieneExceso: excesoCompromiso > 0,
       ingresosPorMesProyectado,
       ingresoAdministrativo: ingresoAdmin,
       methodUsed, 
@@ -350,8 +376,21 @@ function simulateCore(
     totalIngresosProyectados: targetResources.reduce((acc, r) => acc + r.ingresosProyectados, 0),
     totalGastosProyectados: targetResources.reduce((acc, r) => acc + r.gastosProyectados, 0),
     totalCompromisos: targetResources.reduce((acc, r) => acc + r.totalCompromisos, 0),
+    totalCompromisosOriginales: targetResources.reduce((acc, r) => acc + (r.compromisoOriginal || r.totalCompromisos), 0),
+    totalExcesoCompromisos: targetResources.reduce((acc, r) => acc + (r.excesoCompromiso || 0), 0),
     totalPagos: targetResources.reduce((acc, r) => acc + r.totalPagos, 0),
     saldoDisponible: targetResources.reduce((acc, r) => acc + r.saldoDisponible, 0),
+    recursosConExceso: targetResources
+      .filter(r => (r.excesoCompromiso || 0) > 0)
+      .map(r => ({
+        recurso: r.recurso,
+        nombre: r.nombre,
+        ingresos: r.totalIngresos,
+        compromisoOriginal: r.compromisoOriginal || r.totalCompromisos,
+        compromisoAjustado: r.totalCompromisos,
+        exceso: r.excesoCompromiso || 0,
+        pagosAjustados: r.totalPagos
+      })),
     ingresosPorMesProyectado: [
       targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[0] || 0), 0),
       targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[1] || 0), 0),

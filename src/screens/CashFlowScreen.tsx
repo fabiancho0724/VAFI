@@ -385,25 +385,80 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
         </div>
       </div>
 
-      {/* BLOQUE 1: NIVEL EJECUTIVO (KPIs CON GASTOS 2026 OFICIAL) */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      {/* ALERTA DE EQUILIBRIO PRESUPUESTAL: COMPROMISOS Y PAGOS TOPADOS AL INGRESO */}
+      {results.totals.totalExcesoCompromisos > 0 && (
+        <div className="bg-rose-950/40 border-2 border-rose-500/50 rounded-2xl p-5 mb-8 shadow-2xl backdrop-blur-md animate-fadeIn">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-rose-500/30 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white flex flex-wrap items-center gap-2">
+                  <span>ALERTA PRESUPUESTAL: COMPROMISOS CONTRACTUALES SUPERAN EL INGRESO</span>
+                  <span className="text-xs bg-rose-500 text-white font-mono px-2.5 py-0.5 rounded-full font-black">
+                    +{formatCurrencyShort(results.totals.totalExcesoCompromisos)} en Exceso
+                  </span>
+                </h3>
+                <p className="text-xs text-rose-200 mt-1">
+                  <strong>Regla de Oro Presupuestal:</strong> Ningún recurso puede comprometer ni pagar más de lo que recauda. En {results.totals.recursosConExceso.length} recursos, los compromisos contractuales registrados en Gastos 2026 superan el ingreso proyectado. <strong>El balance ha sido ajustado limitando los compromisos y pagos al 100% del ingreso disponible.</strong>
+                </p>
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <span className="text-[10px] uppercase font-bold text-rose-300 block">Exceso Total Desfinanciado:</span>
+              <span className="text-2xl font-mono font-black text-rose-400">{formatCurrency(results.totals.totalExcesoCompromisos)}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+            {results.totals.recursosConExceso.map(r => (
+              <div key={r.recurso} className="bg-black/40 border border-rose-500/30 rounded-xl p-3 text-xs space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-white">R{r.recurso} - {r.nombre}</span>
+                  <span className="text-[10px] font-mono font-bold bg-rose-500/30 text-rose-300 px-2 py-0.5 rounded border border-rose-500/40">
+                    Exceso: +{formatCurrencyShort(r.exceso)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
+                  <div>Ingreso Total: <strong className="text-emerald-400 font-mono block">{formatCurrencyShort(r.ingresos)}</strong></div>
+                  <div>Comp. Original: <strong className="text-rose-300 font-mono block">{formatCurrencyShort(r.compromisoOriginal)}</strong></div>
+                </div>
+                <div className="text-[10px] text-emerald-300 bg-emerald-500/10 p-2 rounded border border-emerald-500/20">
+                  ✓ Balance Ajustado: Compromiso topado a <strong>{formatCurrencyShort(r.compromisoAjustado)}</strong> y Pagos a <strong>{formatCurrencyShort(r.pagosAjustados)}</strong>.
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* BLOQUE 1: NIVEL EJECUTIVO (KPIs CON BALANCE AJUSTADO A INGRESOS) */}
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-emerald-500">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Ingresos Totales Estimados</p>
-          <p className="text-2xl md:text-3xl font-display text-white">{formatCurrencyShort(totalIncome)}</p>
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Ingresos Totales</p>
+          <p className="text-2xl font-display text-white">{formatCurrencyShort(totalIncome)}</p>
           <div className="mt-2 flex items-center gap-2 text-xs">
             <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Recaudo Ago: {formatCurrencyShort(results.totals.totalRecaudo)}</span>
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-rose-500">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Compromisos Vigencia (Gastos 2026)</p>
-          <p className="text-2xl md:text-3xl font-display text-white">{formatCurrencyShort(results.totals.totalCompromisos)}</p>
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Compromisos Originales</p>
+          <p className="text-2xl font-display text-white">{formatCurrencyShort(results.totals.totalCompromisosOriginales)}</p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-bold">Cierre oficial sin adiciones</span>
+            <span className="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-bold">Exceso: +{formatCurrencyShort(results.totals.totalExcesoCompromisos)}</span>
+          </div>
+        </div>
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-indigo-500 bg-indigo-500/5">
+          <p className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-1">Compromisos Ajustados</p>
+          <p className="text-2xl font-display text-indigo-200">{formatCurrencyShort(results.totals.totalCompromisos)}</p>
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span className="text-emerald-400 font-bold">🟢 Topados a Ingresos</span>
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-blue-500">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Pagos Proyectados Cierre</p>
-          <p className="text-2xl md:text-3xl font-display text-blue-400">
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Pagos Cierre</p>
+          <p className="text-2xl font-display text-blue-400">
             {formatCurrencyShort(results.totals.totalPagos)}
           </p>
           <div className="mt-2 flex items-center gap-2 text-xs">
@@ -411,17 +466,17 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-cyan-500 bg-cyan-500/5">
-          <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1">Flujo Neto Tesorería (Cierre)</p>
-          <p className="text-2xl md:text-3xl font-display text-emerald-400 font-bold">
+          <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1">Flujo Neto Tesorería</p>
+          <p className="text-2xl font-display text-emerald-400 font-bold">
             {formatCurrencyShort(flujoTesoreriaCierre)}
           </p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-slate-300 font-bold">Total Ingresos − Total Pagos</span>
+            <span className="text-slate-300 font-bold">Ingresos − Pagos</span>
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-amber-500 bg-amber-500/5">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Cuentas por Pagar Siguiente Vigencia</p>
-          <p className="text-2xl md:text-3xl font-display text-amber-300">
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Cuentas por Pagar</p>
+          <p className="text-2xl font-display text-amber-300">
             {formatCurrencyShort(Math.max(0, results.totals.totalCompromisos - results.totals.totalPagos))}
           </p>
           <div className="mt-2 flex items-center gap-2 text-xs">
@@ -815,46 +870,56 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
           <p className="text-xs text-slate-400">Proyecci&oacute;n detallada de caja mensual (Septiembre - Diciembre) incluyendo el recaudo base</p>
         </div>
         <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
+          <table className="w-full text-left border-collapse min-w-[950px]">
             <thead>
-              <tr className="border-b border-white/10 text-xs text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-white/10 text-xs text-slate-400 uppercase tracking-wider font-mono">
                 <th className="p-3 font-medium">Recurso</th>
                 <th className="p-3 font-medium">Nombre</th>
                 <th className="p-3 font-medium text-right text-emerald-400/70">Recaudo 31/08</th>
-                <th className="p-3 font-medium text-right">Sep</th>
-                <th className="p-3 font-medium text-right">Oct</th>
-                <th className="p-3 font-medium text-right">Nov</th>
-                <th className="p-3 font-medium text-right">Dic</th>
-                <th className="p-3 font-medium text-right text-emerald-400">Ingreso Total</th>
-                <th className="p-3 font-medium text-right text-rose-400">Compromiso 2026</th>
+                <th className="p-3 font-medium text-right text-slate-400">Proy Sep-Dic</th>
+                <th className="p-3 font-medium text-right text-emerald-400 font-bold">Ingreso Total</th>
+                <th className="p-3 font-medium text-right text-rose-300">Comp. Original</th>
+                <th className="p-3 font-medium text-right text-rose-400">Exceso (Alerta)</th>
+                <th className="p-3 font-medium text-right text-indigo-300 font-bold">Comp. Ajustado</th>
                 <th className="p-3 font-medium text-right text-blue-400">Pago Cierre</th>
                 <th className="p-3 font-medium text-right text-white">Saldo Disp.</th>
-                <th className="p-3 font-medium text-center">Estado Cobertura</th>
+                <th className="p-3 font-medium text-center">Estado Balance</th>
               </tr>
             </thead>
             <tbody>
               {results.resources.map(r => {
-                const meses = r.ingresosPorMesProyectado || [0, 0, 0, 0];
+                const mesesProy = (r.ingresosPorMesProyectado || [0, 0, 0, 0]).reduce((a, b) => a + b, 0);
                 const pctPagado = r.totalCompromisos > 0 ? (r.totalPagos / r.totalCompromisos) * 100 : 100;
+                const tieneExceso = (r.excesoCompromiso || 0) > 0;
+
                 return (
-                  <tr key={r.recurso} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors text-sm">
-                    <td className="p-3 font-mono text-slate-300 font-bold">R{r.recurso}</td>
-                    <td className="p-3 text-slate-300 max-w-[180px] truncate" title={r.nombre}>{r.nombre}</td>
-                    <td className="p-3 text-right text-emerald-400 font-mono">{formatCurrencyShort(r.ingresosReales)}</td>
-                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[0])}</td>
-                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[1])}</td>
-                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[2])}</td>
-                    <td className="p-3 text-right text-slate-400 font-mono">{formatCurrencyShort(meses[3])}</td>
-                    <td className="p-3 text-right font-bold text-emerald-300 font-mono">{formatCurrencyShort(r.totalIngresos)}</td>
-                    <td className="p-3 text-right font-mono text-rose-300">{formatCurrencyShort(r.totalCompromisos)}</td>
-                    <td className="p-3 text-right font-mono text-blue-300">{formatCurrencyShort(r.totalPagos)}</td>
-                    <td className="p-3 text-right font-mono font-bold text-white bg-white/5">{formatCurrencyShort(r.saldoDisponible)}</td>
-                    <td className="p-3 text-center">
-                      {pctPagado >= 99.9 ? (
-                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">100% Cubierto</span>
+                  <tr key={r.recurso} className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors text-sm font-mono ${tieneExceso ? 'bg-rose-500/[0.04]' : ''}`}>
+                    <td className="p-3 text-slate-300 font-bold">R{r.recurso}</td>
+                    <td className="p-3 text-slate-300 font-sans max-w-[170px] truncate" title={r.nombre}>{r.nombre}</td>
+                    <td className="p-3 text-right text-emerald-400">{formatCurrencyShort(r.ingresosReales)}</td>
+                    <td className="p-3 text-right text-slate-400">{formatCurrencyShort(mesesProy)}</td>
+                    <td className="p-3 text-right font-bold text-emerald-300">{formatCurrencyShort(r.totalIngresos)}</td>
+                    <td className="p-3 text-right text-slate-300">{formatCurrencyShort(r.compromisoOriginal || r.totalCompromisos)}</td>
+                    <td className="p-3 text-right">
+                      {tieneExceso ? (
+                        <span className="text-rose-400 font-bold bg-rose-500/20 px-2 py-0.5 rounded text-xs">
+                          +{formatCurrencyShort(r.excesoCompromiso)}
+                        </span>
                       ) : (
-                        <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold" title={`Pagos topados a recaudo: ${pctPagado.toFixed(1)}%`}>
-                          {pctPagado.toFixed(0)}% (Tope Recaudo)
+                        <span className="text-slate-500 text-xs">-</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-right font-bold text-indigo-300 bg-indigo-500/5">{formatCurrencyShort(r.totalCompromisos)}</td>
+                    <td className="p-3 text-right text-blue-300">{formatCurrencyShort(r.totalPagos)}</td>
+                    <td className="p-3 text-right font-bold text-white bg-white/5">{formatCurrencyShort(r.saldoDisponible)}</td>
+                    <td className="p-3 text-center font-sans">
+                      {tieneExceso ? (
+                        <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold">
+                          🔴 Ajustado a Ingreso
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                          🟢 100% Cubierto
                         </span>
                       )}
                     </td>
@@ -863,18 +928,17 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
               })}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-white/20 text-sm font-bold bg-white/5">
-                <td colSpan={2} className="p-3 text-white uppercase">Totales Institucionales</td>
-                <td className="p-3 text-right text-emerald-400 font-mono">{formatCurrencyShort(results.totals.totalRecaudo)}</td>
-                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[0] || 0), 0))}</td>
-                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[1] || 0), 0))}</td>
-                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[2] || 0), 0))}</td>
-                <td className="p-3 text-right text-white font-mono">{formatCurrencyShort(results.resources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[3] || 0), 0))}</td>
-                <td className="p-3 text-right text-emerald-300 font-mono">{formatCurrencyShort(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</td>
-                <td className="p-3 text-right text-rose-400 font-mono">{formatCurrencyShort(results.totals.totalCompromisos)}</td>
-                <td className="p-3 text-right text-blue-400 font-mono">{formatCurrencyShort(results.totals.totalPagos)}</td>
-                <td className="p-3 text-right text-white font-mono bg-white/10">{formatCurrencyShort(results.totals.saldoDisponible)}</td>
-                <td className="p-3 text-center text-xs text-emerald-400 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% Global</td>
+              <tr className="border-t-2 border-white/20 text-sm font-bold bg-white/5 font-mono">
+                <td colSpan={2} className="p-3 text-white uppercase font-sans">Totales Institucionales</td>
+                <td className="p-3 text-right text-emerald-400">{formatCurrencyShort(results.totals.totalRecaudo)}</td>
+                <td className="p-3 text-right text-slate-300">{formatCurrencyShort(results.totals.totalIngresosProyectados)}</td>
+                <td className="p-3 text-right text-emerald-300">{formatCurrencyShort(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</td>
+                <td className="p-3 text-right text-slate-300">{formatCurrencyShort(results.totals.totalCompromisosOriginales)}</td>
+                <td className="p-3 text-right text-rose-400 font-black">{formatCurrencyShort(results.totals.totalExcesoCompromisos)}</td>
+                <td className="p-3 text-right text-indigo-300 font-black bg-indigo-500/10">{formatCurrencyShort(results.totals.totalCompromisos)}</td>
+                <td className="p-3 text-right text-blue-400 font-black">{formatCurrencyShort(results.totals.totalPagos)}</td>
+                <td className="p-3 text-right text-white font-black bg-white/10">{formatCurrencyShort(results.totals.saldoDisponible)}</td>
+                <td className="p-3 text-center text-xs text-emerald-400 font-bold font-sans">🟢 Balance Equilibrado</td>
               </tr>
             </tfoot>
           </table>
