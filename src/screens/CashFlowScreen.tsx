@@ -275,7 +275,7 @@ export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => voi
   const trRow = heatmapExpenseTypesData.find(t => t.name.includes('Transferencias'));
   const tmRow = heatmapExpenseTypesData.find(t => t.name.includes('Tasas'));
 
-  let accumulatedBalance = results.totals.totalRecursosIniciales;
+  let accumulatedBalance = 0;
 
   const monthlyData = MONTHS.map((monthName, i) => {
     const f = results.flow[i] || { ingresosProyectados: 0, ingresosReales: 0, compromisos: 0, pagos: 0, saldoInicial: accumulatedBalance, saldoFinal: accumulatedBalance };
@@ -319,9 +319,10 @@ export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => voi
 
   const totalIncome = results.totals.totalIngresosProyectados + results.totals.totalRecaudo;
   const totalExpense = results.totals.totalCompromisos;
-  const finalBalance = results.totals.saldoDisponible;
-  const initialBalance = results.totals.totalRecursosIniciales;
-  const netFlowTotal = totalIncome - totalExpense;
+  const totalPagos = results.totals.totalPagos;
+  const flujoTesoreriaCierre = totalIncome - totalPagos;
+  const finalBalance = flujoTesoreriaCierre;
+  const netFlowTotal = flujoTesoreriaCierre;
 const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
   const maxExpenseMonth = [...monthlyData].sort((a, b) => b.expense - a.expense)[0];
 
@@ -385,7 +386,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
       </div>
 
       {/* BLOQUE 1: NIVEL EJECUTIVO (KPIs CON GASTOS 2026 OFICIAL) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-emerald-500">
           <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Ingresos Totales Estimados</p>
           <p className="text-2xl md:text-3xl font-display text-white">{formatCurrencyShort(totalIncome)}</p>
@@ -409,6 +410,15 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
             <span className="text-blue-300 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% de compromisos pagados</span>
           </div>
         </div>
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-cyan-500 bg-cyan-500/5">
+          <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1">Flujo Neto Tesorería (Cierre)</p>
+          <p className="text-2xl md:text-3xl font-display text-emerald-400 font-bold">
+            {formatCurrencyShort(flujoTesoreriaCierre)}
+          </p>
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span className="text-slate-300 font-bold">Total Ingresos − Total Pagos</span>
+          </div>
+        </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-amber-500 bg-amber-500/5">
           <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Cuentas por Pagar Siguiente Vigencia</p>
           <p className="text-2xl md:text-3xl font-display text-amber-300">
@@ -418,7 +428,6 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
             <span className="text-emerald-400 font-bold">
               {((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% pagado en vigencia
             </span>
-            <span className="text-slate-400">• Menor valor posible</span>
           </div>
         </div>
       </div>

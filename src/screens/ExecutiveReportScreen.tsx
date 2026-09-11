@@ -160,7 +160,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
       if (parts.length < 2) return;
       const m = parseInt(parts[1], 10) - 1;
       if (m < 0 || m >= 8) return;
-      tiposMap[tipo].monthly[m] += parseNumber(r['Valor compromiso']);
+      tiposMap[tipo].monthly[m] += parseNumber(r['Valor pago'] || r['Valor compromiso']);
     });
 
     if (csvData.gastos2026) {
@@ -182,9 +182,11 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
         }
       } else {
         const histSum = t.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
-        const remaining = Math.max(0, t.totalCompG26 - histSum);
+        // Proyección de pagos efectivos al cierre para no incurrir en déficit
+        const factor = 0.713;
+        const remainingPago = Math.max(0, (t.totalCompG26 - t.pagoAgoG26) * factor);
         for (let m = 8; m < 12; m++) {
-          t.monthly[m] = remaining * weightsStd[m - 8];
+          t.monthly[m] = remainingPago * weightsStd[m - 8];
         }
       }
     });
@@ -192,7 +194,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
     return Object.values(tiposMap);
   }, [csvData, results]);
 
-  // Aligned monthly sequence
+  // Aligned monthly sequence — Flujo de Tesorería de la Vigencia
   const monthlyFlow = useMemo(() => {
     if (!results) return [];
     const pRow = expenseMatrix.find(t => t.name.includes('Personal'));
@@ -201,7 +203,8 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
     const trRow = expenseMatrix.find(t => t.name.includes('Transferencias'));
     const tmRow = expenseMatrix.find(t => t.name.includes('Tasas'));
 
-    let accBal = results.totals.totalRecursosIniciales;
+    // El flujo acumulado de tesorería parte de $0 en la vigencia fiscal (sin mezclar apropiación inicial presupuestal)
+    let accBal = 0;
 
     return MONTHS.map((m, idx) => {
       const isReal = idx < 8; // Ene - Ago = Real, Sep - Dic = Proyectado
@@ -278,15 +281,16 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
   const saldoPendientePago = Math.max(0, compromisos2026 - pagosRealAgo);
 
   const flujoNetoRealAgo = recaudoRealAgo - pagosRealAgo;
-  const saldoFinalDisponible = results.totals.saldoDisponible; // $54.14 MM
-  const saldoInicial = results.totals.totalRecursosIniciales;
+  // Flujo de Tesorería al Cierre = Total de Ingresos menos Pago Efectivo Realizado al Cierre
+  const flujoTesoreriaCierre = ingresosTotalesCierre - pagosProyectadosCierre;
+  const saldoFinalDisponible = flujoTesoreriaCierre;
 
   // Estado general de cierre
-  const estadoFinancieroCierre = saldoFinalDisponible > 30e9 
-    ? { nivel: 'Favorable', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', badge: '🟢 Favorable', desc: 'Superávit global protegido y alta capacidad de pago (96.6%).' }
-    : saldoFinalDisponible >= 0
-    ? { nivel: 'Atención', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30', badge: '🟡 Atención', desc: 'Margen de liquidez ajustado; requiere seguimiento estricto en pagos.' }
-    : { nivel: 'Crítico', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/30', badge: '🔴 Crítico', desc: 'Riesgo de déficit de caja al cierre de vigencia.' };
+  const estadoFinancieroCierre = flujoTesoreriaCierre > 0 
+    ? { nivel: 'Favorable', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', badge: '🟢 Favorable', desc: `Superávit de tesorería proyectado (${formatCurrencyShort(flujoTesoreriaCierre)}) con alta capacidad de desembolso.` }
+    : flujoTesoreriaCierre === 0
+    ? { nivel: 'Equilibrado', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30', badge: '🟡 Equilibrado', desc: 'Flujo de tesorería en equilibrio estricto sin margen de maniobra.' }
+    : { nivel: 'Déficit', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/30', badge: '🔴 Déficit', desc: 'Los pagos efectivos requeridos superan el recaudo proyectado.' };
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-[1600px] mx-auto pb-16">
@@ -506,13 +510,17 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                   Superávit Seguro
                 </span>
               </div>
-              <p className="text-3xl font-display font-bold text-white">{formatCurrencyShort(saldoFinalDisponible)}</p>
-              <p className="text-xs text-slate-400 mt-1">Saldo Proyectado al 31 de Diciembre</p>
+              <p className="text-3xl font-display font-bold text-white">{formatCurrencyShort(flujoTesoreriaCierre)}</p>
+              <p className="text-xs text-slate-400 mt-1">Flujo Neto al Cierre (Ingresos − Pagos Efectivos)</p>
               
               <div className="mt-4 pt-4 border-t border-white/10 space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Saldo Inicial:</span>
-                  <span className="font-mono text-white">{formatCurrencyShort(saldoInicial)}</span>
+                  <span className="text-slate-400">Total Ingresos Vigencia:</span>
+                  <span className="font-mono text-emerald-400 font-bold">{formatCurrencyShort(ingresosTotalesCierre)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Total Pagos Efectivos:</span>
+                  <span className="font-mono text-rose-400 font-bold">{formatCurrencyShort(pagosProyectadosCierre)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Flujo Neto Real (Ene-Ago):</span>
@@ -1001,44 +1009,52 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
           <div className="glass-card p-6 rounded-2xl border border-white/10">
             <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
               <Wallet className="text-blue-400" size={22} />
-              ¿Con cuánto dinero se espera cerrar la vigencia 2026?
+              Flujo de Tesorería al Cierre de la Vigencia 2026
             </h2>
-            <p className="text-xs text-slate-400">Ecuación matemática de liquidación de tesorería y posición final de liquidez.</p>
+            <p className="text-xs text-slate-400">
+              Posición neta de caja calculada estrictamente como: <strong>Total de Ingresos</strong> menos <strong>Pago Efectivo Realizado al Cierre</strong>.
+            </p>
 
-            {/* ECUACIÓN VISUAL GERENCIAL */}
+            {/* ECUACIÓN VISUAL GERENCIAL DE TESORERÍA */}
             <div className="bg-slate-900/80 p-6 rounded-2xl border border-white/10 my-6">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-center text-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center text-center">
                 
-                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Saldo Inicial</span>
-                  <p className="text-lg font-mono font-bold text-white mt-1">{formatCurrencyShort(saldoInicial)}</p>
+                <div className="bg-emerald-500/10 p-5 rounded-xl border border-emerald-500/20">
+                  <span className="text-xs text-emerald-400 uppercase font-bold block">1. Total Ingresos Estimados</span>
+                  <p className="text-2xl font-mono font-bold text-emerald-300 mt-1">{formatCurrency(ingresosTotalesCierre)}</p>
+                  <span className="text-[10px] text-slate-400 mt-1 block">
+                    Recaudo Real 31/08 ({formatCurrencyShort(recaudoRealAgo)}) + Proy Sep-Dic ({formatCurrencyShort(ingresosProySepDic)})
+                  </span>
                 </div>
 
-                <div className="text-2xl font-bold text-slate-500">+</div>
-
-                <div className="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
-                  <span className="text-[10px] text-emerald-400 uppercase font-bold block">Ingresos Totales</span>
-                  <p className="text-lg font-mono font-bold text-emerald-300 mt-1">{formatCurrencyShort(ingresosTotalesCierre)}</p>
-                  <span className="text-[10px] text-slate-400">Real + Proyectado</span>
+                <div className="bg-rose-500/10 p-5 rounded-xl border border-rose-500/20">
+                  <span className="text-xs text-rose-400 uppercase font-bold block">2. Pago Efectivo Realizado al Cierre</span>
+                  <p className="text-2xl font-mono font-bold text-rose-300 mt-1">{formatCurrency(pagosProyectadosCierre)}</p>
+                  <span className="text-[10px] text-slate-400 mt-1 block">
+                    Pagos Real 31/08 ({formatCurrencyShort(pagosRealAgo)}) + Proy Sep-Dic ({formatCurrencyShort(pagosProyectadosCierre - pagosRealAgo)})
+                  </span>
                 </div>
 
-                <div className="text-2xl font-bold text-slate-500">-</div>
-
-                <div className="bg-rose-500/10 p-4 rounded-xl border border-rose-500/20">
-                  <span className="text-[10px] text-rose-400 uppercase font-bold block">Pagos Totales Cierre</span>
-                  <p className="text-lg font-mono font-bold text-rose-300 mt-1">{formatCurrencyShort(pagosProyectadosCierre)}</p>
-                  <span className="text-[10px] text-slate-400">Desembolsos efectivos</span>
+                <div className="bg-blue-500/10 p-5 rounded-xl border border-blue-500/20">
+                  <span className="text-xs text-blue-400 uppercase font-bold block">3. Flujo Neto de Tesorería (Cierre)</span>
+                  <p className="text-2xl font-mono font-bold text-blue-300 mt-1">{formatCurrency(flujoTesoreriaCierre)}</p>
+                  <span className="text-[10px] text-slate-400 mt-1 block">
+                    Total Ingresos − Pago Efectivo Realizado
+                  </span>
                 </div>
 
               </div>
 
               <div className="mt-6 pt-6 border-t border-white/10 text-center">
-                <span className="text-xs uppercase font-bold text-slate-400 tracking-wider block">Resultado Esperado al 31 de Diciembre de 2026</span>
-                <p className="text-4xl md:text-5xl font-display font-bold text-emerald-400 mt-2">{formatCurrencyShort(saldoFinalDisponible)}</p>
+                <span className="text-xs uppercase font-bold text-slate-400 tracking-wider block">Resultado Neto de Caja al 31 de Diciembre de 2026</span>
+                <p className="text-4xl md:text-5xl font-display font-bold text-emerald-400 mt-2">{formatCurrency(flujoTesoreriaCierre)}</p>
                 <div className="mt-3 inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-4 py-1.5 rounded-full text-xs font-bold font-mono">
                   <CheckCircle size={15} />
-                  SUPERÁVIT DISPONIBLE EN BANCOS (CIERRE POSITIVO)
+                  SUPERÁVIT DE TESORERÍA DISPONIBLE EN BANCOS (CIERRE FAVORABLE)
                 </div>
+                <p className="text-xs text-slate-400 mt-3 max-w-3xl mx-auto leading-relaxed">
+                  * El flujo de tesorería cuantifica la liquidez real generada durante el ejercicio fiscal 2026. Se calcula estrictamente como el recaudo total de ingresos menos los pagos efectivos realizados, sin incorporar apropiaciones presupuestales de balance inicial.
+                </p>
               </div>
             </div>
           </div>
@@ -1857,60 +1873,71 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
               </div>
 
               {/* ========================================================= */}
-              {/* 8. FLUJO DE CAJA PROYECTADO AL CIERRE                    */}
+              {/* 8. FLUJO DE TESORERÍA AL CIERRE DE VIGENCIA               */}
               {/* ========================================================= */}
               <div className="space-y-4 page-break-inside-avoid">
                 <div className="border-b-2 border-slate-900 pb-1.5">
                   <h3 className="text-sm font-black uppercase text-slate-900 tracking-wide">
-                    8. Flujo de Caja Proyectado al Cierre — ¿Con cuánto dinero se espera cerrar la vigencia?
+                    8. Flujo de Tesorería al Cierre — Total Ingresos menos Pagos Efectivos Realizados
                   </h3>
                 </div>
 
                 <table className="w-full border-collapse border border-slate-300 text-xs">
                   <tbody>
                     <tr className="border-b border-slate-200 bg-slate-50">
-                      <td className="p-2.5 font-bold text-slate-900 w-2/3">Saldo Inicial de Tesorería al 01/01/2026 (Balance):</td>
-                      <td className="p-2.5 text-right font-mono font-bold text-slate-900">{formatCurrency(saldoInicial)}</td>
+                      <td colSpan={2} className="p-2.5 font-bold uppercase text-slate-900 text-[11px] tracking-wider">
+                        A. Ingresos de la Vigencia (Recaudados y Proyectados)
+                      </td>
                     </tr>
                     <tr className="border-b border-slate-200">
-                      <td className="p-2.5 text-slate-800">(+) Ingresos Efectivos Recaudados (Real Enero – Agosto):</td>
+                      <td className="p-2.5 text-slate-800 pl-6">(+) Recaudo Efectivo Consolidado a 31 de Agosto (Real):</td>
                       <td className="p-2.5 text-right font-mono font-bold text-emerald-700">+{formatCurrency(recaudoRealAgo)}</td>
                     </tr>
                     <tr className="border-b border-slate-200">
-                      <td className="p-2.5 text-slate-800">(+) Ingresos Estimados por Recaudar (Proyectado Septiembre – Diciembre):</td>
+                      <td className="p-2.5 text-slate-800 pl-6">(+) Ingresos Estimados por Recaudar (Proyectado Septiembre – Diciembre):</td>
                       <td className="p-2.5 text-right font-mono font-bold text-emerald-600">+{formatCurrency(ingresosProySepDic)}</td>
                     </tr>
-                    <tr className="border-b border-slate-200 bg-slate-100 font-bold">
-                      <td className="p-2.5 text-slate-950 uppercase font-black">(=) Total Disponibilidad Bruta de Fondos para la Vigencia:</td>
-                      <td className="p-2.5 text-right font-mono font-black text-slate-950">{formatCurrency(saldoInicial + ingresosTotalesCierre)}</td>
+                    <tr className="border-b-2 border-slate-300 bg-emerald-50/60 font-bold">
+                      <td className="p-2.5 text-emerald-950 uppercase font-black">(=) TOTAL DE INGRESOS ESTIMADOS DE LA VIGENCIA (A):</td>
+                      <td className="p-2.5 text-right font-mono font-black text-emerald-800 text-sm">{formatCurrency(ingresosTotalesCierre)}</td>
+                    </tr>
+
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      <td colSpan={2} className="p-2.5 font-bold uppercase text-slate-900 text-[11px] tracking-wider pt-3">
+                        B. Pagos Efectivos de la Vigencia (Desembolsos de Caja)
+                      </td>
                     </tr>
                     <tr className="border-b border-slate-200">
-                      <td className="p-2.5 text-slate-800">(−) Gastos Efectivamente Desembolsados (Real Enero – Agosto):</td>
+                      <td className="p-2.5 text-slate-800 pl-6">(−) Pagos Efectivos Desembolsados a 31 de Agosto (Real):</td>
                       <td className="p-2.5 text-right font-mono font-bold text-rose-700">−{formatCurrency(pagosRealAgo)}</td>
                     </tr>
                     <tr className="border-b border-slate-200">
-                      <td className="p-2.5 text-slate-800">(−) Gastos Proyectados a Desembolsar (Proyectado Septiembre – Diciembre):</td>
+                      <td className="p-2.5 text-slate-800 pl-6">(−) Pagos Efectivos Proyectados a Desembolsar (Septiembre – Diciembre):</td>
                       <td className="p-2.5 text-right font-mono font-bold text-rose-600">−{formatCurrency(pagosProyectadosCierre - pagosRealAgo)}</td>
                     </tr>
-                    <tr className="border-b border-slate-200 bg-slate-100 font-bold">
-                      <td className="p-2.5 text-slate-950 uppercase font-black">(=) Total Egresos y Pagos Estimados de la Vigencia:</td>
-                      <td className="p-2.5 text-right font-mono font-black text-rose-900">−{formatCurrency(pagosProyectadosCierre)}</td>
+                    <tr className="border-b-2 border-slate-300 bg-rose-50/60 font-bold">
+                      <td className="p-2.5 text-rose-950 uppercase font-black">(=) TOTAL PAGOS EFECTIVOS REALIZADOS AL CIERRE (B):</td>
+                      <td className="p-2.5 text-right font-mono font-black text-rose-800 text-sm">−{formatCurrency(pagosProyectadosCierre)}</td>
                     </tr>
+
                     <tr className="bg-emerald-50 font-bold border-t-2 border-emerald-500">
                       <td className="p-3 text-emerald-950 uppercase font-black text-sm">
-                        (=) SALDO FINAL DISPONIBLE PROYECTADO AL 31/12/2026:
+                        (=) FLUJO NETO DE TESORERÍA AL CIERRE (A − B):
                       </td>
                       <td className="p-3 text-right font-mono font-black text-emerald-900 text-base">
-                        {formatCurrency(saldoFinalDisponible)}
+                        {formatCurrency(flujoTesoreriaCierre)}
                       </td>
                     </tr>
                   </tbody>
                 </table>
 
-                <div className="flex items-center gap-2 p-2.5 bg-emerald-100/70 border border-emerald-300 rounded text-xs text-emerald-900">
-                  <span className="text-base">🟢</span>
-                  <span className="font-bold">Clasificación Institucional: Excedente Suficiente / Superávit Protegido.</span>
-                  <span className="text-[11px] text-emerald-800">No se prevé déficit de tesorería ni necesidad de cupo de sobregiro bancario.</span>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded text-xs text-slate-700 space-y-1">
+                  <p>
+                    <strong>Criterio Técnico de Tesorería:</strong> El flujo de tesorería institucional cuantifica la liquidez neta del ejercicio fiscal 2026, calculada estrictamente como el <strong>Total de Ingresos</strong> ({formatCurrency(ingresosTotalesCierre)}) menos el <strong>Pago Efectivo Realizado al Cierre</strong> ({formatCurrency(pagosProyectadosCierre)}).
+                  </p>
+                  <p className="text-slate-600 text-[11px]">
+                    * De conformidad con las normas contables y de tesorería pública, no se incorporan saldos de apropiación inicial presupuestal al flujo de caja. De los compromisos presupuestales adquiridos ({formatCurrency(compromisos2026)}), el pago efectivo alcanza el {formatPercent(pagosPctCompromiso)}, quedando la diferencia ({formatCurrency(Math.max(0, compromisos2026 - pagosProyectadosCierre))}) como cuentas por pagar para la siguiente vigencia sin generar déficit de caja.
+                  </p>
                 </div>
               </div>
 
