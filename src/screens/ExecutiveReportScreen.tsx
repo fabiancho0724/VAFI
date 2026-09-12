@@ -8,7 +8,7 @@ import {
   AlertTriangle, AlertCircle, CheckCircle, ShieldCheck, DollarSign, Wallet, 
   Building2, Layers, ArrowUpRight, ArrowDownRight, Activity, ChevronRight, 
   BarChart3, PieChart as PieIcon, HelpCircle, Sparkles, Brain, Clock, 
-  CheckSquare, ArrowRight, RefreshCw, Eye, Award
+  CheckSquare, ArrowRight, RefreshCw, Eye, Award, Loader2
 } from 'lucide-react';
 import { fetchAndParseCSV, parseNumber } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
@@ -57,8 +57,82 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
   const [filterRecurso, setFilterRecurso] = useState('Todos');
   const [filterUnidad, setFilterUnidad] = useState('Todos');
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Acción 1: Imprimir informe directamente
+  const handlePrint = () => {
+    setIsPrintModalOpen(true);
+    const prevTitle = document.title;
+    document.title = 'Informe_Tecnico_Gerencial_Flujo_Caja_UPTC_2026';
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        document.title = prevTitle;
+      }, 2000);
+    }, 250);
+  };
+
+  // Acción 2: Descargar PDF institucional directamente
+  const handleDownloadPDF = async () => {
+    setIsPrintModalOpen(true);
+    setIsDownloading(true);
+    const prevTitle = document.title;
+    const reportTitle = 'Informe_Tecnico_Gerencial_Flujo_Caja_UPTC_2026';
+    document.title = reportTitle;
+
+    try {
+      // Carga dinámica de html2pdf si no estuviera pre-cargado
+      if (!(window as any).html2pdf) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('No se pudo cargar la librería html2pdf'));
+          document.head.appendChild(script);
+          setTimeout(() => reject(new Error('Tiempo de espera agotado')), 4000);
+        });
+      }
+
+      const element = printRef.current || document.getElementById('printable-executive-report');
+      if (!element || !(window as any).html2pdf) {
+        throw new Error('Elemento de reporte no disponible');
+      }
+
+      // Clonar nodo para generar PDF completo sin barras de desplazamiento de pantalla
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.maxHeight = 'none';
+      clone.style.overflow = 'visible';
+      clone.style.height = 'auto';
+      clone.style.width = '1024px';
+      clone.style.position = 'fixed';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.background = '#ffffff';
+      document.body.appendChild(clone);
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `${reportTitle}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      await (window as any).html2pdf().set(opt).from(clone).save();
+      document.body.removeChild(clone);
+    } catch (err) {
+      console.warn('Utilizando exportación nativa a PDF mediante diálogo de impresión:', err);
+      window.print();
+    } finally {
+      setIsDownloading(false);
+      setTimeout(() => {
+        document.title = prevTitle;
+      }, 2000);
+    }
+  };
 
   // Load raw data exactly as Flujo de Caja
   useEffect(() => {
@@ -318,13 +392,45 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 self-end lg:self-center">
+          <div className="flex flex-wrap items-center gap-2.5 self-end lg:self-center">
+            {/* Botón 1: Imprimir Informe */}
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2.5 bg-slate-800/90 hover:bg-slate-700 text-white border border-slate-600 rounded-xl font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer uppercase tracking-wider hover:border-emerald-500/50"
+              title="Abrir diálogo de impresión directa"
+            >
+              <Printer size={15} className="text-emerald-400" />
+              Imprimir
+            </button>
+
+            {/* Botón 2: Descargar PDF */}
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+              className="px-4 py-2.5 bg-primary-container text-on-primary-container hover:bg-yellow-400 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg shadow-yellow-500/20 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50"
+              title="Descargar informe técnico en formato PDF"
+            >
+              {isDownloading ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Generando PDF...
+                </>
+              ) : (
+                <>
+                  <Download size={15} />
+                  Descargar PDF
+                </>
+              )}
+            </button>
+
+            {/* Botón 3: Vista Previa */}
             <button
               onClick={() => setIsPrintModalOpen(true)}
-              className="px-4 py-2.5 bg-primary-container text-on-primary-container hover:bg-yellow-400 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg shadow-yellow-500/10 transition-all cursor-pointer uppercase tracking-wider"
+              className="px-3.5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Ver vista preliminar del documento formal"
             >
-              <Printer size={16} />
-              GENERAR INFORME TÉCNICO GERENCIAL (PDF)
+              <Eye size={14} className="text-blue-400" />
+              Vista Previa
             </button>
             <button
               onClick={() => { setFilterRecurso('Todos'); setFilterUnidad('Todos'); }}
@@ -1437,22 +1543,46 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
           <div className="bg-[#0f172a] border border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8">
             
-            <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900">
+            <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 sticky top-0 z-20">
               <div className="flex items-center gap-2">
                 <FileText className="text-emerald-400" size={20} />
-                <h3 className="text-sm font-bold text-white uppercase">Vista Preliminar de Impresión / Exportación PDF</h3>
+                <h3 className="text-sm font-bold text-white uppercase">Vista Preliminar del Informe Institucional</h3>
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => window.print()}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-2 transition-all cursor-pointer"
+                  onClick={handlePrint}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-all cursor-pointer hover:border-emerald-500/50"
+                  title="Abrir cuadro de diálogo de impresión directa"
                 >
-                  <Printer size={15} />
-                  Imprimir / Guardar como PDF
+                  <Printer size={15} className="text-emerald-400" />
+                  Imprimir
+                </button>
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloading}
+                  className={`px-4 py-2 font-bold text-xs rounded-xl flex items-center gap-2 transition-all cursor-pointer ${
+                    isDownloading
+                      ? 'bg-emerald-600/50 text-white cursor-not-allowed'
+                      : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20'
+                  }`}
+                  title="Descargar directamente el archivo PDF del informe"
+                >
+                  {isDownloading ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" />
+                      Generando PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={15} />
+                      Descargar PDF
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => setIsPrintModalOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"
+                  className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  title="Cerrar vista preliminar"
                 >
                   ✕
                 </button>
