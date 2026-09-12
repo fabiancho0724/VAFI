@@ -61,22 +61,129 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
 
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Acción 1: Imprimir informe directamente
+  // Acción 1: Imprimir informe directamente con aislamiento completo de estilos
   const handlePrint = () => {
-    setIsPrintModalOpen(true);
     const prevTitle = document.title;
-    document.title = 'Informe_Tecnico_Gerencial_Flujo_Caja_UPTC_2026';
-    setTimeout(() => {
+    const reportTitle = 'Informe_Tecnico_Gerencial_Flujo_Caja_UPTC_2026';
+    document.title = reportTitle;
+
+    const element = printRef.current || document.getElementById('printable-executive-report');
+    if (!element) {
       window.print();
-      setTimeout(() => {
-        document.title = prevTitle;
-      }, 2000);
-    }, 250);
+      setTimeout(() => { document.title = prevTitle; }, 2000);
+      return;
+    }
+
+    // Crear un iframe invisible para aislar el documento de impresión
+    // Esto garantiza que Safari o cualquier navegador imprima en fondo blanco puro y con paginación natural completa
+    const iframe = document.createElement('iframe');
+    iframe.id = 'report-print-frame';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      setTimeout(() => { document.title = prevTitle; }, 2000);
+      return;
+    }
+
+    // Copiar estilos del documento principal al iframe
+    const styleTags = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      .map(s => s.outerHTML)
+      .join('\n');
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html lang="es">
+        <head>
+          <meta charset="utf-8">
+          <title>${reportTitle}</title>
+          ${styleTags}
+          <style>
+            @page {
+              size: letter portrait;
+              margin: 10mm 12mm 10mm 12mm;
+            }
+            html, body {
+              background: #ffffff !important;
+              background-color: #ffffff !important;
+              color: #0f172a !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              width: 100% !important;
+              height: auto !important;
+              overflow: visible !important;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            #printable-report-clean {
+              background: #ffffff !important;
+              color: #0f172a !important;
+              width: 100% !important;
+              height: auto !important;
+              overflow: visible !important;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+            .page-break-before {
+              page-break-before: always !important;
+              break-before: page !important;
+            }
+            .page-break-inside-avoid, tr, td, th, .report-section {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            table {
+              page-break-inside: auto !important;
+              break-inside: auto !important;
+              width: 100% !important;
+              border-collapse: collapse !important;
+            }
+            thead {
+              display: table-header-group !important;
+            }
+            img {
+              max-width: 100% !important;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="printable-report-clean" class="p-8 bg-white text-slate-900 space-y-8 font-sans text-xs">
+            ${element.innerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (err) {
+        console.warn('Error en impresión iframe, usando window.print():', err);
+        window.print();
+      } finally {
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+          document.title = prevTitle;
+        }, 4000);
+      }
+    }, 450);
   };
 
   // Acción 2: Descargar PDF institucional directamente
   const handleDownloadPDF = async () => {
-    setIsPrintModalOpen(true);
     setIsDownloading(true);
     const prevTitle = document.title;
     const reportTitle = 'Informe_Tecnico_Gerencial_Flujo_Caja_UPTC_2026';
@@ -100,7 +207,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
         throw new Error('Elemento de reporte no disponible');
       }
 
-      // Clonar nodo para generar PDF completo sin barras de desplazamiento de pantalla
+      // Clonar nodo para generar PDF completo sobre fondo blanco puro y sin restricciones de pantalla
       const clone = element.cloneNode(true) as HTMLElement;
       clone.style.maxHeight = 'none';
       clone.style.overflow = 'visible';
@@ -110,27 +217,36 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
       clone.style.left = '-9999px';
       clone.style.top = '0';
       clone.style.background = '#ffffff';
+      clone.style.color = '#0f172a';
       document.body.appendChild(clone);
 
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [8, 8, 8, 8],
         filename: `${reportTitle}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { 
+          scale: 1.5, 
+          useCORS: true, 
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false 
+        },
         jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       await (window as any).html2pdf().set(opt).from(clone).save();
-      document.body.removeChild(clone);
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone);
+      }
     } catch (err) {
-      console.warn('Utilizando exportación nativa a PDF mediante diálogo de impresión:', err);
-      window.print();
+      console.warn('Utilizando exportación limpia mediante diálogo de impresión:', err);
+      handlePrint();
     } finally {
       setIsDownloading(false);
       setTimeout(() => {
         document.title = prevTitle;
-      }, 2000);
+      }, 2500);
     }
   };
 
@@ -1537,13 +1653,24 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
       )}
 
       {/* ========================================================= */}
-      {/* MODAL DE IMPRESIÓN / EXPORTACIÓN FORMAL DEL INFORME       */}
+      {/* DOCUMENTO FORMAL: SIEMPRE DISPONIBLE EN DOM PARA IMPRESIÓN */}
       {/* ========================================================= */}
-      {isPrintModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="bg-[#0f172a] border border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8">
-            
-            <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 sticky top-0 z-20">
+      <div 
+        className={
+          isPrintModalOpen 
+            ? "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto" 
+            : "hidden print:block"
+        }
+      >
+        <div 
+          className={
+            isPrintModalOpen 
+              ? "bg-[#0f172a] border border-slate-700 w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8" 
+              : "w-full"
+          }
+        >
+          {isPrintModalOpen && (
+            <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 sticky top-0 z-20 no-print">
               <div className="flex items-center gap-2">
                 <FileText className="text-emerald-400" size={20} />
                 <h3 className="text-sm font-bold text-white uppercase">Vista Preliminar del Informe Institucional</h3>
@@ -1588,12 +1715,17 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                 </button>
               </div>
             </div>
+          )}
 
-            <div 
-              ref={printRef} 
-              id="printable-executive-report" 
-              className="p-8 md:p-12 bg-white text-slate-900 space-y-8 overflow-y-auto max-h-[85vh] font-sans text-xs"
-            >
+          <div 
+            ref={printRef} 
+            id="printable-executive-report" 
+            className={
+              isPrintModalOpen 
+                ? "p-8 md:p-12 bg-white text-slate-900 space-y-8 overflow-y-auto max-h-[85vh] font-sans text-xs" 
+                : "p-8 md:p-12 bg-white text-slate-900 space-y-8 font-sans text-xs"
+            }
+          >
               
               {/* ========================================================= */}
               {/* PORTADA INSTITUCIONAL FORMAL                              */}
@@ -2562,7 +2694,6 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
 
           </div>
         </div>
-      )}
 
     </div>
   );

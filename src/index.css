@@ -89,33 +89,121 @@
 }
 
 @media print {
+  @page {
+    size: letter portrait;
+    margin: 8mm 10mm;
+  }
+
+  /* 1. Reset Root, HTML and Body */
+  html,
+  body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 2. Hide all non-printable UI: headers, navigation, sidebars, buttons */
+  header,
+  nav,
+  aside,
+  button,
+  .no-print,
+  [role="navigation"],
+  [class*="sticky"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* 3. Completely neutralize modal backdrop and dark theme containers */
+  .fixed,
+  [class*="fixed"],
+  [class*="backdrop-blur"],
+  [class*="bg-black"],
+  [class*="bg-\[\#0f172a\]"],
+  [class*="bg-\[\#030712\]"],
+  [class*="bg-background"],
+  [class*="bg-surface"] {
+    position: static !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* 4. Hide everything else by default */
   body * {
     visibility: hidden;
   }
+
+  /* 5. Make the printable report visible, static and free to paginate */
   #printable-executive-report,
   #printable-executive-report * {
-    visibility: visible;
+    visibility: visible !important;
   }
+
   #printable-executive-report {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 24px;
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
     color: #0f172a !important;
-    font-size: 11px;
+    font-size: 11px !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    border: none !important;
+    box-shadow: none !important;
   }
+
+  /* 6. Page Breaks and Flow Control */
   .page-break-before {
-    page-break-before: always;
-    break-before: page;
+    page-break-before: always !important;
+    break-before: page !important;
   }
-  .page-break-inside-avoid {
-    page-break-inside: avoid;
-    break-inside: avoid;
+
+  .page-break-inside-avoid,
+  tr,
+  td,
+  th,
+  .report-section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
-  * {
+
+  table {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  /* 7. Accurate color rendering for report badges and text */
+  #printable-executive-report * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
