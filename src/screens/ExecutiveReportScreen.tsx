@@ -124,7 +124,19 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
-            #printable-report-clean {
+            /* VITAL: Anular cualquier visibility: hidden dentro del iframe */
+            html *, body *, * {
+              visibility: visible !important;
+              opacity: 1 !important;
+            }
+            #printable-executive-report,
+            #printable-executive-report *,
+            .printable-content,
+            .printable-content * {
+              visibility: visible !important;
+              opacity: 1 !important;
+            }
+            #printable-executive-report {
               background: #ffffff !important;
               color: #0f172a !important;
               width: 100% !important;
@@ -156,7 +168,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
           </style>
         </head>
         <body>
-          <div id="printable-report-clean" class="p-8 bg-white text-slate-900 space-y-8 font-sans text-xs">
+          <div id="printable-executive-report" class="printable-content p-8 bg-white text-slate-900 space-y-8 font-sans text-xs">
             ${element.innerHTML}
           </div>
         </body>
@@ -179,7 +191,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
           document.title = prevTitle;
         }, 4000);
       }
-    }, 450);
+    }, 500);
   };
 
   // Acción 2: Descargar PDF institucional directamente
@@ -209,15 +221,25 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
 
       // Clonar nodo para generar PDF completo sobre fondo blanco puro y sin restricciones de pantalla
       const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.maxHeight = 'none';
-      clone.style.overflow = 'visible';
-      clone.style.height = 'auto';
-      clone.style.width = '1024px';
+      clone.id = 'printable-executive-report-clone';
       clone.style.position = 'fixed';
       clone.style.left = '-9999px';
       clone.style.top = '0';
+      clone.style.width = '1024px';
+      clone.style.maxHeight = 'none';
+      clone.style.overflow = 'visible';
+      clone.style.height = 'auto';
       clone.style.background = '#ffffff';
       clone.style.color = '#0f172a';
+      clone.style.opacity = '1';
+      clone.style.visibility = 'visible';
+
+      // Forzar que todos los elementos clonados tengan visibilidad y opacidad plena
+      clone.querySelectorAll('*').forEach((el: any) => {
+        el.style.visibility = 'visible';
+        el.style.opacity = '1';
+      });
+
       document.body.appendChild(clone);
 
       const opt = {
@@ -1656,10 +1678,16 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
       {/* DOCUMENTO FORMAL: SIEMPRE DISPONIBLE EN DOM PARA IMPRESIÓN */}
       {/* ========================================================= */}
       <div 
+        id="report-printable-wrapper"
         className={
           isPrintModalOpen 
             ? "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto" 
-            : "hidden print:block"
+            : "relative print:block"
+        }
+        style={
+          !isPrintModalOpen 
+            ? { position: 'fixed', left: '-9999px', top: '0', width: '1024px', opacity: 0, pointerEvents: 'none', zIndex: -10 } 
+            : undefined
         }
       >
         <div 
@@ -1722,8 +1750,8 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
             id="printable-executive-report" 
             className={
               isPrintModalOpen 
-                ? "p-8 md:p-12 bg-white text-slate-900 space-y-8 overflow-y-auto max-h-[85vh] font-sans text-xs" 
-                : "p-8 md:p-12 bg-white text-slate-900 space-y-8 font-sans text-xs"
+                ? "printable-content p-8 md:p-12 bg-white text-slate-900 space-y-8 overflow-y-auto max-h-[85vh] font-sans text-xs" 
+                : "printable-content p-8 md:p-12 bg-white text-slate-900 space-y-8 font-sans text-xs"
             }
           >
               
