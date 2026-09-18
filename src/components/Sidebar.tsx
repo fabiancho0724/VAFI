@@ -58,7 +58,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
          screen === 'budget' ? 'Costeo de Programa' :
          screen === 'reports' ? 'Reportes' :
          screen === 'repository' ? 'Repositorio' :
-         screen === 'assistant' ? 'Asistente IA' :
+         screen === 'assistant' ? 'Centavito IA' :
          'Configuración'}
       </span>}
     </button>

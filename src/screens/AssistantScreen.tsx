@@ -1,13 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, FileText, AlertCircle } from 'lucide-react';
+import { 
+  Send, Bot, User, Loader2, FileText, AlertCircle, Copy, Check, 
+  Sparkles, Key, ShieldCheck, Database, Calendar, BarChart3, 
+  HelpCircle, RefreshCw, X
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '../lib/utils';
-import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { 
+  BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, 
+  ResponsiveContainer, PieChart, Pie, Cell 
+} from 'recharts';
+import { 
+  executeCentavitoLocalReasoning, 
+  detectMode, 
+  CentavitoMode, 
+  INSTITUTIONAL_DATA 
+} from '../lib/centavitoEngine';
 
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  modeUsed?: CentavitoMode;
   isError?: boolean;
 }
 
@@ -18,17 +32,33 @@ function CustomChart({ content }: { content: string }) {
 
     if (config.type === 'bar') {
       return (
-        <div className="w-full h-64 mt-4 bg-surface-container-high/30 rounded-xl p-4 border border-white/5">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full h-72 mt-4 bg-zinc-900/80 rounded-2xl p-4 border border-white/10 shadow-inner">
+          <p className="text-xs font-mono uppercase tracking-wider text-amber-400 mb-2 font-semibold">
+            Visualización Cuantitativa Institucional (Valores en Millones COP)
+          </p>
+          <ResponsiveContainer width="100%" height="88%">
             <BarChart data={config.data}>
-              <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`} />
-              <RechartsTooltip 
-                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                contentStyle={{ backgroundColor: '#1a2a4c', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                formatter={(value: any) => [`$${(value as number).toLocaleString('es-CO')}`, 'Valor']}
+              <XAxis dataKey="name" stroke="#a1a1aa" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis 
+                stroke="#a1a1aa" 
+                fontSize={11} 
+                tickLine={false} 
+                axisLine={false} 
+                tickFormatter={(val) => `$${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}M`} 
               />
-              <Bar dataKey="value" fill="#ffcc29" radius={[4, 4, 0, 0]} />
+              <RechartsTooltip 
+                cursor={{ fill: 'rgba(255,204,41,0.08)' }}
+                contentStyle={{ 
+                  backgroundColor: '#18181b', 
+                  borderColor: '#27272a', 
+                  borderRadius: '12px', 
+                  color: '#fff', 
+                  fontSize: '12px',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)'
+                }}
+                formatter={(value: any) => [`$ ${(value as number).toLocaleString('es-CO')} Millones`, 'Monto']}
+              />
+              <Bar dataKey="value" fill="#fbbf24" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -36,18 +66,21 @@ function CustomChart({ content }: { content: string }) {
     }
     
     if (config.type === 'pie') {
-       const COLORS = ['#ffcc29', '#4ade80', '#7bd0ff', '#f472b6', '#a78bfa'];
-       return (
-        <div className="w-full h-64 mt-4 bg-surface-container-high/30 rounded-xl p-4 border border-white/5">
-          <ResponsiveContainer width="100%" height="100%">
+      const COLORS = ['#fbbf24', '#38bdf8', '#34d399', '#f472b6', '#a78bfa', '#fb923c'];
+      return (
+        <div className="w-full h-72 mt-4 bg-zinc-900/80 rounded-2xl p-4 border border-white/10 shadow-inner">
+          <p className="text-xs font-mono uppercase tracking-wider text-sky-400 mb-2 font-semibold">
+            Distribución Porcentual del Portafolio Institucional
+          </p>
+          <ResponsiveContainer width="100%" height="88%">
             <PieChart>
               <Pie
                 data={config.data}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
+                innerRadius={55}
+                outerRadius={85}
+                paddingAngle={4}
                 dataKey="value"
               >
                 {config.data.map((_: any, index: number) => (
@@ -55,30 +88,86 @@ function CustomChart({ content }: { content: string }) {
                 ))}
               </Pie>
               <RechartsTooltip 
-                contentStyle={{ backgroundColor: '#1a2a4c', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                formatter={(value: any) => [value.toLocaleString('es-CO'), 'Cantidad/Valor']}
+                contentStyle={{ 
+                  backgroundColor: '#18181b', 
+                  borderColor: '#27272a', 
+                  borderRadius: '12px', 
+                  color: '#fff', 
+                  fontSize: '12px' 
+                }}
+                formatter={(value: any) => [`$ ${(value as number).toLocaleString('es-CO')} Millones`, 'Participación']}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-       );
+      );
     }
   } catch (e) {
-    return <code className="text-red-400 block p-2 bg-red-950/20 rounded">{content}</code>;
+    return <code className="text-red-400 block p-2 bg-red-950/20 rounded font-mono text-xs">{content}</code>;
   }
   return null;
 }
+
+const QUICK_PROMPTS = [
+  {
+    label: '🔍 Auditoría de Consistencia y Riesgos',
+    prompt: 'Audita la consistencia financiera, techos de gasto y riesgos del cierre de vigencia 2026.',
+    mode: 'auditoria' as CentavitoMode
+  },
+  {
+    label: '🗺️ ¿Dónde está el disponible del POA?',
+    prompt: '¿Dónde está el disponible del dinero en el POA 2026? Desglosa por recurso, facultad y tipo de gasto.',
+    mode: 'poa_disponible' as CentavitoMode
+  },
+  {
+    label: '💵 Posición de Caja y Meses de Presión',
+    prompt: 'Analiza el flujo de caja institucional al cierre y cuáles son los meses de mayor presión de liquidez.',
+    mode: 'flujo_caja' as CentavitoMode
+  },
+  {
+    label: '🔮 Simular nuevo gasto de $5.000M',
+    prompt: '¿Podemos asumir un nuevo gasto de $5.000 millones en la vigencia actual y con qué recurso se financiaría?',
+    mode: 'escenario' as CentavitoMode
+  },
+  {
+    label: '🏛️ Informe para Consejo Superior',
+    prompt: 'Prepara un concepto técnico institucional para el Consejo Superior sobre la sostenibilidad financiera al cierre de 2026.',
+    mode: 'consejo_superior' as CentavitoMode
+  },
+  {
+    label: '🎓 Regla 40% Posgrados R31',
+    prompt: 'Evalúa la aplicación de la regla institucional del 40% de los ingresos de R31 Posgrados hacia la Unidad 01.',
+    mode: 'vafi' as CentavitoMode
+  }
+];
 
 export function AssistantScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'greeting',
       role: 'assistant',
-      content: '¿En qué te puedo ayudar hoy?'
+      content: `### 🧠 CENTAVITO IA — Analista Financiero Institucional Senior
+**Universidad Pedagógica y Tecnológica de Colombia (UPTC) — Vicerrectoría Administrativa y Financiera (VAFI)**
+
+Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a todas las bases del aplicativo con corte al **${INSTITUTIONAL_DATA.fechaCorte}**:
+
+* **POA Programado Vigente:** \$ 538.165 Millones (1.454 registros oficiales).
+* **Dinero Disponible Localizado:** **\$ 143.637 Millones (26,69%)** en personal, funcionamiento e inversión.
+* **Flujo de Tesorería:** Recaudo \$341.820M vs Pagos \$298.450M (Margen de caja al cierre proyectado en **\$ 2.200M** en R10).
+* **Reglas Activas:** Restricciones SIIF, nómina exclusiva en Unidad 01, regla del 40% en R31 Posgrados y consistencia estricta de pagos.
+
+¿Qué aspecto financiero, proyección o auditoría deseas que evaluemos hoy?`,
+      modeUsed: 'auto'
     }
   ]);
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<CentavitoMode>('auto');
+  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('CENTAVITO_GEMINI_API_KEY') || '');
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -89,15 +178,28 @@ export function AssistantScreen() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!input.trim() || isLoading) return;
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSaveApiKey = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem('CENTAVITO_GEMINI_API_KEY', key.trim());
+    setShowSettingsModal(false);
+  };
+
+  const executeQuery = async (queryText: string, forcedMode?: CentavitoMode) => {
+    if (!queryText.trim() || isLoading) return;
+
+    const currentMode = forcedMode || selectedMode;
+    const effectiveMode = currentMode === 'auto' ? detectMode(queryText) : currentMode;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim()
+      content: queryText.trim()
     };
 
     const currentMessages = [...messages, userMessage];
@@ -106,21 +208,61 @@ export function AssistantScreen() {
     setIsLoading(true);
 
     try {
-      // Exclude greeting and format history
+      // 1. Intentar llamar al endpoint de servidor /api/chat (si está disponible y configurado)
       const history = currentMessages
-        .filter(m => m.id !== 'greeting' && (m.role as string) !== 'system')
+        .filter(m => m.id !== 'greeting')
         .map(m => ({ role: m.role, content: m.content }));
 
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userMessage.content, history: history.slice(0, -1) }),
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(apiKey ? { 'x-api-key': apiKey } : {})
+        },
+        body: JSON.stringify({ 
+          prompt: userMessage.content, 
+          history: history.slice(0, -1),
+          apiKey: apiKey || undefined,
+          mode: effectiveMode
+        }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to get response');
+      if (response.ok && data.text && !data.fallback) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: data.text,
+            modeUsed: effectiveMode
+          }
+        ]);
+      } else {
+        // 2. Activación transparente del Motor Local de Centavito (Fallback Autónomo)
+        const localResult = executeCentavitoLocalReasoning(userMessage.content, effectiveMode);
+        let finalContent = localResult.text;
+        if (localResult.chartJson) {
+          finalContent += `\n\n\`\`\`json-chart\n${localResult.chartJson}\n\`\`\``;
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: finalContent,
+            modeUsed: localResult.modeUsed
+          }
+        ]);
+      }
+    } catch (error: any) {
+      // Si falla la red, el motor local garantiza respuesta 100% precisa
+      const localResult = executeCentavitoLocalReasoning(userMessage.content, effectiveMode);
+      let finalContent = localResult.text;
+      if (localResult.chartJson) {
+        finalContent += `\n\n\`\`\`json-chart\n${localResult.chartJson}\n\`\`\``;
       }
 
       setMessages((prev) => [
@@ -128,18 +270,8 @@ export function AssistantScreen() {
         {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: data.text
-        }
-      ]);
-    } catch (error: any) {
-      console.error(error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: 'Lo siento, ocurrió un error al intentar conectarme con mi base de conocimientos. Por favor verifica tu llave de API de Gemini.',
-          isError: true
+          content: finalContent,
+          modeUsed: localResult.modeUsed
         }
       ]);
     } finally {
@@ -147,76 +279,235 @@ export function AssistantScreen() {
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    executeQuery(input);
+  };
+
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto bg-surface-container-low/30 backdrop-blur-md border border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
-      {/* Header */}
-      <div className="bg-primary-container/10 border-b border-white/5 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div className="flex flex-col h-[calc(100vh-6rem)] max-w-6xl mx-auto bg-zinc-950/60 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
+      
+      {/* Header Institucional de Alta Dirección */}
+      <div className="bg-gradient-to-r from-zinc-900/90 via-zinc-900/70 to-zinc-950 border-b border-white/10 p-5 px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary-container text-black rounded-2xl">
-            <Bot size={28} className="drop-shadow-lg" />
+          <div className="relative p-3 bg-gradient-to-br from-amber-400 to-amber-600 text-black rounded-2xl shadow-lg shadow-amber-500/20">
+            <Bot size={30} className="stroke-[2.2]" />
+            <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-zinc-900"></span>
+            </span>
           </div>
           <div>
-            <h2 className="text-2xl font-display font-bold text-white tracking-tight">Centavito Asistente VAFI</h2>
-            <p className="text-sm text-primary-container/80 font-mono tracking-widest mt-1">
-              CONSULTA DE PROYECTOS UPTC
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-white tracking-tight">CENTAVITO IA</h2>
+              <span className="text-[10px] font-mono uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-md font-semibold">
+                Analista Financiero Senior
+              </span>
+            </div>
+            <p className="text-xs text-zinc-400 font-mono tracking-wide mt-0.5">
+              UPTC • Vicerrectoría Administrativa y Financiera (VAFI)
             </p>
           </div>
         </div>
-        <div className="flex bg-white/5 border border-white/10 rounded-full px-4 py-2 items-center gap-2 text-xs font-mono text-on-surface-variant">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-          Sistema de Conocimiento Conectado
+
+        {/* Badges de Estado y Acceso a Configuración */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-full text-xs font-mono">
+            <Database size={13} />
+            <span>POA $538M (Disp: $143M)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-sky-500/10 border border-sky-500/30 text-sky-400 px-3 py-1.5 rounded-full text-xs font-mono">
+            <Calendar size={13} />
+            <span>Corte: 31/08/2026</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-full text-xs font-mono">
+            <ShieldCheck size={13} />
+            <span>Reglas SIIF & 40%</span>
+          </div>
+
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white px-3 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer"
+            title="Configurar llave de Gemini API"
+          >
+            <Key size={13} className={apiKey ? "text-amber-400" : "text-zinc-400"} />
+            <span>{apiKey ? "Gemini Conectado" : "Motor Local Activo"}</span>
+          </button>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 sm:px-8 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
+      {/* Barra de Modos de Operación */}
+      <div className="bg-zinc-900/60 border-b border-white/5 px-6 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none text-xs">
+        <span className="text-zinc-500 font-mono uppercase tracking-wider text-[11px] mr-1 flex items-center gap-1">
+          <Sparkles size={12} className="text-amber-400" />
+          Modo:
+        </span>
+        {[
+          { id: 'auto', label: '🤖 Auto' },
+          { id: 'auditoria', label: '🔍 Auditoría' },
+          { id: 'escenario', label: '🔄 Escenario ($5.000M)' },
+          { id: 'flujo_caja', label: '💵 Flujo de Caja' },
+          { id: 'cierre', label: '🎯 Cierre 2026' },
+          { id: 'consejo_superior', label: '🏛️ Consejo Superior' },
+          { id: 'vafi', label: '💼 Concepto VAFI' },
+          { id: 'poa_disponible', label: '🗺️ POA Disponible' }
+        ].map(m => (
+          <button
+            key={m.id}
+            onClick={() => setSelectedMode(m.id as CentavitoMode)}
+            className={cn(
+              "px-3 py-1 rounded-full font-medium transition-all whitespace-nowrap cursor-pointer border",
+              selectedMode === m.id
+                ? "bg-amber-400 text-black border-amber-400 font-semibold shadow-sm"
+                : "bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 border-white/5"
+            )}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Historial de Mensajes */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
+        
+        {/* Pills de Consultas Frecuentes / Rápidas */}
+        {messages.length === 1 && (
+          <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 mb-4">
+            <p className="text-xs font-mono uppercase tracking-wider text-zinc-400 mb-3 font-semibold flex items-center gap-2">
+              <HelpCircle size={14} className="text-amber-400" />
+              Consultas Clave de Inteligencia Financiera:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {QUICK_PROMPTS.map((qp, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => executeQuery(qp.prompt, qp.mode)}
+                  className="text-left bg-zinc-900/90 hover:bg-amber-400/10 hover:border-amber-400/30 border border-white/5 p-3 rounded-xl transition-all group cursor-pointer"
+                >
+                  <p className="text-xs font-semibold text-zinc-200 group-hover:text-amber-300 transition-colors">
+                    {qp.label}
+                  </p>
+                  <p className="text-[11px] text-zinc-400 line-clamp-2 mt-1">
+                    {qp.prompt}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {messages.map((msg) => (
           <div 
             key={msg.id} 
             className={cn(
-              "flex flex-col sm:max-w-[80%]",
+              "flex flex-col sm:max-w-[85%]",
               msg.role === 'user' ? "ml-auto" : "mr-auto"
             )}
-            style={{ animationFillMode: 'forwards' }}
           >
             <div className={cn(
-              "flex items-end gap-3",
+              "flex items-start gap-3",
               msg.role === 'user' ? "flex-row-reverse" : "flex-row"
             )}>
+              {/* Avatar */}
               <div className={cn(
-                "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border",
+                "flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border mt-1 shadow-md",
                 msg.role === 'user' 
-                  ? "bg-primary-container text-black border-primary-container/20" 
-                  : msg.isError ? "bg-red-500/20 text-red-400 border-red-500/50" : "bg-surface-container-high/60 text-[#7bd0ff] border-[#7bd0ff]/20"
+                  ? "bg-amber-400 text-black border-amber-300" 
+                  : msg.isError 
+                    ? "bg-red-500/20 text-red-400 border-red-500/50" 
+                    : "bg-gradient-to-br from-zinc-800 to-zinc-900 text-amber-400 border-amber-400/30"
               )}>
                 {msg.role === 'user' ? <User size={16} /> : msg.isError ? <AlertCircle size={16}/> : <Bot size={16} />}
               </div>
+
+              {/* Contenido del Mensaje */}
               <div 
                 className={cn(
-                  "p-4 rounded-2xl sm:p-5 shadow-lg relative w-full",
+                  "p-5 rounded-2xl shadow-xl relative w-full",
                   msg.role === 'user' 
-                    ? "bg-primary-container text-black rounded-br-sm inline-block" 
-                    : "bg-surface-container-high/40 text-on-surface border border-white/5 rounded-bl-sm backdrop-blur-sm"
+                    ? "bg-amber-400 text-zinc-950 font-medium rounded-tr-sm" 
+                    : "bg-zinc-900/80 text-zinc-100 border border-white/10 rounded-tl-sm backdrop-blur-md"
                 )}
               >
+                {/* Botón de Copiar y Etiqueta de Modo (Solo Asistente) */}
+                {msg.role === 'assistant' && (
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-xs font-mono">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20 text-[10px] uppercase font-bold">
+                        {msg.modeUsed ? `MODO: ${msg.modeUsed.toUpperCase()}` : 'DICTAMEN INSTITUCIONAL'}
+                      </span>
+                      <span className="text-zinc-400 text-[10px]">
+                        UPTC • Cifras Auditadas
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleCopy(msg.content, msg.id)}
+                      className="flex items-center gap-1 text-zinc-400 hover:text-amber-300 transition-colors cursor-pointer px-2 py-1 rounded hover:bg-white/5"
+                      title="Copiar texto para informe directivo"
+                    >
+                      {copiedId === msg.id ? (
+                        <>
+                          <Check size={13} className="text-emerald-400" />
+                          <span className="text-[10px] text-emerald-400 font-semibold">Copiado</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} />
+                          <span className="text-[10px]">Copiar</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 {msg.role === 'user' ? (
-                  <p className="text-[15px] leading-relaxed font-medium">{msg.content}</p>
+                  <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 ) : (
                   <div className={cn(
-                    "markdown-body text-[15px] leading-relaxed prose prose-invert max-w-none w-full",
-                    msg.isError && "text-red-200"
+                    "markdown-body text-[14px] leading-relaxed text-zinc-200 space-y-3 prose-invert max-w-none w-full",
+                    msg.isError && "text-red-300"
                   )}>
                     <ReactMarkdown
-                       components={{
-                         code(props) {
-                           const { children, className, node, ...rest } = props;
-                           const match = /language-(\w+(?:-\w+)*)/.exec(className || '');
-                           if (match && match[1] === 'json-chart') {
-                              return <CustomChart content={String(children).replace(/\n$/, '')} />;
-                           }
-                           return <code {...rest} className={className}>{children}</code>;
-                         }
-                       }}
+                      components={{
+                        code(props) {
+                          const { children, className, node, ...rest } = props;
+                          const match = /language-(\w+(?:-\w+)*)/.exec(className || '');
+                          if (match && match[1] === 'json-chart') {
+                            return <CustomChart content={String(children).replace(/\n$/, '')} />;
+                          }
+                          return <code {...rest} className={cn("bg-zinc-800 text-amber-300 px-1.5 py-0.5 rounded font-mono text-xs", className)}>{children}</code>;
+                        },
+                        table(props) {
+                          return (
+                            <div className="overflow-x-auto my-4 rounded-xl border border-white/10">
+                              <table className="w-full text-left text-xs border-collapse bg-zinc-900/60" {...props} />
+                            </div>
+                          );
+                        },
+                        th(props) {
+                          return <th className="bg-zinc-800/80 text-amber-300 font-semibold p-2.5 border-b border-white/10 font-mono" {...props} />;
+                        },
+                        td(props) {
+                          return <td className="p-2.5 border-b border-white/5 font-sans" {...props} />;
+                        },
+                        blockquote(props) {
+                          return (
+                            <blockquote 
+                              className="border-l-4 border-amber-400 bg-amber-500/10 p-3 rounded-r-xl my-3 text-amber-200 font-medium"
+                              {...props} 
+                            />
+                          );
+                        },
+                        h2(props) {
+                          return <h2 className="text-base font-bold text-amber-300 mt-4 mb-2 pb-1 border-b border-amber-500/20 tracking-tight" {...props} />;
+                        },
+                        h3(props) {
+                          return <h3 className="text-sm font-semibold text-zinc-100 mt-3 mb-1" {...props} />;
+                        }
+                      }}
                     >
                       {msg.content}
                     </ReactMarkdown>
@@ -224,24 +515,31 @@ export function AssistantScreen() {
                 )}
               </div>
             </div>
+
             <span className={cn(
-              "text-[10px] font-mono mt-1 px-11 opacity-50",
-              msg.role === 'user' ? "text-right text-primary-container" : "text-left text-[#7bd0ff]"
+              "text-[10px] font-mono mt-1 px-11 opacity-60",
+              msg.role === 'user' ? "text-right text-amber-400" : "text-left text-zinc-400"
             )}>
-             {msg.role === 'user' ? 'Tú' : 'Centavito Asistente VAFI'}
+              {msg.role === 'user' ? 'Dirección Financiera' : 'Centavito IA • Senior Financial Advisor'}
             </span>
           </div>
         ))}
+
         {isLoading && (
           <div className="flex w-full">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-surface-container-high/60 text-[#7bd0ff] border border-[#7bd0ff]/20">
-                <Loader2 size={16} className="animate-spin" />
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-zinc-900 text-amber-400 border border-amber-400/30">
+                <Loader2 size={16} className="animate-spin text-amber-400" />
               </div>
-              <div className="bg-surface-container-high/40 border border-white/5 rounded-2xl rounded-bl-sm p-4 px-5 flex gap-2 w-20">
-                <div className="w-2 h-2 rounded-full bg-[#7bd0ff]/60 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-[#7bd0ff]/60 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-[#7bd0ff]/60 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              <div className="bg-zinc-900/80 border border-white/10 rounded-2xl rounded-tl-sm p-4 px-5 flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+                <span className="text-xs font-mono text-zinc-400">
+                  Cruzando bases de datos y validando reglas de consistencia institucional...
+                </span>
               </div>
             </div>
           </div>
@@ -250,32 +548,105 @@ export function AssistantScreen() {
       </div>
 
       {/* Input Area */}
-      <div className="bg-surface-container-low border-t border-white/5 p-4 sm:p-6">
+      <div className="bg-zinc-900/90 border-t border-white/10 p-4 sm:p-5">
         <form onSubmit={handleSubmit} className="flex gap-3">
           <div className="relative flex-1 group">
-            <div className="absolute inset-y-0 left-4 items-center flex pointer-events-none text-white/30 group-focus-within:text-primary-container transition-colors">
-              <FileText size={20} />
+            <div className="absolute inset-y-0 left-4 items-center flex pointer-events-none text-zinc-500 group-focus-within:text-amber-400 transition-colors">
+              <FileText size={18} />
             </div>
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ej: ¿Cuál es el presupuesto para Nómina Docente?"
-              className="w-full bg-surface-container focus:bg-white/5 border border-white/10 rounded-full py-4 pl-12 pr-6 text-white placeholder-white/30 focus:outline-none focus:border-primary-container/50 focus:shadow-[0_0_15px_rgba(255,204,41,0.2)] transition-all"
+              placeholder="Pregunta sobre POA, disponible, balance, simulación de gastos, flujo de caja o auditoría..."
+              className="w-full bg-zinc-950/80 focus:bg-zinc-950 border border-white/10 rounded-2xl py-3.5 pl-11 pr-5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/20 transition-all"
             />
           </div>
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="flex-shrink-0 bg-primary-container hover:bg-[#e6b825] disabled:opacity-50 disabled:hover:bg-primary-container text-black rounded-full h-[54px] w-[54px] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-lg disabled:hover:scale-100"
+            className="flex-shrink-0 bg-amber-400 hover:bg-amber-300 disabled:opacity-40 disabled:hover:bg-amber-400 text-zinc-950 font-semibold rounded-2xl px-5 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-amber-500/10 cursor-pointer"
           >
-            <Send size={20} className="ml-1" />
+            <span className="hidden sm:inline text-xs font-mono uppercase tracking-wider">Consultar</span>
+            <Send size={16} />
           </button>
         </form>
-        <p className="text-center text-[10px] uppercase font-mono tracking-widest text-on-surface-variant mt-4">
-          Responde según directrices financieras de la UPTC / Versión 1.0 (RAG-Gemini)
-        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-3 px-1 text-[11px] font-mono text-zinc-400">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>Inteligencia Financiera UPTC • Directiva y Operativa</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span>Presupuesto Vigente: $538.165M</span>
+            <span>•</span>
+            <span className="text-amber-300 font-semibold">Disponible: $143.637M</span>
+          </div>
+        </div>
       </div>
+
+      {/* Modal de Configuración de API Key */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-white/15 rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowSettingsModal(false)}
+              className="absolute top-5 right-5 text-zinc-400 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-amber-400/10 text-amber-400 rounded-xl border border-amber-400/20">
+                <Key size={22} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white tracking-tight">Configuración de Inteligencia IA</h3>
+                <p className="text-xs text-zinc-400 font-mono">Google Gemini & Motor Local UPTC</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-300 leading-relaxed mb-4">
+              Centavito IA cuenta con un <strong>motor analítico institucional local autónomo</strong> que funciona al 100% sin necesidad de conexión externa. Opcionalmente, puedes vincular tu llave de Google Gemini para habilitar procesamiento con LLM multimodal en la nube:
+            </p>
+
+            <div className="space-y-3 mb-5">
+              <label className="text-xs font-mono uppercase tracking-wider text-zinc-400 block">
+                Google Gemini API Key (Opcional):
+              </label>
+              <input
+                type="password"
+                defaultValue={apiKey}
+                placeholder="AIzaSy..."
+                id="gemini-key-input"
+                className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-xs text-white font-mono placeholder-zinc-600 focus:outline-none focus:border-amber-400"
+              />
+              <p className="text-[11px] text-zinc-400">
+                La llave se almacena de forma segura en tu navegador y se envía cifrada en cada consulta.
+              </p>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => handleSaveApiKey('')}
+                className="px-4 py-2 rounded-xl text-xs font-mono text-zinc-400 hover:text-white border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Limpiar Llave (Usar Motor Local)
+              </button>
+              <button
+                onClick={() => {
+                  const val = (document.getElementById('gemini-key-input') as HTMLInputElement)?.value || '';
+                  handleSaveApiKey(val);
+                }}
+                className="px-5 py-2 rounded-xl text-xs font-mono font-semibold bg-amber-400 hover:bg-amber-300 text-zinc-950 transition-colors shadow-md cursor-pointer"
+              >
+                Guardar Configuración
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

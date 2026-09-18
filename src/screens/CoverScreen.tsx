@@ -16,7 +16,7 @@ const MODULES = [
   { id: 'poa', icon: Layers, title: 'POA (Disponible)', desc: 'Control del Plan Operativo Anual 2026, solicitudes y localización de fondos disponibles.' },
   { id: 'reports', icon: FileText, title: 'Reportes', desc: 'Informes detallados listos para exportar.' },
   { id: 'repository', icon: FolderOpen, title: 'Repositorio', desc: 'Archivos y documentos financieros.' },
-  { id: 'assistant', icon: Bot, title: 'Asistente IA', desc: 'Consultas financieras mediante lenguaje natural.' },
+  { id: 'assistant', icon: Bot, title: 'Centavito IA', desc: 'Analista financiero institucional senior con conocimiento integral del presupuesto y caja.' },
   { id: 'settings', icon: Settings, title: 'Configuración', desc: 'Parametrización del sistema.' }
 ];
 
@@ -63,7 +63,7 @@ export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void })
             <button onClick={() => onNavigate('dashboard')} className="text-xs font-mono text-on-surface-variant hover:text-white transition-colors uppercase tracking-wider cursor-pointer">Tablero</button>
             <button onClick={() => onNavigate('historical')} className="text-xs font-mono text-on-surface-variant hover:text-white transition-colors uppercase tracking-wider cursor-pointer">Histórico</button>
             <button onClick={() => onNavigate('predictive')} className="text-xs font-mono text-on-surface-variant hover:text-white transition-colors uppercase tracking-wider cursor-pointer">Proyecciones</button>
-            <button onClick={() => onNavigate('assistant')} className="text-xs font-mono text-on-surface-variant hover:text-white transition-colors uppercase tracking-wider cursor-pointer">IA Asistente</button>
+            <button onClick={() => onNavigate('assistant')} className="text-xs font-mono text-on-surface-variant hover:text-white transition-colors uppercase tracking-wider cursor-pointer">Centavito IA</button>
           </nav>
 
           <button 
