@@ -12,7 +12,6 @@ import {
 } from 'recharts';
 import { 
   executeCentavitoLocalReasoning, 
-  detectMode, 
   CentavitoMode, 
   INSTITUTIONAL_DATA 
 } from '../lib/centavitoEngine';
@@ -22,6 +21,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   modeUsed?: CentavitoMode;
+  topicTitle?: string;
   isError?: boolean;
 }
 
@@ -66,7 +66,7 @@ function CustomChart({ content }: { content: string }) {
     }
     
     if (config.type === 'pie') {
-      const COLORS = ['#fbbf24', '#38bdf8', '#34d399', '#f472b6', '#a78bfa', '#fb923c'];
+      const COLORS = ['#fbbf24', '#38bdf8', '#34d399', '#f472b6', '#a78bfa', '#fb923c', '#818cf8'];
       return (
         <div className="w-full h-72 mt-4 bg-zinc-900/80 rounded-2xl p-4 border border-white/10 shadow-inner">
           <p className="text-xs font-mono uppercase tracking-wider text-sky-400 mb-2 font-semibold">
@@ -110,18 +110,18 @@ function CustomChart({ content }: { content: string }) {
 
 const QUICK_PROMPTS = [
   {
-    label: '🔍 Auditoría de Consistencia y Riesgos',
-    prompt: 'Audita la consistencia financiera, techos de gasto y riesgos del cierre de vigencia 2026.',
-    mode: 'auditoria' as CentavitoMode
+    label: '🎓 ¿Cuánto ingresó por posgrados?',
+    prompt: '¿Cuánto ingresó por posgrados y cómo se divide por facultades y programas?',
+    mode: 'poa_disponible' as CentavitoMode
   },
   {
-    label: '🗺️ ¿Dónde está el disponible del POA?',
+    label: '🗺️ ¿Dónde está el dinero disponible?',
     prompt: '¿Dónde está el disponible del dinero en el POA 2026? Desglosa por recurso, facultad y tipo de gasto.',
     mode: 'poa_disponible' as CentavitoMode
   },
   {
-    label: '💵 Posición de Caja y Meses de Presión',
-    prompt: 'Analiza el flujo de caja institucional al cierre y cuáles son los meses de mayor presión de liquidez.',
+    label: '💵 Flujo de caja y meses de presión',
+    prompt: '¿Cómo está la situación de caja y tesorería para pagar la nómina y primas de fin de año?',
     mode: 'flujo_caja' as CentavitoMode
   },
   {
@@ -130,14 +130,14 @@ const QUICK_PROMPTS = [
     mode: 'escenario' as CentavitoMode
   },
   {
-    label: '🏛️ Informe para Consejo Superior',
-    prompt: 'Prepara un concepto técnico institucional para el Consejo Superior sobre la sostenibilidad financiera al cierre de 2026.',
-    mode: 'consejo_superior' as CentavitoMode
+    label: '🔍 Auditoría y riesgos de cierre',
+    prompt: 'Audita la consistencia financiera, techos de gasto y riesgos del cierre de vigencia 2026.',
+    mode: 'auditoria' as CentavitoMode
   },
   {
-    label: '🎓 Regla 40% Posgrados R31',
-    prompt: 'Evalúa la aplicación de la regla institucional del 40% de los ingresos de R31 Posgrados hacia la Unidad 01.',
-    mode: 'vafi' as CentavitoMode
+    label: '🏛️ Concepto para Consejo Superior',
+    prompt: 'Prepara un concepto técnico institucional para el Consejo Superior sobre la sostenibilidad financiera al cierre de 2026.',
+    mode: 'consejo_superior' as CentavitoMode
   }
 ];
 
@@ -146,18 +146,19 @@ export function AssistantScreen() {
     {
       id: 'greeting',
       role: 'assistant',
-      content: `### 🧠 CENTAVITO IA — Analista Financiero Institucional Senior
-**Universidad Pedagógica y Tecnológica de Colombia (UPTC) — Vicerrectoría Administrativa y Financiera (VAFI)**
+      content: `¡Hola! Soy **CENTAVITO**, tu analista financiero institucional de la **Universidad Pedagógica y Tecnológica de Colombia (UPTC)**.
 
-Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a todas las bases del aplicativo con corte al **${INSTITUTIONAL_DATA.fechaCorte}**:
+Estoy aquí para ayudarte a comprender, analizar y proyectar cualquier cifra financiera de la Universidad con un **lenguaje claro, amigable y directo**. Tengo a la mano toda la información oficial con corte al **${INSTITUTIONAL_DATA.fechaCorte}**:
 
-* **POA Programado Vigente:** \$ 538.165 Millones (1.454 registros oficiales).
-* **Dinero Disponible Localizado:** **\$ 143.637 Millones (26,69%)** en personal, funcionamiento e inversión.
-* **Flujo de Tesorería:** Recaudo \$341.820M vs Pagos \$298.450M (Margen de caja al cierre proyectado en **\$ 2.200M** en R10).
-* **Reglas Activas:** Restricciones SIIF, nómina exclusiva en Unidad 01, regla del 40% en R31 Posgrados y consistencia estricta de pagos.
+* 🎓 **Posgrados:** \$ 45.472M en ingresos anuales, 5.170 estudiantes y detalle por facultades.
+* 👥 **Nómina y Personal:** \$ 301.916M programados y \$ 99.032M disponibles en la Unidad 01.
+* 🗺️ **POA y Fondos Disponibles:** \$ 143.637 Millones disponibles de \$ 538.165M programados.
+* 💵 **Flujo de Caja:** \$ 43.370M en bancos a la fecha y \$ 2.200M proyectados de margen de cierre en R10.
+* 🏫 **Facultades y Sedes:** Tunja, Sogamoso, Duitama, FESAD, Unisalud, Educación e Ingeniería.
 
-¿Qué aspecto financiero, proyección o auditoría deseas que evaluemos hoy?`,
-      modeUsed: 'auto'
+¿Sobre qué tema o cifra te gustaría consultar hoy?`,
+      modeUsed: 'auto',
+      topicTitle: 'Bienvenida Institucional'
     }
   ]);
 
@@ -194,7 +195,6 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
     if (!queryText.trim() || isLoading) return;
 
     const currentMode = forcedMode || selectedMode;
-    const effectiveMode = currentMode === 'auto' ? detectMode(queryText) : currentMode;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -208,7 +208,7 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
     setIsLoading(true);
 
     try {
-      // 1. Intentar llamar al endpoint de servidor /api/chat (si está disponible y configurado)
+      // 1. Intentar llamar al endpoint de servidor /api/chat (si está disponible)
       const history = currentMessages
         .filter(m => m.id !== 'greeting')
         .map(m => ({ role: m.role, content: m.content }));
@@ -223,7 +223,7 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
           prompt: userMessage.content, 
           history: history.slice(0, -1),
           apiKey: apiKey || undefined,
-          mode: effectiveMode
+          mode: currentMode
         }),
       });
 
@@ -236,12 +236,13 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
             id: (Date.now() + 1).toString(),
             role: 'assistant',
             content: data.text,
-            modeUsed: effectiveMode
+            modeUsed: currentMode,
+            topicTitle: data.topicTitle || 'Análisis Institucional'
           }
         ]);
       } else {
-        // 2. Activación transparente del Motor Local de Centavito (Fallback Autónomo)
-        const localResult = executeCentavitoLocalReasoning(userMessage.content, effectiveMode);
+        // 2. Activación transparente del Motor Local Dinámico de Centavito
+        const localResult = executeCentavitoLocalReasoning(userMessage.content, currentMode);
         let finalContent = localResult.text;
         if (localResult.chartJson) {
           finalContent += `\n\n\`\`\`json-chart\n${localResult.chartJson}\n\`\`\``;
@@ -253,13 +254,14 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
             id: (Date.now() + 1).toString(),
             role: 'assistant',
             content: finalContent,
-            modeUsed: localResult.modeUsed
+            modeUsed: localResult.modeUsed,
+            topicTitle: localResult.topicTitle
           }
         ]);
       }
     } catch (error: any) {
-      // Si falla la red, el motor local garantiza respuesta 100% precisa
-      const localResult = executeCentavitoLocalReasoning(userMessage.content, effectiveMode);
+      // Respaldo inmediato con el motor local
+      const localResult = executeCentavitoLocalReasoning(userMessage.content, currentMode);
       let finalContent = localResult.text;
       if (localResult.chartJson) {
         finalContent += `\n\n\`\`\`json-chart\n${localResult.chartJson}\n\`\`\``;
@@ -271,7 +273,8 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
           id: (Date.now() + 1).toString(),
           role: 'assistant',
           content: finalContent,
-          modeUsed: localResult.modeUsed
+          modeUsed: localResult.modeUsed,
+          topicTitle: localResult.topicTitle
         }
       ]);
     } finally {
@@ -282,6 +285,14 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     executeQuery(input);
+  };
+
+  const handleModeClick = (modeId: CentavitoMode) => {
+    if (selectedMode === modeId) {
+      setSelectedMode('auto');
+    } else {
+      setSelectedMode(modeId);
+    }
   };
 
   return (
@@ -342,10 +353,10 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
       <div className="bg-zinc-900/60 border-b border-white/5 px-6 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none text-xs">
         <span className="text-zinc-500 font-mono uppercase tracking-wider text-[11px] mr-1 flex items-center gap-1">
           <Sparkles size={12} className="text-amber-400" />
-          Modo:
+          Enfoque:
         </span>
         {[
-          { id: 'auto', label: '🤖 Auto' },
+          { id: 'auto', label: '🤖 Auto (Recomendado)' },
           { id: 'auditoria', label: '🔍 Auditoría' },
           { id: 'escenario', label: '🔄 Escenario ($5.000M)' },
           { id: 'flujo_caja', label: '💵 Flujo de Caja' },
@@ -356,7 +367,7 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
         ].map(m => (
           <button
             key={m.id}
-            onClick={() => setSelectedMode(m.id as CentavitoMode)}
+            onClick={() => handleModeClick(m.id as CentavitoMode)}
             className={cn(
               "px-3 py-1 rounded-full font-medium transition-all whitespace-nowrap cursor-pointer border",
               selectedMode === m.id
@@ -377,7 +388,7 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
           <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 mb-4">
             <p className="text-xs font-mono uppercase tracking-wider text-zinc-400 mb-3 font-semibold flex items-center gap-2">
               <HelpCircle size={14} className="text-amber-400" />
-              Consultas Clave de Inteligencia Financiera:
+              Consultas Sugeridas en Lenguaje Natural:
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {QUICK_PROMPTS.map((qp, idx) => (
@@ -431,15 +442,15 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
                     : "bg-zinc-900/80 text-zinc-100 border border-white/10 rounded-tl-sm backdrop-blur-md"
                 )}
               >
-                {/* Botón de Copiar y Etiqueta de Modo (Solo Asistente) */}
+                {/* Botón de Copiar y Etiqueta del Tema (Solo Asistente) */}
                 {msg.role === 'assistant' && (
                   <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-xs font-mono">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20 text-[10px] uppercase font-bold">
-                        {msg.modeUsed ? `MODO: ${msg.modeUsed.toUpperCase()}` : 'DICTAMEN INSTITUCIONAL'}
+                      <span className="px-2.5 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20 text-[11px] uppercase font-bold">
+                        {msg.topicTitle ? `📌 ${msg.topicTitle.toUpperCase()}` : 'ANÁLISIS INSTITUCIONAL'}
                       </span>
-                      <span className="text-zinc-400 text-[10px]">
-                        UPTC • Cifras Auditadas
+                      <span className="text-zinc-500 text-[10px] hidden sm:inline">
+                        UPTC • Cifras Oficiales
                       </span>
                     </div>
 
@@ -538,7 +549,7 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
                   <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }}></div>
                 </div>
                 <span className="text-xs font-mono text-zinc-400">
-                  Cruzando bases de datos y validando reglas de consistencia institucional...
+                  Cruzando bases de datos y preparando respuesta amigable...
                 </span>
               </div>
             </div>
@@ -558,7 +569,7 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Pregunta sobre POA, disponible, balance, simulación de gastos, flujo de caja o auditoría..."
+              placeholder="Ej: ¿Cuánto ingresó por posgrados? o ¿Dónde está el disponible del POA?"
               className="w-full bg-zinc-950/80 focus:bg-zinc-950 border border-white/10 rounded-2xl py-3.5 pl-11 pr-5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/20 transition-all"
             />
           </div>
@@ -575,7 +586,7 @@ Bienvenido al centro de inteligencia financiera. Cuento con acceso integral a to
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-3 px-1 text-[11px] font-mono text-zinc-400">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Inteligencia Financiera UPTC • Directiva y Operativa</span>
+            <span>Inteligencia Financiera UPTC • Enfoque dinámico y amigable</span>
           </div>
           <div className="flex items-center gap-3">
             <span>Presupuesto Vigente: $538.165M</span>
