@@ -2,10 +2,9 @@
  * CENTAVITO IA — MOTOR DE INTELIGENCIA FINANCIERA INSTITUCIONAL
  * Universidad Pedagógica y Tecnológica de Colombia — UPTC
  * 
- * Implementación dinámica, amigable y multidimensional basada en el Prompt Maestro:
- * - Detección inteligente por temas (Posgrados, Nómina, POA Disponible, Tesorería/Caja, Facultades, Recursos, Escenarios)
- * - Lenguaje cercano, empático, claro, directivo y profesional ("tono amigable institucional")
- * - Cifras maestras oficiales y consolidadas del aplicativo UPTC
+ * Regla de oro:
+ * 1. Responde de forma CONCRETA, DIRECTA y AMIGABLE a la pregunta que se hace.
+ * 2. Solo proporciona información adicional si el usuario lo desea (mediante opciones interactivas).
  */
 
 export type CentavitoMode = 
@@ -23,6 +22,7 @@ export interface CentavitoResponse {
   topicTitle: string;
   text: string;
   chartJson?: string;
+  suggestedFollowUps?: string[];
 }
 
 // Cifras maestras oficiales y consolidadas del aplicativo UPTC
@@ -78,30 +78,30 @@ export const INSTITUTIONAL_DATA = {
     ]
   },
 
-  // Base completa de Posgrados UPTC (Oficial)
+  // Base de Posgrados UPTC (Oficial)
   posgrados: {
     vigenciaActual: 2026,
     ingresoConsolidado2026: 45472060134.0,
     estudiantesHistorico2026: 5170,
     ingresoProyectadoCreditos: 42925508467.0,
-    estudiantesProyectados: 7092, // 3.552 S1 y 3.540 S2 con IAEP 8%
+    estudiantesProyectados: 7092,
     matriculaNetaCorte: 20420124271.0,
     matriculaBrutaCorte: 28874273954.0,
     estudiantesMatriculadosCorte: 3557,
     poaR33Programado: 39180000000.0,
     poaR33Solicitudes: 35701000000.0,
     poaR33Disponible: 3479000000.0,
-    cuota40Institucional: 18188824053.0, // 40% de 45.472M para Unidad 01
+    cuota40Institucional: 18188824053.0,
     porFacultad: [
-      { facultad: 'Ciencias de la Educación', valor: 4142228354, estudiantes: 980 },
-      { facultad: 'Ingeniería', valor: 3804165406, estudiantes: 645 },
-      { facultad: 'Educación a Distancia (FESAD)', valor: 3205950506, estudiantes: 720 },
-      { facultad: 'Ciencias Económicas y Adm.', valor: 2361507114, estudiantes: 410 },
-      { facultad: 'Seccional Sogamoso', valor: 2138537964, estudiantes: 340 },
-      { facultad: 'Seccional Duitama', valor: 1580514225, estudiantes: 220 },
-      { facultad: 'Ciencias Agropecuarias', valor: 1140468687, estudiantes: 115 },
-      { facultad: 'Ciencias de la Salud', valor: 1053446509, estudiantes: 85 },
-      { facultad: 'Ciencias Básicas', valor: 871833268, estudiantes: 42 }
+      { facultad: 'Ciencias de la Educación', valor: 4142228354, pct: '20,3%' },
+      { facultad: 'Ingeniería', valor: 3804165406, pct: '18,6%' },
+      { facultad: 'Educación a Distancia (FESAD)', valor: 3205950506, pct: '15,7%' },
+      { facultad: 'Ciencias Económicas y Adm.', valor: 2361507114, pct: '11,6%' },
+      { facultad: 'Seccional Sogamoso', valor: 2138537964, pct: '10,5%' },
+      { facultad: 'Seccional Duitama', valor: 1580514225, pct: '7,7%' },
+      { facultad: 'Ciencias Agropecuarias', valor: 1140468687, pct: '5,6%' },
+      { facultad: 'Ciencias de la Salud', valor: 1053446509, pct: '5,2%' },
+      { facultad: 'Ciencias Básicas', valor: 871833268, pct: '4,3%' }
     ],
     historico: [
       { vigencia: 2020, ingreso: 31104295703, estudiantes: 6951 },
@@ -122,33 +122,11 @@ export const INSTITUTIONAL_DATA = {
     pagosEfectivosAgosto: 298450000000.0,
     pagosProyectadosSepDic: 165670000000.0,
     pagosTotalesCierre: 464120000000.0,
-    saldoCajaFinalProyectado: 2200000000.0, // Diferencia estricta de 2.200M en R10
+    saldoCajaFinalProyectado: 2200000000.0,
     saldoActualBancos: 43370000000.0,
-    mesesPresion: ['Octubre', 'Noviembre', 'Diciembre'],
-    causaPresion: 'Pago de primas de navidad, bonificaciones docentes/administrativas y liquidaciones contractuales de fin de año.',
-    reglaConsistencia: 'PAGOS PROYECTADOS <= RECAUDO PROYECTADO; COMPROMISOS <= INGRESO POR RECURSO'
-  },
-
-  // Reglas y Restricciones Institucionales
-  reglas: {
-    siifRestringidos: ['R10.0', 'R10.1', 'R10.2', 'R10.3', 'R10.5', 'R12', 'R16.0', 'R16.1', 'R16.2'],
-    personalUnidadExclusiva: 'Unidad 01 - Administrativa y Financiera',
-    posgradosR31Regla40: {
-      porcentaje: 40,
-      destino: 'Unidad 01 - Administrativa y Financiera',
-      totalIngresosR31Esperado: 45472060134.0,
-      cuota40Calculada: 18188824053.0
-    },
-    inversionExclusivaRecursos: ['R12', 'R16.0', 'R16.1', 'R16.2', 'R40']
+    mesesPresion: ['Octubre', 'Noviembre', 'Diciembre']
   }
 };
-
-/**
- * Formatea valores numéricos en moneda colombiana ($X.XXX.XXX)
- */
-export function formatCOP(val: number): string {
-  return `$ ${Math.round(val).toLocaleString('es-CO')}`;
-}
 
 /**
  * Normaliza texto para búsqueda semántica insensible a tildes y mayúsculas
@@ -163,15 +141,15 @@ function cleanText(txt: string): string {
 
 /**
  * Motor de Razonamiento Financiero Autónomo de Centavito
- * Identifica con precisión el tema específico del usuario y responde con amabilidad,
- * exactitud técnica y claridad institucional.
+ * Prioriza responder la pregunta concreta y precisa de inmediato,
+ * ofreciendo opciones para profundizar solo si el usuario lo desea.
  */
 export function executeCentavitoLocalReasoning(prompt: string, mode: CentavitoMode = 'auto'): CentavitoResponse {
   const q = cleanText(prompt);
 
-  // -------------------------------------------------------------
-  // 1. TEMA: POSGRADOS (Ingresos, Matrículas, Estudiantes, R33, R31)
-  // -------------------------------------------------------------
+  // =========================================================================
+  // 1. TEMA: POSGRADOS (Ingresos, Matrículas, Programas, Regla 40%)
+  // =========================================================================
   if (
     q.includes('posgrado') || 
     q.includes('posgrados') || 
@@ -181,71 +159,158 @@ export function executeCentavitoLocalReasoning(prompt: string, mode: CentavitoMo
     q.includes('r33') ||
     (q.includes('cuanto') && q.includes('ingreso') && q.includes('posgrado'))
   ) {
-    const chartJson = JSON.stringify({
-      type: 'pie',
-      data: INSTITUTIONAL_DATA.posgrados.porFacultad.map(f => ({
-        name: f.facultad.replace('Facultad ', '').replace('Ciencias ', 'C. '),
-        value: Math.round(f.valor / 1e6)
-      }))
-    });
+    // Si el usuario pide explícitamente el desglose por facultades
+    if (q.includes('desglose') || q.includes('facultad') || q.includes('facultades') || q.includes('ranking')) {
+      const chartJson = JSON.stringify({
+        type: 'pie',
+        data: INSTITUTIONAL_DATA.posgrados.porFacultad.map(f => ({
+          name: f.facultad.replace('Facultad ', '').replace('Ciencias ', 'C. '),
+          value: Math.round(f.valor / 1e6)
+        }))
+      });
 
+      return {
+        modeUsed: 'poa_disponible',
+        topicTitle: 'Posgrados: Desglose por Facultades',
+        chartJson,
+        text: `Aquí tienes el **desglose de ingresos netos de posgrados por facultades**:
+
+1. 🥇 **Ciencias de la Educación:** **\$ 4.142 Millones** (20,3% del total)
+2. 🥈 **Ingeniería:** **\$ 3.804 Millones** (18,6%)
+3. 🥉 **Estudios a Distancia (FESAD):** **\$ 3.205 Millones** (15,7%)
+4. **Ciencias Económicas y Administrativas:** **\$ 2.361 Millones** (11,6%)
+5. **Seccional Sogamoso:** **\$ 2.138 Millones** (10,5%)
+6. **Seccional Duitama:** **\$ 1.580 Millones** (7,7%)
+7. **Ciencias Agropecuarias:** **\$ 1.140 Millones** (5,6%)
+8. **Ciencias de la Salud:** **\$ 1.053 Millones** (5,2%)
+9. **Ciencias Básicas:** **\$ 871 Millones** (4,3%)
+
+Total neto semestral consolidado: **\$ 20.420.124.271 COP**.`,
+        suggestedFollowUps: [
+          'Ver regla del 40% para Unidad 01',
+          'Ver histórico de ingresos 2020-2026',
+          'Ver disponible de posgrados en el POA'
+        ]
+      };
+    }
+
+    // Si pide la regla del 40%
+    if (q.includes('40') || q.includes('regla')) {
+      return {
+        modeUsed: 'vafi',
+        topicTitle: 'Regla del 40% en Posgrados',
+        text: `La **regla institucional del 40%** establece que el 40% de los ingresos recaudados por programas de posgrados debe transferirse al fondo común de la **Unidad 01 – Vicerrectoría Administrativa y Financiera**.
+
+Para la vigencia 2026, esto representa aproximadamente **\$ 18.188 Millones COP** (\$18.188.824.053 COP). Estos recursos se destinan a financiar la contrapartida de nómina de docentes de planta, plataformas académicas y sostenimiento institucional.`,
+        suggestedFollowUps: [
+          '¿Cuánto ingresó por posgrados en total?',
+          'Ver desglose por facultades',
+          'Ver disponible de posgrados en el POA'
+        ]
+      };
+    }
+
+    // Si pide histórico
+    if (q.includes('historico') || q.includes('evolucion') || q.includes('anos anteriores')) {
+      return {
+        modeUsed: 'auto',
+        topicTitle: 'Histórico de Posgrados (2020-2026)',
+        text: `Los ingresos de posgrados en la UPTC han tenido la siguiente evolución:
+* **2020:** \$ 31.104M (6.951 estudiantes)
+* **2021:** \$ 31.984M (6.591 estudiantes)
+* **2022:** \$ 37.234M (6.460 estudiantes)
+* **2023:** \$ 40.155M (6.757 estudiantes)
+* **2024:** \$ 43.156M (5.537 estudiantes)
+* **2025:** \$ 45.129M (5.351 estudiantes)
+* **2026 (Proyectado):** **\$ 45.472M (5.170 estudiantes)** (+46% de crecimiento frente a 2020).`,
+        suggestedFollowUps: [
+          'Ver desglose por facultades',
+          'Ver regla del 40% para Unidad 01'
+        ]
+      };
+    }
+
+    // RESPUESTA CONCRETA Y DIRECTA PRINCIPAL
     return {
-      modeUsed: mode !== 'auto' ? mode : 'poa_disponible',
-      topicTitle: 'Ingresos y Matrículas de Posgrados',
-      chartJson,
-      text: `¡Hola! Con mucho gusto te doy el detalle completo y exacto sobre los **ingresos por posgrados en la UPTC**:
+      modeUsed: 'auto',
+      topicTitle: 'Ingresos por Posgrados 2026',
+      text: `Por concepto de **posgrados**, la UPTC proyecta un ingreso total para la vigencia 2026 de **\$ 45.472.060.134 COP** (con una población de 5.170 estudiantes).
 
----
-
-### 📌 Resumen General de Ingresos por Posgrados (Vigencia 2026)
-
-* **Ingreso Total Consolidado Anual:** **\$ 45.472.060.134 COP**
-* **Estudiantes de Posgrado:** **5.170 estudiantes matriculados** en la vigencia.
-* **Modelo Alternativo por Créditos Académicos (IAEP 8%):** Se proyecta en **\$ 42.925.508.467 COP** con 7.092 registros semestrales.
-* **Matrícula Neta Registrada en el último semestre:** **\$ 20.420.124.271 COP** (con \$28.874M en matrícula bruta para 3.557 estudiantes activos).
-
----
-
-### 🏫 ¿Cómo se distribuyen los ingresos entre las Facultades?
-
-Las facultades que más aportan al recaudo de posgrados en la Universidad son:
-
-1. 🥇 **Facultad de Ciencias de la Educación:** **\$ 4.142 Millones** (Líder institucional por su sólida oferta de Doctorados y Maestrías en educación, pedagogía y lenguaje).
-2. 🥈 **Facultad de Ingeniería (Sede Tunja y Sogamoso):** **\$ 3.804 Millones** (Doctorados en ingeniería, materiales y especializaciones técnicas).
-3. 🥉 **Facultad de Estudios a Distancia (FESAD):** **\$ 3.205 Millones** (Especializaciones en gerencia, alta dirección y salud).
-4. **Ciencias Económicas y Administrativas:** **\$ 2.361 Millones**.
-5. **Seccional Sogamoso:** **\$ 2.138 Millones**.
-6. **Seccional Duitama:** **\$ 1.580 Millones**.
-7. **Ciencias Agropecuarias:** **\$ 1.140 Millones**.
-8. **Ciencias de la Salud:** **\$ 1.053 Millones**.
-9. **Ciencias Básicas:** **\$ 871 Millones**.
-
----
-
-### ⚖️ La Regla Institucional del 40% para la Unidad 01
-
-Por directriz financiera institucional de la Universidad:
-* El **40% de los ingresos recaudados por Posgrados** (aproximadamente **\$ 18.188 Millones**) debe trasladarse a la **Unidad 01 – Vicerrectoría Administrativa y Financiera**.
-* **¿Para qué se utiliza?** Este fondo común financia la contrapartida de nómina de docentes de planta, servicios generales, plataformas tecnológicas y sostenimiento administrativo de toda la Universidad.
-
----
-
-### 📊 ¿Cómo está el Recurso en el Plan Operativo Anual (POA 2026)?
-
-En el POA oficial:
-* **Recurso 33 (Posgrados y Convenios):** Tiene **\$ 39.180 Millones** programados.
-* **Solicitudes en trámite o ejecutadas:** **\$ 35.701 Millones (91,12% de ejecución)**.
-* **Disponible libre actual:** **\$ 3.479 Millones (8,88%)**.
-
-> 💡 **Dato clave:** Los posgrados han tenido un crecimiento sostenido en la UPTC: pasamos de recaudar **\$ 31.104M en 2020** a más de **\$ 45.472M en 2026**, lo que representa un incremento del **+46%** en los últimos 6 años.
-
-¿Deseas que revisemos los ingresos de algún programa en particular (ej. un doctorado o especialización específica) o la proyección de matrículas para el próximo semestre?`
+A nivel de corte semestral, el recaudo neto registrado en matrícula asciende a **\$ 20.420.124.271 COP** (correspondiente a 3.557 estudiantes matriculados). Asimismo, en el POA oficial el Recurso 33 cuenta con **\$ 39.180M programados** y un disponible libre actual de **\$ 3.479 Millones**.`,
+      suggestedFollowUps: [
+        'Ver desglose por facultades',
+        'Ver regla institucional del 40%',
+        'Ver histórico de ingresos 2020-2026'
+      ]
     };
   }
 
-  // -------------------------------------------------------------
-  // 2. TEMA: NÓMINA Y GASTOS DE PERSONAL
-  // -------------------------------------------------------------
+  // =========================================================================
+  // 2. TEMA: POA / DISPONIBILIDAD DE FONDOS ("¿Dónde está el dinero?")
+  // =========================================================================
+  if (
+    q.includes('donde esta') || 
+    q.includes('disponible') || 
+    q.includes('plata') || 
+    q.includes('cuanto tenemos') || 
+    q.includes('fondos disponibles') ||
+    (q.includes('poa') && !q.includes('posgrado'))
+  ) {
+    if (q.includes('recurso') || q.includes('recursos') || q.includes('fuente')) {
+      return {
+        modeUsed: 'poa_disponible',
+        topicTitle: 'Disponible POA por Recurso',
+        text: `El dinero disponible en el POA (\$ 143.637M) se distribuye en estos recursos principales:
+1. **R10.0 (Nación - Funcionamiento):** **\$ 82.781 Millones** (26,3% libre)
+2. **R31 (Recursos Propios Matrículas):** **\$ 10.629 Millones** (33,8% libre)
+3. **R20 (Estampilla Pro-Desarrollo):** **\$ 8.676 Millones** (45,9% libre)
+4. **R10.5 (Gratuidad Nación):** **\$ 8.398 Millones** (40,5% libre)
+5. **R16.0 (Estampilla Pro-UPTC):** **\$ 6.347 Millones** (33,6% libre)
+6. **R12 (Crédito y Capital):** **\$ 5.468 Millones** (31,9% libre)
+7. **R21 (Fondos Especiales):** **\$ 4.587 Millones** (87,9% libre)
+8. **R33 (Posgrados y Convenios):** **\$ 3.479 Millones** (8,9% libre)`,
+        suggestedFollowUps: [
+          'Ver disponibilidad por facultades',
+          'Ver bolsas mayores a $500M',
+          'Ver rubros con bajo disponible (<10%)'
+        ]
+      };
+    }
+
+    if (q.includes('bolsa') || q.includes('500')) {
+      return {
+        modeUsed: 'poa_disponible',
+        topicTitle: 'Mayores Bolsas Disponibles (> $500M)',
+        text: `Las mayores bolsas de dinero disponible en el POA 2026 corresponden a:
+* **Sueldos básicos y prestaciones (Unidad 01 - R10.0):** Más de \$ 82.000 Millones reservados para el cierre de año.
+* **Proyectos de inversión física y laboratorios (R20 y R16):** \$ 15.023 Millones combinados con alta disponibilidad.
+* **Recursos propios no comprometidos (R31):** \$ 10.629 Millones disponibles para gastos de funcionamiento y apoyos académicos.
+* **Fondos especiales de estímulos (R21):** \$ 4.587 Millones (87,9% disponible).`,
+        suggestedFollowUps: [
+          'Ver disponibilidad por recurso',
+          'Ver disponibilidad por facultades'
+        ]
+      };
+    }
+
+    // RESPUESTA CONCRETA Y DIRECTA
+    return {
+      modeUsed: 'poa_disponible',
+      topicTitle: 'Disponible Total del POA 2026',
+      text: `El Plan Operativo Anual (POA 2026) de la UPTC tiene actualmente un **dinero disponible total de \$ 143.637.765.931,93 COP** (equivalente al **26,69% libre** frente a los \$ 538.165 Millones programados).
+
+El **91,0% de este disponible (\$ 130.713 Millones)** está alojado en la **Unidad 01 – Vicerrectoría Administrativa y Financiera**, reservado para el pago de nómina, prestaciones y servicios generales del segundo semestre.`,
+      suggestedFollowUps: [
+        'Ver disponibilidad por recursos (R10, R31, R20...)',
+        'Ver disponibilidad por facultades',
+        'Ver mayores bolsas (> $500M)'
+      ]
+    };
+  }
+
+  // =========================================================================
+  // 3. TEMA: NÓMINA Y GASTOS DE PERSONAL
+  // =========================================================================
   if (
     q.includes('nomina') || 
     q.includes('personal') || 
@@ -256,134 +321,39 @@ En el POA oficial:
     q.includes('prima') ||
     q.includes('prestacion')
   ) {
-    const chartJson = JSON.stringify({
-      type: 'bar',
-      data: [
-        { name: 'Personal Programado', value: 301916 },
-        { name: 'Personal Solicitado', value: 202884 },
-        { name: 'Personal Disponible', value: 99032 },
-        { name: 'Sueldos R10 Nación', value: 82781 }
-      ]
-    });
+    if (q.includes('fuente') || q.includes('recurso')) {
+      return {
+        modeUsed: 'vafi',
+        topicTitle: 'Fuentes de Financiación de Nómina',
+        text: `La nómina docente y administrativa de la UPTC se financia principalmente con:
+* **Recurso 10.0 (Aportes Nación - Funcionamiento):** \$ 301.082 Millones programados (cuenta con \$ 82.781M disponibles para el cierre de año).
+* **Recurso 10.5 (Gratuidad):** \$ 20.708 Millones.
+* **Recurso 14 (Matrículas FSE):** \$ 18.737 Millones.
+* **Recursos Propios (R31 / R20):** Financian contrapartida de docentes ocasionales y de cátedra.`,
+        suggestedFollowUps: [
+          '¿Cuánto queda disponible para fin de año?',
+          'Ver impacto de primas de diciembre'
+        ]
+      };
+    }
 
+    // RESPUESTA CONCRETA Y DIRECTA
     return {
-      modeUsed: mode !== 'auto' ? mode : 'vafi',
-      topicTitle: 'Nómina y Gastos de Personal',
-      chartJson,
-      text: `¡Hola! Con gusto te explico cómo están presupuestados y ejecutados los **gastos de personal y nómina en la UPTC**:
+      modeUsed: 'vafi',
+      topicTitle: 'Gastos de Personal y Nómina 2026',
+      text: `Para gastos de personal y nómina en la vigencia 2026, la UPTC tiene programados **\$ 301.916 Millones COP**, de los cuales se han tramitado solicitudes por **\$ 202.884 Millones (67,20%)**, dejando un saldo disponible libre de **\$ 99.032 Millones (32,80%)**.
 
----
-
-### 👥 Estado de la Nómina y Personal en el POA 2026 (Corte al 31 de Agosto)
-
-* **Presupuesto Total Programado para Personal (Rubro 2.1.1):** **\$ 301.916 Millones**
-* **Solicitudes y Compromisos Radicados:** **\$ 202.884 Millones (67,20% de avance)**
-* **Dinero Disponible para el Resto del Año:** **\$ 99.032 Millones (32,80% libre)**
-
----
-
-### 🏛️ Regla de Centralización en la Unidad 01
-
-* El **100% de los gastos de personal** está centralizado en la **Unidad 01 – Vicerrectoría Administrativa y Financiera**. 
-* Ninguna facultad o seccional liquida nómina de planta por fuera de esta unidad central, lo que garantiza el estricto cumplimiento de las escalas salariales del Decreto nacional y acuerdos colectivos.
-
----
-
-### 💰 ¿Con qué fuentes se paga la nómina?
-
-1. **Aportes de la Nación - Funcionamiento (Recurso 10.0):** Es la fuente principal con **\$ 301.082 Millones** asignados para sueldos de profesores de planta, pensiones y administrativos. Cuenta con **\$ 82.781 Millones disponibles** para cubrir las nóminas de septiembre a diciembre.
-2. **Aportes Política de Gratuidad (Recurso 10.5):** **\$ 20.708 Millones**.
-3. **Fondo de Matrículas FSE (Recurso 14):** **\$ 18.737 Millones**.
-4. **Recursos Propios (R31 y R20):** Financian contrapartida de docentes ocasionales y de cátedra.
-
----
-
-### ⚠️ Meses de Mayor Compromiso Financiero
-
-Durante el último cuatrimestre, la nómina afronta su mayor exigencia de caja:
-* **Noviembre y Diciembre:** Se deben desembolsar las nóminas regulares, las primas de navidad, bonificaciones por servicios y liquidaciones contractuales, con un valor estimado que supera los **\$ 48.000 Millones**.
-* El saldo de disponible en el POA (\$99.032M) garantiza que existe respaldo presupuestal pleno para atender estas obligaciones sin déficit de aforo.
-
-¿Te gustaría que evaluemos el impacto de un ajuste salarial o el costo de vinculación de nuevas plazas docentes?`
+El 100% de los gastos de personal se administra centralizadamente en la **Unidad 01 – Vicerrectoría Administrativa y Financiera**, con respaldo suficiente para cubrir los sueldos y prestaciones del segundo semestre.`,
+      suggestedFollowUps: [
+        'Ver fuentes de financiación de nómina (R10, R10.5...)',
+        'Ver proyección de pagos de noviembre y diciembre'
+      ]
     };
   }
 
-  // -------------------------------------------------------------
-  // 3. TEMA: DISPONIBILIDAD DEL POA / ¿DÓNDE ESTÁ EL DINERO?
-  // -------------------------------------------------------------
-  if (
-    q.includes('donde esta') || 
-    q.includes('disponible') || 
-    q.includes('plata') || 
-    q.includes('cuanto tenemos') || 
-    (q.includes('poa') && !q.includes('posgrado'))
-  ) {
-    const chartJson = JSON.stringify({
-      type: 'pie',
-      data: [
-        { name: 'Personal (Unidad 01)', value: 99032 },
-        { name: 'Funcionamiento (Bienes/Serv)', value: 26702 },
-        { name: 'Inversión Institucional', value: 16261 },
-        { name: 'Transferencias', value: 992 },
-        { name: 'Tasas y Multas', value: 649 }
-      ]
-    });
-
-    return {
-      modeUsed: 'poa_disponible',
-      topicTitle: 'Localización del Disponible Presupuestal POA',
-      chartJson,
-      text: `¡Hola! Esta es una de las preguntas más importantes para la gestión financiera. Aquí tienes la **radiografía exacta de dónde está el dinero disponible en la UPTC**:
-
----
-
-### 📊 Las Grandes Cifras del POA 2026 (Corte al ${INSTITUTIONAL_DATA.fechaCorte})
-
-* **Presupuesto Total Programado:** **\$ 538.165 Millones** (1.454 conceptos presupuestales)
-* **Solicitudes Comprometidas:** **\$ 394.528 Millones (73,31%)**
-* **DINERO DISPONIBLE TOTAL:** **\$ 143.637.765.931,93 (26,69% libre)**
-
----
-
-### 🗺️ ¿En qué Recursos está guardado ese Disponible?
-
-1. **Recurso 10.0 (Aportes Nación Funcionamiento):** **\$ 82.781 Millones** (26,26% libre). Está reservado principalmente para el pago de la nómina docente y administrativa de fin de año.
-2. **Recurso 31 (Recursos Propios / Matrículas Pregrado):** **\$ 10.629 Millones** (33,76% libre). Es el recurso con mayor flexibilidad institucional para gastos operativos.
-3. **Recurso 20 (Estampilla Pro-Desarrollo):** **\$ 8.676 Millones** (45,91% libre). *Gran bolsa disponible para proyectos de modernización institucional.*
-4. **Recurso 10.5 (Aportes Nación - Gratuidad):** **\$ 8.398 Millones** (40,55% libre).
-5. **Recurso 16.0 (Estampilla Pro-UPTC):** **\$ 6.347 Millones** (33,62% libre).
-6. **Recurso 12 (Crédito y Recursos de Capital):** **\$ 5.468 Millones** (31,87% libre). *Exclusivo para inversión y obras.*
-7. **Recurso 21 (Fondos Especiales / Becas):** **\$ 4.587 Millones** (87,89% libre — *bolsa con baja solicitud que debe ejecutarse*).
-8. **Recurso 33 (Posgrados):** **\$ 3.479 Millones** (8,88% libre — ya ejecutó el 91,12%).
-
----
-
-### 🏢 ¿Dónde está ubicado por Dependencias?
-
-* **Unidad 01 – Vicerrectoría Administrativa y Financiera:** Concentra el **91,0% del disponible (\$ 130.713 Millones)**, ya que allí se alojan los recursos de salarios, seguridad social, servicios públicos institucionales y pólizas.
-* **Sogamoso:** **\$ 1.693 Millones** disponibles (21,7% libre).
-* **Investigación y Extensión (VIE):** **\$ 1.640 Millones** disponibles (25,2% libre).
-* **Facultad de Ingeniería:** **\$ 1.432 Millones** disponibles (13,7% libre).
-* **FESAD (A Distancia):** **\$ 1.187 Millones** disponibles (43,6% libre).
-* **Presupuesto SGR (Regalías):** **\$ 1.170 Millones** disponibles.
-* **Unisalud:** **\$ 1.166 Millones** (6,1% libre — *alerta por bajo margen*).
-* **Ciencias de la Educación:** **\$ 1.161 Millones** (8,3% libre).
-
----
-
-### 💡 Por Tipo de Gasto
-* **Personal:** **\$ 99.032M** (68,9% del total disponible)
-* **Bienes y Servicios (Funcionamiento):** **\$ 26.702M** (18,6%)
-* **Inversión:** **\$ 16.261M** (11,3%)
-* **Transferencias y Tasas:** **\$ 1.641M** (1,2%)
-
-¿Quieres consultar el disponible de un rubro en particular o ver las mayores bolsas mayores a \$500 Millones?`
-    };
-  }
-
-  // -------------------------------------------------------------
-  // 4. TEMA: CAJA, BANCOS, TESORERÍA Y FLUJO
-  // -------------------------------------------------------------
+  // =========================================================================
+  // 4. TEMA: CAJA, BANCOS, TESORERÍA Y LIQUIDEZ
+  // =========================================================================
   if (
     q.includes('caja') || 
     q.includes('banco') || 
@@ -393,62 +363,37 @@ Durante el último cuatrimestre, la nómina afronta su mayor exigencia de caja:
     q.includes('flujo') ||
     q.includes('saldo')
   ) {
-    const chartJson = JSON.stringify({
-      type: 'bar',
-      data: [
-        { name: 'Recaudo Real Ago', value: 341820 },
-        { name: 'Pagos Reales Ago', value: 298450 },
-        { name: 'Saldo Actual Caja', value: 43370 },
-        { name: 'Ingresos Sep-Dic', value: 124500 },
-        { name: 'Pagos Sep-Dic', value: 165670 },
-        { name: 'Margen Cierre Dic', value: 2200 }
-      ]
-    });
+    if (q.includes('presion') || q.includes('meses') || q.includes('diciembre')) {
+      return {
+        modeUsed: 'flujo_caja',
+        topicTitle: 'Meses de Presión de Tesorería',
+        text: `Los meses de mayor presión de liquidez en la UPTC son **octubre, noviembre y especialmente diciembre**.
 
+En diciembre se deben desembolsar las nóminas regulares, primas de navidad, cesantías y liquidación de contratos por más de **\$ 48.000 Millones**. Para atender este pico, los giros del PAC de la Nación deben recibirse sin demoras antes del 15 de diciembre.`,
+        suggestedFollowUps: [
+          '¿Cuál es el saldo actual en bancos?',
+          'Ver proyección de ingresos vs pagos sep-dic'
+        ]
+      };
+    }
+
+    // RESPUESTA CONCRETA Y DIRECTA
     return {
       modeUsed: 'flujo_caja',
-      topicTitle: 'Flujo de Caja y Tesorería',
-      chartJson,
-      text: `¡Hola! Con mucho gusto te presento la **situación real del flujo de caja y tesorería en la UPTC**:
+      topicTitle: 'Posición de Caja y Tesorería',
+      text: `A corte del **${INSTITUTIONAL_DATA.fechaCorte}**, la Universidad cuenta con un **saldo efectivo en bancos de \$ 43.370 Millones COP** (ingresos recaudados de \$ 341.820M menos pagos realizados de \$ 298.450M).
 
----
-
-### 🏦 Posición Actual de Tesorería (Corte al ${INSTITUTIONAL_DATA.fechaCorte})
-
-* **Recaudo Real Acumulado:** **\$ 341.820 Millones**
-* **Pagos Efectivos Realizados:** **\$ 298.450 Millones**
-* **Saldo Efectivo en Caja y Bancos a la Fecha:** **\$ 43.370 Millones**
-
----
-
-### 📈 Proyección hacia el Cierre de Diciembre 2026
-
-* **Ingresos Proyectados a Recaudar (Septiembre a Diciembre):** **+\$ 124.500 Millones**
-* **Pagos Proyectados a Realizar (Septiembre a Diciembre):** **-\$ 165.670 Millones**
-* **Margen de Caja Estimado al 31 de Diciembre:** **\$ 2.200.000.000,00 COP**
-
----
-
-### ⚠️ ¿Por qué los pagos superan a los ingresos en el último cuatrimestre?
-
-Durante los primeros 8 meses del año, la Universidad recauda gran parte de las matrículas y transferencias base. Sin embargo, en el último cuatrimestre se concentran los pagos más fuertes del año:
-1. **Octubre:** Pago de nómina corriente y retroactivos salariales.
-2. **Noviembre:** Provisiones y compras de fin de año.
-3. **Diciembre (Mes de máxima presión):** Se cancela la nómina, las primas de navidad, cesantías y la liquidación de contratos de prestación de servicios docentes y administrativos.
-
----
-
-### 🧠 Conclusión de Liquidez
-* El saldo de cierre de **\$ 2.200 Millones** está concentrado en el Recurso **R10.0 (Nación)**. 
-* Se cumple estrictamente la regla financiera: **los pagos nunca superan al recaudo**. La Universidad cerrará la vigencia en equilibrio de caja, siempre que los giros del PAC de la Nación lleguen dentro del calendario previsto en diciembre.
-
-¿Quieres que simulemos el impacto de un pago imprevisto sobre la caja o revisemos el calendario de giros?`
+Para el cierre del 31 de diciembre, tras ejecutar los pagos y prestaciones proyectadas del último cuatrimestre, el **margen de caja final estimado es de \$ 2.200.000.000,00 COP** (concentrado en el Recurso R10.0 de la Nación).`,
+      suggestedFollowUps: [
+        'Ver meses de mayor presión de pagos',
+        'Ver proyección de ingresos vs pagos sep-dic'
+      ]
     };
   }
 
-  // -------------------------------------------------------------
+  // =========================================================================
   // 5. TEMA: FACULTADES Y SECCIONALES ESPECÍFICAS
-  // -------------------------------------------------------------
+  // =========================================================================
   if (
     q.includes('ingenieria') || 
     q.includes('sogamoso') || 
@@ -465,75 +410,56 @@ Durante los primeros 8 meses del año, la Universidad recauda gran parte de las 
     let prog = 10452;
     let disp = 1432;
     let pct = '13,7%';
-    let extra = 'En posgrados, Ingeniería genera más de $ 3.804 Millones anuales con sus maestrías y doctorados.';
+    let posg = '$ 3.804 Millones';
 
     if (q.includes('sogamoso')) {
       facName = 'Facultad Seccional Sogamoso';
       prog = 7788;
       disp = 1693;
       pct = '21,7%';
-      extra = 'Sogamoso cuenta con una ejecución del 78,3% y genera $ 2.138 Millones en programas de posgrados.';
+      posg = '$ 2.138 Millones';
     } else if (q.includes('duitama')) {
       facName = 'Facultad Seccional Duitama';
       prog = 1759;
       disp = 547;
       pct = '31,1%';
-      extra = 'Duitama tiene una disponibilidad holgada del 31,1% y aporta $ 1.580M en posgrados.';
+      posg = '$ 1.580 Millones';
     } else if (q.includes('fesad') || q.includes('distancia')) {
-      facName = 'FESAD (Estudios Tecnológicos y a Distancia)';
+      facName = 'FESAD (Estudios a Distancia)';
       prog = 2724;
       disp = 1187;
       pct = '43,6%';
-      extra = 'FESAD tiene una alta disponibilidad del 43,6% y genera $ 3.205M en posgrados a distancia.';
+      posg = '$ 3.205 Millones';
     } else if (q.includes('unisalud')) {
       facName = 'Unisalud';
       prog = 19052;
       disp = 1166;
       pct = '6,1%';
-      extra = '⚠️ Alerta: Unisalud presenta una ejecución muy alta (93,9%), por lo que debe priorizar estrictamente sus compras médicas.';
+      posg = 'No aplica';
     } else if (q.includes('educacion')) {
       facName = 'Facultad de Ciencias de la Educación';
       prog = 13937;
       disp = 1161;
       pct = '8,3%';
-      extra = 'Educación es la facultad líder en posgrados con más de $ 4.142 Millones en recaudos de doctorados y maestrías.';
+      posg = '$ 4.142 Millones (Líder institucional)';
     }
-
-    const chartJson = JSON.stringify({
-      type: 'bar',
-      data: [
-        { name: 'Programado', value: prog },
-        { name: 'Solicitado', value: prog - disp },
-        { name: 'Disponible', value: disp }
-      ]
-    });
 
     return {
       modeUsed: 'poa_disponible',
-      topicTitle: `Situación Financiera: ${facName}`,
-      chartJson,
-      text: `¡Hola! Con mucho gusto te presento los datos de la **${facName}** en el POA 2026:
+      topicTitle: `Presupuesto: ${facName}`,
+      text: `La **${facName}** tiene un presupuesto programado en el POA 2026 de **\$ ${prog.toLocaleString('es-CO')} Millones COP**, con solicitudes radicadas por **\$ ${(prog - disp).toLocaleString('es-CO')} Millones** y un **saldo disponible libre de \$ ${disp.toLocaleString('es-CO')} Millones (${pct})**.
 
----
-
-### 🏫 Balance Presupuestal de la Unidad
-* **Presupuesto Programado:** **\$ ${prog.toLocaleString('es-CO')} Millones**
-* **Solicitudes Radicadas:** **\$ ${(prog - disp).toLocaleString('es-CO')} Millones** (${(100 - parseFloat(pct)).toFixed(1)}%)
-* **Disponible Libre:** **\$ ${disp.toLocaleString('es-CO')} Millones (${pct} libre)**
-
----
-
-### 💡 Análisis Institucional
-* ${extra}
-* Los recursos asignados a esta unidad corresponden a gastos de funcionamiento, insumos de laboratorios, servicios académicos y proyectos de inversión propios de la facultad. Recordando que la nómina de planta docente está financiada desde la Unidad Central 01.
-
-¿Deseas conocer los rubros específicos de gasto o solicitudes pendientes de esta dependencia?`
+En posgrados, esta unidad genera aportes anuales de **${posg}**. (Nota: la nómina de planta docente se financia centralizadamente desde la Unidad 01).`,
+      suggestedFollowUps: [
+        'Ver detalles de posgrados de esta facultad',
+        'Ver disponible global de todas las facultades'
+      ]
     };
   }
 
-  // -------------------------------------------------------------
-  // 6. TEMA: SIMULACIÓN DE ESCENARIOS (Ej. Asumir nuevo gasto de $5.000M)
-  // -------------------------------------------------------------
+  // =========================================================================
+  // 6. TEMA: SIMULACIÓN DE NUEVOS GASTOS (Ej. $5.000M)
+  // =========================================================================
   if (
     q.includes('que pasa si') || 
     q.includes('simula') || 
@@ -544,54 +470,24 @@ Durante los primeros 8 meses del año, la Universidad recauda gran parte de las 
     q.includes('asumir') ||
     mode === 'escenario'
   ) {
-    const chartJson = JSON.stringify({
-      type: 'bar',
-      data: [
-        { name: 'R10 Disponible', value: 82781 },
-        { name: 'R31 Disponible', value: 10629 },
-        { name: 'Nuevo Gasto Propuesto', value: 5000 },
-        { name: 'Margen Caja Cierre', value: 2200 },
-        { name: 'Déficit Caja si se paga todo', value: -2800 }
-      ]
-    });
-
     return {
       modeUsed: 'escenario',
-      topicTitle: 'Simulación de Escenario: Nuevo Gasto de $5.000M',
-      chartJson,
-      text: `¡Hola! Qué interesante ejercicio de simulación. Analicemos técnicamente si la UPTC puede **asumir un nuevo gasto de \$ 5.000 Millones** en la vigencia 2026:
+      topicTitle: 'Viabilidad de Nuevo Gasto de $5.000M',
+      text: `**Dictamen concreto:**
+* **Presupuestalmente SÍ es viable:** Hay apropiación disponible en el POA (\$ 82.781M en R10 y \$ 10.629M en R31).
+* **En Flujo de Caja Real NO es viable pagarlo de contado en 2026:** El saldo proyectado al 31 de diciembre es de \$ 2.200M. Desembolsar \$ 5.000M causaría un **déficit de tesorería de -\$ 2.800 Millones** que pondría en riesgo el pago de la nómina de fin de año.
 
----
-
-### 🎯 La Respuesta Directa:
-* **Presupuestalmente:** **SÍ es viable.** Hay apropiación disponible tanto en R10 (\$82.781M) como en R31 (\$10.629M).
-* **En Flujo de Caja Real:** **NO es viable pagarlo de contado antes del 31 de diciembre.** Generaría un déficit de tesorería de **-\$ 2.800 Millones**, ya que el saldo proyectado de caja al cierre es de \$ 2.200M.
-
----
-
-### 🔎 Análisis por Dimensiones:
-
-1. **Magnitud:** \$ 5.000 Millones representan el **0,93%** del presupuesto anual programado (\$538.165M) y el **3,48%** del dinero disponible total del POA (\$143.637M).
-2. **¿Con qué recurso se financiaría?**
-   - Si es **Personal docente/administrativo:** Debe ir a la **Unidad 01** con cargo a **R10.0 (Nación)**.
-   - Si es **Inversión o infraestructura:** Puede cargarse a **R20 (Estampilla Pro-Desarrollo)** o **R16**.
-   - Si es **Bienes y Servicios generales:** Puede financiarse con **R31 (Recursos Propios)**.
-3. **Efecto sobre la Tesorería (El cuello de botella):**
-   - El margen libre de caja proyectado para el cierre de año es de **\$ 2.200 Millones**.
-   - Si se exige pagar los \$ 5.000M antes del 31 de diciembre, colisionaría con el pago de primas y salarios de fin de año (\$48.000M).
-
----
-
-### 💡 ¿Cómo se podría viabilizar de forma segura?
-Recomiendo pactar un esquema de pago diferido: pagar un anticipo menor a **\$ 1.500 Millones en 2026** y dejar el saldo (\$ 3.500M) para pagar en el primer trimestre de 2027 mediante reserva presupuestal legal. De esta manera, no se pone en riesgo la nómina navideña.
-
-¿Deseas que simulemos este gasto con alguna fuente o fecha de pago específica?`
+**Para viabilizarlo:** Se recomienda pactar un pago diferido con anticipo menor a \$ 1.500M en 2026 y saldo para el primer trimestre de 2027 como reserva presupuestal.`,
+      suggestedFollowUps: [
+        'Ver propuesta de pago diferido para 2027',
+        'Ver qué fuentes (R16, R20, R31) son aplicables'
+      ]
     };
   }
 
-  // -------------------------------------------------------------
-  // 7. TEMA: AUDITORÍA DE CONSISTENCIA Y RIESGOS
-  // -------------------------------------------------------------
+  // =========================================================================
+  // 7. TEMA: AUDITORÍA DE CONSISTENCIA
+  // =========================================================================
   if (
     q.includes('audita') || 
     q.includes('auditor') || 
@@ -600,35 +496,41 @@ Recomiendo pactar un esquema de pago diferido: pagar un anticipo menor a **\$ 1.
     q.includes('riesgo') ||
     mode === 'auditoria'
   ) {
+    if (q.includes('tabla') || q.includes('completa') || q.includes('detalle')) {
+      return {
+        modeUsed: 'auditoria',
+        topicTitle: 'Tabla de Auditoría Financiera',
+        text: `| Hallazgo | Evidencia | Impacto | Acción sugerida |
+| :--- | :--- | :--- | :--- |
+| **Compromisos en R10** | Diferencia de \$ 2.200M frente a ingresos proyectados Nación. | Riesgo de presión de caja si el giro de diciembre se retrasa. | Monitorear cronograma PAC del Ministerio de Hacienda. |
+| **Bolsa ociosa R21** | \$ 4.587M disponibles (87,9% libre). | Recursos que no se están ejecutando oportunamente. | Agilizar convocatorias de becas y estímulos. |
+| **Agotamiento en Unisalud** | Ejecución del 93,9% (solo 6,1% disponible: \$1.166M). | Poco margen para imprevistos de fin de año. | Priorizar autorizaciones médicas electivas. |
+| **Inversión R12/R16** | R12 cuenta con 31,9% libre (\$5.468M). | Riesgo de rezago contractual de obras. | Fijar fecha límite del 20 de octubre para radicar contratos. |`,
+        suggestedFollowUps: [
+          '¿Se cumple la regla de consistencia pagos <= recaudo?',
+          'Ver recomendaciones de control de tesorería'
+        ]
+      };
+    }
+
     return {
       modeUsed: 'auditoria',
-      topicTitle: 'Auditoría Financiera y Control de Consistencia',
-      text: `¡Hola! Como analista de control financiero, he corrido las validaciones de consistencia sobre las bases de datos de la Universidad con corte al **${INSTITUTIONAL_DATA.fechaCorte}**:
+      topicTitle: 'Auditoría Financiera: Conclusiones Clave',
+      text: `La auditoría de consistencia al **${INSTITUTIONAL_DATA.fechaCorte}** confirma que la Universidad se encuentra en **equilibrio financiero** (los pagos no superan el recaudo proyectado).
 
----
-
-### 📋 Hallazgos y Puntos de Atención Prioritarios
-
-| Hallazgo | Evidencia Observada | Impacto Financiero | Acción Sugerida |
-| :--- | :--- | :--- | :--- |
-| **Concentración de Compromiso en R10** | Diferencia de \$ 2.200M entre compromisos y el recaudo proyectado en la Nación. | Requiere que el giro del PAC de diciembre llegue a tiempo para no tensionar tesorería. | Monitorear el cronograma de giros con el Ministerio de Hacienda antes del 30 de septiembre. |
-| **Bolsa Ociosa en Fondos Especiales (R21)** | El Recurso 21 tiene \$4.587M disponibles (87,9% libre). | Dinero sin ejecutar que no está beneficiando a los estudiantes oportunamente. | Agilizar la adjudicación de becas y estímulos estudiantiles antes del 15 de octubre. |
-| **Presión de Agotamiento en Unisalud** | Unisalud ya ejecutó el 93,9% de su presupuesto programado (solo 6,1% libre: \$1.166M). | Poco margen para imprevistos médicos de fin de año. | Establecer comité de priorización para autorizaciones médicas electivas no urgentes. |
-| **Recursos de Inversión (R12 y R16)** | R12 cuenta con 31,9% disponible (\$5.468M). | Riesgo de que las obras no se alcancen a comprometer antes de finalizar la vigencia. | Fijar fecha límite del 20 de octubre para radicar contratos de obra y laboratorios. |
-
----
-
-### ⚠️ Verificación de la Regla de Consistencia
-* **Regla:** $\\text{Pagos Proyectados} \\leq \\text{Recaudo Proyectado}$.
-* **Estado:** **CUMPLE**. No se identifican sobregiros ni déficits contables. La Universidad mantiene un balance sano y ordenado.
-
-¿Deseas que auditemos a profundidad algún centro de costos o rubro en específico?`
+Se señalan dos puntos de atención prioritarios:
+1. **Margen de caja de cierre ajustado (\$ 2.200M en R10):** Requiere estricta puntualidad en el giro del PAC de diciembre.
+2. **Alta ejecución en Unisalud (93,9%):** Cuenta con solo \$ 1.166M libres para imprevistos de fin de año.`,
+      suggestedFollowUps: [
+        'Ver tabla completa de hallazgos de auditoría',
+        'Ver recomendaciones de control de tesorería'
+      ]
     };
   }
 
-  // -------------------------------------------------------------
+  // =========================================================================
   // 8. TEMA: CONSEJO SUPERIOR / PRESENTACIÓN DIRECTIVA
-  // -------------------------------------------------------------
+  // =========================================================================
   if (
     q.includes('consejo superior') || 
     q.includes('consejo academico') || 
@@ -639,105 +541,60 @@ Recomiendo pactar un esquema de pago diferido: pagar un anticipo menor a **\$ 1.
   ) {
     return {
       modeUsed: 'consejo_superior',
-      topicTitle: 'Concepto Ejecutivo para el Consejo Superior',
-      text: `¡Hola! Con mucho gusto. He redactado un **concepto ejecutivo y técnico con lenguaje institucional listo para presentar ante el Honorable Consejo Superior o Consejo Académico**:
+      topicTitle: 'Concepto Ejecutivo para Consejo Superior',
+      text: `**Concepto Ejecutivo Institucional:**
+La situación financiera de la UPTC al 31 de agosto de 2026 es **sólida y sostenible**. El POA dispone de **\$ 143.637 Millones libres (26,69%)**, los compromisos de personal docente y administrativo están fondeados al 100% en la Unidad 01, y la tesorería proyecta un saldo positivo de **\$ 2.200 Millones** al 31 de diciembre.
 
----
-
-### 🏛️ INFORME TÉCNICO GERENCIAL DE SOSTENIBILIDAD FINANCIERA — UPTC
-**Para:** Honorable Consejo Superior Universitario  
-**De:** Vicerrectoría Administrativa y Financiera (VAFI)  
-**Fecha:** ${INSTITUTIONAL_DATA.fechaCorte}  
-**Asunto:** Estado Financiero, Disponibilidad Presupuestal y Prospectiva al Cierre 2026  
-
----
-
-#### 1. HECHO
-Con corte al 31 de agosto de 2026, la Universidad ejecuta un presupuesto programado en el POA de **\$ 538.165 Millones**, habiendo tramitado solicitudes por **\$ 394.528 Millones (73,31%)** y manteniendo una disponibilidad libre de **\$ 143.637 Millones (26,69%)**. En tesorería, el recaudo acumulado es de **\$ 341.820 Millones**, respaldando plenamente los pagos realizados por **\$ 298.450 Millones**.
-
-#### 2. IMPACTO
-La estructura financiera de la Universidad se encuentra equilibrada y blindada:
-* La nómina docente y administrativa cuenta con respaldo presupuestal del 100% en la **Unidad 01**.
-* Los ingresos de posgrados superan los **\$ 45.472 Millones**, aportando el 40% (\$ 18.188M) al fondo común institucional.
-* No existe déficit patrimonial en ninguno de los recursos analizados.
-
-#### 3. RIESGO
-El último trimestre concentra obligaciones prestacionales de fin de año (primas de navidad y liquidaciones por más de \$48.000M). El margen de caja proyectado para el 31 de diciembre es de **\$ 2.200 Millones** en R10. Por tanto, se debe mantener estricta cautela y no asumir nuevos gastos recurrentes sin fuente cierta.
-
-#### 4. CONCLUSIÓN Y RECOMENDACIÓN
-La situación financiera de la UPTC es **SÓLIDA Y SOSTENIBLE**. Se recomienda al Honorable Consejo:
-1. Recomendar la agilización en la contratación de proyectos de inversión (R20 y R16) antes de noviembre.
-2. Mantener la prudencia presupuestal para la estructuración del anteproyecto de presupuesto 2027.
-
-¿Te gustaría ajustar el enfoque hacia algún tema en particular antes de imprimirlo o copiarlo?`
+Se recomienda al Honorable Consejo mantener prudencia presupuestal para el anteproyecto 2027 y fijar el 20 de octubre como fecha límite para radicación de proyectos de inversión (R16 y R20).`,
+      suggestedFollowUps: [
+        'Ver memorando formal completo para Consejo Superior',
+        'Ver cifras de presupuesto y caja para presentación'
+      ]
     };
   }
 
-  // -------------------------------------------------------------
+  // =========================================================================
   // 9. TEMA: CIERRE DE VIGENCIA 2026
-  // -------------------------------------------------------------
+  // =========================================================================
   if (
     q.includes('cierre') || 
     q.includes('diciembre') || 
-    q.includes('fin de ano') || 
     q.includes('fin de ano') ||
     mode === 'cierre'
   ) {
     return {
       modeUsed: 'cierre',
-      topicTitle: 'Diagnóstico de Cierre de Vigencia 2026',
-      text: `¡Hola! Con gusto te explico cómo se proyecta el **cierre financiero de la vigencia 2026 en la UPTC**:
+      topicTitle: 'Cierre Financiero Vigencia 2026',
+      text: `La vigencia 2026 de la UPTC cerrará con una **ejecución presupuestal esperada del 99,53%**, con ingresos totales de **\$ 466.320 Millones** y compromisos de **\$ 464.120 Millones**.
 
----
-
-### 🎯 Proyección de Cierre al 31 de Diciembre de 2026
-
-* **Ingresos Totales Consolidados:** **\$ 466.320 Millones**
-* **Compromisos Totales:** **\$ 464.120 Millones**
-* **Tasa de Ejecución Presupuestal Esperada:** **99,53%**
-* **Remanente de Caja Proyectado:** **\$ 2.200.000.000,00 COP** (concentrado exclusivamente en el Recurso R10.0 de la Nación).
-
----
-
-### 🔎 ¿Cómo cerraremos cada componente?
-
-1. **Nómina y Salarios:** Se cerrará con una ejecución del 100% de lo programado, habiendo ajustado oportunamente el ingreso de diciembre de R10 con la deducción de \$43.820M para evitar desfases.
-2. **Gastos de Funcionamiento:** Se estima un remanente no superior al 2% en compras y suministros, el cual se constituirá como cuentas por pagar o reservas presupuestales conforme a la norma.
-3. **Inversión y Laboratorios:** Los proyectos financiados con Estampilla (R20 y R16) quedarán comprometidos con sus respectivos Registros Presupuestales (RP) para ejecutarse entre enero y marzo de 2027.
-
----
-
-### 💡 Conclusión
-La Universidad cerrará el año 2026 con **equilibrio presupuestal y de caja**, garantizando el pago de todas sus obligaciones laborales y manteniendo sus cuentas en orden.
-
-¿Deseas ver las fechas sugeridas para el cierre de trámites y cajas menores?`
+El saldo proyectado de caja libre al 31 de diciembre es de **\$ 2.200.000.000,00 COP** en el Recurso R10.0 de la Nación, cumpliendo la regla de que ningún recurso compromete ni paga por encima de su recaudo real.`,
+      suggestedFollowUps: [
+        'Ver fechas recomendadas de cierre de trámites y cajas menores',
+        'Ver proyección de pagos de noviembre y diciembre'
+      ]
     };
   }
 
-  // -------------------------------------------------------------
+  // =========================================================================
   // 10. CONSULTA GENERAL / BIENVENIDA AMIGABLE
-  // -------------------------------------------------------------
+  // =========================================================================
   return {
     modeUsed: 'auto',
     topicTitle: 'Inteligencia Financiera UPTC',
-    text: `¡Hola! Con mucho gusto te ayudo a analizar cualquier aspecto financiero de la **UPTC**.
+    text: `¡Hola! Con mucho gusto te respondo de forma concreta y directa cualquier consulta sobre las finanzas de la **UPTC**.
 
-Actualmente tengo sincronizadas en tiempo real todas las bases de datos de la Universidad con corte al **${INSTITUTIONAL_DATA.fechaCorte}**:
+Cuento con la información oficial al **${INSTITUTIONAL_DATA.fechaCorte}** sobre:
+* 🎓 **Posgrados:** \$ 45.472M anuales proyectados, 5.170 estudiantes y detalle de facultades.
+* 👥 **Nómina:** \$ 301.916M programados y \$ 99.032M disponibles en la Unidad 01.
+* 🗺️ **POA:** \$ 143.637 Millones disponibles de \$ 538.165M programados.
+* 💵 **Caja y Bancos:** \$ 43.370M actuales en bancos y \$ 2.200M proyectados de cierre en R10.
 
-* 🎓 **Posgrados:** \$ 45.472M en ingresos anuales, 5.170 estudiantes y distribución por facultades.
-* 👥 **Nómina y Personal:** \$ 301.916M programados y \$ 99.032M disponibles en la Unidad 01.
-* 🗺️ **POA y Fondos Disponibles:** \$ 143.637 Millones disponibles de \$ 538.165M programados.
-* 💵 **Flujo de Caja:** \$ 43.370M en bancos a la fecha y \$ 2.200M proyectados al cierre en R10.
-* 🏫 **Facultades y Seccionales:** Información detallada de Tunja, Sogamoso, Duitama, FESAD, Unisalud e Ingeniería.
-
----
-
-¿Qué consulta te gustaría realizar? Puedes preguntarme directamente con tus palabras, por ejemplo:
-* *"¿Cuánto ingresó por posgrados y cómo se divide por facultades?"*
-* *"¿Cuánto dinero tenemos disponible en el POA y en qué cuentas?"*
-* *"¿Podemos asumir un gasto de $5.000 millones este año?"*
-* *"¿Cómo está la situación de caja y tesorería para pagar la nómina de diciembre?"*
-
-¡Dime qué necesitas y con gusto lo revisamos juntos!`
+¿Qué dato o tema específico deseas consultar?`,
+    suggestedFollowUps: [
+      '¿Cuánto ingresó por posgrados?',
+      '¿Dónde está el dinero disponible en el POA?',
+      '¿Cuánto dinero tenemos en caja y bancos?',
+      '¿Podemos asumir un nuevo gasto de $5.000M?'
+    ]
   };
 }

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, Bot, User, Loader2, FileText, AlertCircle, Copy, Check, 
   Sparkles, Key, ShieldCheck, Database, Calendar, BarChart3, 
-  HelpCircle, RefreshCw, X
+  HelpCircle, RefreshCw, X, ArrowRight
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '../lib/utils';
@@ -22,6 +22,7 @@ interface ChatMessage {
   content: string;
   modeUsed?: CentavitoMode;
   topicTitle?: string;
+  suggestedFollowUps?: string[];
   isError?: boolean;
 }
 
@@ -158,7 +159,13 @@ Estoy aquí para ayudarte a comprender, analizar y proyectar cualquier cifra fin
 
 ¿Sobre qué tema o cifra te gustaría consultar hoy?`,
       modeUsed: 'auto',
-      topicTitle: 'Bienvenida Institucional'
+      topicTitle: 'Bienvenida Institucional',
+      suggestedFollowUps: [
+        '¿Cuánto ingresó por posgrados?',
+        '¿Dónde está el dinero disponible en el POA?',
+        '¿Cuánto dinero tenemos en caja y bancos?',
+        '¿Cuánto se gasta en nómina y personal?'
+      ]
     }
   ]);
 
@@ -237,7 +244,8 @@ Estoy aquí para ayudarte a comprender, analizar y proyectar cualquier cifra fin
             role: 'assistant',
             content: data.text,
             modeUsed: currentMode,
-            topicTitle: data.topicTitle || 'Análisis Institucional'
+            topicTitle: data.topicTitle || 'Análisis Institucional',
+            suggestedFollowUps: data.suggestedFollowUps
           }
         ]);
       } else {
@@ -255,7 +263,8 @@ Estoy aquí para ayudarte a comprender, analizar y proyectar cualquier cifra fin
             role: 'assistant',
             content: finalContent,
             modeUsed: localResult.modeUsed,
-            topicTitle: localResult.topicTitle
+            topicTitle: localResult.topicTitle,
+            suggestedFollowUps: localResult.suggestedFollowUps
           }
         ]);
       }
@@ -274,7 +283,8 @@ Estoy aquí para ayudarte a comprender, analizar y proyectar cualquier cifra fin
           role: 'assistant',
           content: finalContent,
           modeUsed: localResult.modeUsed,
-          topicTitle: localResult.topicTitle
+          topicTitle: localResult.topicTitle,
+          suggestedFollowUps: localResult.suggestedFollowUps
         }
       ]);
     } finally {
@@ -522,6 +532,27 @@ Estoy aquí para ayudarte a comprender, analizar y proyectar cualquier cifra fin
                     >
                       {msg.content}
                     </ReactMarkdown>
+                  </div>
+                )}
+
+                {msg.role === 'assistant' && msg.suggestedFollowUps && msg.suggestedFollowUps.length > 0 && (
+                  <div className="mt-4 pt-3 border-t border-white/10">
+                    <p className="text-[11px] font-mono uppercase tracking-wider text-amber-300/90 mb-2.5 flex items-center gap-1.5 font-semibold">
+                      <Sparkles size={12} className="text-amber-400" />
+                      ¿Deseas información adicional sobre este tema?
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {msg.suggestedFollowUps.map((opt, i) => (
+                        <button
+                          key={i}
+                          onClick={() => executeQuery(opt)}
+                          className="text-xs font-medium bg-amber-400/10 hover:bg-amber-400/20 text-amber-200 hover:text-amber-100 border border-amber-400/30 px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-sm"
+                        >
+                          <span>{opt}</span>
+                          <ArrowRight size={12} className="opacity-70 text-amber-400" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
