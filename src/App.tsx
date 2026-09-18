@@ -15,6 +15,7 @@ import { CoverScreen } from './screens/CoverScreen';
 import { AssistantScreen } from './screens/AssistantScreen';
 import { CashFlowScreen } from './screens/CashFlowScreen';
 import { ExecutiveReportScreen } from './screens/ExecutiveReportScreen';
+import { PoaScreen } from './screens/PoaScreen';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('cover');
@@ -34,6 +35,7 @@ export default function App() {
       {currentScreen === 'predictive' && <PredictiveScreen onNavigate={handleNavigate} />}
       {currentScreen === 'cashflow' && <CashFlowScreen onNavigate={handleNavigate} />}
       {currentScreen === 'informe-gerencial' && <ExecutiveReportScreen onNavigate={handleNavigate} />}
+      {currentScreen === 'poa' && <PoaScreen onNavigate={handleNavigate} />}
       {currentScreen === 'presupuesto' && <BudgetScreen onNavigate={handleNavigate} />}
       {currentScreen === 'historical' && <HistoricalScreen onNavigate={handleNavigate} />}
       {currentScreen === 'budget' && <ProgramCostingScreen onNavigate={handleNavigate} />}

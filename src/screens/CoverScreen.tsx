@@ -13,6 +13,7 @@ const MODULES = [
   { id: 'predictive', icon: BarChart3, title: 'Proyección Financiera', desc: 'Simulador, flujo de caja y escenarios futuros.' },
   { id: 'multiyear', icon: Layers, title: 'Proyección Multivigencia', desc: 'Simulación presupuestal de mediano y largo plazo (1 a 20 años) con indexadores IPC/ICES.' },
   { id: 'budget', icon: Wallet, title: 'Costeo de Programa', desc: 'Estudio de viabilidad, simulador de matrícula, docentes y punto de equilibrio.' },
+  { id: 'poa', icon: Layers, title: 'POA (Disponible)', desc: 'Control del Plan Operativo Anual 2026, solicitudes y localización de fondos disponibles.' },
   { id: 'reports', icon: FileText, title: 'Reportes', desc: 'Informes detallados listos para exportar.' },
   { id: 'repository', icon: FolderOpen, title: 'Repositorio', desc: 'Archivos y documentos financieros.' },
   { id: 'assistant', icon: Bot, title: 'Asistente IA', desc: 'Consultas financieras mediante lenguaje natural.' },

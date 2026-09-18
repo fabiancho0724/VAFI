@@ -13,7 +13,8 @@ import {
   GraduationCap,
   Bot,
   Coins,
-  Award
+  Award,
+  Layers
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -52,6 +53,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
          screen === 'predictive' ? 'Proyección Financiera' :
          screen === 'cashflow' ? 'Flujo de Caja' :
          screen === 'informe-gerencial' ? 'Informe Gerencial' :
+         screen === 'poa' ? 'POA (Disponible)' :
          screen === 'presupuesto' ? 'Presupuesto' :
          screen === 'budget' ? 'Costeo de Programa' :
          screen === 'reports' ? 'Reportes' :
@@ -93,8 +95,9 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
         <IconWrapper icon={BarChart3} screen="predictive" />
         <IconWrapper icon={Coins} screen="cashflow" />
         <IconWrapper icon={Award} screen="informe-gerencial" />
+        <IconWrapper icon={Layers} screen="poa" />
         <IconWrapper icon={Landmark} screen="presupuesto" />
-                <IconWrapper icon={Wallet} screen="budget" />
+        <IconWrapper icon={Wallet} screen="budget" />
         <IconWrapper icon={FileText} screen="reports" />
         <IconWrapper icon={FolderOpen} screen="repository" />
         <IconWrapper icon={Bot} screen="assistant" />

@@ -4,13 +4,17 @@ import time
 import json
 from datetime import datetime
 
-# Source Directory (OneDrive folder)
-SOURCE_DIR = r"C:\Users\COSTOS\OneDrive - uptc.edu.co\Documentos\VAFI\2026\VAFI Control\Bases de ingresos y gastos"
+# Source Directory (macOS / OneDrive Windows folder)
+MAC_SOURCE_DIR = "/Users/fabiancely/Documents/Documentos UPTC/Bases de Datos VAFI"
+WIN_SOURCE_DIR = r"C:\Users\COSTOS\OneDrive - uptc.edu.co\Documentos\VAFI\2026\VAFI Control\Bases de ingresos y gastos"
+
+SOURCE_DIR = MAC_SOURCE_DIR if os.path.exists(MAC_SOURCE_DIR) else WIN_SOURCE_DIR
 
 # Target Directory inside VAFI Web App
-TARGET_DIR = r"c:\Users\COSTOS\OneDrive - uptc.edu.co\Documentos\VAFI\2026\VAFI Control\VAFI\public\data"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TARGET_DIR = os.path.join(BASE_DIR, "public", "data")
 
-FILES_TO_WATCH = ["Gastos.csv", "Ingresos.csv", "Nomina.csv"]
+FILES_TO_WATCH = ["Gastos.csv", "Ingresos.csv", "Nomina.csv", "POA.csv"]
 
 def get_file_mtimes(folder):
     mtimes = {}
