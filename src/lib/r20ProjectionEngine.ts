@@ -859,3 +859,97 @@ export function exportProjectionCSV(
   link.click();
   document.body.removeChild(link);
 }
+
+// ============================================================================
+// RECURSO 21 - DEVOLUCIÓN IVA (INSTITUCIONES DE EDUCACIÓN SUPERIOR)
+// ============================================================================
+
+export const R21_HISTORICAL_RECORDS: R20Record[] = [
+  { vigencia: 2016, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 4390197920 },
+  { vigencia: 2017, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 3562839475 },
+  { vigencia: 2018, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 3754016152 },
+  { vigencia: 2019, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 5219433295 },
+  { vigencia: 2020, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 3972192702 },
+  { vigencia: 2021, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 4825577630 },
+  { vigencia: 2022, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 4727709282 },
+  { vigencia: 2023, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 4887893421 },
+  { vigencia: 2024, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 4000000000 },
+  { vigencia: 2025, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 7981747901 },
+  { vigencia: 2026, unidad: '01 - ADMINISTRATIVA Y FINANCIERA', concepto: 'Devolución IVA - Instituciones de Educación Superior', recurso: '21-Devolucion IVA', totalRecaudo: 4672202857 }
+];
+
+export async function fetchAndParseR21(): Promise<R20Record[]> {
+  try {
+    const res = await fetch('/data/Historico_R21_Devolucion_IVA.csv');
+    if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+    const text = await res.text();
+
+    return new Promise((resolve) => {
+      Papa.parse<any>(text, {
+        header: true,
+        delimiter: ';',
+        skipEmptyLines: true,
+        complete: (results) => {
+          const parsedRecords: R20Record[] = [];
+          for (const row of results.data) {
+            const rawVigencia = row['Vigencia'] || row['vigencia'];
+            const rawRecaudo = row['Total recaudo'] || row['total_recaudo'];
+            if (!rawVigencia || !rawRecaudo) continue;
+
+            const cleanStr = String(rawRecaudo)
+              .replace(/\$/g, '')
+              .replace(/\./g, '')
+              .replace(/,/g, '.')
+              .trim();
+            const val = parseFloat(cleanStr);
+            if (isNaN(val)) continue;
+
+            parsedRecords.push({
+              vigencia: parseInt(String(rawVigencia).trim(), 10),
+              unidad: String(row['Unidad'] || '01 - ADMINISTRATIVA Y FINANCIERA').trim(),
+              concepto: String(row['Concepto'] || 'Devolución IVA - Instituciones de Educación Superior').trim(),
+              recurso: '21-Devolucion IVA',
+              totalRecaudo: val
+            });
+          }
+          if (parsedRecords.length > 0) {
+            resolve(parsedRecords);
+          } else {
+            resolve(R21_HISTORICAL_RECORDS);
+          }
+        },
+        error: () => resolve(R21_HISTORICAL_RECORDS)
+      });
+    });
+  } catch (err) {
+    return R21_HISTORICAL_RECORDS;
+  }
+}
+
+// Exportación a CSV para R21
+export function exportR21CSV(models: R20ForecastModelResult[], records: R20Record[]): void {
+  let csvContent = 'data:text/csv;charset=utf-8,';
+  csvContent += `PROYECCION RECURSO 21 - DEVOLUCION IVA (IES) - VIGENCIA 2027\n`;
+  csvContent += `Concepto:;Devolución IVA - Instituciones de Educación Superior\n`;
+  csvContent += `Marco Normativo:;Art. 92 Ley 30 de 1992 / Art. 481 Estatuto Tributario\n\n`;
+
+  csvContent += `HISTORICO ANUAL 2016-2026\n`;
+  csvContent += `Vigencia;Unidad;Concepto;Recurso;Total Recaudo (COP);Total Recaudo ($M)\n`;
+  for (const r of records) {
+    csvContent += `"${r.vigencia}";"${r.unidad}";"${r.concepto}";"${r.recurso}";"${Math.round(r.totalRecaudo)}";"${(r.totalRecaudo / 1e6).toFixed(2)}"\n`;
+  }
+
+  csvContent += `\nMODELOS MATEMATICOS PROYECTADOS 2027\n`;
+  csvContent += `Modelo;Formula;Proyeccion 2027 (COP);Proyeccion 2027 ($M);Variacion vs 2026 (%);R2 (%);MAPE (%);RMSE;Limite Inf 95%;Limite Sup 95%;Criterio\n`;
+  for (const m of models) {
+    csvContent += `"${m.modelName}";"${m.formula}";"${Math.round(m.projected2027)}";"${(m.projected2027 / 1e6).toFixed(2)}";"${m.variationPct.toFixed(2)}%";"${m.r2.toFixed(1)}%";"${m.mape.toFixed(2)}%";"${Math.round(m.rmse)}";"${Math.round(m.lowerBound95)}";"${Math.round(m.upperBound95)}";"${m.tag}"\n`;
+  }
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Proyeccion_Recurso_21_Devolucion_IVA_2027.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
