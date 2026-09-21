@@ -10,6 +10,11 @@ WIN_SOURCE_DIR = r"C:\Users\COSTOS\OneDrive - uptc.edu.co\Documentos\VAFI\2026\V
 
 SOURCE_DIR = MAC_SOURCE_DIR if os.path.exists(MAC_SOURCE_DIR) else WIN_SOURCE_DIR
 
+# R20 Historical Directory
+MAC_R20_DIR = "/Users/fabiancely/Documents/R 20"
+WIN_R20_DIR = r"C:\Users\COSTOS\OneDrive - uptc.edu.co\Documentos\VAFI\R 20"
+R20_DIR = MAC_R20_DIR if os.path.exists(MAC_R20_DIR) else WIN_R20_DIR
+
 # Target Directory inside VAFI Web App
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TARGET_DIR = os.path.join(BASE_DIR, "public", "data")
@@ -22,6 +27,10 @@ def get_file_mtimes(folder):
         fpath = os.path.join(folder, fname)
         if os.path.exists(fpath):
             mtimes[fname] = os.path.getmtime(fpath)
+    if os.path.exists(R20_DIR):
+        r20_path = os.path.join(R20_DIR, "Historico Ingresos.csv")
+        if os.path.exists(r20_path):
+            mtimes["Historico_Ingresos_10y.csv"] = os.path.getmtime(r20_path)
     return mtimes
 
 def sync_files():
@@ -52,6 +61,27 @@ def sync_files():
                                 cutoff_date = last_part
                 except Exception as e:
                     pass
+
+    # Sync R20 Historical 10y CSV
+    if os.path.exists(R20_DIR):
+        r20_src = os.path.join(R20_DIR, "Historico Ingresos.csv")
+        r20_dst = os.path.join(TARGET_DIR, "Historico_Ingresos_10y.csv")
+        if os.path.exists(r20_src):
+            try:
+                with open(r20_src, 'rb') as f:
+                    raw_b = f.read()
+                try:
+                    txt = raw_b.decode('mac_roman')
+                except Exception:
+                    try:
+                        txt = raw_b.decode('latin-1')
+                    except Exception:
+                        txt = raw_b.decode('utf-8', errors='ignore')
+                with open(r20_dst, 'w', encoding='utf-8') as f:
+                    f.write(txt)
+                synced.append("Historico_Ingresos_10y.csv")
+            except Exception as e:
+                print(f"Error al sincronizar Historico Ingresos.csv: {e}")
 
     status = {
         "lastSync": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

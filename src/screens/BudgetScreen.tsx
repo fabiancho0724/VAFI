@@ -12,6 +12,7 @@ import {
 import { budgetData } from '../data/budgetData';
 import { MACRO_INDICATORS, YEARS, SUPUESTOS_MACROECONOMICOS_MFMP } from '../lib/macroData';
 import { selectBestModel, getScenarios, getAllModels, ModelType } from '../lib/budgetForecasting';
+import { R20ResourceProjectionSection } from '../components/R20ResourceProjectionSection';
 
 const COLORS = ['#4ade80', '#60a5fa', '#f472b6', '#fbbf24', '#c084fc', '#38bdf8'];
 
@@ -23,6 +24,7 @@ function formatCurrencyShort(value: number) {
 }
 
 export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
+  const [activeBudgetTab, setActiveBudgetTab] = useState<'general' | 'r20-proyeccion'>('general');
   const [selectedScenario, setSelectedScenario] = useState<'base' | 'conservative' | 'pressure'>('base');
   const [userSelectedModel, setUserSelectedModel] = useState<ModelType | 'Auto'>('Auto');
 
@@ -265,8 +267,44 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
         </div>
       </header>
 
-      {/* SECCIÓN OFICIAL: SUPUESTOS MACROECONÓMICOS (MFMP - MINISTERIO DE HACIENDA) */}
-      <div className="mb-8 bg-gradient-to-br from-surface-container-high/90 to-background border border-primary-container/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
+      {/* PESTAÑAS PRINCIPALES DE NAVEGACIÓN DENTRO DE PRESUPUESTO */}
+      <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
+        <button
+          onClick={() => setActiveBudgetTab('general')}
+          className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-medium text-xs sm:text-sm transition-all ${
+            activeBudgetTab === 'general'
+              ? 'bg-primary-container text-on-primary-container shadow-lg font-bold scale-[1.02]'
+              : 'bg-white/5 text-on-surface-variant hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          <Building2 size={18} />
+          <span>Presupuesto General & MFMP</span>
+        </button>
+
+        <button
+          onClick={() => setActiveBudgetTab('r20-proyeccion')}
+          className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-medium text-xs sm:text-sm transition-all ${
+            activeBudgetTab === 'r20-proyeccion'
+              ? 'bg-amber-500 text-black shadow-lg font-bold scale-[1.02]'
+              : 'bg-white/5 text-on-surface-variant hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          <TrendingUp size={18} />
+          <span>Proyección de Recursos 2027 (R20 Propios)</span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+            activeBudgetTab === 'r20-proyeccion' ? 'bg-black/30 text-white' : 'bg-amber-500/20 text-amber-300'
+          }`}>
+            10 Años CSV
+          </span>
+        </button>
+      </div>
+
+      {activeBudgetTab === 'r20-proyeccion' ? (
+        <R20ResourceProjectionSection />
+      ) : (
+        <>
+          {/* SECCIÓN OFICIAL: SUPUESTOS MACROECONÓMICOS (MFMP - MINISTERIO DE HACIENDA) */}
+          <div className="mb-8 bg-gradient-to-br from-surface-container-high/90 to-background border border-primary-container/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary-container/10 blur-[100px] rounded-full pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-amber-500/5 blur-[100px] rounded-full pointer-events-none"></div>
 
@@ -901,6 +939,8 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
           </p>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
