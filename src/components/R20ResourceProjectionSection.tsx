@@ -6,13 +6,15 @@ import {
 import { 
   TrendingUp, TrendingDown, Calculator, BarChart3, Layers, Download, 
   RefreshCw, SlidersHorizontal, Sparkles, AlertTriangle, CheckCircle2, 
-  Info, Building2, Table, Filter, ArrowUpRight, Scale, ChevronDown, ChevronUp 
+  Info, Building2, Table, Filter, ArrowUpRight, Scale, ChevronDown, ChevronUp,
+  Search, CheckCheck, Landmark, DollarSign, Wallet
 } from 'lucide-react';
 import { 
   R20Record, R20ForecastModelResult, R20ConceptForecast, 
+  R20ConceptMatrixSummary, R20ConceptMatrixRow,
   fetchAndParseR20, loadFallbackRecords, filterR20Data, runAllR20Models, 
-  computeBottomUpConceptForecast, formatCurrencyCOP, formatCurrencyShortCOP, 
-  exportProjectionCSV 
+  computeConceptMatrix, computeBottomUpConceptForecast, 
+  formatCurrencyCOP, formatCurrencyShortCOP, exportProjectionCSV 
 } from '../lib/r20ProjectionEngine';
 
 export function R20ResourceProjectionSection() {
@@ -25,6 +27,8 @@ export function R20ResourceProjectionSection() {
   const [selectedConcepto, setSelectedConcepto] = useState('Todos');
   const [selectedModelFilter, setSelectedModelFilter] = useState('all');
   const [showParamControls, setShowParamControls] = useState(false);
+  const [conceptSearch, setConceptSearch] = useState('');
+  const [matrixViewMode, setMatrixViewMode] = useState<'recent' | 'all'>('recent');
 
   // Parámetros de calibración
   const [ipcTarget, setIpcTarget] = useState(7.0);
@@ -32,8 +36,8 @@ export function R20ResourceProjectionSection() {
   const [alpha, setAlpha] = useState(0.5);
   const [beta, setBeta] = useState(0.3);
 
-  // Sub-vista
-  const [activeSubTab, setActiveSubTab] = useState<'modelos' | 'conceptos' | 'unidades'>('modelos');
+  // Sub-vista: Modelos & Curvas | Matriz de Conceptos y Total R20 | Unidades
+  const [activeSubTab, setActiveSubTab] = useState<'modelos' | 'matriz-conceptos' | 'unidades'>('matriz-conceptos');
 
   // Carga inicial de datos
   useEffect(() => {
@@ -59,27 +63,46 @@ export function R20ResourceProjectionSection() {
     });
   }, [records, selectedUnidad, selectedConcepto, selectedWindow]);
 
-  // Ejecución de todos los modelos matemáticos
+  // Ejecución de todos los modelos matemáticos (incluyendo ARIMA)
   const models = useMemo(() => {
     if (values.length < 2) return [];
     return runAllR20Models(years, values, { alpha, beta, ipcTarget, effortRate });
   }, [years, values, alpha, beta, ipcTarget, effortRate]);
 
-  // Modelo óptimo recomendado (menor MAPE y R2 más alto)
+  // Modelo óptimo recomendado
   const bestModel = useMemo(() => {
     if (!models || models.length === 0) return null;
-    // Si el usuario seleccionó un modelo específico
     if (selectedModelFilter !== 'all') {
       const found = models.find(m => m.modelId === selectedModelFilter);
       if (found) return found;
     }
-    // Por defecto sugerir el modelo Macro MFMP o Holt
     const macroModel = models.find(m => m.modelId === 'macro');
     if (macroModel) return macroModel;
     return models[0];
   }, [models, selectedModelFilter]);
 
-  // Desglose Bottom-Up por conceptos
+  // Matriz completa concepto a concepto con Total R20
+  const matrixSummary: R20ConceptMatrixSummary = useMemo(() => {
+    return computeConceptMatrix(filteredRecords, selectedWindow, ipcTarget);
+  }, [filteredRecords, selectedWindow, ipcTarget]);
+
+  // Conceptos filtrados por búsqueda
+  const filteredMatrixRows = useMemo(() => {
+    if (!conceptSearch.trim()) return matrixSummary.rows;
+    return matrixSummary.rows.filter(r => 
+      r.concepto.toLowerCase().includes(conceptSearch.toLowerCase())
+    );
+  }, [matrixSummary.rows, conceptSearch]);
+
+  // Años a mostrar en la tabla de la matriz
+  const displayYears = useMemo(() => {
+    if (matrixViewMode === 'recent') {
+      return matrixSummary.years.filter(y => y >= 2021);
+    }
+    return matrixSummary.years;
+  }, [matrixSummary.years, matrixViewMode]);
+
+  // Desglose Bottom-Up por conceptos (para exportación y KPIs)
   const bottomUpData = useMemo(() => {
     return computeBottomUpConceptForecast(filteredRecords, selectedWindow);
   }, [filteredRecords, selectedWindow]);
@@ -122,7 +145,7 @@ export function R20ResourceProjectionSection() {
     return list;
   }, [filteredRecords, years, bestModel]);
 
-  // Generación de puntos para la gráfica Recharts
+  // Generación de puntos para la gráfica Recharts (incluye ARIMA)
   const chartSeries = useMemo(() => {
     if (!models || models.length === 0 || years.length === 0) return [];
 
@@ -130,7 +153,6 @@ export function R20ResourceProjectionSection() {
     const lastYear = years[lastIdx];
     const lastVal = values[lastIdx];
 
-    // Puntos históricos
     const series = years.map((y, idx) => {
       const isAnchor = idx === lastIdx;
       return {
@@ -138,9 +160,9 @@ export function R20ResourceProjectionSection() {
         numericYear: y,
         real: values[idx],
         isProjection: false,
-        // Conectar el punto de anclaje 2026 a cada modelo
         macro: isAnchor ? lastVal : null,
         holt: isAnchor ? lastVal : null,
+        arima: isAnchor ? lastVal : null,
         log: isAnchor ? lastVal : null,
         poly2: isAnchor ? lastVal : null,
         wma: isAnchor ? lastVal : null,
@@ -151,20 +173,20 @@ export function R20ResourceProjectionSection() {
       };
     });
 
-    // Model values en 2027
     const macroVal = models.find(m => m.modelId === 'macro')?.projected2027 ?? null;
     const holtVal = models.find(m => m.modelId === 'holt')?.projected2027 ?? null;
+    const arimaVal = models.find(m => m.modelId === 'arima')?.projected2027 ?? null;
     const logVal = models.find(m => m.modelId === 'log')?.projected2027 ?? null;
     const poly2Val = models.find(m => m.modelId === 'poly2')?.projected2027 ?? null;
     const wmaVal = models.find(m => m.modelId === 'wma')?.projected2027 ?? null;
     const olsVal = models.find(m => m.modelId === 'ols')?.projected2027 ?? null;
     const cagrVal = models.find(m => m.modelId === 'cagr')?.projected2027 ?? null;
 
-    const allProjs = [macroVal, holtVal, logVal, poly2Val, wmaVal, olsVal, cagrVal].filter((v): v is number => v !== null && v > 0);
+    const allProjs = [macroVal, holtVal, arimaVal, logVal, poly2Val, wmaVal, olsVal, cagrVal]
+      .filter((v): v is number => v !== null && v > 0);
     const minProj = allProjs.length > 0 ? Math.min(...allProjs) : lastVal;
     const maxProj = allProjs.length > 0 ? Math.max(...allProjs) : lastVal;
 
-    // Punto 2027 Proyectado
     series.push({
       year: '2027 (Proy)',
       numericYear: 2027,
@@ -172,6 +194,7 @@ export function R20ResourceProjectionSection() {
       isProjection: true,
       macro: macroVal,
       holt: holtVal,
+      arima: arimaVal,
       log: logVal,
       poly2: poly2Val,
       wma: wmaVal,
@@ -201,7 +224,7 @@ export function R20ResourceProjectionSection() {
     if (!data) return null;
 
     return (
-      <div className="bg-slate-900/95 border border-white/20 p-4 rounded-xl shadow-2xl backdrop-blur-md text-xs min-w-[260px]">
+      <div className="bg-slate-900/95 border border-white/20 p-4 rounded-xl shadow-2xl backdrop-blur-md text-xs min-w-[280px]">
         <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
           <span className="font-bold text-white text-sm font-display">Vigencia {label}</span>
           {data.isProjection && (
@@ -221,7 +244,7 @@ export function R20ResourceProjectionSection() {
         {data.isProjection && (
           <div className="space-y-1.5 pt-1">
             <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-semibold">
-              Modelos Proyectados 2027:
+              Modelos Evaluados 2027:
             </p>
             {data.macro !== null && (
               <div className="flex justify-between items-center">
@@ -233,6 +256,12 @@ export function R20ResourceProjectionSection() {
               <div className="flex justify-between items-center">
                 <span className="text-emerald-400 font-medium">Holt Suavizado:</span>
                 <span className="font-mono font-bold text-white">{formatCurrencyShortCOP(data.holt)}</span>
+              </div>
+            )}
+            {data.arima !== null && (
+              <div className="flex justify-between items-center">
+                <span className="text-indigo-400 font-medium">ARIMA (1,1,0):</span>
+                <span className="font-mono font-bold text-white">{formatCurrencyShortCOP(data.arima)}</span>
               </div>
             )}
             {data.log !== null && (
@@ -251,12 +280,6 @@ export function R20ResourceProjectionSection() {
               <div className="flex justify-between items-center">
                 <span className="text-yellow-400 font-medium">Promedio Móvil (WMA):</span>
                 <span className="font-mono font-bold text-white">{formatCurrencyShortCOP(data.wma)}</span>
-              </div>
-            )}
-            {data.cagr !== null && (
-              <div className="flex justify-between items-center">
-                <span className="text-pink-400 font-medium">Tasa CAGR:</span>
-                <span className="font-mono font-bold text-white">{formatCurrencyShortCOP(data.cagr)}</span>
               </div>
             )}
             {data.ols !== null && (
@@ -288,19 +311,22 @@ export function R20ResourceProjectionSection() {
                 <Calculator size={28} />
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                    Histórico 10 Años (2016–2026) • Recurso 20 Propios
+                    Histórico Actualizado • Recurso 20 Propios
                   </span>
-                  <span className="text-[11px] font-mono text-on-surface-variant">
-                    187 Registros de Recaudación
+                  <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 font-bold">
+                    ✓ CSV Sincronizado ({records.length} Registros)
+                  </span>
+                  <span className="text-[11px] font-mono text-indigo-300 bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">
+                    ARIMA(1,1,0) Activo
                   </span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-display text-white font-bold tracking-tight mt-1">
-                  Proyección de Recursos Propios 2027
+                <h2 className="text-2xl md:text-3xl font-display text-white font-bold tracking-tight mt-1.5">
+                  Proyección de Recursos Propios 2027 (R20)
                 </h2>
                 <p className="text-on-surface-variant font-sans text-xs md:text-sm mt-1 max-w-3xl leading-relaxed">
-                  Modelación matemática predictiva multimodelo con análisis de sensibilidad institucional. Permite calibrar la ventana temporal para aislar el cambio regulatorio de la Política de Gratuidad en Matrículas (Ley 2307 de 2023) y proyectar escenarios de recaudo para la vigencia 2027.
+                  Modelación predictiva multimodelo (incluyendo ARIMA, Holt, OLS y Macro MFMP) con tabla integral que detalla el histórico y la proyección concepto por concepto, consolidando el <strong>Total General de la Proyección de R20</strong> para la vigencia 2027.
                 </p>
               </div>
             </div>
@@ -324,10 +350,10 @@ export function R20ResourceProjectionSection() {
                   setLoading(false);
                 }}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all shadow-md active:scale-95"
-                title="Recargar base histórica"
+                title="Sincronizar base histórica"
               >
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                <span>Recargar Base</span>
+                <span>Recargar CSV</span>
               </button>
             </div>
           </div>
@@ -337,7 +363,7 @@ export function R20ResourceProjectionSection() {
             {/* Selector de Ventana Histórica */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-400" /> Ventana de Calibración:
+                <Sparkles size={14} className="text-amber-400" /> Calibración:
               </span>
               <div className="inline-flex rounded-xl bg-black/40 p-1 border border-white/10">
                 <button
@@ -378,7 +404,6 @@ export function R20ResourceProjectionSection() {
 
             {/* Filtros de Unidad y Concepto */}
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-              {/* Filtro Unidad */}
               <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
                 <Building2 size={14} className="text-primary-container shrink-0" />
                 <span className="text-on-surface-variant">Unidad:</span>
@@ -387,14 +412,13 @@ export function R20ResourceProjectionSection() {
                   onChange={(e) => setSelectedUnidad(e.target.value)}
                   className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer max-w-[180px] truncate"
                 >
-                  <option value="Todas" className="bg-slate-900 text-white">Todas las Unidades (14)</option>
+                  <option value="Todas" className="bg-slate-900 text-white">Todas las Unidades</option>
                   {allUnidades.map(u => (
                     <option key={u} value={u} className="bg-slate-900 text-white">{u}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Filtro Concepto */}
               <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
                 <Filter size={14} className="text-amber-400 shrink-0" />
                 <span className="text-on-surface-variant">Concepto:</span>
@@ -403,14 +427,13 @@ export function R20ResourceProjectionSection() {
                   onChange={(e) => setSelectedConcepto(e.target.value)}
                   className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer max-w-[180px] truncate"
                 >
-                  <option value="Todos" className="bg-slate-900 text-white">Todos los Conceptos (34)</option>
+                  <option value="Todos" className="bg-slate-900 text-white">Todos los Conceptos ({allConceptos.length})</option>
                   {allConceptos.map(c => (
                     <option key={c} value={c} className="bg-slate-900 text-white">{c}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Botón de Parámetros */}
               <button
                 onClick={() => setShowParamControls(!showParamControls)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
@@ -420,13 +443,13 @@ export function R20ResourceProjectionSection() {
                 }`}
               >
                 <SlidersHorizontal size={14} />
-                <span>Calibrar Supuestos</span>
+                <span>Supuestos</span>
                 {showParamControls ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
             </div>
           </div>
 
-          {/* PANEL EXPANDIBLE DE CALIBRACIÓN DE SUPUESTOS */}
+          {/* PANEL EXPANDIBLE DE CALIBRACIÓN */}
           {showParamControls && (
             <div className="mt-5 p-4 rounded-2xl bg-black/40 border border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in">
               <div>
@@ -474,7 +497,7 @@ export function R20ResourceProjectionSection() {
                   onChange={(e) => setAlpha(parseFloat(e.target.value))}
                   className="w-full accent-sky-500 cursor-pointer"
                 />
-                <span className="text-[10px] text-on-surface-variant block mt-0.5">Ponderación del nivel</span>
+                <span className="text-[10px] text-on-surface-variant block mt-0.5">Ponderación de nivel</span>
               </div>
 
               <div>
@@ -499,36 +522,36 @@ export function R20ResourceProjectionSection() {
 
       {/* TARJETAS KPI DE PROYECCIÓN 2027 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Proyección Central */}
-        <div className="glass-card p-5 rounded-2xl border border-amber-500/30 relative overflow-hidden">
+        {/* KPI 1: Total Proyección R20 */}
+        <div className="glass-card p-5 rounded-2xl border border-amber-500/40 relative overflow-hidden bg-gradient-to-br from-amber-500/10 to-transparent">
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
-          <span className="text-xs font-mono uppercase tracking-wider text-amber-400 block mb-1">
-            Proyección Central 2027 (R20)
+          <span className="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold block mb-1 flex items-center justify-between">
+            <span>Total Proyección R20 (2027)</span>
+            <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">Bottom-Up</span>
           </span>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-3xl font-display font-bold text-white tracking-tight">
-              {bestModel ? formatCurrencyShortCOP(bestModel.projected2027) : '$0'}
+              {formatCurrencyShortCOP(matrixSummary.totalProyeccion2027)}
             </span>
-            {bestModel && (
-              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md ${
-                bestModel.variationPct >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-              }`}>
-                {bestModel.variationPct >= 0 ? '+' : ''}{bestModel.variationPct.toFixed(1)}% vs 2026
-              </span>
-            )}
+            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md ${
+              matrixSummary.variacionTotalPct >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+            }`}>
+              {matrixSummary.variacionTotalPct >= 0 ? '+' : ''}{matrixSummary.variacionTotalPct.toFixed(1)}%
+            </span>
           </div>
           <p className="text-[11px] font-mono text-on-surface-variant mt-2 truncate">
-            {bestModel ? formatCurrencyCOP(bestModel.projected2027) : '$0 COP'}
+            {formatCurrencyCOP(matrixSummary.totalProyeccion2027)}
           </p>
         </div>
 
-        {/* KPI 2: Modelo Seleccionado */}
+        {/* KPI 2: Modelo Óptimo (Incluye ARIMA) */}
         <div className="glass-card p-5 rounded-2xl border border-white/10 relative overflow-hidden">
           <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant block mb-1">
-            Modelo de Referencia Activo
+            Modelo de Referencia Global
           </span>
-          <div className="text-lg font-bold text-white mt-1 truncate">
-            {bestModel ? bestModel.shortName : 'Calculando...'}
+          <div className="text-lg font-bold text-white mt-1 truncate flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: bestModel?.color || '#38bdf8' }}></span>
+            <span>{bestModel ? bestModel.shortName : 'Calculando...'}</span>
           </div>
           <div className="flex items-center gap-3 mt-2 font-mono text-xs">
             <span className="text-emerald-400 font-semibold">
@@ -541,29 +564,29 @@ export function R20ResourceProjectionSection() {
           </div>
         </div>
 
-        {/* KPI 3: Base 2026 vs 2025 */}
+        {/* KPI 3: Recaudo 2026 Real */}
         <div className="glass-card p-5 rounded-2xl border border-white/10 relative overflow-hidden">
           <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant block mb-1">
-            Recaudo Base 2026 (Corte Actual)
+            Recaudo Base 2026 (Corte Vigencia)
           </span>
           <div className="text-2xl font-display font-bold text-white mt-1">
-            {formatCurrencyShortCOP(lastYearValue)}
+            {formatCurrencyShortCOP(matrixSummary.total2026)}
           </div>
-          <p className="text-[11px] text-on-surface-variant mt-2">
-            Vigencia 2025: <strong className="text-white font-mono">{formatCurrencyShortCOP(prevYearValue)}</strong>
+          <p className="text-[11px] text-on-surface-variant mt-2 font-mono">
+            COP: <strong className="text-white">{formatCurrencyCOP(matrixSummary.total2026)}</strong>
           </p>
         </div>
 
-        {/* KPI 4: Banda de Incertidumbre */}
+        {/* KPI 4: Incremento Neto Proyectado */}
         <div className="glass-card p-5 rounded-2xl border border-white/10 relative overflow-hidden">
           <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant block mb-1">
-            Banda de Incertidumbre (95%)
+            Incremento Neto Proyectado (Δ)
           </span>
-          <div className="text-lg font-display font-bold text-white mt-1 truncate">
-            {bestModel ? `${formatCurrencyShortCOP(bestModel.lowerBound95)} – ${formatCurrencyShortCOP(bestModel.upperBound95)}` : '$0'}
+          <div className="text-2xl font-display font-bold text-emerald-400 mt-1">
+            +{formatCurrencyShortCOP(matrixSummary.totalProyeccion2027 - matrixSummary.total2026)}
           </div>
-          <p className="text-[11px] text-on-surface-variant mt-2 font-mono">
-            Amplitud: {bestModel ? formatCurrencyShortCOP(bestModel.upperBound95 - bestModel.lowerBound95) : '$0'}
+          <p className="text-[11px] text-on-surface-variant mt-2">
+            Proyección basada en {matrixSummary.rows.length} conceptos activos
           </p>
         </div>
       </div>
@@ -571,62 +594,312 @@ export function R20ResourceProjectionSection() {
       {/* NAVEGACIÓN SECUNDARIA DEL APARTADO (Pestañas internas) */}
       <div className="flex items-center gap-2 border-b border-white/10 pb-2">
         <button
-          onClick={() => setActiveSubTab('modelos')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'modelos'
-              ? 'bg-amber-500 text-black shadow'
+          onClick={() => setActiveSubTab('matriz-conceptos')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+            activeSubTab === 'matriz-conceptos'
+              ? 'bg-amber-500 text-black shadow-lg scale-[1.02]'
               : 'text-on-surface-variant hover:text-white hover:bg-white/5'
           }`}
         >
-          <BarChart3 size={15} />
-          <span>Comparativa de Modelos y Curvas</span>
+          <Table size={16} />
+          <span>📋 Matriz Detallada de Conceptos y Total R20</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded font-mono bg-black/20 font-bold">
+            {matrixSummary.rows.length} Conceptos
+          </span>
         </button>
 
         <button
-          onClick={() => setActiveSubTab('conceptos')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeSubTab === 'conceptos'
-              ? 'bg-amber-500 text-black shadow'
+          onClick={() => setActiveSubTab('modelos')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+            activeSubTab === 'modelos'
+              ? 'bg-amber-500 text-black shadow-lg scale-[1.02]'
               : 'text-on-surface-variant hover:text-white hover:bg-white/5'
           }`}
         >
-          <Layers size={15} />
-          <span>Desglose Bottom-Up por Concepto</span>
+          <BarChart3 size={16} />
+          <span>📊 Comparativa de Modelos Matemáticos (Incluye ARIMA)</span>
           <span className="text-[10px] px-1.5 py-0.2 rounded font-mono bg-black/20 font-bold">
-            {bottomUpData.concepts.length}
+            {models.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveSubTab('unidades')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeSubTab === 'unidades'
-              ? 'bg-amber-500 text-black shadow'
+              ? 'bg-amber-500 text-black shadow-lg scale-[1.02]'
               : 'text-on-surface-variant hover:text-white hover:bg-white/5'
           }`}
         >
-          <Building2 size={15} />
-          <span>Distribución por Facultad / Sede</span>
+          <Building2 size={16} />
+          <span>🏛️ Distribución por Facultad / Sede</span>
         </button>
       </div>
 
-      {/* VISTA 1: COMPARATIVA DE MODELOS MATEMÁTICOS & GRÁFICA */}
+      {/* ========================================================================= */}
+      {/* VISTA A: MATRIZ DETALLADA DE CONCEPTOS UNO A UNO Y TOTAL R20              */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'matriz-conceptos' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* Tarjeta Ejecutiva de Resumen del Total R20 */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-surface-container-high/90 to-background shadow-xl">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider font-bold text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
+                    Consolidado Institucional de Recursos Propios
+                  </span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight">
+                  Total de la Proyección de Recursos Propios (R20) — Vigencia 2027
+                </h3>
+                <p className="text-xs md:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
+                  Cifra calculada mediante modelación desagregada concepto a concepto (Bottom-Up) para los <strong>{matrixSummary.rows.length} conceptos presupuestales</strong> de la universidad, indexando el esfuerzo propio y los supuestos macroeconómicos del MFMP.
+                </p>
+              </div>
+
+              {/* Bloque Destacado de Totales */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-black/40 p-5 rounded-2xl border border-white/15">
+                <div className="text-left sm:text-right pr-0 sm:pr-4 border-b sm:border-b-0 sm:border-r border-white/10 pb-3 sm:pb-0">
+                  <span className="text-[11px] uppercase tracking-wider text-on-surface-variant block font-medium">Recaudo Base 2026</span>
+                  <span className="text-xl font-mono font-bold text-sky-300">{formatCurrencyShortCOP(matrixSummary.total2026)}</span>
+                  <span className="text-[10px] font-mono text-on-surface-variant block">{formatCurrencyCOP(matrixSummary.total2026)}</span>
+                </div>
+
+                <div className="text-left sm:text-right">
+                  <span className="text-[11px] uppercase tracking-wider text-amber-400 block font-bold">TOTAL PROYECTADO 2027 (R20)</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-mono font-extrabold text-emerald-400">
+                      {formatCurrencyShortCOP(matrixSummary.totalProyeccion2027)}
+                    </span>
+                    <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded">
+                      +{matrixSummary.variacionTotalPct.toFixed(2)}%
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono font-semibold text-white block">
+                    {formatCurrencyCOP(matrixSummary.totalProyeccion2027)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* TABLA PRINCIPAL: TODOS LOS VALORES DE LOS CONCEPTOS UNO A UNO Y EL TOTAL R20 */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-white/10 space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Table size={18} className="text-amber-400" />
+                  Tabla Detallada de Conceptos de Ingreso R20
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Histórico por vigencias y proyección individual 2027 para cada concepto con fila de Total General.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Buscador de concepto */}
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                  <input
+                    type="text"
+                    placeholder="Buscar concepto..."
+                    value={conceptSearch}
+                    onChange={(e) => setConceptSearch(e.target.value)}
+                    className="bg-black/30 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-on-surface-variant focus:outline-none focus:border-amber-400 w-[180px]"
+                  />
+                </div>
+
+                {/* Toggle de columnas de años */}
+                <div className="inline-flex rounded-xl bg-black/40 p-1 border border-white/10 text-xs">
+                  <button
+                    onClick={() => setMatrixViewMode('recent')}
+                    className={`px-3 py-1 rounded-lg font-medium transition-all ${
+                      matrixViewMode === 'recent' ? 'bg-amber-500 text-black font-bold' : 'text-on-surface-variant hover:text-white'
+                    }`}
+                  >
+                    2021–2027 (Post-Gratuidad)
+                  </button>
+                  <button
+                    onClick={() => setMatrixViewMode('all')}
+                    className={`px-3 py-1 rounded-lg font-medium transition-all ${
+                      matrixViewMode === 'all' ? 'bg-amber-500 text-black font-bold' : 'text-on-surface-variant hover:text-white'
+                    }`}
+                  >
+                    10 Años Completos (2016–2027)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* TABLA PRINCIPAL RESPONSIVE */}
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-3.5 font-semibold text-white sticky left-0 bg-surface-container-low z-10">
+                      Concepto de Ingreso R20 ({filteredMatrixRows.length})
+                    </th>
+                    {displayYears.map(y => (
+                      <th 
+                        key={y} 
+                        className={`p-3.5 font-semibold text-right font-mono ${
+                          y === 2026 ? 'text-sky-300 bg-sky-500/10' : 'text-on-surface-variant'
+                        }`}
+                      >
+                        {y} {y === 2026 ? '(Real)' : ''}
+                      </th>
+                    ))}
+                    <th className="p-3.5 font-bold text-right text-emerald-300 bg-emerald-500/10 font-mono">
+                      Proyección 2027 ($ COP)
+                    </th>
+                    <th className="p-3.5 font-bold text-right text-white font-mono">
+                      Proy ($M)
+                    </th>
+                    <th className="p-3.5 font-semibold text-center text-amber-300">
+                      Var vs 2026
+                    </th>
+                    <th className="p-3.5 font-semibold text-center text-purple-300">
+                      Part. R20 (%)
+                    </th>
+                    <th className="p-3.5 font-semibold text-center text-on-surface-variant">
+                      Método
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {filteredMatrixRows.map((row, idx) => {
+                    return (
+                      <tr key={idx} className="hover:bg-white/5 transition-colors">
+                        <td className="p-3.5 font-semibold text-white max-w-[280px] truncate sticky left-0 bg-slate-900/90 backdrop-blur z-10" title={row.concepto}>
+                          <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
+                            <span className="truncate">{row.concepto}</span>
+                          </div>
+                        </td>
+
+                        {displayYears.map(y => {
+                          const val = row.valoresPorAno[y] || 0;
+                          return (
+                            <td 
+                              key={y} 
+                              className={`p-3.5 text-right font-mono ${
+                                y === 2026 
+                                  ? 'text-sky-300 font-bold bg-sky-500/5' 
+                                  : val > 0 ? 'text-on-surface-variant' : 'text-white/20'
+                              }`}
+                            >
+                              {val > 0 ? formatCurrencyShortCOP(val) : '—'}
+                            </td>
+                          );
+                        })}
+
+                        <td className="p-3.5 text-right font-mono font-bold text-emerald-300 bg-emerald-500/5">
+                          {formatCurrencyCOP(row.proyeccion2027)}
+                        </td>
+                        <td className="p-3.5 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(row.proyeccion2027)}
+                        </td>
+                        <td className="p-3.5 text-center font-mono font-bold">
+                          <span className={`px-2 py-0.5 rounded text-[11px] ${
+                            row.variacionPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
+                          }`}>
+                            {row.variacionPct >= 0 ? '+' : ''}{row.variacionPct.toFixed(1)}%
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-center font-mono font-bold text-purple-300">
+                          {row.participacionPct.toFixed(1)}%
+                        </td>
+                        <td className="p-3.5 text-center font-mono text-[10px] text-on-surface-variant">
+                          {row.modeloUtilizado}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+
+                {/* FILA DE TOTAL DE LA PROYECCIÓN DE R20 (SOLICITADA POR EL USUARIO) */}
+                <tfoot className="border-t-2 border-amber-500/40 bg-black/40 font-bold text-white text-xs sticky bottom-0">
+                  <tr className="shadow-lg">
+                    <td className="p-4 font-extrabold text-amber-400 uppercase tracking-wider sticky left-0 bg-slate-900 z-10 flex items-center gap-2">
+                      <Landmark size={16} className="text-amber-400 shrink-0" />
+                      <span>TOTAL GENERAL RECURSOS PROPIOS (R20)</span>
+                    </td>
+
+                    {displayYears.map(y => {
+                      const colTotal = matrixSummary.totalesPorAno[y] || 0;
+                      return (
+                        <td 
+                          key={y} 
+                          className={`p-4 text-right font-mono font-extrabold ${
+                            y === 2026 ? 'text-sky-300 bg-sky-500/20' : 'text-white'
+                          }`}
+                        >
+                          {formatCurrencyShortCOP(colTotal)}
+                        </td>
+                      );
+                    })}
+
+                    <td className="p-4 text-right font-mono font-extrabold text-emerald-300 bg-emerald-500/20 text-sm">
+                      {formatCurrencyCOP(matrixSummary.totalProyeccion2027)}
+                    </td>
+
+                    <td className="p-4 text-right font-mono font-extrabold text-white text-sm">
+                      {formatCurrencyShortCOP(matrixSummary.totalProyeccion2027)}
+                    </td>
+
+                    <td className="p-4 text-center font-mono font-extrabold text-emerald-400 bg-emerald-500/10">
+                      +{matrixSummary.variacionTotalPct.toFixed(2)}%
+                    </td>
+
+                    <td className="p-4 text-center font-mono font-extrabold text-purple-300">
+                      100.0%
+                    </td>
+
+                    <td className="p-4 text-center font-mono text-[10px] text-amber-400 font-bold">
+                      Consolidado Total R20
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* Sub-notas de la tabla */}
+            <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] text-on-surface-variant">
+              <span className="flex items-center gap-1.5">
+                <CheckCheck size={14} className="text-emerald-400" />
+                Los valores históricos provienen fielmente de los 124 registros consolidados de <strong>Historico Ingresos.csv</strong>.
+              </span>
+              <button
+                onClick={handleExport}
+                className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition-colors"
+              >
+                <Download size={13} />
+                Descargar esta matriz en CSV
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* VISTA B: COMPARATIVA DE MODELOS MATEMÁTICOS & GRÁFICA (INCLUYE ARIMA)      */}
+      {/* ========================================================================= */}
       {activeSubTab === 'modelos' && (
-        <div className="space-y-6">
-          {/* Gráfico Recharts */}
+        <div className="space-y-6 animate-in fade-in">
+          {/* Gráfico Recharts con Línea ARIMA */}
           <div className="glass-card p-6 md:p-8 rounded-[28px]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
               <div>
                 <h3 className="text-xl font-display text-white font-bold flex items-center gap-2">
                   <TrendingUp size={20} className="text-amber-400" />
-                  Curva Histórica y Trayectorias Proyectadas a 2027
+                  Curva Histórica y Modelos Predictivos a 2027 (Incluye ARIMA)
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Puntos reales {years[0]}–{years[years.length - 1]} vs convergencia de modelos matemáticos para 2027.
+                  Puntos reales {years[0]}–{years[years.length - 1]} vs proyección 2027 con ARIMA, Holt, OLS, Macro MFMP y polinomial.
                 </p>
               </div>
 
-              {/* Selector de visualización en gráfica */}
               <div className="flex items-center gap-2 text-xs bg-black/30 px-3 py-1.5 rounded-xl border border-white/10">
                 <span className="text-on-surface-variant font-semibold">Enfocar en Gráfica:</span>
                 <select
@@ -634,7 +907,7 @@ export function R20ResourceProjectionSection() {
                   onChange={(e) => setSelectedModelFilter(e.target.value)}
                   className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
                 >
-                  <option value="all" className="bg-slate-900 text-white">Todos los Modelos (Multi-Líneas)</option>
+                  <option value="all" className="bg-slate-900 text-white">Todos los Modelos ({models.length})</option>
                   {models.map(m => (
                     <option key={m.modelId} value={m.modelId} className="bg-slate-900 text-white">
                       {m.shortName} ({formatCurrencyShortCOP(m.projected2027)})
@@ -695,6 +968,19 @@ export function R20ResourceProjectionSection() {
                     dot={{ r: 5, fill: '#38bdf8', strokeWidth: 2, stroke: '#0f172a' }}
                     activeDot={{ r: 7 }}
                   />
+
+                  {/* Línea ARIMA (1,1,0) */}
+                  {(selectedModelFilter === 'all' || selectedModelFilter === 'arima') && (
+                    <Line
+                      type="monotone"
+                      dataKey="arima"
+                      name="ARIMA (1,1,0)"
+                      stroke="#818cf8"
+                      strokeWidth={3}
+                      strokeDasharray="4 4"
+                      dot={{ r: 6, fill: '#818cf8', strokeWidth: 2, stroke: '#0f172a' }}
+                    />
+                  )}
 
                   {/* Líneas Proyectadas */}
                   {(selectedModelFilter === 'all' || selectedModelFilter === 'macro') && (
@@ -784,11 +1070,14 @@ export function R20ResourceProjectionSection() {
               </ResponsiveContainer>
             </div>
 
-            {/* Leyenda y Notas del Gráfico */}
+            {/* Leyenda de la gráfica */}
             <div className="mt-4 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs text-on-surface-variant">
               <div className="flex flex-wrap items-center gap-4">
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-1 bg-[#38bdf8] rounded-full"></span> Real Histórico
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-1 bg-[#818cf8] rounded-full"></span> ARIMA (1,1,0)
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-1 bg-[#f59e0b] rounded-full"></span> Macro MFMP (7%)
@@ -806,30 +1095,27 @@ export function R20ResourceProjectionSection() {
                   <span className="w-3 h-1 bg-[#fbbf24] rounded-full"></span> WMA Móvil
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-1 bg-[#f472b6] rounded-full"></span> CAGR
+                  <span className="w-3 h-1 bg-[#60a5fa] rounded-full"></span> Lineal OLS
                 </span>
               </div>
               <span className="font-mono text-white bg-white/5 px-2.5 py-1 rounded-lg">
-                Convergencia Proyectada 2027
+                {models.length} Modelos Evaluados
               </span>
             </div>
           </div>
 
-          {/* TABLA COMPARATIVA DE LOS 7 MODELOS MATEMÁTICOS */}
+          {/* TABLA COMPARATIVA DE LOS 8 MODELOS MATEMÁTICOS */}
           <div className="glass-card p-6 rounded-[28px]">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-display text-white font-bold flex items-center gap-2">
                   <Table size={18} className="text-amber-400" />
-                  Evaluación Comparativa de Modelos Matemáticos
+                  Evaluación Comparativa de Modelos Matemáticos (Incluye ARIMA)
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-0.5">
-                  Racional matemático, bondad de ajuste (R²), tasa de error (MAPE) y valor proyectado para 2027.
+                  Racional matemático, ecuación, bondad de ajuste (R²), tasa de error (MAPE) y valor proyectado para 2027.
                 </p>
               </div>
-              <span className="text-xs font-mono text-on-surface-variant bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
-                {models.length} Modelos Evaluados
-              </span>
             </div>
 
             <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
@@ -902,106 +1188,23 @@ export function R20ResourceProjectionSection() {
                 </tbody>
               </table>
             </div>
-
-            <p className="text-[11px] text-on-surface-variant mt-3 italic flex items-center gap-1.5">
-              <Info size={13} className="text-amber-400 shrink-0" />
-              Haga clic sobre cualquier fila para enfocar la trayectoria de ese modelo en la gráfica interactiva superior.
-            </p>
           </div>
         </div>
       )}
 
-      {/* VISTA 2: DESGLOSE BOTTOM-UP POR CONCEPTO */}
-      {activeSubTab === 'conceptos' && (
-        <div className="glass-card p-6 md:p-8 rounded-[28px] space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-display text-white font-bold flex items-center gap-2">
-                <Layers size={20} className="text-amber-400" />
-                Proyección Bottom-Up por Concepto de Ingreso R20
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-1">
-                Estimación individual concepto por concepto sumada para contrastar con la proyección global Top-Down.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 bg-black/30 px-4 py-2 rounded-2xl border border-white/10">
-              <span className="text-xs text-on-surface-variant">Suma Bottom-Up 2027:</span>
-              <span className="text-lg font-mono font-bold text-emerald-400">
-                {formatCurrencyShortCOP(bottomUpData.totalBottomUp2027)}
-              </span>
-              <span className="text-xs font-mono text-on-surface-variant">
-                ({bottomUpData.growthPct >= 0 ? '+' : ''}{bottomUpData.growthPct.toFixed(1)}% vs 2026)
-              </span>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
-                <tr>
-                  <th className="p-4 font-semibold text-white">Concepto de Ingreso</th>
-                  <th className="p-4 font-semibold text-right text-on-surface-variant">Recaudo 2024</th>
-                  <th className="p-4 font-semibold text-right text-on-surface-variant">Recaudo 2025</th>
-                  <th className="p-4 font-semibold text-right text-sky-300">Recaudo 2026</th>
-                  <th className="p-4 font-semibold text-right text-emerald-300">Proyectado 2027</th>
-                  <th className="p-4 font-semibold text-center text-white">Variación</th>
-                  <th className="p-4 font-semibold text-center text-amber-300">Part. R20 (%)</th>
-                  <th className="p-4 font-semibold text-center text-on-surface-variant">Método</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 font-sans">
-                {bottomUpData.concepts.map((c, idx) => (
-                  <tr key={idx} className="hover:bg-white/5 transition-colors">
-                    <td className="p-4 font-semibold text-white max-w-[260px] truncate" title={c.concepto}>
-                      {c.concepto}
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(c.recaudo2024)}
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(c.recaudo2025)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-sky-300">
-                      {formatCurrencyShortCOP(c.recaudo2026)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                      {formatCurrencyShortCOP(c.recaudo2027Proyectado)}
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold">
-                      <span className={`px-2 py-0.5 rounded text-[11px] ${
-                        c.variacionPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
-                      }`}>
-                        {c.variacionPct >= 0 ? '+' : ''}{c.variacionPct.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold text-amber-300">
-                      {c.participacionPct.toFixed(1)}%
-                    </td>
-                    <td className="p-4 text-center font-mono text-[10px] text-on-surface-variant">
-                      {c.modeloUsado}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* VISTA 3: DISTRIBUCIÓN POR FACULTAD / SEDE */}
+      {/* ========================================================================= */}
+      {/* VISTA C: DISTRIBUCIÓN POR FACULTAD / SEDE                                 */}
+      {/* ========================================================================= */}
       {activeSubTab === 'unidades' && (
-        <div className="glass-card p-6 md:p-8 rounded-[28px] space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-display text-white font-bold flex items-center gap-2">
-                <Building2 size={20} className="text-amber-400" />
-                Distribución Proyectada por Unidad y Seccional (2027)
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-1">
-                Aportes de las 14 dependencias académicas y administrativas en la generación de Recursos Propios.
-              </p>
-            </div>
+        <div className="glass-card p-6 md:p-8 rounded-[28px] space-y-6 animate-in fade-in">
+          <div>
+            <h3 className="text-xl font-display text-white font-bold flex items-center gap-2">
+              <Building2 size={20} className="text-amber-400" />
+              Distribución Proyectada por Unidad y Seccional (2027)
+            </h3>
+            <p className="text-xs text-on-surface-variant mt-1">
+              Aportes de las dependencias académicas y administrativas en la generación de Recursos Propios.
+            </p>
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
@@ -1046,13 +1249,13 @@ export function R20ResourceProjectionSection() {
           </div>
           <div className="space-y-3">
             <h4 className="text-base font-bold text-white font-display">
-              Dictamen Técnico Institucional — Análisis de Transición Estructural de R20
+              Dictamen Técnico Institucional — Transición Estructural de R20 y Conclusión
             </h4>
             <p className="text-xs md:text-sm text-on-surface-variant leading-relaxed">
               <strong className="text-white">Cambio de Paradigma Presupuestal:</strong> En el periodo 2016–2018, los Recursos Propios de la UPTC superaban los \$60.000 millones anuales debido al recaudo masivo directo por matrículas de pregrado. Con la sanción de la <strong>Política de Gratuidad en la Educación Superior (Ley 2307 de 2023 / Decreto 2271 de 2023)</strong>, la universidad dejó de cobrar directamente la matrícula a los estudiantes, recibiendo en su lugar transferencias directas de la Nación (recursos R10 / FES).
             </p>
             <p className="text-xs md:text-sm text-on-surface-variant leading-relaxed">
-              <strong className="text-white">Criterio de Calibración:</strong> Por este motivo, proyectar 2027 con una regresión lineal simple sobre los 10 años completos arroja una falsa pendiente negativa pronunciada. La <strong>ventana Post-Gratuidad (2021–2026)</strong> refleja con precisión el nuevo piso estructural de R20 (\$16.000M a \$24.000M), estabilizado en certificaciones, servicios de alimentación, rendimientos de tesorería y otros ingresos de autogestión.
+              <strong className="text-white">Total Proyectado 2027:</strong> La suma desagregada concepto a concepto arroja un <strong>Total de Proyección R20 para 2027 de {formatCurrencyShortCOP(matrixSummary.totalProyeccion2027)}</strong> ({formatCurrencyCOP(matrixSummary.totalProyeccion2027)}), lo que representa un crecimiento saludable y prudente de <strong>+{matrixSummary.variacionTotalPct.toFixed(2)}%</strong> frente al cierre de 2026, alineado con las directrices del Consejo Superior y la Vicerrectoría Administrativa y Financiera (VAFI).
             </p>
           </div>
         </div>
