@@ -486,7 +486,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
             {formatCurrencyShort(results.totals.totalPagos)}
           </p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-blue-300 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% ejecutado (13% bajo compromisos)</span>
+            <span className="text-blue-300 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% ejecutado (8.5% bajo compromisos)</span>
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-cyan-500 bg-cyan-500/5">
@@ -495,7 +495,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
             {formatCurrencyShort(results.totals.saldoDisponible)}
           </p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-cyan-300 font-bold">13% Cuentas por Pagar / Contratos</span>
+            <span className="text-cyan-300 font-bold">8.5% Cuentas por Pagar / Contratos</span>
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-emerald-500 bg-emerald-500/5">

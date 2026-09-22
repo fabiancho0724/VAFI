@@ -309,8 +309,8 @@ function simulateCore(
 
     // REGLA TÁCTICA INSTITUCIONAL:
     // Dados los históricos y condiciones contractuales de la UPTC, los pagos efectivos a 31 de diciembre
-    // siempre están en promedio un 13% por debajo de los compromisos totales (ejecución efectiva del 87%).
-    const FACTOR_PAGO_EFECTIVO = 0.87;
+    // se sitúan al 91.5% de los compromisos totales (8.5% por debajo de compromisos para reserva de caja).
+    const FACTOR_PAGO_EFECTIVO = 0.915;
 
     if (hasManualExpense) {
       totalComp = customConfig!.manualExpense!;
@@ -322,7 +322,7 @@ function simulateCore(
       totalPago = Math.max(pagoHistorico, Math.round(totalComp * FACTOR_PAGO_EFECTIVO));
       methodUsed = methodUsed + ' / Gasto Manual';
       trace.push({ step: 'Gasto Manual Override', value: totalComp, detail: 'Compromiso total fijado manualmente' });
-      trace.push({ step: 'Pago Cierre (87% Efectivo)', value: totalPago, detail: 'Pagos efectivos 13% por debajo de compromisos totales' });
+      trace.push({ step: 'Pago Cierre (91.5% Efectivo)', value: totalPago, detail: 'Pagos efectivos al 91.5% de compromisos totales' });
     } else if (isR10) {
       // REGLA INSTITUCIONAL: La diferencia entre el compromiso y el ingreso es de apenas 2.200 millones,
       // concentrada exclusivamente como excedente en el Recurso R10 (Aportes Nación).
@@ -331,22 +331,22 @@ function simulateCore(
       totalComp = totalIngresos; // Ajustado en balance al ingreso disponible
       totalPago = Math.max(pagoHistorico, Math.round(totalComp * FACTOR_PAGO_EFECTIVO));
       gasProyectado = Math.max(0, totalComp - compHistorico);
-      methodUsed = 'Ajuste Institucional (Excedente R10 $2.200M / Pagos 87%)';
+      methodUsed = 'Ajuste Institucional (Excedente R10 $2.200M / Pagos 91.5%)';
       trace.push({ step: 'Compromiso R10 Original', value: compromisoOriginal, detail: `Ingreso R10 (${totalIngresos}) + Diferencia de $2.200M` });
       trace.push({ step: 'Excedente R10 (Alerta)', value: excesoCompromiso, detail: 'Excedente de compromisos sobre el ingreso' });
       trace.push({ step: 'Compromiso Ajustado', value: totalComp, detail: 'Limitado a ingresos para balance en equilibrio' });
-      trace.push({ step: 'Pago Cierre R10 (87% Efectivo)', value: totalPago, detail: 'Pagos efectivos 13% por debajo de compromisos (Reserva de caja 13%)' });
+      trace.push({ step: 'Pago Cierre R10 (91.5% Efectivo)', value: totalPago, detail: 'Pagos efectivos al 91.5% de compromisos (Reserva de caja 8.5%)' });
       alerts.push('🚨 ALERTA PRESUPUESTAL: En Recurso 10 (Aportes Nación) existe una diferencia contractual de $2.200.000.000 sobre el ingreso proyectado.');
     } else {
       // En los demás recursos se redistribuyen los compromisos de forma proporcional al ingreso disponible,
-      // asegurando que compromiso = ingreso y pago = 87% de compromiso (13% reserva para cuentas por pagar).
+      // asegurando que compromiso = ingreso y pago = 91.5% de compromiso (8.5% reserva para cuentas por pagar).
       compromisoOriginal = totalIngresos;
       excesoCompromiso = 0;
       totalComp = totalIngresos;
       totalPago = Math.max(pagoHistorico, Math.round(totalComp * FACTOR_PAGO_EFECTIVO));
       gasProyectado = Math.max(0, totalComp - compHistorico);
       trace.push({ step: 'Compromiso Equilibrado', value: totalComp, detail: 'Redistribuido al 100% del ingreso disponible' });
-      trace.push({ step: 'Pago Cierre (87% Efectivo)', value: totalPago, detail: 'Pagos efectivos 13% por debajo de compromisos (Reserva de caja 13%)' });
+      trace.push({ step: 'Pago Cierre (91.5% Efectivo)', value: totalPago, detail: 'Pagos efectivos al 91.5% de compromisos (Reserva de caja 8.5%)' });
     }
     
     let ingresoAdmin = 0;
