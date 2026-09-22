@@ -154,13 +154,17 @@ export interface StrictProjectionResult {
 const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18'];
 
 export const GIROS_SIIF_PROYECTADOS: Record<string, number[]> = {
-  '10':   [25447028176, 28905581876, 28841664885, 25447028176],
-  '10.0': [25447028176, 28905581876, 28841664885, 25447028176],
-  '10.5': [1720542062, 1720542062, 1720542062, 1720542062],
-  '18':   [179049568, 179049568, 179049568, 179049568],
-  '17':   [478844455, 478844455, 478844455, 478844455],
-  '10.1': [5623807220, 2165253520, 0, 0],
-  '10.3': [0, 0, 2229170511, 0]
+  '10':   [20695590222, 23508369040, 23456386438, 20695555423],
+  '10.0': [20695590222, 23508369040, 23456386438, 20695555423],
+  '10.1': [0, 2165253520, 0, 0],
+  '10.2': [0, 0, 0, 0],
+  '10.3': [0, 0, 2229170511, 0],
+  '10.5': [0, 0, 0, 0],
+  '13':   [0, 0, 0, 0],
+  '14':   [0, 0, 0, 0],
+  '16.1': [0, 0, 0, 0],
+  '17':   [0, 478844455, 478844455, 478844455],
+  '18':   [0, 179049568, 179049568, 179049568]
 };
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const MONTH_KEYS = ['Valor ene', 'Valor feb', 'Valor mar', 'Valor abr', 'Valor may', 'Valor jun', 'Valor jul', 'Valor ago', 'Valor sep', 'Valor oct', 'Valor nov', 'Valor dic'];
@@ -303,41 +307,46 @@ function simulateCore(
 
     const isR10 = base.recurso === '10' || base.recurso === '10.0' || base.recurso.includes('10 -');
 
+    // REGLA TÁCTICA INSTITUCIONAL:
+    // Dados los históricos y condiciones contractuales de la UPTC, los pagos efectivos a 31 de diciembre
+    // siempre están en promedio un 13% por debajo de los compromisos totales (ejecución efectiva del 87%).
+    const FACTOR_PAGO_EFECTIVO = 0.87;
+
     if (hasManualExpense) {
       totalComp = customConfig!.manualExpense!;
-      totalPago = customConfig!.manualExpense!;
       compromisoOriginal = totalComp;
       if (totalComp > totalIngresos) {
         excesoCompromiso = totalComp - totalIngresos;
       }
       gasProyectado = Math.max(0, totalComp - compHistorico);
+      totalPago = Math.max(pagoHistorico, Math.round(totalComp * FACTOR_PAGO_EFECTIVO));
       methodUsed = methodUsed + ' / Gasto Manual';
       trace.push({ step: 'Gasto Manual Override', value: totalComp, detail: 'Compromiso total fijado manualmente' });
-      trace.push({ step: 'Pago Manual', value: totalPago, detail: 'Pago programado igual al compromiso fijado' });
+      trace.push({ step: 'Pago Cierre (87% Efectivo)', value: totalPago, detail: 'Pagos efectivos 13% por debajo de compromisos totales' });
     } else if (isR10) {
       // REGLA INSTITUCIONAL: La diferencia entre el compromiso y el ingreso es de apenas 2.200 millones,
       // concentrada exclusivamente como excedente en el Recurso R10 (Aportes Nación).
       excesoCompromiso = 2200000000;
       compromisoOriginal = totalIngresos + excesoCompromiso;
       totalComp = totalIngresos; // Ajustado en balance al ingreso disponible
-      totalPago = totalIngresos; // Ejecución total del ingreso sin superávit
+      totalPago = Math.max(pagoHistorico, Math.round(totalComp * FACTOR_PAGO_EFECTIVO));
       gasProyectado = Math.max(0, totalComp - compHistorico);
-      methodUsed = 'Ajuste Institucional (Excedente R10 $2.200M)';
+      methodUsed = 'Ajuste Institucional (Excedente R10 $2.200M / Pagos 87%)';
       trace.push({ step: 'Compromiso R10 Original', value: compromisoOriginal, detail: `Ingreso R10 (${totalIngresos}) + Diferencia de $2.200M` });
       trace.push({ step: 'Excedente R10 (Alerta)', value: excesoCompromiso, detail: 'Excedente de compromisos sobre el ingreso' });
       trace.push({ step: 'Compromiso Ajustado', value: totalComp, detail: 'Limitado a ingresos para balance en equilibrio' });
-      trace.push({ step: 'Pago Cierre R10', value: totalPago, detail: 'Ejecución plena del recaudo efectivo' });
+      trace.push({ step: 'Pago Cierre R10 (87% Efectivo)', value: totalPago, detail: 'Pagos efectivos 13% por debajo de compromisos (Reserva de caja 13%)' });
       alerts.push('🚨 ALERTA PRESUPUESTAL: En Recurso 10 (Aportes Nación) existe una diferencia contractual de $2.200.000.000 sobre el ingreso proyectado.');
     } else {
       // En los demás recursos se redistribuyen los compromisos de forma proporcional al ingreso disponible,
-      // asegurando que compromiso = ingreso y pago = ingreso (cero déficit y cero superávit artificial).
+      // asegurando que compromiso = ingreso y pago = 87% de compromiso (13% reserva para cuentas por pagar).
       compromisoOriginal = totalIngresos;
       excesoCompromiso = 0;
       totalComp = totalIngresos;
-      totalPago = totalIngresos;
+      totalPago = Math.max(pagoHistorico, Math.round(totalComp * FACTOR_PAGO_EFECTIVO));
       gasProyectado = Math.max(0, totalComp - compHistorico);
       trace.push({ step: 'Compromiso Equilibrado', value: totalComp, detail: 'Redistribuido al 100% del ingreso disponible' });
-      trace.push({ step: 'Pago Cierre Equilibrado', value: totalPago, detail: 'Ejecución plena de ingresos de la vigencia' });
+      trace.push({ step: 'Pago Cierre (87% Efectivo)', value: totalPago, detail: 'Pagos efectivos 13% por debajo de compromisos (Reserva de caja 13%)' });
     }
     
     let ingresoAdmin = 0;
@@ -516,38 +525,13 @@ function simulateCore(
          if (!r.ingresosPorMesProyectado) r.ingresosPorMesProyectado = [0,0,0,0];
          r.ingresosPorMesProyectado[pIdx] = monthIngProy;
          
-         if (gastos2026Parsed) {
-           const compHistRec = (monthlyHist.comp[r.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
-           const pagoHistRec = (monthlyHist.pago[r.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
-           const remComp = Math.max(0, r.totalCompromisos - compHistRec);
-           const remPago = Math.max(0, r.totalPagos - pagoHistRec);
+         const compHistRec = (monthlyHist.comp[r.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+         const pagoHistRec = (monthlyHist.pago[r.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+         const remComp = Math.max(0, r.totalCompromisos - compHistRec);
+         const remPago = Math.max(0, r.totalPagos - pagoHistRec);
 
-           mComp += remComp * MONTH_PAGO_WEIGHTS[pIdx];
-           mPago += remPago * MONTH_PAGO_WEIGHTS[pIdx];
-         } else {
-           const totalRealNomina = expenseTypeReal['2.1.1 Gastos de Personal'] || expenseTypeReal['Personal (Nómina)'] || 1;
-           const shareN = (expenseTypeResourceReal['2.1.1 Gastos de Personal']?.[r.recurso] || expenseTypeResourceReal['Personal (Nómina)']?.[r.recurso] || 0) / totalRealNomina;
-           const nAsignada = TOTAL_NOMINA_SEP_DIC * shareN;
-           const monthlyN = NOMINA_EXACTA_SEP_DIC[pIdx] * shareN;
-
-           const totalRealFunc = expenseTypeReal['2.1.2 Gastos de Funcionamiento'] || expenseTypeReal['Funcionamiento'] || 1;
-           const shareF = (expenseTypeResourceReal['2.1.2 Gastos de Funcionamiento']?.[r.recurso] || expenseTypeResourceReal['Funcionamiento']?.[r.recurso] || 0) / totalRealFunc;
-           const fAsignada = TOTAL_FUNC_SEP_DIC * shareF;
-           const monthlyF = FUNCIONAMIENTO_EXACTO_SEP_DIC[pIdx] * shareF;
-
-           const otherExpense = Math.max(0, r.gastosProyectados - nAsignada - fAsignada);
-           
-           let w_other = w;
-           if (idx === 11) {
-               w_other = 0;
-           } else if (idx === 10) {
-               const dec_w = historicWeights[r.recurso] ? historicWeights[r.recurso][11] : 0.25;
-               w_other += dec_w;
-           }
-
-           mComp += monthlyN + monthlyF + (otherExpense * w_other);
-           mPago += monthlyN + (monthlyF * 0.9) + (otherExpense * 0.9 * w_other);
-         }
+         mComp += remComp * MONTH_PAGO_WEIGHTS[pIdx];
+         mPago += remPago * MONTH_PAGO_WEIGHTS[pIdx];
       }
     });
     

@@ -55,21 +55,21 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
 
   // Metadatos explicativos de marco legal y entidad para Ingresos Fijos
   const METADATOS_FIJOS: Record<string, { baseLegal: string; entidad: string; calendarNote: string }> = {
-    '10': { baseLegal: 'Ley 30/1992 Art. 86 / Res. MEN Anual', entidad: 'Ministerio de Educación Nacional (MEN)', calendarNote: '4 Giros mensuales programados en PAC SIIF' },
-    '10.0': { baseLegal: 'Ley 30/1992 Art. 86 / Res. MEN Anual', entidad: 'Ministerio de Educación Nacional (MEN)', calendarNote: '4 Giros mensuales programados en PAC SIIF' },
-    '10.1': { baseLegal: 'Resolución MEN - Plan Fomento Calidad (PIC Convencional)', entidad: 'MEN - Subdirección Apoyo IES', calendarNote: 'Giros bimestrales en SIIF Nación' },
-    '10.2': { baseLegal: 'Resolución MEN - Fomento a la Calidad Regional', entidad: 'MEN', calendarNote: 'Giro programado según radicación de proyectos' },
-    '10.3': { baseLegal: 'Resolución MEN - Fortalecimiento a la Gestión', entidad: 'MEN', calendarNote: 'Giro programado en SIIF para noviembre' },
-    '10.5': { baseLegal: 'Ley 2307/2023 / Decreto Reglamentario MEN (Gratuidad)', entidad: 'MEN / Fondo Gratuidad', calendarNote: 'Giros calendarizados de compensación matrícula 100%' },
+    '10': { baseLegal: 'Ley 30/1992 Art. 86 / Res. MEN Anual', entidad: 'Ministerio de Educación Nacional (MEN)', calendarNote: 'Recaudo efectivo $238.714M + Giros PAC Sep-Dic $88.356M' },
+    '10.0': { baseLegal: 'Ley 30/1992 Art. 86 / Res. MEN Anual', entidad: 'Ministerio de Educación Nacional (MEN)', calendarNote: 'Recaudo efectivo $238.714M + Giros PAC Sep-Dic $88.356M' },
+    '10.1': { baseLegal: 'Resolución MEN - Plan Fomento Calidad (PIC Convencional)', entidad: 'MEN - Subdirección Apoyo IES', calendarNote: 'Recaudo efectivo $5.624M + Giro pendiente $2.165M' },
+    '10.2': { baseLegal: 'Resolución MEN - Fomento a la Calidad Regional', entidad: 'MEN', calendarNote: 'Recaudo 100% efectivo ($3.060M) completado' },
+    '10.3': { baseLegal: 'Resolución MEN - Fortalecimiento a la Gestión', entidad: 'MEN', calendarNote: 'Giro programado en SIIF para noviembre ($2.229M)' },
+    '10.5': { baseLegal: 'Ley 2307/2023 / Decreto Reglamentario MEN (Gratuidad)', entidad: 'MEN / Fondo Gratuidad', calendarNote: 'Recaudo 100% efectivo ($11.208M) completado' },
     '12': { baseLegal: 'Ley 1697/2013 - Estampilla Pro-UNAL y Otras Estatales', entidad: 'Ministerio de Hacienda / DIAN', calendarNote: 'Transferencias de recaudos tributarios nacionales' },
-    '13': { baseLegal: 'Art. 142 Ley 1819/2016 / DIAN (Excedentes Cooperativos)', entidad: 'Sector Cooperativo / DIAN', calendarNote: 'Giro reglamentado anual por excedentes financieros' },
-    '14': { baseLegal: 'Fondo de Solidaridad Educativa (FSE) - MEN', entidad: 'MEN / FSE', calendarNote: 'Compensación de matrículas de estudiantes vulnerables' },
+    '13': { baseLegal: 'Art. 142 Ley 1819/2016 / DIAN (Excedentes Cooperativos)', entidad: 'Sector Cooperativo / DIAN', calendarNote: 'Recaudo 100% efectivo ($1.535M) completado' },
+    '14': { baseLegal: 'Fondo de Solidaridad Educativa (FSE) - MEN', entidad: 'MEN / FSE', calendarNote: 'Recaudo 100% efectivo ($12.641M) completado' },
     '16': { baseLegal: 'Presupuesto General de la Nación (PGN) - Ley 30 Art. 87', entidad: 'DNP / MEN / MinHacienda', calendarNote: 'Asignación anual de inversión pública aprobada' },
     '16.0': { baseLegal: 'Presupuesto General de la Nación (PGN) - Ley 30 Art. 87', entidad: 'DNP / MEN / MinHacienda', calendarNote: 'Asignación anual de inversión pública aprobada' },
-    '16.1': { baseLegal: 'Planes de Fomento Básicos (PFB) - MEN', entidad: 'MEN', calendarNote: 'Proyectos de inversión básica institucional' },
+    '16.1': { baseLegal: 'Planes de Fomento Básicos (PFB) - MEN', entidad: 'MEN', calendarNote: 'Recaudo 100% efectivo ($1.407M) completado' },
     '16.2': { baseLegal: 'Planes de Fomento Complementarios (PFC) - MEN', entidad: 'MEN', calendarNote: 'Proyectos complementarios de infraestructura y TIC' },
-    '17': { baseLegal: 'Ley 403/1997 Art. 1 / MinHacienda (Descuento Electoral)', entidad: 'Ministerio de Hacienda y Crédito Público', calendarNote: 'Reembolso directo de descuentos electorales en matrículas' },
-    '18': { baseLegal: 'Artículo 87 Ley 30/1992 - Fondo Desarrollo Universitario', entidad: 'CESU / MEN', calendarNote: 'Distribución reglamentada por indicadores de desempeño' }
+    '17': { baseLegal: 'Ley 403/1997 Art. 1 / MinHacienda (Descuento Electoral)', entidad: 'Ministerio de Hacienda y Crédito Público', calendarNote: 'Recaudo efectivo $4.207M + Giros pendientes $1.437M' },
+    '18': { baseLegal: 'Artículo 87 Ley 30/1992 - Fondo Desarrollo Universitario', entidad: 'CESU / MEN', calendarNote: 'Recaudo efectivo $1.573M + Giros pendientes $537M' }
   };
 
   // Metadatos explicativos de naturaleza y riesgo para Ingresos Proyectados

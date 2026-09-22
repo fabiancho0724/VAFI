@@ -481,28 +481,28 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-blue-500">
-          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Pagos Cierre</p>
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Pagos Cierre Efectivo</p>
           <p className="text-2xl font-display text-blue-400">
             {formatCurrencyShort(results.totals.totalPagos)}
           </p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-blue-300 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% de ingresos ejecutados</span>
+            <span className="text-blue-300 font-bold">{((results.totals.totalPagos / (results.totals.totalCompromisos || 1)) * 100).toFixed(1)}% ejecutado (13% bajo compromisos)</span>
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-cyan-500 bg-cyan-500/5">
-          <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1">Flujo Neto Tesorería</p>
-          <p className="text-2xl font-display text-emerald-400 font-bold">
-            $0
+          <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1">Reserva de Caja (Cierre)</p>
+          <p className="text-2xl font-display text-cyan-400 font-bold">
+            {formatCurrencyShort(results.totals.saldoDisponible)}
           </p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-emerald-300 font-bold">Cierre Equilibrado</span>
+            <span className="text-cyan-300 font-bold">13% Cuentas por Pagar / Contratos</span>
           </div>
         </div>
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group border-l-4 border-l-emerald-500 bg-emerald-500/5">
           <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Estado del Balance</p>
           <p className="text-2xl font-display text-emerald-400">Equilibrado</p>
           <div className="mt-2 flex items-center gap-2 text-xs">
-            <span className="text-slate-300 font-bold">Sin superávit artificial</span>
+            <span className="text-emerald-300 font-bold">Compromisos 100% amparados</span>
           </div>
         </div>
       </div>
