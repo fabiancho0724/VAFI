@@ -44,6 +44,7 @@ export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => voi
   const [expandedTiposGasto, setExpandedTiposGasto] = useState<string[]>(['2.1.1 Gastos de Personal']);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isBoardPresentationOpen, setIsBoardPresentationOpen] = useState(false);
+  const [matrixTargetMode, setMatrixTargetMode] = useState<'financiados' | 'totales'>('financiados');
   const [selectedUnitOps, setSelectedUnitOps] = useState('Todas');
   const [selectedTipoOps, setSelectedTipoOps] = useState('Todos');
 
@@ -225,46 +226,78 @@ export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => voi
       });
     }
 
-    // 3. Project months 8..11 (Sep..Dic) for Personal with exact attached flow; other expenses according to Gastos 2026 without adding extra commitments
+    // 3. Proyección Meses 8..11 (Sep..Dic):
+    // REGLA TÉCNICA INSTITUCIONAL:
+    // - Gastos de Personal: 100% FIJO E INALTERABLE ($359.60MM anual con cronograma exacto Sep-Dic).
+    // - Los otros 4 tipos de gasto se ajustan al valor inferior del compromiso institucional ($527.12MM Financiados o $529.32MM Totales).
     const weightsStd = [0.20, 0.22, 0.26, 0.32];
     const PERSONAL_EXACTO_SEP_DIC = [28740288969, 27877151499, 31041344714, 76314557950];
 
     const pType = tiposMap['2.1.1 Gastos de Personal'];
     const totalHistPersonal = pType ? Object.values(pType.recursos).reduce((acc, r) => acc + r.monthly.slice(0, 8).reduce((a, b) => a + b, 0), 0) || 1 : 1;
 
-    Object.values(tiposMap).forEach(t => {
-      const isPersonal = t.name.includes('Personal');
-      if (isPersonal) {
-        Object.values(t.recursos).forEach(rec => {
-          const histSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
-          const share = histSum / totalHistPersonal;
-          for (let m = 8; m < 12; m++) {
-            const pVal = PERSONAL_EXACTO_SEP_DIC[m - 8] * share;
-            rec.monthly[m] = pVal;
-            t.monthly[m] += pVal;
-          }
-          rec.total = rec.monthly.reduce((a, b) => a + b, 0);
-        });
-      } else {
-        Object.values(t.recursos).forEach(rec => {
-          const histSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
-          const targetComp = rec.totalCompG26 > 0 ? rec.totalCompG26 : histSum;
-          const factor = 81643918815.45 / 97259711621;
-          const remaining = Math.max(0, (targetComp - histSum) * factor);
-          for (let m = 8; m < 12; m++) {
-            const pVal = remaining * weightsStd[m - 8];
-            rec.monthly[m] = pVal;
-            t.monthly[m] += pVal;
-          }
-          rec.total = rec.monthly.reduce((a, b) => a + b, 0);
-        });
-      }
+    // 3.1 Personal: Exacto e inalterable
+    if (pType) {
+      Object.values(pType.recursos).forEach(rec => {
+        const histSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+        const share = histSum / totalHistPersonal;
+        for (let m = 8; m < 12; m++) {
+          const pVal = PERSONAL_EXACTO_SEP_DIC[m - 8] * share;
+          rec.monthly[m] = pVal;
+          pType.monthly[m] += pVal;
+        }
+        rec.total = rec.monthly.reduce((a, b) => a + b, 0);
+      });
+    }
+
+    const personalTotal = pType ? pType.monthly.reduce((a, b) => a + b, 0) : 359596839055;
+
+    // 3.2 Compromiso institucional objetivo (Financiado en equilibrio: $527.12MM o Total contractual: $529.32MM)
+    const targetCompromisoTotal = matrixTargetMode === 'totales'
+      ? (results.totals.totalCompromisosOriginales || 529321651378.78)
+      : (results.totals.totalCompromisos || 527121651378.78);
+
+    const targetOthers = Math.max(0, targetCompromisoTotal - personalTotal);
+
+    // Sumatoria histórica ejecutada de otros gastos (Ene-Ago) y remanente sin escalar
+    let histOthers = 0;
+    let totalUnscaledRem = 0;
+
+    Object.entries(tiposMap).forEach(([tName, t]) => {
+      if (tName.includes('Personal')) return;
+      histOthers += t.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+      Object.values(t.recursos).forEach(rec => {
+        const hSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+        const targetComp = rec.totalCompG26 > 0 ? rec.totalCompG26 : hSum;
+        const rem = Math.max(0, targetComp - hSum);
+        totalUnscaledRem += rem;
+      });
+    });
+
+    const neededSepDic = Math.max(0, targetOthers - histOthers);
+    const dynamicScaleFactor = totalUnscaledRem > 0 ? (neededSepDic / totalUnscaledRem) : 0;
+
+    // 3.3 Asignación de saldo Sep-Dic a los otros 4 tipos de gasto en estricta proporción
+    Object.entries(tiposMap).forEach(([tName, t]) => {
+      if (tName.includes('Personal')) return;
+      Object.values(t.recursos).forEach(rec => {
+        const hSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+        const targetComp = rec.totalCompG26 > 0 ? rec.totalCompG26 : hSum;
+        const rem = Math.max(0, targetComp - hSum);
+        const remainingScaled = rem * dynamicScaleFactor;
+        for (let m = 8; m < 12; m++) {
+          const pVal = remainingScaled * weightsStd[m - 8];
+          rec.monthly[m] = pVal;
+          t.monthly[m] += pVal;
+        }
+        rec.total = rec.monthly.reduce((a, b) => a + b, 0);
+      });
     });
 
     return Object.values(tiposMap)
       .filter(t => t.monthly.reduce((a, b) => a + b, 0) > 0)
       .sort((a, b) => a.order - b.order);
-  }, [csvData, results]);
+  }, [csvData, results, matrixTargetMode]);
 
   if (dataStage === 'loading') {
     return (
@@ -903,17 +936,49 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
 
       {/* BLOQUE 5: MATRIZ HEATMAP INTERACTIVA POR TIPO DE GASTO Y RECURSOS */}
       <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mb-8 border border-white/5 shadow-2xl">
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <h2 className="text-xl font-display text-white">Matriz Mes × Tipo de Gasto (Concentración del Gasto)</h2>
+              <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                Personal Fijo: $359.60MM
+              </span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                Ajustado a Compromiso Inferior
+              </span>
             </div>
             <p className="text-xs text-slate-400">
-              Haz clic en cualquier tipo de gasto para desplegar u ocultar los recursos asociados y su ejecución mensual.
+              Gastos de Personal fijados al 100% de su nómina proyectada ($359.60MM). Los demás tipos de gasto se ajustan dinámicamente al techo de compromisos institucionales.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* SELECTOR DE COMPROMISO OBJETIVO */}
+            <div className="flex items-center bg-slate-800/80 p-1 rounded-xl border border-white/10 text-xs">
+              <button
+                onClick={() => setMatrixTargetMode('financiados')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  matrixTargetMode === 'financiados'
+                    ? 'bg-emerald-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Ajustar matriz a los compromisos financiados en equilibrio ($527.12MM)"
+              >
+                Financiados ({formatCurrencyShort(results.totals.totalCompromisos)})
+              </button>
+              <button
+                onClick={() => setMatrixTargetMode('totales')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  matrixTargetMode === 'totales'
+                    ? 'bg-amber-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Ajustar matriz a los compromisos totales con exceso R10 ($529.32MM)"
+              >
+                Totales ({formatCurrencyShort(results.totals.totalCompromisosOriginales)})
+              </button>
+            </div>
+
             <button
               onClick={() => {
                 if (expandedTiposGasto.length === heatmapExpenseTypesData.length) {
@@ -922,7 +987,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                   setExpandedTiposGasto(heatmapExpenseTypesData.map(t => t.name));
                 }
               }}
-              className="text-xs bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 transition-colors"
+              className="text-xs bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 transition-colors cursor-pointer"
             >
               {expandedTiposGasto.length === heatmapExpenseTypesData.length ? 'Colapsar Todos' : 'Expandir Todos'}
             </button>
@@ -970,6 +1035,11 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                             {isExpanded ? <ChevronDown size={14} className="text-emerald-400" /> : <ChevronRight size={14} />}
                           </div>
                           <span className="text-sm text-slate-100">{row.name}</span>
+                          {row.name.includes('Personal') && (
+                            <span className="text-[9px] bg-blue-500/20 text-blue-300 border border-blue-500/40 px-1.5 py-0.2 rounded font-bold">
+                              Fijo
+                            </span>
+                          )}
                           <span className="text-[10px] font-mono text-slate-400 bg-white/5 px-2 py-0.5 rounded-full ml-auto">
                             {recursosList.length} rec.
                           </span>
