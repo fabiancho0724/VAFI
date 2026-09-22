@@ -13,6 +13,7 @@ import {
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
 import { ResourceAllocationSection } from '../components/ResourceAllocationSection';
+import { CashFlowIncomeFixedVsProjected } from '../components/CashFlowIncomeFixedVsProjected';
 import { RESOURCES_LIST } from '../lib/resourceMapper';
 import { RECURSOS_FINANCIEROS } from '../lib/constants';
 
@@ -871,87 +872,12 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
       {/* BLOQUE ASIGNACIÓN: DISTRIBUCIÓN OPTIMIZADA DE RECURSOS PARA EL CIERRE */}
       <ResourceAllocationSection balanceData={csvData.balanceData} gastos2026Data={csvData.gastos2026} />
 
-      {/* BLOQUE 6: TABLA MENSUAL DE INGRESOS POR RECURSO */}
-      <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mb-8 border border-white/5">
-        <div className="mb-6">
-          <h2 className="text-xl font-display text-white">Desglose de Ingresos por Recurso y Mes Proyectado</h2>
-          <p className="text-xs text-slate-400">Proyecci&oacute;n detallada de caja mensual (Septiembre - Diciembre) incluyendo el recaudo base</p>
-        </div>
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[950px]">
-            <thead>
-              <tr className="border-b border-white/10 text-xs text-slate-400 uppercase tracking-wider font-mono">
-                <th className="p-3 font-medium">Recurso</th>
-                <th className="p-3 font-medium">Nombre</th>
-                <th className="p-3 font-medium text-right text-emerald-400/70">Recaudo 31/08</th>
-                <th className="p-3 font-medium text-right text-slate-400">Proy Sep-Dic</th>
-                <th className="p-3 font-medium text-right text-emerald-400 font-bold">Ingreso Total</th>
-                <th className="p-3 font-medium text-right text-rose-300">Comp. Original</th>
-                <th className="p-3 font-medium text-right text-rose-400">Exceso (Alerta)</th>
-                <th className="p-3 font-medium text-right text-indigo-300 font-bold">Comp. Ajustado</th>
-                <th className="p-3 font-medium text-right text-blue-400">Pago Cierre</th>
-                <th className="p-3 font-medium text-right text-white">Saldo Disp.</th>
-                <th className="p-3 font-medium text-center">Estado Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.resources.map(r => {
-                const mesesProy = (r.ingresosPorMesProyectado || [0, 0, 0, 0]).reduce((a, b) => a + b, 0);
-                const pctPagado = r.totalCompromisos > 0 ? (r.totalPagos / r.totalCompromisos) * 100 : 100;
-                const tieneExceso = (r.excesoCompromiso || 0) > 0;
-
-                return (
-                  <tr key={r.recurso} className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors text-sm font-mono ${tieneExceso ? 'bg-rose-500/[0.04]' : ''}`}>
-                    <td className="p-3 text-slate-300 font-bold">R{r.recurso}</td>
-                    <td className="p-3 text-slate-300 font-sans max-w-[170px] truncate" title={r.nombre}>{r.nombre}</td>
-                    <td className="p-3 text-right text-emerald-400">{formatCurrencyShort(r.ingresosReales)}</td>
-                    <td className="p-3 text-right text-slate-400">{formatCurrencyShort(mesesProy)}</td>
-                    <td className="p-3 text-right font-bold text-emerald-300">{formatCurrencyShort(r.totalIngresos)}</td>
-                    <td className="p-3 text-right text-slate-300">{formatCurrencyShort(r.compromisoOriginal || r.totalCompromisos)}</td>
-                    <td className="p-3 text-right">
-                      {tieneExceso ? (
-                        <span className="text-rose-400 font-bold bg-rose-500/20 px-2 py-0.5 rounded text-xs">
-                          +{formatCurrencyShort(r.excesoCompromiso)}
-                        </span>
-                      ) : (
-                        <span className="text-slate-500 text-xs">-</span>
-                      )}
-                    </td>
-                    <td className="p-3 text-right font-bold text-indigo-300 bg-indigo-500/5">{formatCurrencyShort(r.totalCompromisos)}</td>
-                    <td className="p-3 text-right text-blue-300">{formatCurrencyShort(r.totalPagos)}</td>
-                    <td className="p-3 text-right font-bold text-white bg-white/5">{formatCurrencyShort(r.saldoDisponible)}</td>
-                    <td className="p-3 text-center font-sans">
-                      {tieneExceso ? (
-                        <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold">
-                          🔴 Ajustado a Ingreso
-                        </span>
-                      ) : (
-                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
-                          🟢 100% Cubierto
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-white/20 text-sm font-bold bg-white/5 font-mono">
-                <td colSpan={2} className="p-3 text-white uppercase font-sans">Totales Institucionales</td>
-                <td className="p-3 text-right text-emerald-400">{formatCurrencyShort(results.totals.totalRecaudo)}</td>
-                <td className="p-3 text-right text-slate-300">{formatCurrencyShort(results.totals.totalIngresosProyectados)}</td>
-                <td className="p-3 text-right text-emerald-300">{formatCurrencyShort(results.totals.totalRecaudo + results.totals.totalIngresosProyectados)}</td>
-                <td className="p-3 text-right text-slate-300">{formatCurrencyShort(results.totals.totalCompromisosOriginales)}</td>
-                <td className="p-3 text-right text-rose-400 font-black">{formatCurrencyShort(results.totals.totalExcesoCompromisos)}</td>
-                <td className="p-3 text-right text-indigo-300 font-black bg-indigo-500/10">{formatCurrencyShort(results.totals.totalCompromisos)}</td>
-                <td className="p-3 text-right text-blue-400 font-black">{formatCurrencyShort(results.totals.totalPagos)}</td>
-                <td className="p-3 text-right text-white font-black bg-white/10">{formatCurrencyShort(results.totals.saldoDisponible)}</td>
-                <td className="p-3 text-center text-xs text-emerald-400 font-bold font-sans">🟢 Balance Equilibrado</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
+      {/* BLOQUE 6: ESTRUCTURA DUAL DEL FLUJO DE INGRESOS (FIJOS NACIÓN VS PROYECTADOS PROPIOS) */}
+      <CashFlowIncomeFixedVsProjected 
+        resources={results.resources} 
+        balanceData={csvData.balanceData} 
+        totals={results.totals} 
+      />
 
       {/* BLOQUE 5: MATRIZ HEATMAP INTERACTIVA POR TIPO DE GASTO Y RECURSOS */}
       <div className="glass-card p-6 rounded-[24px] overflow-hidden flex flex-col mb-8 border border-white/5 shadow-2xl">
