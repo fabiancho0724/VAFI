@@ -3,10 +3,12 @@ import {
   Building2, Landmark, TrendingUp, TrendingDown, Coins, Lock, CheckCircle2, 
   AlertTriangle, FileSpreadsheet, Download, Search, SlidersHorizontal, 
   ShieldCheck, Scale, Calendar, Sparkles, Info, HelpCircle, Layers, 
-  ArrowUpRight, ArrowRight, Check, Eye, ExternalLink, ChevronDown, ChevronRight
+  ArrowUpRight, ArrowRight, Check, Eye, ExternalLink, ChevronDown, ChevronRight,
+  Presentation
 } from 'lucide-react';
 import { StrictResourceProjection, StrictTotals, GIROS_SIIF_PROYECTADOS } from '../lib/strictProjections';
 import { RECURSOS_FIJOS_RESOLUCION } from '../lib/constants';
+import { BoardPresentationModal } from './BoardPresentationModal';
 
 const formatCurrency = (value: number) => 
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -30,6 +32,7 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
   const [activeTab, setActiveTab] = useState<'comparativa' | 'fijos' | 'proyectados' | 'consolidado'>('comparativa');
   const [searchTerm, setSearchTerm] = useState('');
   const [showMonthlyBreakdown, setShowMonthlyBreakdown] = useState(false);
+  const [isPresentationOpen, setIsPresentationOpen] = useState(false);
 
   // Mapeo auxiliar de aforos y SIIF desde balanceData
   const balanceMetaMap = useMemo(() => {
@@ -280,6 +283,15 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
 
         {/* CONTROLES Y EXPORTACIÓN */}
         <div className="flex flex-wrap items-center gap-2.5 self-end lg:self-center">
+          <button
+            onClick={() => setIsPresentationOpen(true)}
+            className="text-xs px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl flex items-center gap-2 font-black transition-all shadow-lg shadow-amber-500/20 border border-amber-300 cursor-pointer animate-pulse"
+            title="Abrir presentación ejecutiva de alta resolución para la Junta Directiva (con descarga en PDF)"
+          >
+            <Presentation size={15} className="text-slate-950" />
+            <span>Presentación Junta (PDF)</span>
+          </button>
+
           <button
             onClick={() => setShowMonthlyBreakdown(!showMonthlyBreakdown)}
             className={`text-xs px-3.5 py-2 rounded-xl border flex items-center gap-2 transition-all cursor-pointer ${
@@ -954,6 +966,15 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
           </span>
         </div>
       </div>
+
+      {/* MODAL / MODO PRESENTACIÓN PARA LA JUNTA DIRECTIVA */}
+      <BoardPresentationModal 
+        isOpen={isPresentationOpen}
+        onClose={() => setIsPresentationOpen(false)}
+        resources={resources}
+        balanceData={balanceData}
+        totals={totals}
+      />
 
     </div>
   );

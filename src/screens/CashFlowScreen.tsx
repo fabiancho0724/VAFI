@@ -8,12 +8,13 @@ import {
   AlertCircle, AlertTriangle, CheckCircle, Calendar, Filter, 
   ChevronDown, ChevronRight, Download, Maximize2, Coins, Activity, Target,
   Brain, FileText, PieChart as PieChartIcon, Settings, X, Save, Lock, Award,
-  Layers, Building2
+  Layers, Building2, Presentation
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
 import { ResourceAllocationSection } from '../components/ResourceAllocationSection';
 import { CashFlowIncomeFixedVsProjected } from '../components/CashFlowIncomeFixedVsProjected';
+import { BoardPresentationModal } from '../components/BoardPresentationModal';
 import { RESOURCES_LIST } from '../lib/resourceMapper';
 import { RECURSOS_FINANCIEROS } from '../lib/constants';
 
@@ -42,6 +43,7 @@ export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => voi
   const [selectedMonthDetail, setSelectedMonthDetail] = useState<any>(null);
   const [expandedTiposGasto, setExpandedTiposGasto] = useState<string[]>(['2.1.1 Gastos de Personal']);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isBoardPresentationOpen, setIsBoardPresentationOpen] = useState(false);
   const [selectedUnitOps, setSelectedUnitOps] = useState('Todas');
   const [selectedTipoOps, setSelectedTipoOps] = useState('Todos');
 
@@ -384,6 +386,15 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
           <button onClick={() => setIsConfigModalOpen(true)} className="glass-card px-4 py-2 rounded-xl text-white hover:bg-emerald-500/20 transition-colors flex items-center gap-2 border border-emerald-500/30 bg-emerald-500/10">
             <Settings size={16} className="text-emerald-400" />
             <span className="text-sm font-medium">Configuración de Escenario</span>
+          </button>
+
+          <button 
+            onClick={() => setIsBoardPresentationOpen(true)}
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all border border-amber-300 cursor-pointer"
+            title="Presentación ejecutiva para la Junta Directiva (con descarga en PDF)"
+          >
+            <Presentation size={16} />
+            <span>Presentación Junta (PDF)</span>
           </button>
 
           {onNavigate && (
@@ -1573,6 +1584,15 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
           </div>
         </div>
       )}
+
+      {/* MODAL / MODO PRESENTACIÓN PARA LA JUNTA DIRECTIVA */}
+      <BoardPresentationModal 
+        isOpen={isBoardPresentationOpen}
+        onClose={() => setIsBoardPresentationOpen(false)}
+        resources={results.resources}
+        balanceData={csvData.balanceData}
+        totals={results.totals}
+      />
 
     </div>
   );
