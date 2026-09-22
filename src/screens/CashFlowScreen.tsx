@@ -45,17 +45,28 @@ export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => voi
   const [selectedUnitOps, setSelectedUnitOps] = useState('Todas');
   const [selectedTipoOps, setSelectedTipoOps] = useState('Todos');
 
-  const handleOverrideChange = (recurso: string, field: 'manualIncome' | 'manualExpense', value: number) => {
-    setConfig(prev => ({
-      ...prev,
-      resourceOverrides: {
-        ...prev.resourceOverrides,
-        [recurso]: {
-          ...(prev.resourceOverrides[recurso] || { method: 'Manual', growthRate: 0 }),
-          [field]: value
-        }
+  const handleOverrideChange = (recurso: string, field: 'manualIncome' | 'manualExpense', value: number | undefined) => {
+    setConfig(prev => {
+      const current = prev.resourceOverrides[recurso] || { method: 'Manual', growthRate: prev.globalGrowthRate };
+      const updated = { ...current };
+      if (value === undefined || isNaN(value) || value <= 0) {
+        delete updated[field];
+      } else {
+        updated[field] = value;
       }
-    }));
+      
+      const newOverrides = { ...prev.resourceOverrides };
+      if (updated.manualIncome !== undefined || updated.manualExpense !== undefined) {
+        newOverrides[recurso] = updated;
+      } else {
+        delete newOverrides[recurso];
+      }
+
+      return {
+        ...prev,
+        resourceOverrides: newOverrides
+      };
+    });
   };
 
   const [config, setConfig] = useState<StrictConfig>({
@@ -1358,7 +1369,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
               
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex gap-3">
                 <Activity className="text-emerald-400 shrink-0 mt-1" size={18} />
-                <p className="text-sm text-emerald-200">Esta configuración impacta en tiempo real todos los cálculos y gráficos. Las restricciones de giros SIIF se conservan automáticamente por el motor.</p>
+                <p className="text-sm text-emerald-200">Esta configuración impacta en tiempo real todos los cálculos, tablas y gráficos. El escenario base aplica para Posgrados el total reglamentario de $41.088.265.317 COP.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1367,31 +1378,62 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                   <select 
                     className="w-full text-sm border-slate-600 rounded-lg bg-slate-800 p-3 outline-none text-white focus:border-emerald-500 cursor-pointer"
                     value={config.scenario}
-                    onChange={e => setConfig({...config, scenario: e.target.value as any})}
+                    onChange={e => {
+                      const sc = e.target.value as any;
+                      let rate = config.globalGrowthRate;
+                      let scName = config.scenarioName;
+                      if (sc === 'Base') {
+                        rate = 0.041;
+                        scName = 'Proyección Institucional (Base)';
+                      } else if (sc === 'Optimista') {
+                        rate = 0.091;
+                        scName = 'Escenario Optimista (+5%)';
+                      } else if (sc === 'Pesimista') {
+                        rate = -0.009;
+                        scName = 'Escenario Pesimista (-5%)';
+                      } else {
+                        scName = 'Escenario Personalizado';
+                      }
+                      setConfig(prev => ({
+                        ...prev,
+                        scenario: sc,
+                        globalGrowthRate: rate,
+                        scenarioName: scName
+                      }));
+                    }}
                   >
                     <option value="Base">Base Estricta (Límite IPC 4.1%)</option>
-                    <option value="Optimista">Optimista (Base + 5%)</option>
-                    <option value="Pesimista">Pesimista (Base - 5%)</option>
+                    <option value="Optimista">Optimista (Base + 5% = 9.1%)</option>
+                    <option value="Pesimista">Pesimista (Base - 5% = -0.9%)</option>
                     <option value="Personalizado">Personalizado</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Límite Global de Crecimiento (%)</label>
                   <input 
-                    type="number" step="0.01" 
-                    value={config.globalGrowthRate} 
-                    onChange={e => setConfig({...config, globalGrowthRate: parseFloat(e.target.value)})} 
+                    type="number" step="0.1" 
+                    value={Number((config.globalGrowthRate * 100).toFixed(2))} 
+                    onChange={e => {
+                      const val = parseFloat(e.target.value);
+                      setConfig(prev => ({
+                        ...prev,
+                        scenario: 'Personalizado',
+                        globalGrowthRate: isNaN(val) ? 0 : val / 100,
+                        scenarioName: 'Escenario Personalizado'
+                      }));
+                    }} 
                     className="w-full text-sm border border-slate-600 rounded-lg bg-slate-800 p-3 outline-none text-white focus:border-emerald-500"
-                    disabled={config.scenario !== 'Personalizado'}
                   />
-                  {config.scenario !== 'Personalizado' && <p className="text-[10px] text-slate-500 mt-1">Anclado al IPC según artículo 86.</p>}
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Tasa aplicada: {(config.globalGrowthRate * 100).toFixed(2)}% {config.scenario === 'Base' ? '(Anclado al IPC Art. 86)' : config.scenario === 'Personalizado' ? '(Definido manualmente)' : `(${config.scenario})`}
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Filtro por Unidad Administrativa</label>
                   <select 
                     className="w-full text-sm border-slate-600 rounded-lg bg-slate-800 p-3 outline-none text-white focus:border-emerald-500 cursor-pointer"
                     value={config.filterUnidad}
-                    onChange={e => setConfig({...config, filterUnidad: e.target.value})}
+                    onChange={e => setConfig(prev => ({ ...prev, filterUnidad: e.target.value }))}
                   >
                     <option value="Todos">Consolidado Institucional</option>
                     <option value="01">01 - ADMINISTRATIVA Y FINANCIERA</option>
@@ -1415,19 +1457,32 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                   <input 
                     type="text"
                     value={config.scenarioName} 
-                    onChange={e => setConfig({...config, scenarioName: e.target.value})} 
+                    onChange={e => setConfig(prev => ({ ...prev, scenarioName: e.target.value }))} 
                     className="w-full text-sm border border-slate-600 rounded-lg bg-slate-800 p-3 outline-none text-white focus:border-emerald-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-3 flex justify-between items-center">
-                  <span>Ajustes manuales por Recurso (Overrides)</span>
-                  <span className="text-[10px] text-orange-400 font-normal bg-orange-400/10 px-2 py-1 rounded flex items-center gap-1">
-                    <Lock size={10} /> Valores SIIF Bloqueados
-                  </span>
-                </label>
+                <div className="flex justify-between items-center mb-3">
+                  <label className="block text-xs font-bold text-slate-400 uppercase">
+                    Ajustes manuales por Recurso (Overrides)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    {Object.keys(config.resourceOverrides || {}).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setConfig(prev => ({ ...prev, resourceOverrides: {} }))}
+                        className="text-[11px] text-rose-400 hover:text-rose-300 underline font-medium transition-colors"
+                      >
+                        Limpiar Ajustes Manuales
+                      </button>
+                    )}
+                    <span className="text-[10px] text-orange-400 font-normal bg-orange-400/10 px-2 py-1 rounded flex items-center gap-1">
+                      <Lock size={10} /> SIIF Reglado por Defecto
+                    </span>
+                  </div>
+                </div>
                 <div className="bg-slate-900/50 border border-slate-700 rounded-xl overflow-hidden max-h-[300px] overflow-y-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="bg-slate-800 text-xs uppercase text-slate-400 sticky top-0 z-10">
@@ -1449,28 +1504,36 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                             <td className="px-4 py-3">
                               <div className="font-medium text-slate-200 font-mono text-xs">{r.recurso}</div>
                               <div className="text-[10px] text-slate-400 truncate max-w-[180px]" title={r.nombre}>{r.nombre}</div>
-                              {isFixed && <div className="text-[9px] text-orange-400/80 mt-1 flex items-center gap-1"><Lock size={10}/> Bloqueado SIIF</div>}
+                              {isFixed ? (
+                                <div className="text-[9px] text-orange-400/80 mt-1 flex items-center gap-1"><Lock size={10}/> SIIF Oficial</div>
+                              ) : r.recurso === '31' ? (
+                                <div className="text-[9px] text-emerald-400/90 mt-1 font-semibold">Meta $41.088M</div>
+                              ) : null}
                             </td>
                             <td className="px-4 py-3">
-                              <div className="text-[10px] text-slate-500 mb-1 text-right">Proyectado: {formatCurrencyShort(r.ingresosProyectados)}</div>
+                              <div className="text-[10px] text-slate-400 mb-1 text-right">Actual: {formatCurrencyShort(r.ingresosProyectados)}</div>
                               <input 
                                 type="number"
-                                disabled={isFixed}
-                                value={override.manualIncome || ''}
-                                onChange={e => handleOverrideChange(r.recurso, 'manualIncome', parseFloat(e.target.value) || 0)}
-                                className={`w-full text-xs border rounded-lg p-2 outline-none text-right ${isFixed ? 'bg-slate-800/30 border-slate-700 text-slate-600 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-emerald-300 focus:border-emerald-500'}`}
-                                placeholder={isFixed ? 'Reglado' : 'Valor manual'}
+                                value={override.manualIncome !== undefined ? override.manualIncome : ''}
+                                onChange={e => {
+                                  const val = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                                  handleOverrideChange(r.recurso, 'manualIncome', val);
+                                }}
+                                className="w-full text-xs border rounded-lg p-2 outline-none text-right bg-slate-900 border-slate-600 text-emerald-300 focus:border-emerald-500"
+                                placeholder={isFixed ? `SIIF: ${formatCurrencyShort(r.ingresosProyectados)}` : `Est: ${formatCurrencyShort(r.ingresosProyectados)}`}
                               />
                             </td>
                             <td className="px-4 py-3">
-                              <div className="text-[10px] text-slate-500 mb-1 text-right">Proyectado: {formatCurrencyShort(r.totalCompromisos)}</div>
+                              <div className="text-[10px] text-slate-400 mb-1 text-right">Actual: {formatCurrencyShort(r.totalCompromisos)}</div>
                               <input 
                                 type="number"
-                                disabled={isFixed}
-                                value={override.manualExpense || ''}
-                                onChange={e => handleOverrideChange(r.recurso, 'manualExpense', parseFloat(e.target.value) || 0)}
-                                className={`w-full text-xs border rounded-lg p-2 outline-none text-right ${isFixed ? 'bg-slate-800/30 border-slate-700 text-slate-600 cursor-not-allowed' : 'bg-slate-900 border-slate-600 text-rose-300 focus:border-rose-500'}`}
-                                placeholder={isFixed ? 'Reglado' : 'Valor manual'}
+                                value={override.manualExpense !== undefined ? override.manualExpense : ''}
+                                onChange={e => {
+                                  const val = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                                  handleOverrideChange(r.recurso, 'manualExpense', val);
+                                }}
+                                className="w-full text-xs border rounded-lg p-2 outline-none text-right bg-slate-900 border-slate-600 text-rose-300 focus:border-rose-500"
+                                placeholder={`Comp: ${formatCurrencyShort(r.totalCompromisos)}`}
                               />
                             </td>
                             <td className="px-4 py-3">
@@ -1495,7 +1558,7 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
                         );
                       })}
                     </tbody>
-</table>
+                  </table>
                 </div>
               </div>
 

@@ -227,9 +227,11 @@ function simulateCore(
 
   baseData.forEach(base => {
     const isFixed = NACION_FIXED.includes(base.recurso);
-    const customConfig = config.resourceOverrides[base.recurso];
+    const customConfig = config.resourceOverrides ? config.resourceOverrides[base.recurso] : undefined;
     
-    const recaudoRealAcumulado = base.recaudo;
+    const recaudoRealAcumulado = (config.filterUnidad && config.filterUnidad !== 'Todos')
+      ? ((monthlyHist.ing[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0))
+      : base.recaudo;
     const totalRealNomina = expenseTypeReal['2.1.1 Gastos de Personal'] || expenseTypeReal['Personal (Nómina)'] || 1;
     const shareNomina = (expenseTypeResourceReal['2.1.1 Gastos de Personal']?.[base.recurso] || expenseTypeResourceReal['Personal (Nómina)']?.[base.recurso] || 0) / totalRealNomina;
     const nominaAsignada = TOTAL_NOMINA_SEP_DIC * shareNomina;
@@ -240,17 +242,24 @@ function simulateCore(
     const compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
     const pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
 
+    const hasManualIncome = customConfig && customConfig.manualIncome !== undefined && customConfig.manualIncome !== null && !isNaN(customConfig.manualIncome);
+    const hasManualExpense = customConfig && customConfig.manualExpense !== undefined && customConfig.manualExpense !== null && !isNaN(customConfig.manualExpense);
+
     let ingProyectado = 0;
     let gasProyectado = 0;
     let trace: TraceNode[] = [];
     let methodUsed = 'Tendencia Histórica';
     
-    trace.push({ step: 'Base', value: base.aforo, detail: 'Aforo oficial' });
-    trace.push({ step: 'Recaudo Real', value: recaudoRealAcumulado, detail: 'Enero a Agosto' });
+    trace.push({ step: 'Base Aforo', value: base.aforo, detail: 'Aforo oficial' });
+    trace.push({ step: 'Recaudo Real', value: recaudoRealAcumulado, detail: config.filterUnidad !== 'Todos' ? `Ene-Ago (Unidad ${config.filterUnidad})` : 'Enero a Agosto' });
     
     const girosExactos = GIROS_SIIF_PROYECTADOS[base.recurso];
 
-    if (girosExactos) {
+    if (hasManualIncome) {
+      ingProyectado = customConfig!.manualIncome!;
+      methodUsed = 'Ajuste Manual';
+      trace.push({ step: 'Ajuste Manual Ingreso', value: ingProyectado, detail: 'Valor fijado manualmente en configuración' });
+    } else if (girosExactos) {
       ingProyectado = girosExactos.reduce((a, b) => a + b, 0);
       methodUsed = 'Fijo (SIIF)';
       trace.push({ step: 'Giros Pendientes (SIIF)', value: ingProyectado, detail: 'Valores exactos provistos para Sep-Dic' });
@@ -259,11 +268,27 @@ function simulateCore(
       if (base.siif === 0) ingProyectado = 0;
       methodUsed = 'Fijo (SIIF)';
       trace.push({ step: 'Asignación Fija', value: ingProyectado, detail: 'Saldo restante del SIIF anual' });
+    } else if (base.recurso === '31') {
+      // REGLA INSTITUCIONAL POSGRADOS:
+      // En Escenario Base el recaudo total de todo el año es exactamente $41.088.265.317 COP.
+      // Recaudo Real Ene-Ago: $39.764.667.216 -> Saldo Base Sep-Dic = $1.323.598.101 COP.
+      const TARGET_TOTAL_POSGRADOS = 41088265317;
+      const baseRemPosgrados = Math.max(0, TARGET_TOTAL_POSGRADOS - recaudoRealAcumulado);
+      
+      let factorPosgrados = 1.0;
+      if (config.scenario === 'Optimista') factorPosgrados = 1.05;
+      else if (config.scenario === 'Pesimista') factorPosgrados = 0.95;
+      else if (config.scenario === 'Personalizado') factorPosgrados = 1 + (effGrowth - 0.041);
+
+      ingProyectado = Math.round(baseRemPosgrados * factorPosgrados);
+      methodUsed = config.scenario === 'Base' ? 'Meta Anual Base Posgrados ($41.088M)' : `Meta Posgrados (${config.scenario})`;
+      trace.push({ step: 'Meta Posgrados Anual', value: TARGET_TOTAL_POSGRADOS, detail: 'Meta anual base $41.088.265.317' });
+      trace.push({ step: 'Proyección Sep-Dic', value: ingProyectado, detail: `Saldo base (${baseRemPosgrados.toLocaleString()}) × Factor (${factorPosgrados})` });
     } else {
       let pendiente = Math.max(0, base.aforo - recaudoRealAcumulado);
-      let rRate = customConfig ? customConfig.growthRate : effGrowth;
-      ingProyectado = pendiente * (1 + rRate);
-      trace.push({ step: 'Cálculo Base Tendencia', value: ingProyectado, detail: `Aforo pendiente (${pendiente}) × tasa (${(rRate*100).toFixed(1)}%)` });
+      let rRate = (customConfig && customConfig.growthRate !== undefined && customConfig.growthRate !== 0) ? customConfig.growthRate : effGrowth;
+      ingProyectado = Math.round(pendiente * (1 + rRate));
+      trace.push({ step: 'Cálculo Base Tendencia', value: ingProyectado, detail: `Aforo pendiente (${pendiente.toLocaleString()}) × tasa (${(rRate*100).toFixed(2)}%)` });
     }
 
     const aiIncomeReference = ingProyectado;
@@ -278,7 +303,18 @@ function simulateCore(
 
     const isR10 = base.recurso === '10' || base.recurso === '10.0' || base.recurso.includes('10 -');
 
-    if (isR10) {
+    if (hasManualExpense) {
+      totalComp = customConfig!.manualExpense!;
+      totalPago = customConfig!.manualExpense!;
+      compromisoOriginal = totalComp;
+      if (totalComp > totalIngresos) {
+        excesoCompromiso = totalComp - totalIngresos;
+      }
+      gasProyectado = Math.max(0, totalComp - compHistorico);
+      methodUsed = methodUsed + ' / Gasto Manual';
+      trace.push({ step: 'Gasto Manual Override', value: totalComp, detail: 'Compromiso total fijado manualmente' });
+      trace.push({ step: 'Pago Manual', value: totalPago, detail: 'Pago programado igual al compromiso fijado' });
+    } else if (isR10) {
       // REGLA INSTITUCIONAL: La diferencia entre el compromiso y el ingreso es de apenas 2.200 millones,
       // concentrada exclusivamente como excedente en el Recurso R10 (Aportes Nación).
       excesoCompromiso = 2200000000;
@@ -300,7 +336,6 @@ function simulateCore(
       totalComp = totalIngresos;
       totalPago = totalIngresos;
       gasProyectado = Math.max(0, totalComp - compHistorico);
-      methodUsed = 'Redistribución Proporcional (Equilibrio 100%)';
       trace.push({ step: 'Compromiso Equilibrado', value: totalComp, detail: 'Redistribuido al 100% del ingreso disponible' });
       trace.push({ step: 'Pago Cierre Equilibrado', value: totalPago, detail: 'Ejecución plena de ingresos de la vigencia' });
     }
@@ -314,7 +349,7 @@ function simulateCore(
     const saldoDisp = Math.max(0, totalIngresos - totalPago);
 
     const mWeights = historicWeights[base.recurso] || [0,0,0,0,0,0,0,0, 0.25, 0.25, 0.25, 0.25];
-    const girosMatch = GIROS_SIIF_PROYECTADOS[base.recurso] || (base.recurso === '10' ? GIROS_SIIF_PROYECTADOS['10.0'] : undefined);
+    const girosMatch = (!hasManualIncome && (GIROS_SIIF_PROYECTADOS[base.recurso] || (base.recurso === '10' ? GIROS_SIIF_PROYECTADOS['10.0'] : undefined)));
     const ingresosPorMesProyectado = girosMatch ? [...girosMatch] : [
       ingProyectado * (mWeights[8] || 0.25),
       ingProyectado * (mWeights[9] || 0.25),
@@ -343,6 +378,14 @@ function simulateCore(
   let targetResources = Object.values(resourcesObj);
   if (config.filterRecurso && config.filterRecurso !== 'Todos') {
     targetResources = targetResources.filter(r => r.recurso === config.filterRecurso || getRecursoEquivalence(r.recurso) === config.filterRecurso);
+  }
+  if (config.filterUnidad && config.filterUnidad !== 'Todos') {
+    targetResources = targetResources.filter(r => 
+      r.ingresosReales > 0 || 
+      r.ingresosProyectados > 0 || 
+      r.totalCompromisos > 0 || 
+      (config.resourceOverrides && config.resourceOverrides[r.recurso] !== undefined)
+    );
   }
 
   const totalIngresoAdmin = targetResources.reduce((acc, r) => acc + r.ingresoAdministrativo, 0);
@@ -465,18 +508,12 @@ function simulateCore(
          mPago += (monthlyHist.pago[r.recurso] || [])[idx] || 0;
       } else {
          const pIdx = idx - 8;
-         const girosExactos = GIROS_SIIF_PROYECTADOS[r.recurso];
          const w = historicWeights[r.recurso] ? historicWeights[r.recurso][idx] : 0.25;
-         
-         if (!r.ingresosPorMesProyectado) r.ingresosPorMesProyectado = [0,0,0,0];
-           
-         let monthIngProy = 0;
-         if (girosExactos) {
-             monthIngProy = girosExactos[pIdx];
-         } else {
-             monthIngProy = r.ingresosProyectados * w;
-         }
+         const monthIngProy = (r.ingresosPorMesProyectado && r.ingresosPorMesProyectado[pIdx] !== undefined)
+           ? r.ingresosPorMesProyectado[pIdx]
+           : (r.ingresosProyectados * w);
          mIngProy += monthIngProy;
+         if (!r.ingresosPorMesProyectado) r.ingresosPorMesProyectado = [0,0,0,0];
          r.ingresosPorMesProyectado[pIdx] = monthIngProy;
          
          if (gastos2026Parsed) {
