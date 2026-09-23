@@ -7,7 +7,8 @@ import {
   TrendingUp, TrendingDown, Calculator, BarChart3, Layers, Download, 
   RefreshCw, SlidersHorizontal, Sparkles, AlertTriangle, CheckCircle2, 
   Info, Building2, Table, Filter, ArrowUpRight, Scale, ChevronDown, ChevronUp,
-  Search, CheckCheck, Landmark, DollarSign, Wallet, FileText, Award
+  Search, CheckCheck, Landmark, DollarSign, Wallet, FileText, Award, GraduationCap,
+  Coins
 } from 'lucide-react';
 import { 
   R20Record, R20ForecastModelResult, R20ConceptForecast, 
@@ -18,12 +19,22 @@ import {
   R21_HISTORICAL_RECORDS, fetchAndParseR21, exportR21CSV,
   R10BaseComponent2026, R10_BASE_COMPONENTS_2026, R10_BASE_TOTAL_2026,
   PGN_2027_DATA, R10HistoricalRecord, R10_HISTORICAL_SERIES, exportR10CSV,
-  R18HistoricalRecord, R18_HISTORICAL_SERIES, R18_PROJECTION_DATA, exportR18CSV
+  R18HistoricalRecord, R18_HISTORICAL_SERIES, R18_PROJECTION_DATA, exportR18CSV,
+  R14_BASE_2026, R14_HISTORICAL_SERIES, R14_FORECAST_MODELS,
+  R14HistoricalRecord, R14ForecastModel, exportR14CSV,
+  R13HistoricalRecord, R13ForecastModel, R13_BASE_2026,
+  R13_HISTORICAL_SERIES, R13_FORECAST_MODELS, exportR13CSV
 } from '../lib/r20ProjectionEngine';
 
 export function R20ResourceProjectionSection() {
-  // Selector de Recurso Principal: R10.0 (Aportes Nación) | R18 (Art. 87 CESU) | R20 (Propios) | R21 (Devolución IVA) | Consolidado
-  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'r10' | 'r18' | 'r20' | 'r21' | 'consolidado'>('r10');
+  // Selector de Recurso Principal: R10.0 (Aportes Nación) | R13 (Cooperativas) | R14 (Gratuidad) | R18 (Art. 87 CESU) | R20 (Propios) | R21 (Devolución IVA) | Consolidado
+  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'r10' | 'r13' | 'r14' | 'r18' | 'r20' | 'r21' | 'consolidado'>('r10');
+
+  // Modelo activo para R13 (Excedentes de Cooperativas)
+  const [r13SelectedModel, setR13SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media'>('macro');
+
+  // Modelo activo para R14 (Política de Gratuidad)
+  const [r14SelectedModel, setR14SelectedModel] = useState<'macro' | 'linear' | 'holt' | 'optimista'>('macro');
 
   // Datos R20
   const [records, setRecords] = useState<R20Record[]>([]);
@@ -215,6 +226,36 @@ export function R20ResourceProjectionSection() {
   }, []);
 
   // =========================================================================
+  // MODELACIÓN Y SERIE HISTÓRICA RECURSO 14 (POLÍTICA DE GRATUIDAD)
+  // =========================================================================
+  const r14ActiveModel = useMemo(() => {
+    return R14_FORECAST_MODELS.find(m => m.id === r14SelectedModel) || R14_FORECAST_MODELS[0];
+  }, [r14SelectedModel]);
+
+  const r14ChartSeries = useMemo(() => {
+    return R14_HISTORICAL_SERIES.map((h) => {
+      const is2027 = h.vigencia === 2027;
+      const recaudo = is2027 ? r14ActiveModel.projected2027 : h.totalRecaudo;
+      const variacionCOP = is2027 ? r14ActiveModel.incrementoNominal : h.variacionAnualCOP;
+      const variacionPct = is2027 ? r14ActiveModel.variacionPct : h.variacionAnualPct;
+
+      return {
+        year: `${h.vigencia}`,
+        numericYear: h.vigencia,
+        vigencia: h.vigencia,
+        recaudo: recaudo,
+        recaudoMillones: Number((recaudo / 1e6).toFixed(2)),
+        variacionCOP: variacionCOP,
+        variacionPct: variacionPct,
+        tipo: h.tipo,
+        notaNormativa: is2027 ? `${r14ActiveModel.name} — ${r14ActiveModel.formula}` : h.notaNormativa,
+        is2027: is2027,
+        is2026: h.vigencia === 2026
+      };
+    });
+  }, [r14ActiveModel]);
+
+  // =========================================================================
   // SERIE DE DATOS PARA GRÁFICO HISTÓRICO RECURSO 18 (ART. 87 CESU)
   // =========================================================================
   const r18ChartSeries = useMemo(() => {
@@ -233,7 +274,37 @@ export function R20ResourceProjectionSection() {
   }, []);
 
   // =========================================================================
-  // MODELACIÓN COMBINADA INSTITUCIONAL (R10 + R18 + R20 + R21)
+  // MODELACIÓN Y SERIE HISTÓRICA RECURSO 13 (EXCEDENTES DE COOPERATIVAS)
+  // =========================================================================
+  const r13ActiveModel = useMemo(() => {
+    return R13_FORECAST_MODELS.find(m => m.id === r13SelectedModel) || R13_FORECAST_MODELS[0];
+  }, [r13SelectedModel]);
+
+  const r13ChartSeries = useMemo(() => {
+    return R13_HISTORICAL_SERIES.map((h) => {
+      const is2027 = h.vigencia === 2027;
+      const recaudo = is2027 ? r13ActiveModel.projected2027 : h.totalRecaudo;
+      const variacionCOP = is2027 ? r13ActiveModel.incrementoNominal : h.variacionAnualCOP;
+      const variacionPct = is2027 ? r13ActiveModel.variacionPct : h.variacionAnualPct;
+
+      return {
+        year: `${h.vigencia}`,
+        numericYear: h.vigencia,
+        vigencia: h.vigencia,
+        recaudo: recaudo,
+        recaudoMillones: Number((recaudo / 1e6).toFixed(2)),
+        variacionCOP: variacionCOP,
+        variacionPct: variacionPct,
+        tipo: h.tipo,
+        notaNormativa: is2027 ? `${r13ActiveModel.name} — ${r13ActiveModel.formula}` : h.notaNormativa,
+        is2027: is2027,
+        is2026: h.vigencia === 2026
+      };
+    });
+  }, [r13ActiveModel]);
+
+  // =========================================================================
+  // MODELACIÓN COMBINADA INSTITUCIONAL (R10 + R13 + R14 + R18 + R20 + R21)
   // =========================================================================
   const combinedSummary = useMemo(() => {
     const r20_2024 = matrixSummary.totalesPorAno[2024] || 0;
@@ -251,10 +322,20 @@ export function R20ResourceProjectionSection() {
     const r10_2026 = PGN_2027_DATA.basePresupuestal2026; // 351.357.927.407
     const r10_2027 = PGN_2027_DATA.funcionamientoR10;    // 395.704.592.082
 
+    const r14_2024 = 37090700264;
+    const r14_2025 = 36210311946;
+    const r14_2026 = R14_BASE_2026;                     // 49.844.177.233
+    const r14_2027 = r14ActiveModel.projected2027;      // 53.133.892.930 (o modelo seleccionado)
+
     const r18_2024 = R18_PROJECTION_DATA.recaudo2024;    // 1.067.037.785
     const r18_2025 = R18_PROJECTION_DATA.recaudo2025;    // 457.065.634
     const r18_2026 = R18_PROJECTION_DATA.base2026;       // 1.573.078.344
     const r18_2027 = R18_PROJECTION_DATA.proyeccion2027; // 1.676.901.515
+
+    const r13_2024 = 2078952994;
+    const r13_2025 = 2080840690;
+    const r13_2026 = R13_BASE_2026;                     // 1.530.000.000
+    const r13_2027 = r13ActiveModel.projected2027;      // 1.630.980.000 (o modelo seleccionado)
 
     const autogestion_2024 = r20_2024 + r21_2024;
     const autogestion_2025 = r20_2025 + r21_2025;
@@ -262,10 +343,10 @@ export function R20ResourceProjectionSection() {
     const autogestion_2027 = r20_2027 + r21_2027;
     const varAutogestion = autogestion_2026 > 0 ? ((autogestion_2027 - autogestion_2026) / autogestion_2026) * 100 : 0;
 
-    const nacion_2024 = r10_2024 + r18_2024;
-    const nacion_2025 = r10_2025 + r18_2025;
-    const nacion_2026 = r10_2026 + r18_2026;
-    const nacion_2027 = r10_2027 + r18_2027;
+    const nacion_2024 = r10_2024 + r14_2024 + r18_2024 + r13_2024;
+    const nacion_2025 = r10_2025 + r14_2025 + r18_2025 + r13_2025;
+    const nacion_2026 = r10_2026 + r14_2026 + r18_2026 + r13_2026;
+    const nacion_2027 = r10_2027 + r14_2027 + r18_2027 + r13_2027;
     const varNacion = nacion_2026 > 0 ? ((nacion_2027 - nacion_2026) / nacion_2026) * 100 : 0;
 
     const grand_total_2024 = nacion_2024 + autogestion_2024;
@@ -276,6 +357,8 @@ export function R20ResourceProjectionSection() {
 
     return {
       r10: { y24: r10_2024, y25: r10_2025, y26: r10_2026, y27: r10_2027, part: (r10_2027 / grand_total_2027) * 100, varPct: PGN_2027_DATA.variacionPct },
+      r13: { y24: r13_2024, y25: r13_2025, y26: r13_2026, y27: r13_2027, part: (r13_2027 / grand_total_2027) * 100, varPct: r13ActiveModel.variacionPct },
+      r14: { y24: r14_2024, y25: r14_2025, y26: r14_2026, y27: r14_2027, part: (r14_2027 / grand_total_2027) * 100, varPct: r14ActiveModel.variacionPct },
       r18: { y24: r18_2024, y25: r18_2025, y26: r18_2026, y27: r18_2027, part: (r18_2027 / grand_total_2027) * 100, varPct: R18_PROJECTION_DATA.tasaAumentoPct },
       r20: { y24: r20_2024, y25: r20_2025, y26: r20_2026, y27: r20_2027, part: (r20_2027 / grand_total_2027) * 100 },
       r21: { y24: r21_2024, y25: r21_2025, y26: r21_2026, y27: r21_2027, part: (r21_2027 / grand_total_2027) * 100 },
@@ -283,7 +366,7 @@ export function R20ResourceProjectionSection() {
       autogestion: { y24: autogestion_2024, y25: autogestion_2025, y26: autogestion_2026, y27: autogestion_2027, varPct: varAutogestion },
       total: { y24: grand_total_2024, y25: grand_total_2025, y26: grand_total_2026, y27: grand_total_2027, varPct: varGrandTotal }
     };
-  }, [matrixSummary, r21Records, r21BestModel]);
+  }, [matrixSummary, r21Records, r21BestModel, r14ActiveModel, r13ActiveModel]);
 
   // Generación de puntos para gráfica R20 (incluye ARIMA)
   const chartSeries = useMemo(() => {
@@ -452,6 +535,36 @@ export function R20ResourceProjectionSection() {
           </button>
 
           <button
+            onClick={() => setSelectedRecursoTab('r13')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs transition-all ${
+              selectedRecursoTab === 'r13'
+                ? 'bg-amber-600 text-white shadow-lg scale-[1.02]'
+                : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Coins size={15} />
+            <span>Recurso 13 (Cooperativas)</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
+              $1.631M (+6,6%)
+            </span>
+          </button>
+
+          <button
+            onClick={() => setSelectedRecursoTab('r14')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs transition-all ${
+              selectedRecursoTab === 'r14'
+                ? 'bg-teal-500 text-black shadow-lg scale-[1.02]'
+                : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <GraduationCap size={15} />
+            <span>Recurso 14 (Política Gratuidad)</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
+              $53.134M (+6,6%)
+            </span>
+          </button>
+
+          <button
             onClick={() => setSelectedRecursoTab('r18')}
             className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs transition-all ${
               selectedRecursoTab === 'r18'
@@ -505,7 +618,7 @@ export function R20ResourceProjectionSection() {
             }`}
           >
             <Layers size={15} />
-            <span>Consolidado Global (R10 + R20 + R21)</span>
+            <span>Consolidado Global (R10 + R13 + R14 + R18 + R20 + R21)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/30 text-white font-bold">
               Total Institucional
             </span>
@@ -1040,6 +1153,1252 @@ export function R20ResourceProjectionSection() {
                   </p>
                   <p>
                     3. <strong className="text-white">Inversión Complementaria:</strong> El PGN 2027 asigna adicionalmente a la UPTC la suma de <strong>$ 8.310.959.010 COP</strong> para Inversión en Calidad y Fomento de la Educación Superior (Rubro 2202 / 0700 Intersubsectorial), elevando el total de la unidad ejecutora a <strong>$ 404.015.551.092 COP</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN 0.3: RECURSO 13 (EXCEDENTES DEL SECTOR COOPERATIVO - LEY 1819)     */}
+      {/* ========================================================================= */}
+      {selectedRecursoTab === 'r13' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* HEADER HERO R13 */}
+          <div className="bg-gradient-to-br from-surface-container-high/90 to-background border border-amber-500/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-amber-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+            <div className="relative z-10">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-300 shrink-0 border border-amber-500/30 shadow-lg">
+                    <Coins size={28} />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-xs font-mono uppercase tracking-wider font-bold text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
+                        Aporte Sector Solidario • Art. 142 Ley 1819 de 2016
+                      </span>
+                      <span className="text-xs font-mono font-bold text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/20">
+                        Serie Histórica 2019–2026 (n = 8 vigencias)
+                      </span>
+                      <span className="text-xs font-mono font-bold text-rose-300 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30 flex items-center gap-1">
+                        <AlertTriangle size={13} /> Caída Recaudo 2026: -26,47% (-$550.8M)
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                        <TrendingUp size={13} /> Parámetro Macro Oficial: +6,6%
+                      </span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
+                      Recurso 13: Excedentes Financieros de Entidades del Sector Cooperativo
+                    </h3>
+                    <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
+                      Conforme al artículo 142 de la Ley 1819 de 2016 (art. 19-4 E.T.), el 20% del excedente financiero tomado de los fondos de educación y solidaridad de las cooperativas se destina a financiar cupos y programas en Instituciones de Educación Superior públicas.
+                      <br />
+                      <strong className="text-amber-300">Alerta de Desempeño 2026:</strong> En la última vigencia, el recaudo real cerró en <strong className="text-white">$ 1.530.000.000 COP</strong>, sufriendo una contracción severa de <strong className="text-rose-400">-$550.840.690 COP (-26,47%)</strong> respecto a 2025 y ubicándose marcadamente <strong className="text-rose-300">por debajo de lo proyectado</strong>. Proyectar sobre promedios históricos desconociendo este piso generaría déficit de tesorería. Por ello, se recomienda adoptar con prudencia el <strong className="text-emerald-300">Escenario Base Macroeconómico (+6,6% sobre base real = $ 1.630.980.000 COP)</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 shrink-0">
+                  <button
+                    onClick={() => exportR13CSV(r13SelectedModel)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] cursor-pointer"
+                  >
+                    <Download size={15} />
+                    <span>Descargar Certificado R13 (CSV)</span>
+                  </button>
+                  <div className="flex items-center gap-2 text-right">
+                    <span className="text-[11px] font-mono text-on-surface-variant">
+                      Base Real Recaudada 2026: <strong className="text-amber-300">{formatCurrencyShortCOP(R13_BASE_2026)}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SELECTOR INTERACTIVO DE ESCENARIO 2027 */}
+              <div className="mt-6 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-amber-400" />
+                    Seleccionar Modelo de Proyección R13 para 2027:
+                  </span>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Modelo Activo: <strong className="text-white">{r13ActiveModel.name}</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {R13_FORECAST_MODELS.map((m) => {
+                    const isSelected = r13SelectedModel === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => setR13SelectedModel(m.id)}
+                        className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden ${
+                          isSelected
+                            ? 'bg-amber-500/15 border-amber-400 ring-2 ring-amber-500/40 shadow-lg scale-[1.02]'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                            isSelected ? 'bg-amber-500 text-black font-extrabold' : 'bg-white/10 text-on-surface-variant'
+                          }`}>
+                            {m.tag}
+                          </span>
+                          {m.isOfficial && (
+                            <span className="text-[9px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                              Oficial Recomendado
+                            </span>
+                          )}
+                          {m.riskLevel === 'alto' && (
+                            <span className="text-[9px] font-mono font-bold text-rose-300 bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/30">
+                              Riesgo Alto
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-bold text-xs text-white mt-1">
+                          {m.shortName}
+                        </div>
+                        <div className="font-mono text-lg font-extrabold text-amber-300 mt-0.5">
+                          {formatCurrencyShortCOP(m.projected2027)}
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
+                          <span className={`${m.variacionPct > 0 ? 'text-emerald-400' : 'text-on-surface-variant'} font-bold`}>
+                            {m.variacionPct > 0 ? '+' : ''}{m.variacionPct.toFixed(2)}%
+                          </span>
+                          <span>{m.incrementoNominal > 0 ? `+${formatCurrencyShortCOP(m.incrementoNominal)}` : '$0'}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* TARJETAS KPI DE IMPACTO */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                {/* KPI 1: Proyección 2027 R13 */}
+                <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">
+                      Proyección 2027 (R13)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded border border-amber-500/30">
+                      {r13ActiveModel.tag}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-amber-300 block">
+                      {formatCurrencyShortCOP(r13ActiveModel.projected2027)}
+                    </span>
+                    <span className="text-[11px] font-mono text-white/90 block mt-0.5">
+                      {formatCurrencyCOP(r13ActiveModel.projected2027)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-amber-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Fórmula:</span>
+                    <strong className="text-amber-200 font-mono">{r13ActiveModel.formula}</strong>
+                  </div>
+                </div>
+
+                {/* KPI 2: Recaudo Real 2026 (Alerta de Caída) */}
+                <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-rose-300 uppercase tracking-wider">
+                      Recaudo Real 2026 (Deprimido)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded border border-rose-500/30">
+                      -26,47%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-bold text-white block">
+                      {formatCurrencyShortCOP(R13_BASE_2026)}
+                    </span>
+                    <span className="text-[11px] font-mono text-rose-300/90 block mt-0.5">
+                      -$550.840.690 COP vs 2025 ($2.081M)
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-rose-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Diagnóstico:</span>
+                    <strong className="text-rose-400">Por debajo de lo proyectado</strong>
+                  </div>
+                </div>
+
+                {/* KPI 3: Variación Nominal Proyectada */}
+                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
+                      Incremento Nominal 2027
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
+                      +{r13ActiveModel.variacionPct.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-emerald-400 block">
+                      +{formatCurrencyShortCOP(r13ActiveModel.incrementoNominal)}
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
+                      +{formatCurrencyCOP(r13ActiveModel.incrementoNominal)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Cálculo sobre base 2026:</span>
+                    <strong className="text-emerald-300">+{r13ActiveModel.variacionPct.toFixed(1)}% indexación</strong>
+                  </div>
+                </div>
+
+                {/* KPI 4: Volatilidad Histórica y Riesgo */}
+                <div className="p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-sky-300 uppercase tracking-wider">
+                      Volatilidad de la Fuente
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-sky-500/20 text-sky-200 px-2 py-0.5 rounded border border-sky-500/30">
+                      CV = 53,8%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-sky-300 block">
+                      Alta Oscilación
+                    </span>
+                    <span className="text-[11px] font-mono text-sky-200/90 block mt-0.5">
+                      Rango: $901M (2019) a $4.432M (2022)
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-sky-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Criterio Tesorería:</span>
+                    <strong className="text-amber-300">Gasto condicionado a recaudo</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* GRÁFICO HISTÓRICO Y PROYECCIÓN RECHARTS */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
+                  <BarChart3 size={20} className="text-amber-400" />
+                  Evolución y Proyección de Excedentes de Cooperativas (2019–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Comportamiento histórico de 8 vigencias evidenciando el pico atípico de 2022, la contracción 2026 (-26,47%) y la proyección 2027.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+                  Histórico Real (2019–2025)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-rose-300 font-bold">
+                  <span className="w-3 h-3 rounded-full bg-rose-500 ring-2 ring-rose-500/50"></span>
+                  Base 2026 Deprimida ($1.530M)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
+                  <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
+                  Proyección 2027 ({formatCurrencyShortCOP(r13ActiveModel.projected2027)})
+                </span>
+              </div>
+            </div>
+
+            <div className="h-[340px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={r13ChartSeries} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <defs>
+                    <linearGradient id="r13BarGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#b45309" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="r13Bar2026" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#9f1239" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="r13Bar2027" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#34d399" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="r13AreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                  />
+                  
+                  <YAxis 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                    tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`}
+                    domain={[0, 5000000000]}
+                  />
+
+                  <RechartsTooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload;
+                      return (
+                        <div className="bg-surface-container-high/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl min-w-[280px]">
+                          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+                            <span className="font-mono font-bold text-white text-sm">
+                              Vigencia {item.vigencia}
+                            </span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                              item.is2027 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                                : item.is2026
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                            }`}>
+                              {item.is2027 ? `PROYECCIÓN (${r13ActiveModel.shortName})` : item.is2026 ? 'BASE REAL (CAÍDA)' : 'HISTÓRICO REAL'}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-on-surface-variant">Total Recaudo:</span>
+                              <span className="font-mono font-bold text-amber-300 text-sm">
+                                {formatCurrencyShortCOP(item.recaudo)}
+                              </span>
+                            </div>
+                            <div className="text-right text-[11px] font-mono text-white/80">
+                              {formatCurrencyCOP(item.recaudo)}
+                            </div>
+
+                            {item.variacionCOP !== 0 && (
+                              <div className="flex justify-between items-baseline pt-2 border-t border-white/10">
+                                <span className="text-on-surface-variant">Variación vs. año ant:</span>
+                                <span className={`font-mono font-bold ${item.variacionCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {item.variacionCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(item.variacionCOP)} ({item.variacionPct >= 0 ? '+' : ''}{item.variacionPct.toFixed(2)}%)
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="pt-2 border-t border-white/10 text-[10px] text-on-surface-variant italic">
+                              {item.notaNormativa}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+
+                  <Area 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    fill="url(#r13AreaGrad)" 
+                    stroke="none" 
+                  />
+
+                  <Bar dataKey="recaudo" radius={[8, 8, 0, 0]}>
+                    {r13ChartSeries.map((entry, index) => (
+                      <Cell 
+                        key={`r13-cell-${index}`} 
+                        fill={entry.is2027 ? 'url(#r13Bar2027)' : entry.is2026 ? 'url(#r13Bar2026)' : 'url(#r13BarGradient)'}
+                        stroke={entry.is2027 ? '#10b981' : entry.is2026 ? '#f43f5e' : 'none'}
+                        strokeWidth={entry.is2027 || entry.is2026 ? 2 : 0}
+                      />
+                    ))}
+                  </Bar>
+
+                  <Line 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    stroke="#38bdf8" 
+                    strokeWidth={2.5}
+                    dot={{ fill: '#38bdf8', r: 4 }}
+                    activeDot={{ r: 6, fill: '#38bdf8', stroke: '#fff', strokeWidth: 2 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-4 p-3.5 rounded-2xl bg-black/30 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-amber-300">
+                <Info size={16} className="shrink-0" />
+                <span>
+                  <strong>Diagnóstico de Serie R13:</strong> Tras el pico extraordinario de 2022 ($4.432M), el recaudo se estabilizó en torno a $2.080M (2024–2025), pero cayó a <strong>$1.530M en 2026 (-26,47%)</strong>. El modelo activo proyecta <strong>{formatCurrencyCOP(r13ActiveModel.projected2027)}</strong> (+{r13ActiveModel.variacionPct.toFixed(2)}%).
+                </span>
+              </div>
+              <span className="font-mono text-emerald-400 font-bold shrink-0">
+                Modelo: {r13ActiveModel.name}
+              </span>
+            </div>
+          </div>
+
+          {/* TABLA 1: SERIE HISTÓRICA COMPLETA Y PROYECCIÓN */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Table size={18} className="text-amber-400" />
+                  Tabla: Histórico y Proyección Recurso 13 — Excedentes de Cooperativas (2019–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Registro cronológico de los aportes del sector solidario con análisis del desempeño real 2026.
+                </p>
+              </div>
+              <button
+                onClick={() => exportR13CSV(r13SelectedModel)}
+                className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+              >
+                <Download size={14} />
+                <span>Exportar Tabla CSV</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Vigencia</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Concepto Presupuestal</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Recurso</th>
+                    <th className="p-4 font-semibold text-right text-amber-300">Total Recaudo ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Variación Anual ($)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Variación (%)</th>
+                    <th className="p-4 font-semibold text-left text-on-surface-variant">Hito / Diagnóstico</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R13_HISTORICAL_SERIES.map((h) => {
+                    const is2027 = h.vigencia === 2027;
+                    const is2026 = h.vigencia === 2026;
+                    const recaudo = is2027 ? r13ActiveModel.projected2027 : h.totalRecaudo;
+                    const varCOP = is2027 ? r13ActiveModel.incrementoNominal : h.variacionAnualCOP;
+                    const varPct = is2027 ? r13ActiveModel.variacionPct : h.variacionAnualPct;
+
+                    return (
+                      <tr 
+                        key={h.vigencia} 
+                        className={`transition-colors ${
+                          is2027 
+                            ? 'bg-emerald-500/10 hover:bg-emerald-500/20 font-semibold' 
+                            : is2026 
+                            ? 'bg-rose-500/10 hover:bg-rose-500/20 font-medium' 
+                            : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold font-mono">
+                          <span className={`px-2.5 py-1 rounded-lg text-xs ${
+                            is2027 
+                              ? 'bg-emerald-500 text-black font-extrabold' 
+                              : is2026 
+                              ? 'bg-rose-500 text-white font-extrabold' 
+                              : 'bg-white/10 text-white'
+                          }`}>
+                            {h.vigencia}
+                          </span>
+                        </td>
+                        <td className={`p-4 ${is2027 ? 'text-emerald-200 font-bold' : is2026 ? 'text-rose-200 font-bold' : 'text-white'}`}>
+                          {is2027 ? `Excedentes Cooperativas (${r13ActiveModel.shortName})` : h.concepto}
+                        </td>
+                        <td className="p-4 font-mono text-on-surface-variant text-[11px]">
+                          {h.recurso}
+                        </td>
+                        <td className={`p-4 text-right font-mono font-bold ${
+                          is2027 ? 'text-emerald-300 text-sm' : is2026 ? 'text-rose-300' : 'text-white'
+                        }`}>
+                          {formatCurrencyCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono">
+                          {varCOP !== 0 ? (
+                            <span className={varCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                              {varCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(varCOP)}
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold">
+                          {varPct !== 0 ? (
+                            <span className={`px-2 py-0.5 rounded text-[11px] ${
+                              is2027 
+                                ? 'bg-emerald-500/30 text-emerald-300 font-extrabold' 
+                                : varPct >= 0 ? 'text-emerald-400' : 'text-rose-400 font-bold'
+                            }`}>
+                              {varPct >= 0 ? '+' : ''}{varPct.toFixed(2)}%
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-on-surface-variant text-[11px] italic">
+                          {is2027 ? r13ActiveModel.interpretation : h.notaNormativa}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TABLA 2: COMPARACIÓN DE MODELOS MATEMÁTICOS EVALUADOS */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Calculator size={18} className="text-amber-400" />
+                  Matriz Comparativa de Modelos de Proyección 2027 (R13)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Evaluación de alternativas de proyección frente al riesgo de desfase financiero tras la caída de 2026.
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Modelo / Metodología</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Fórmula de Cálculo</th>
+                    <th className="p-4 font-semibold text-right text-amber-300">Proyección 2027 ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Incremento ($ COP)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Variación %</th>
+                    <th className="p-4 font-semibold text-center text-white">Nivel de Riesgo</th>
+                    <th className="p-4 font-semibold text-center text-white">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R13_FORECAST_MODELS.map((m) => {
+                    const isSelected = r13SelectedModel === m.id;
+                    return (
+                      <tr 
+                        key={m.id} 
+                        className={`transition-colors ${
+                          isSelected ? 'bg-amber-500/15 font-semibold' : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold text-white flex items-center gap-2">
+                          <span 
+                            className="w-3 h-3 rounded-full shrink-0" 
+                            style={{ backgroundColor: m.color }}
+                          />
+                          <div>
+                            <span>{m.name}</span>
+                            <span className="text-[10px] block text-on-surface-variant font-normal">{m.tag}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 font-mono text-[11px] text-on-surface-variant">
+                          {m.formula}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-amber-300 text-sm">
+                          {formatCurrencyCOP(m.projected2027)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(m.projected2027)}
+                        </td>
+                        <td className="p-4 text-right font-mono text-emerald-400 font-semibold">
+                          {m.incrementoNominal > 0 ? `+${formatCurrencyShortCOP(m.incrementoNominal)}` : '$0'}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold text-amber-300">
+                          {m.variacionPct > 0 ? `+${m.variacionPct.toFixed(2)}%` : '0,00%'}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                            m.riskLevel === 'bajo' 
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                              : m.riskLevel === 'medio'
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          }`}>
+                            {m.riskLevel.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          {isSelected ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-black">
+                              Activo
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setR13SelectedModel(m.id)}
+                              className="px-2.5 py-1 rounded-full text-[10px] font-mono text-amber-300 hover:text-white bg-white/5 hover:bg-white/15 border border-white/10 transition-colors"
+                            >
+                              Aplicar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* PANEL DE ANÁLISIS DE RIESGO Y ASPECTOS RELEVANTES */}
+          <div className="p-6 md:p-8 rounded-[28px] bg-gradient-to-r from-surface-container-high/90 to-background border border-amber-500/30 shadow-xl">
+            <div className="flex flex-col md:flex-row items-start gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0 border border-amber-500/30">
+                <Scale size={24} />
+              </div>
+              <div className="space-y-4 w-full">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider font-bold text-amber-300">
+                    Dictamen Técnico Financiero Institucional
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                    Alerta de Subrecaudo 2026
+                  </span>
+                </div>
+                <h4 className="text-xl font-bold text-white tracking-tight">
+                  Aspectos Relevantes del Recurso 13 y Justificación del Escenario Base 2027
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  {/* Aspecto 1 */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                      <AlertTriangle size={15} />
+                      <span>1. Diagnóstico de la Caída 2026 (-26,47%)</span>
+                    </div>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      En 2026 se presupuestó un recaudo superior basado en el promedio de 2024–2025 ($2.080M), pero el ingreso efectivo sólo alcanzó <strong className="text-white">$1.530.000.000 COP</strong> (un faltante de -$550.8M). Esta brecha obedeció a la reducción de excedentes netos reportados por cooperativas en Boyacá y el país, y mayores absorciones por fondos de reserva legal.
+                    </p>
+                  </div>
+
+                  {/* Aspecto 2 */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                      <AlertTriangle size={15} />
+                      <span>2. Peligro de Ilusión Presupuestal y Déficit</span>
+                    </div>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      Adoptar modelos que promedien años pasados sin corregir la base (como la Media Cuatrienal de $1.889M o WMA de $1.805M) implicaría crear compromisos de gasto de funcionamiento sin certeza de tesorería. Si el sector solidario no repunta, la universidad incurriría en un déficit no cubierto de más de $350 millones.
+                    </p>
+                  </div>
+
+                  {/* Aspecto 3 */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                      <CheckCircle2 size={15} />
+                      <span>3. Sustentación del Modelo Macroeconómico (+6,6%)</span>
+                    </div>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      La presupuestación oficial parte del <strong className="text-white">recaudo real ejecutado ($1.530M)</strong> y le aplica la tasa macroeconómica aprobada del <strong className="text-emerald-300">+6,6%</strong>, arrojando <strong className="text-emerald-300">$ 1.630.980.000 COP</strong>. Esto reconoce la inflación esperada sin inflar la base, blindando la posición de liquidez de la UPTC.
+                    </p>
+                  </div>
+
+                  {/* Aspecto 4 */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center gap-2 text-sky-400 font-bold text-xs uppercase tracking-wider">
+                      <Layers size={15} />
+                      <span>4. Regla de Ejecución Condicionada a Tesorería</span>
+                    </div>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      Dado que los giros de excedentes cooperativos se concentran entre mayo y junio tras la aprobación de asambleas generales, se recomienda al Consejo Superior no expedir Certificados de Disponibilidad Presupuestal (CDP) recurrentes sobre R13 hasta que los recursos ingresen efectivamente a bancos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN 0.4: RECURSO 14 (POLÍTICA DE GRATUIDAD EN MATRÍCULA - LEY 2307)    */}
+      {/* ========================================================================= */}
+      {selectedRecursoTab === 'r14' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* HEADER HERO R14 */}
+          <div className="bg-gradient-to-br from-surface-container-high/90 to-background border border-teal-500/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-teal-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+            <div className="relative z-10">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-teal-500/20 flex items-center justify-center text-teal-300 shrink-0 border border-teal-500/30 shadow-lg">
+                    <GraduationCap size={28} />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-xs font-mono uppercase tracking-wider font-bold text-teal-300 bg-teal-500/20 px-3 py-1 rounded-full border border-teal-500/30">
+                        Transferencia Nacional FSE • Ley 2307 de 2023
+                      </span>
+                      <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
+                        Serie Histórica desde 2021 (n = 6 vigencias)
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                        <TrendingUp size={13} /> Referencia Macroeconómica: +6,6%
+                      </span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
+                      Recurso 14: Política de Gratuidad en Matrícula
+                    </h3>
+                    <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
+                      Recurso creado en 2021 mediante el Fondo Solidario para la Educación (Decreto 1667/2021) y formalizado con fuerza de ley permanente mediante la <strong className="text-white">Ley 2307 de 2023 ("Puedo Estudiar")</strong>. Financia el 100% de la matrícula neta de los estudiantes de pregrado de la UPTC.
+                      Con un recaudo base en 2026 de <strong className="text-teal-300">$ 49.844.177.233 COP</strong>, se evalúa el piso prudente de indexación macroeconómica (+6,6% = <strong className="text-emerald-300">$ 53.134M</strong>) frente a los modelos de tendencia histórica OLS (<strong className="text-sky-300">$ 54.459M</strong>, R²=94,7%) y suavizamiento Holt (<strong className="text-purple-300">$ 53.802M</strong>).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 shrink-0">
+                  <button
+                    onClick={() => exportR14CSV(r14SelectedModel)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-teal-500 hover:bg-teal-400 text-black font-bold text-xs shadow-lg shadow-teal-500/20 transition-all hover:scale-[1.02] cursor-pointer"
+                  >
+                    <Download size={15} />
+                    <span>Descargar Certificado R14 (CSV)</span>
+                  </button>
+                  <div className="flex items-center gap-2 text-right">
+                    <span className="text-[11px] font-mono text-on-surface-variant">
+                      Base Recaudo 2026: <strong className="text-teal-300">{formatCurrencyShortCOP(R14_BASE_2026)}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SELECTOR INTERACTIVO DE ESCENARIO 2027 */}
+              <div className="mt-6 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-semibold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-amber-400" />
+                    Seleccionar Escenario de Proyección R14 para 2027:
+                  </span>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Modelo Activo: <strong className="text-white">{r14ActiveModel.name}</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {R14_FORECAST_MODELS.map((m) => {
+                    const isSelected = r14SelectedModel === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => setR14SelectedModel(m.id)}
+                        className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden ${
+                          isSelected
+                            ? 'bg-teal-500/15 border-teal-400 ring-2 ring-teal-500/40 shadow-lg scale-[1.02]'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                            isSelected ? 'bg-teal-500 text-black font-extrabold' : 'bg-white/10 text-on-surface-variant'
+                          }`}>
+                            {m.tag}
+                          </span>
+                          {m.isOfficial && (
+                            <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                              Base Macro
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-bold text-xs text-white mt-1">
+                          {m.shortName}
+                        </div>
+                        <div className="font-mono text-lg font-extrabold text-teal-300 mt-0.5">
+                          {formatCurrencyShortCOP(m.projected2027)}
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
+                          <span className="text-emerald-400 font-bold">+{m.variacionPct.toFixed(2)}%</span>
+                          <span>+{formatCurrencyShortCOP(m.incrementoNominal)}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* TARJETAS KPI DE IMPACTO */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                {/* KPI 1: Proyección 2027 R14 */}
+                <div className="p-5 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-teal-300 uppercase tracking-wider">
+                      Proyección 2027 (R14)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-teal-500/20 text-teal-200 px-2 py-0.5 rounded border border-teal-500/30">
+                      {r14ActiveModel.tag}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-teal-300 block">
+                      {formatCurrencyShortCOP(r14ActiveModel.projected2027)}
+                    </span>
+                    <span className="text-[11px] font-mono text-white/90 block mt-0.5">
+                      {formatCurrencyCOP(r14ActiveModel.projected2027)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-teal-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Fórmula:</span>
+                    <strong className="text-teal-200 font-mono">{r14ActiveModel.formula}</strong>
+                  </div>
+                </div>
+
+                {/* KPI 2: Recaudo de Referencia 2026 */}
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                      Recaudo Referencia 2026
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-white/10 text-white px-2 py-0.5 rounded border border-white/20">
+                      Vigencia Base
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-bold text-white block">
+                      {formatCurrencyShortCOP(R14_BASE_2026)}
+                    </span>
+                    <span className="text-[11px] font-mono text-on-surface-variant block mt-0.5">
+                      {formatCurrencyCOP(R14_BASE_2026)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Crecimiento 2026</span>
+                    <strong className="text-emerald-400">+$13.634M (+37,65%)</strong>
+                  </div>
+                </div>
+
+                {/* KPI 3: Incremento Nominal */}
+                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
+                      Incremento Nominal 2027
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
+                      +{r14ActiveModel.variacionPct.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-emerald-400 block">
+                      +{formatCurrencyShortCOP(r14ActiveModel.incrementoNominal)}
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
+                      +{formatCurrencyCOP(r14ActiveModel.incrementoNominal)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Adicionales vs 2026</span>
+                    <strong className="text-emerald-300">+{r14ActiveModel.variacionPct.toFixed(1)}% vs Base</strong>
+                  </div>
+                </div>
+
+                {/* KPI 4: CAGR Histórico 2021-2026 */}
+                <div className="p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-sky-300 uppercase tracking-wider">
+                      Crecimiento Histórico (CAGR)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-sky-500/20 text-sky-200 px-2 py-0.5 rounded border border-sky-500/30">
+                      2021–2026
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-sky-300 block">
+                      +29,64%
+                    </span>
+                    <span className="text-[11px] font-mono text-sky-200/90 block mt-0.5">
+                      Tasa Anual Compuesta (5 años)
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-sky-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Multiplicador de Expansión</span>
+                    <strong className="text-sky-200">3,66× desde 2021</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* GRÁFICO HISTÓRICO Y PROYECCIÓN RECHARTS */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-teal-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
+                  <BarChart3 size={20} className="text-teal-400" />
+                  Evolución y Proyección de la Política de Gratuidad (2021–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Comportamiento del recaudo histórico desde la creación del fondo (2021) y proyección 2027 según el modelo seleccionado.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-teal-400"></span>
+                  Histórico Real (2021–2025)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-teal-600"></span>
+                  Base 2026 ($49.844M)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
+                  <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
+                  Proyección 2027 ({formatCurrencyShortCOP(r14ActiveModel.projected2027)})
+                </span>
+              </div>
+            </div>
+
+            <div className="h-[340px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={r14ChartSeries} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <defs>
+                    <linearGradient id="r14BarGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2dd4bf" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#0f766e" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="r14Bar2027" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#34d399" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="r14AreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#14b8a6" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                  />
+                  
+                  <YAxis 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                    tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`}
+                    domain={[0, 65000000000]}
+                  />
+
+                  <RechartsTooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload;
+                      return (
+                        <div className="bg-surface-container-high/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl min-w-[280px]">
+                          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+                            <span className="font-mono font-bold text-white text-sm">
+                              Vigencia {item.vigencia}
+                            </span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                              item.is2027 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                                : 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
+                            }`}>
+                              {item.is2027 ? `PROYECCIÓN (${r14ActiveModel.shortName})` : 'HISTÓRICO REAL'}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-on-surface-variant">Total Recaudo:</span>
+                              <span className="font-mono font-bold text-teal-300 text-sm">
+                                {formatCurrencyShortCOP(item.recaudo)}
+                              </span>
+                            </div>
+                            <div className="text-right text-[11px] font-mono text-white/80">
+                              {formatCurrencyCOP(item.recaudo)}
+                            </div>
+
+                            {item.variacionCOP !== 0 && (
+                              <div className="flex justify-between items-baseline pt-2 border-t border-white/10">
+                                <span className="text-on-surface-variant">Variación vs. año ant:</span>
+                                <span className={`font-mono font-bold ${item.variacionCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {item.variacionCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(item.variacionCOP)} ({item.variacionPct >= 0 ? '+' : ''}{item.variacionPct.toFixed(2)}%)
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="pt-2 border-t border-white/10 text-[10px] text-on-surface-variant italic">
+                              {item.notaNormativa}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+
+                  <Area 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    fill="url(#r14AreaGrad)" 
+                    stroke="none" 
+                  />
+
+                  <Bar dataKey="recaudo" radius={[8, 8, 0, 0]}>
+                    {r14ChartSeries.map((entry, index) => (
+                      <Cell 
+                        key={`r14-cell-${index}`} 
+                        fill={entry.is2027 ? 'url(#r14Bar2027)' : 'url(#r14BarGradient)'}
+                        stroke={entry.is2027 ? '#10b981' : 'none'}
+                        strokeWidth={entry.is2027 ? 2 : 0}
+                      />
+                    ))}
+                  </Bar>
+
+                  <Line 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    stroke="#f59e0b" 
+                    strokeWidth={2.5}
+                    dot={{ fill: '#f59e0b', r: 4 }}
+                    activeDot={{ r: 6, fill: '#f59e0b', stroke: '#fff', strokeWidth: 2 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-4 p-3.5 rounded-2xl bg-black/30 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-teal-300">
+                <Info size={16} className="shrink-0" />
+                <span>
+                  <strong>Comportamiento del Fondo:</strong> El recurso creció de <strong>$13.614M (2021)</strong> a <strong>$49.844M (2026)</strong> con la implementación de la Ley 2307/2023. El modelo activo proyecta <strong>{formatCurrencyCOP(r14ActiveModel.projected2027)}</strong> para 2027 (+{r14ActiveModel.variacionPct.toFixed(2)}%).
+                </span>
+              </div>
+              <span className="font-mono text-emerald-400 font-bold shrink-0">
+                Modelo: {r14ActiveModel.name}
+              </span>
+            </div>
+          </div>
+
+          {/* TABLA 1: SERIE HISTÓRICA COMPLETA Y PROYECCIÓN */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-teal-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Table size={18} className="text-teal-400" />
+                  Tabla: Histórico y Proyección Recurso 14 — Política de Gratuidad (2021–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Registro cronológico oficial desde la vigencia inaugural de gratuidad hasta la proyección 2027.
+                </p>
+              </div>
+              <button
+                onClick={() => exportR14CSV(r14SelectedModel)}
+                className="flex items-center gap-1.5 text-xs text-teal-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+              >
+                <Download size={14} />
+                <span>Exportar Tabla CSV</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Vigencia</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Concepto Presupuestal</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Recurso</th>
+                    <th className="p-4 font-semibold text-right text-teal-300">Total Recaudo ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Variación Anual ($)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Variación (%)</th>
+                    <th className="p-4 font-semibold text-left text-on-surface-variant">Hito Normativo / Criterio</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R14_HISTORICAL_SERIES.map((h) => {
+                    const is2027 = h.vigencia === 2027;
+                    const is2026 = h.vigencia === 2026;
+                    const recaudo = is2027 ? r14ActiveModel.projected2027 : h.totalRecaudo;
+                    const varCOP = is2027 ? r14ActiveModel.incrementoNominal : h.variacionAnualCOP;
+                    const varPct = is2027 ? r14ActiveModel.variacionPct : h.variacionAnualPct;
+
+                    return (
+                      <tr 
+                        key={h.vigencia} 
+                        className={`transition-colors ${
+                          is2027 
+                            ? 'bg-emerald-500/10 hover:bg-emerald-500/20 font-semibold' 
+                            : is2026 
+                            ? 'bg-teal-500/10 hover:bg-teal-500/20 font-medium' 
+                            : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold font-mono">
+                          <span className={`px-2.5 py-1 rounded-lg text-xs ${
+                            is2027 
+                              ? 'bg-emerald-500 text-black font-extrabold' 
+                              : is2026 
+                              ? 'bg-teal-500 text-black font-extrabold' 
+                              : 'bg-white/10 text-white'
+                          }`}>
+                            {h.vigencia}
+                          </span>
+                        </td>
+                        <td className={`p-4 ${is2027 ? 'text-emerald-200 font-bold' : is2026 ? 'text-teal-200 font-bold' : 'text-white'}`}>
+                          {is2027 ? `Política de Gratuidad (${r14ActiveModel.shortName})` : h.concepto}
+                        </td>
+                        <td className="p-4 font-mono text-on-surface-variant text-[11px]">
+                          {h.recurso}
+                        </td>
+                        <td className={`p-4 text-right font-mono font-bold ${
+                          is2027 ? 'text-emerald-300 text-sm' : is2026 ? 'text-teal-300' : 'text-white'
+                        }`}>
+                          {formatCurrencyCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono">
+                          {varCOP !== 0 ? (
+                            <span className={varCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                              {varCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(varCOP)}
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold">
+                          {varPct !== 0 ? (
+                            <span className={`px-2 py-0.5 rounded text-[11px] ${
+                              is2027 
+                                ? 'bg-emerald-500/30 text-emerald-300 font-extrabold' 
+                                : varPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            }`}>
+                              {varPct >= 0 ? '+' : ''}{varPct.toFixed(2)}%
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-on-surface-variant text-[11px] italic">
+                          {is2027 ? r14ActiveModel.interpretation : h.notaNormativa}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TABLA 2: COMPARACIÓN DE MODELOS MATEMÁTICOS EVALUADOS */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-teal-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Calculator size={18} className="text-teal-400" />
+                  Matriz Comparativa de Modelos de Proyección 2027 (R14)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Contraste entre el piso macroeconómico oficial (+6,6%) y los modelos de regresión y suavizamiento estadístico.
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Modelo / Metodología</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Fórmula de Cálculo</th>
+                    <th className="p-4 font-semibold text-right text-teal-300">Proyección 2027 ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Incremento ($ COP)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Variación %</th>
+                    <th className="p-4 font-semibold text-center text-purple-300">Ajuste (R²)</th>
+                    <th className="p-4 font-semibold text-center text-white">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R14_FORECAST_MODELS.map((m) => {
+                    const isSelected = r14SelectedModel === m.id;
+                    return (
+                      <tr 
+                        key={m.id} 
+                        className={`transition-colors ${
+                          isSelected ? 'bg-teal-500/15 font-semibold' : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold text-white flex items-center gap-2">
+                          <span 
+                            className="w-3 h-3 rounded-full shrink-0" 
+                            style={{ backgroundColor: m.color }}
+                          />
+                          <div>
+                            <span>{m.name}</span>
+                            <span className="text-[10px] block text-on-surface-variant font-normal">{m.tag}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 font-mono text-[11px] text-on-surface-variant">
+                          {m.formula}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-teal-300 text-sm">
+                          {formatCurrencyCOP(m.projected2027)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(m.projected2027)}
+                        </td>
+                        <td className="p-4 text-right font-mono text-emerald-400 font-semibold">
+                          +{formatCurrencyShortCOP(m.incrementoNominal)}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold text-amber-300">
+                          +{m.variacionPct.toFixed(2)}%
+                        </td>
+                        <td className="p-4 text-center font-mono text-purple-300 font-bold">
+                          {m.r2 ? `${m.r2.toFixed(1)}%` : '—'}
+                        </td>
+                        <td className="p-4 text-center">
+                          {isSelected ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-teal-500 text-black">
+                              Activo
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setR14SelectedModel(m.id)}
+                              className="px-2.5 py-1 rounded-full text-[10px] font-mono text-teal-300 hover:text-white bg-white/5 hover:bg-white/15 border border-white/10 transition-colors"
+                            >
+                              Aplicar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* PANEL DE JUSTIFICACIÓN METODOLÓGICA Y CONTEXTO NORMATIVO */}
+          <div className="p-6 md:p-8 rounded-[28px] bg-gradient-to-r from-surface-container-high/90 to-background border border-teal-500/30 shadow-xl">
+            <div className="flex flex-col md:flex-row items-start gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-teal-500/20 text-teal-300 flex items-center justify-center shrink-0 border border-teal-500/30">
+                <Scale size={24} />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider font-bold text-teal-300">
+                    Contexto Técnico y Criterio de Presupuestación
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/20 text-teal-200 border border-teal-500/30">
+                    Ley 2307 de 2023 ("Puedo Estudiar")
+                  </span>
+                </div>
+                <h4 className="text-xl font-bold text-white tracking-tight">
+                  Fundamento de la Serie Histórica y Proyección para 2027
+                </h4>
+                <div className="text-xs md:text-sm text-on-surface-variant space-y-2 leading-relaxed">
+                  <p>
+                    1. <strong className="text-white">Origen en la Vigencia 2021:</strong> El Recurso 14 no existía antes de 2021 porque la matrícula de pregrado era financiada por las familias bajo el Recurso 20 (Recursos Propios) y por subsidios limitados (como Generación E / Ser Pilo Paga). La universidad comenzó a recaudar este concepto a partir de 2021 con el Fondo Solidario para la Educación (FSE). Por ello, la serie histórica homogénea y representativa comprende exactamente 6 vigencias (2021–2026).
+                  </p>
+                  <p>
+                    2. <strong className="text-white">Cambio Estructural con la Ley 2307 de 2023:</strong> La ley eliminó los límites de edad y extendió la gratuidad como derecho universal en instituciones públicas, lo que explica el salto presupuestal de <strong>$23.206M (2023)</strong> a <strong>$37.091M (2024)</strong> y <strong>$49.844M (2026)</strong>.
+                  </p>
+                  <p>
+                    3. <strong className="text-white">Recomendación Institucional para el Escenario Base:</strong> Aunque el modelo de regresión lineal proyecta <strong>$54.459M COP (+9,26%, R²=94,65%)</strong> reflejando la alta expansión del programa, se aconseja adoptar para el anteproyecto presupuestal el <strong className="text-emerald-300">Parámetro Macroeconómico Oficial del +6,6% ($53.134M COP)</strong>. Esta postura prudente asegura el equilibrio financiero frente a posibles rezagos en las liquidaciones semestrales del Ministerio de Educación Nacional.
                   </p>
                 </div>
               </div>
@@ -2520,10 +3879,10 @@ export function R20ResourceProjectionSection() {
                   Presupuesto Global Consolidado UPTC
                 </span>
                 <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
-                  Consolidado Global: Aportes Nación (R10 + R18) + Propios (R20) + Devolución IVA (R21)
+                  Consolidado Global: Giros de la Nación (R10 + R13 + R14 + R18) + Propios (R20) + Devolución IVA (R21)
                 </h3>
                 <p className="text-xs md:text-sm text-on-surface-variant max-w-2xl mt-1 leading-relaxed">
-                  Visión unificada del presupuesto de ingresos institucional 2027. Integra las asignaciones de la Nación (PGN 2027 y Art. 87 CESU) junto con las proyecciones de autogestión de la UPTC.
+                  Visión unificada del presupuesto de ingresos institucional 2027. Integra las transferencias de la Nación (PGN 2027, Excedentes Cooperativas Ley 1819, Política de Gratuidad Ley 2307 y Art. 87 CESU) junto con las proyecciones de autogestión de la UPTC.
                 </p>
               </div>
 
@@ -2535,7 +3894,7 @@ export function R20ResourceProjectionSection() {
                 </div>
 
                 <div className="text-left sm:text-right">
-                  <span className="text-[11px] uppercase tracking-wider text-indigo-400 block font-bold">TOTAL INSTITUCIONAL 2027 (R10+R18+R20+R21)</span>
+                  <span className="text-[11px] uppercase tracking-wider text-indigo-400 block font-bold">TOTAL INSTITUCIONAL 2027 (R10+R13+R14+R18+R20+R21)</span>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-mono font-extrabold text-emerald-400">
                       {formatCurrencyShortCOP(combinedSummary.total.y27)}
@@ -2552,7 +3911,7 @@ export function R20ResourceProjectionSection() {
             </div>
           </div>
 
-          {/* TABLA COMPARATIVA R10 vs R18 vs R20 vs R21 */}
+          {/* TABLA COMPARATIVA R10 vs R13 vs R14 vs R18 vs R20 vs R21 */}
           <div className="glass-card p-6 md:p-8 rounded-[28px]">
             <h4 className="text-lg font-display text-white font-bold mb-4 flex items-center gap-2">
               <Table size={18} className="text-indigo-400" />
@@ -2606,6 +3965,70 @@ export function R20ResourceProjectionSection() {
                     </td>
                   </tr>
 
+                  {/* Fila R13 (Cooperativas) */}
+                  <tr className="hover:bg-white/5 transition-colors bg-amber-600/5">
+                    <td className="p-4 font-bold text-white flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                      <div>
+                        <span>Recurso 13 — Excedentes Financieros de Cooperativas</span>
+                        <span className="text-[10px] block text-amber-300 font-normal">Art. 142 Ley 1819/2016 • {r13ActiveModel.name}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(combinedSummary.r13.y24)}
+                    </td>
+                    <td className="p-4 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(combinedSummary.r13.y25)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-sky-300">
+                      {formatCurrencyShortCOP(combinedSummary.r13.y26)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
+                      {formatCurrencyCOP(combinedSummary.r13.y27)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-white">
+                      {formatCurrencyShortCOP(combinedSummary.r13.y27)}
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
+                      +{combinedSummary.r13.varPct.toFixed(2)}%
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-amber-400">
+                      {combinedSummary.r13.part.toFixed(1)}%
+                    </td>
+                  </tr>
+
+                  {/* Fila R14 (Gratuidad) */}
+                  <tr className="hover:bg-white/5 transition-colors bg-teal-500/5">
+                    <td className="p-4 font-bold text-white flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
+                      <div>
+                        <span>Recurso 14 — Política de Gratuidad en Matrícula</span>
+                        <span className="text-[10px] block text-teal-300 font-normal">Ley 2307/2023 (FSE) • {r14ActiveModel.name}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(combinedSummary.r14.y24)}
+                    </td>
+                    <td className="p-4 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(combinedSummary.r14.y25)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-sky-300">
+                      {formatCurrencyShortCOP(combinedSummary.r14.y26)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
+                      {formatCurrencyCOP(combinedSummary.r14.y27)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-white">
+                      {formatCurrencyShortCOP(combinedSummary.r14.y27)}
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
+                      +{combinedSummary.r14.varPct.toFixed(2)}%
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-teal-300">
+                      {combinedSummary.r14.part.toFixed(1)}%
+                    </td>
+                  </tr>
+
                   {/* Fila R18 */}
                   <tr className="hover:bg-white/5 transition-colors bg-purple-500/5">
                     <td className="p-4 font-bold text-white flex items-center gap-2">
@@ -2638,10 +4061,10 @@ export function R20ResourceProjectionSection() {
                     </td>
                   </tr>
 
-                  {/* Subtotal Aportes Nación (R10 + R18) */}
+                  {/* Subtotal Giros de la Nación (R10 + R13 + R14 + R18) */}
                   <tr className="bg-cyan-500/10 font-semibold text-cyan-200 border-t border-cyan-500/20">
                     <td className="p-4 pl-8 text-cyan-300 italic flex items-center gap-2">
-                      <span>↳ Subtotal Giros de la Nación (R10 + R18)</span>
+                      <span>↳ Subtotal Giros y Fondos de la Nación (R10 + R13 + R14 + R18)</span>
                     </td>
                     <td className="p-4 text-right font-mono">
                       {formatCurrencyShortCOP(combinedSummary.nacion.y24)}
@@ -2662,7 +4085,7 @@ export function R20ResourceProjectionSection() {
                       +{combinedSummary.nacion.varPct.toFixed(2)}%
                     </td>
                     <td className="p-4 text-center font-mono text-cyan-200 font-bold">
-                      {(combinedSummary.r10.part + combinedSummary.r18.part).toFixed(1)}%
+                      {(combinedSummary.r10.part + combinedSummary.r13.part + combinedSummary.r14.part + combinedSummary.r18.part).toFixed(1)}%
                     </td>
                   </tr>
 
@@ -2672,7 +4095,7 @@ export function R20ResourceProjectionSection() {
                       <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
                       <div>
                         <span>Recurso 20 — Recursos Propios</span>
-                        <span className="text-[10px] block text-amber-300 font-normal">Gestión académica y administrativa (Matrículas, servicios)</span>
+                        <span className="text-[10px] block text-amber-300 font-normal">Gestión académica y administrativa (Matrículas posgrado, servicios)</span>
                       </div>
                     </td>
                     <td className="p-4 text-right font-mono text-on-surface-variant">
@@ -2764,7 +4187,7 @@ export function R20ResourceProjectionSection() {
                   <tr className="shadow-lg">
                     <td className="p-4 font-extrabold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
                       <Landmark size={16} className="text-indigo-400 shrink-0" />
-                      <span>TOTAL CONSOLIDADO UPTC (R10 + R18 + R20 + R21)</span>
+                      <span>TOTAL CONSOLIDADO UPTC (R10 + R13 + R14 + R18 + R20 + R21)</span>
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-white">
                       {formatCurrencyShortCOP(combinedSummary.total.y24)}

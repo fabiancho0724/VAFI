@@ -1298,6 +1298,7 @@ export function exportR18CSV(): void {
     csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${h.totalRecaudo}";"${(h.totalRecaudo / 1e6).toFixed(2)}";"${h.variacionAnualCOP >= 0 ? '+' : ''}${h.variacionAnualCOP}";"${h.variacionAnualPct >= 0 ? '+' : ''}${h.variacionAnualPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
   }
 
+
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
@@ -1306,5 +1307,445 @@ export function exportR18CSV(): void {
   link.click();
   document.body.removeChild(link);
 }
+
+// =========================================================================
+// RECURSO 14 - POLÍTICA DE GRATUIDAD (LEY 2307 DE 2023 / FSE)
+// =========================================================================
+
+export interface R14HistoricalRecord {
+  vigencia: number;
+  unidad: string;
+  concepto: string;
+  recurso: string;
+  totalRecaudo: number;
+  variacionAnualCOP: number;
+  variacionAnualPct: number;
+  tipo: 'historico' | 'base2026' | 'proyeccion';
+  notaNormativa: string;
+}
+
+export interface R14ForecastModel {
+  id: 'macro' | 'linear' | 'holt' | 'optimista';
+  name: string;
+  shortName: string;
+  tag: 'Oficial Aprobado' | 'Tendencia Histórica' | 'Suavizado' | 'Expansión';
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  r2?: number; // 0 a 100
+  color: string;
+  interpretation: string;
+  isOfficial?: boolean;
+}
+
+export const R14_BASE_2026 = 49844177233;
+
+export const R14_HISTORICAL_SERIES: R14HistoricalRecord[] = [
+  {
+    vigencia: 2021,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Política de Gratuidad en Matrícula',
+    recurso: '14-Fondo Solidario de Educación - Gratuidad',
+    totalRecaudo: 13614386270,
+    variacionAnualCOP: 0,
+    variacionAnualPct: 0,
+    tipo: 'historico',
+    notaNormativa: 'Inicio de política de gratuidad (Decreto 1667 de 2021 y Fondo Solidario para la Educación)'
+  },
+  {
+    vigencia: 2022,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Política de Gratuidad en Matrícula',
+    recurso: '14-Fondo Solidario de Educación - Gratuidad',
+    totalRecaudo: 19265095526,
+    variacionAnualCOP: 5650709256,
+    variacionAnualPct: 41.51,
+    tipo: 'historico',
+    notaNormativa: 'Ampliación de cobertura a estudiantes de estratos 1, 2 y 3 de pregrado'
+  },
+  {
+    vigencia: 2023,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Política de Gratuidad en Matrícula',
+    recurso: '14-Fondo Solidario de Educación - Gratuidad',
+    totalRecaudo: 23206355604,
+    variacionAnualCOP: 3941260078,
+    variacionAnualPct: 20.46,
+    tipo: 'historico',
+    notaNormativa: 'Consolidación de asignaciones previas a la expedición de ley permanente'
+  },
+  {
+    vigencia: 2024,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Política de Gratuidad "Puedo Estudiar"',
+    recurso: '14-Fondo Solidario de Educación - Gratuidad',
+    totalRecaudo: 37090700264,
+    variacionAnualCOP: 13884344660,
+    variacionAnualPct: 59.83,
+    tipo: 'historico',
+    notaNormativa: 'Entrada en vigor Ley 2307 de 2023 (eliminación de barrera de edad y gratuidad universal)'
+  },
+  {
+    vigencia: 2025,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Política de Gratuidad "Puedo Estudiar"',
+    recurso: '14-Fondo Solidario de Educación - Gratuidad',
+    totalRecaudo: 36210311946,
+    variacionAnualCOP: -880388318,
+    variacionAnualPct: -2.37,
+    tipo: 'historico',
+    notaNormativa: 'Liquidación de giros efectivos del MEN tras auditoría de derechos pecuniarios'
+  },
+  {
+    vigencia: 2026,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Política de Gratuidad "Puedo Estudiar" (Base Referencia)',
+    recurso: '14-Fondo Solidario de Educación - Gratuidad',
+    totalRecaudo: 49844177233,
+    variacionAnualCOP: 13633865287,
+    variacionAnualPct: 37.65,
+    tipo: 'base2026',
+    notaNormativa: 'Recaudo base certificado para proyecciones institucionales'
+  },
+  {
+    vigencia: 2027,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Política de Gratuidad "Puedo Estudiar" (Proyectado)',
+    recurso: '14-Fondo Solidario de Educación - Gratuidad',
+    totalRecaudo: 53133892930,
+    variacionAnualCOP: 3289715697,
+    variacionAnualPct: 6.60,
+    tipo: 'proyeccion',
+    notaNormativa: 'Proyección institucional con parámetro macroeconómico oficial aprobado (+6,6%)'
+  }
+];
+
+export const R14_FORECAST_MODELS: R14ForecastModel[] = [
+  {
+    id: 'macro',
+    name: 'Parámetro Macroeconómico Aprobado (+6,6%)',
+    shortName: 'Macro +6,6%',
+    tag: 'Oficial Aprobado',
+    formula: 'Recaudo 2026 × 1,066',
+    projected2027: 53133892930,
+    incrementoNominal: 3289715697,
+    variacionPct: 6.60,
+    color: '#06b6d4',
+    interpretation: 'Alineado con el criterio macroeconómico institucional de prudencia presupuestal (+6,6%). Proporciona un piso de ingresos garantizado y defendible ante el Consejo Superior.',
+    isOfficial: true
+  },
+  {
+    id: 'linear',
+    name: 'Regresión Lineal de Tendencia OLS',
+    shortName: 'Lineal OLS (R²=94,7%)',
+    tag: 'Tendencia Histórica',
+    formula: 'y = 7.024.827.107 · t + 12.309.770.040',
+    projected2027: 54458732681,
+    incrementoNominal: 4614555448,
+    variacionPct: 9.26,
+    r2: 94.65,
+    color: '#10b981',
+    interpretation: 'Excelente ajuste estadístico (R² = 94,65%). Modela la trayectoria estructural de crecimiento continuo que la Ley 2307 ha impulsado en las universidades públicas.',
+    isOfficial: false
+  },
+  {
+    id: 'holt',
+    name: 'Suavizamiento Exponencial Holt',
+    shortName: 'Holt Suavizado',
+    tag: 'Suavizado',
+    formula: 'L_t = α·Y_t + (1-α)(L_{t-1} + T_{t-1}), α=0.5, β=0.3',
+    projected2027: 53801708707,
+    incrementoNominal: 3957531474,
+    variacionPct: 7.94,
+    color: '#8b5cf6',
+    interpretation: 'Pondera dinámicamente la tendencia histórica amortiguando la corrección de 2025 y dando fuerte peso a la recuperación consolidada de 2026.',
+    isOfficial: false
+  },
+  {
+    id: 'optimista',
+    name: 'Escenario de Expansión de Cobertura (+15,0%)',
+    shortName: 'Expansión +15,0%',
+    tag: 'Expansión',
+    formula: 'Recaudo 2026 × 1,15',
+    projected2027: 57320803818,
+    incrementoNominal: 7476626585,
+    variacionPct: 15.00,
+    color: '#f59e0b',
+    interpretation: 'Escenario contingente en caso de asignaciones extraordinarias del Ministerio de Educación Nacional por incremento neto en la matrícula pregradual elegible.',
+    isOfficial: false
+  }
+];
+
+export function exportR14CSV(selectedModelId: 'macro' | 'linear' | 'holt' | 'optimista' = 'macro'): void {
+  const model = R14_FORECAST_MODELS.find(m => m.id === selectedModelId) || R14_FORECAST_MODELS[0];
+  let csvContent = 'data:text/csv;charset=utf-8,';
+  csvContent += `PROYECCION RECURSO 14 - POLITICA DE GRATUIDAD (LEY 2307 DE 2023) - VIGENCIA 2027\n`;
+  csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Modelo Seleccionado:;${model.name}\n`;
+  csvContent += `Base Recaudo 2026 (COP):;${R14_BASE_2026}\n`;
+  csvContent += `Tasa de Crecimiento Proyectada:;+${model.variacionPct.toFixed(2)}%\n`;
+  csvContent += `Proyeccion 2027 (COP):;${model.projected2027}\n`;
+  csvContent += `Incremento Nominal (COP):;+${model.incrementoNominal}\n\n`;
+
+  csvContent += `MODELOS DE PROYECCION EVALUADOS 2027\n`;
+  csvContent += `Modelo;Formula;Proyeccion 2027 (COP);Proyeccion ($M);Incremento (COP);Variacion (%);Ajuste R2;Criterio\n`;
+  for (const m of R14_FORECAST_MODELS) {
+    csvContent += `"${m.name}";"${m.formula}";"${m.projected2027}";"${(m.projected2027 / 1e6).toFixed(2)}";"+${m.incrementoNominal}";"+${m.variacionPct.toFixed(2)}%";"${m.r2 ? m.r2.toFixed(2) + '%' : 'N/A'}";"${m.interpretation}"\n`;
+  }
+  csvContent += `\n`;
+
+  csvContent += `SERIE HISTORICA Y PROYECCION (2021-2027)\n`;
+  csvContent += `Vigencia;Unidad;Concepto;Recurso;Total Recaudo (COP);Total Recaudo ($M);Variacion Anual (COP);Variacion Anual (%);Tipo;Marco Legal / Nota\n`;
+  for (const h of R14_HISTORICAL_SERIES) {
+    const is2027 = h.vigencia === 2027;
+    const recaudo = is2027 ? model.projected2027 : h.totalRecaudo;
+    const varCOP = is2027 ? model.incrementoNominal : h.variacionAnualCOP;
+    const varPct = is2027 ? model.variacionPct : h.variacionAnualPct;
+    csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${recaudo}";"${(recaudo / 1e6).toFixed(2)}";"${varCOP >= 0 ? '+' : ''}${varCOP}";"${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
+  }
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Proyeccion_Recurso_14_Politica_Gratuidad_2027.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// =========================================================================
+// RECURSO 13 - EXCEDENTES FINANCIEROS DE COOPERATIVAS (ART. 142 LEY 1819/2016)
+// =========================================================================
+
+export interface R13HistoricalRecord {
+  vigencia: number;
+  unidad: string;
+  concepto: string;
+  recurso: string;
+  totalRecaudo: number;
+  variacionAnualCOP: number;
+  variacionAnualPct: number;
+  tipo: 'historico' | 'base2026' | 'proyeccion';
+  notaNormativa: string;
+}
+
+export interface R13ForecastModel {
+  id: 'macro' | 'inercial' | 'wma' | 'media';
+  name: string;
+  shortName: string;
+  tag: 'Prudente Oficial' | 'Piso Conservador' | 'Ponderado WMA-3' | 'Media Cuatrienal';
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  color: string;
+  interpretation: string;
+  alertaRiesgo: string;
+  isOfficial?: boolean;
+}
+
+export const R13_BASE_2026 = 1530000000;
+
+export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
+  {
+    vigencia: 2019,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Excedentes Financieros de Cooperativas',
+    recurso: '13-Excedentes Financieros Cooperativas',
+    totalRecaudo: 900973803,
+    variacionAnualCOP: 0,
+    variacionAnualPct: 0,
+    tipo: 'historico',
+    notaNormativa: 'Primeras transferencias bajo el Art. 142 de la Ley 1819 de 2016 (Reforma Tributaria)'
+  },
+  {
+    vigencia: 2020,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Excedentes Financieros de Cooperativas',
+    recurso: '13-Excedentes Financieros Cooperativas',
+    totalRecaudo: 2208758036,
+    variacionAnualCOP: 1307784233,
+    variacionAnualPct: 145.15,
+    tipo: 'historico',
+    notaNormativa: 'Liquidación acumulada de declaraciones tributarias del sector solidario'
+  },
+  {
+    vigencia: 2021,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Excedentes Financieros de Cooperativas',
+    recurso: '13-Excedentes Financieros Cooperativas',
+    totalRecaudo: 1315131132,
+    variacionAnualCOP: -893626904,
+    variacionAnualPct: -40.46,
+    tipo: 'historico',
+    notaNormativa: 'Contracción económica derivada de la pandemia en las utilidades de cooperativas'
+  },
+  {
+    vigencia: 2022,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Excedentes Financieros de Cooperativas',
+    recurso: '13-Excedentes Financieros Cooperativas',
+    totalRecaudo: 4431510384,
+    variacionAnualCOP: 3116379252,
+    variacionAnualPct: 236.96,
+    tipo: 'historico',
+    notaNormativa: 'Pico atípico extraordinario por resoluciones represadas de la DIAN y sector financiero solidario'
+  },
+  {
+    vigencia: 2023,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Excedentes Financieros de Cooperativas',
+    recurso: '13-Excedentes Financieros Cooperativas',
+    totalRecaudo: 1867826108,
+    variacionAnualCOP: -2563684276,
+    variacionAnualPct: -57.85,
+    tipo: 'historico',
+    notaNormativa: 'Normalización post-pico de las transferencias tributarias cooperativas'
+  },
+  {
+    vigencia: 2024,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Excedentes Financieros de Cooperativas',
+    recurso: '13-Excedentes Financieros Cooperativas',
+    totalRecaudo: 2078952994,
+    variacionAnualCOP: 211126886,
+    variacionAnualPct: 11.30,
+    tipo: 'historico',
+    notaNormativa: 'Consolidación del recaudo regular del 20% del gravamen cooperativo'
+  },
+  {
+    vigencia: 2025,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Excedentes Financieros de Cooperativas',
+    recurso: '13-Excedentes Financieros Cooperativas',
+    totalRecaudo: 2080840690,
+    variacionAnualCOP: 1887696,
+    variacionAnualPct: 0.09,
+    tipo: 'historico',
+    notaNormativa: 'Vigencia de estabilidad máxima del recaudo ordinario (~$2.081M)'
+  },
+  {
+    vigencia: 2026,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Excedentes Financieros de Cooperativas (Base Referencia)',
+    recurso: '13-Excedentes Financieros Cooperativas',
+    totalRecaudo: 1530000000,
+    variacionAnualCOP: -550840690,
+    variacionAnualPct: -26.47,
+    tipo: 'base2026',
+    notaNormativa: 'Caída significativa (-26,5%): recaudo efectivo por debajo de la meta presupuestada institucional'
+  },
+  {
+    vigencia: 2027,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Excedentes Financieros de Cooperativas (Proyectado)',
+    recurso: '13-Excedentes Financieros Cooperativas',
+    totalRecaudo: 1630980000,
+    variacionAnualCOP: 100980000,
+    variacionAnualPct: 6.60,
+    tipo: 'proyeccion',
+    notaNormativa: 'Proyección prudente con parámetro macroeconómico oficial (+6,6%) sobre la base real de 2026'
+  }
+];
+
+export const R13_FORECAST_MODELS: R13ForecastModel[] = [
+  {
+    id: 'macro',
+    name: 'Base Prudente Macroeconómica (+6,6%)',
+    shortName: 'Macro +6,6% (Base Real)',
+    tag: 'Prudente Oficial',
+    formula: 'Recaudo 2026 × 1,066',
+    projected2027: 1630980000,
+    incrementoNominal: 100980000,
+    variacionPct: 6.60,
+    color: '#f97316',
+    interpretation: 'Toma como ancla la realidad deprimida de 2026 ($1.530M) y aplica únicamente la indexación macroeconómica (+6,6%). Protege el flujo de caja contra el déficit de compromisos.',
+    alertaRiesgo: 'Bajo Riesgo. La opción más prudente para formular el anteproyecto de presupuesto.',
+    isOfficial: true
+  },
+  {
+    id: 'inercial',
+    name: 'Piso Inercial Estricto (0,0% / Base 2026)',
+    shortName: 'Piso Inercial ($1.530M)',
+    tag: 'Piso Conservador',
+    formula: 'Recaudo 2026 (Crecimiento Cero)',
+    projected2027: 1530000000,
+    incrementoNominal: 0,
+    variacionPct: 0.00,
+    color: '#ef4444',
+    interpretation: 'Mantiene plano el valor de 2026 sin asumir recuperación alguna en los excedentes de las cooperativas. Máxima cautela ante incertidumbre macroeconómica del sector solidario.',
+    alertaRiesgo: 'Riesgo Nulo de Déficit. Presupuesto ultra-defensivo.',
+    isOfficial: false
+  },
+  {
+    id: 'wma',
+    name: 'Promedio Ponderado Trienal (WMA-3 Ponderación 3:2:1)',
+    shortName: 'WMA-3 Ponderado',
+    tag: 'Ponderado WMA-3',
+    formula: '(1.530M·3 + 2.081M·2 + 2.079M·1) / 6',
+    projected2027: 1805105729,
+    incrementoNominal: 275105729,
+    variacionPct: 17.98,
+    color: '#eab308',
+    interpretation: 'Asigna el 50% de peso a la caída de 2026 y el 50% restante a la estabilidad de 2024-2025, modelando una recuperación gradual hacia la media.',
+    alertaRiesgo: 'Riesgo Moderado. Requiere que el sector cooperativo recupere utilidades operativas.',
+    isOfficial: false
+  },
+  {
+    id: 'media',
+    name: 'Media de Estabilidad Cuatrienal (2023–2026)',
+    shortName: 'Media Cuatrienal ($1.889M)',
+    tag: 'Media Cuatrienal',
+    formula: 'Promedio(2023, 2024, 2025, 2026)',
+    projected2027: 1889404948,
+    incrementoNominal: 359404948,
+    variacionPct: 23.49,
+    color: '#a855f7',
+    interpretation: 'Promedia las cuatro vigencias posteriores al shock atípico de 2022. Supone que la caída de 2026 fue transitoria y se normalizará el giro.',
+    alertaRiesgo: 'Riesgo Alto. Puede revivir la brecha presupuestal de 2026 si el sector no repunta.',
+    isOfficial: false
+  }
+];
+
+export function exportR13CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'media' = 'macro'): void {
+  const model = R13_FORECAST_MODELS.find(m => m.id === selectedModelId) || R13_FORECAST_MODELS[0];
+  let csvContent = 'data:text/csv;charset=utf-8,';
+  csvContent += `PROYECCION RECURSO 13 - EXCEDENTES FINANCIEROS DE COOPERATIVAS (LEY 1819/2016) - VIGENCIA 2027\n`;
+  csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Modelo Seleccionado:;${model.name}\n`;
+  csvContent += `Base Recaudo 2026 (COP):;${R13_BASE_2026}\n`;
+  csvContent += `Variacion vs Recaudo 2026:;+${model.variacionPct.toFixed(2)}%\n`;
+  csvContent += `Proyeccion 2027 (COP):;${model.projected2027}\n`;
+  csvContent += `Incremento Nominal (COP):;+${model.incrementoNominal}\n`;
+  csvContent += `Evaluacion de Riesgo de Caja:;${model.alertaRiesgo}\n\n`;
+
+  csvContent += `MODELOS DE PROYECCION EVALUADOS 2027\n`;
+  csvContent += `Modelo;Formula;Proyeccion 2027 (COP);Proyeccion ($M);Incremento (COP);Variacion (%);Evaluacion de Riesgo;Criterio\n`;
+  for (const m of R13_FORECAST_MODELS) {
+    csvContent += `"${m.name}";"${m.formula}";"${m.projected2027}";"${(m.projected2027 / 1e6).toFixed(2)}";"+${m.incrementoNominal}";"+${m.variacionPct.toFixed(2)}%";"${m.alertaRiesgo}";"${m.interpretation}"\n`;
+  }
+  csvContent += `\n`;
+
+  csvContent += `SERIE HISTORICA Y PROYECCION (2019-2027)\n`;
+  csvContent += `Vigencia;Unidad;Concepto;Recurso;Total Recaudo (COP);Total Recaudo ($M);Variacion Anual (COP);Variacion Anual (%);Tipo;Marco Legal / Nota\n`;
+  for (const h of R13_HISTORICAL_SERIES) {
+    const is2027 = h.vigencia === 2027;
+    const recaudo = is2027 ? model.projected2027 : h.totalRecaudo;
+    const varCOP = is2027 ? model.incrementoNominal : h.variacionAnualCOP;
+    const varPct = is2027 ? model.variacionPct : h.variacionAnualPct;
+    csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${recaudo}";"${(recaudo / 1e6).toFixed(2)}";"${varCOP >= 0 ? '+' : ''}${varCOP}";"${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
+  }
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Proyeccion_Recurso_13_Excedentes_Cooperativas_2027.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
 
 
