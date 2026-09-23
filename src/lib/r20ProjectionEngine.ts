@@ -1259,13 +1259,13 @@ export const R18_HISTORICAL_SERIES: R18HistoricalRecord[] = [
   {
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Aportes Art. 87 Ley 30 - CESU (Proyectado +6.6%)',
+    concepto: 'Aportes Art. 87 Ley 30 - CESU (Proyectado +6.0%)',
     recurso: '18-Articulo 87 CESU',
-    totalRecaudo: 1676901515,
-    variacionAnualCOP: 103823171,
-    variacionAnualPct: 6.60,
+    totalRecaudo: 1667463045,
+    variacionAnualCOP: 94384701,
+    variacionAnualPct: 6.00,
     tipo: 'proyeccion',
-    notaNormativa: 'Proyección técnica con parámetro macroeconómico aprobado (+6,6%)'
+    notaNormativa: 'Proyección técnica con parámetro macroeconómico aprobado (+6,0%)'
   }
 ];
 
@@ -1274,13 +1274,13 @@ export const R18_PROJECTION_DATA = {
   recurso: '18-Articulo 87 CESU',
   denominacion: 'Recurso 18 — Aportes Artículo 87 de la Ley 30 de 1992 (CESU)',
   base2026: 1573078344,
-  tasaAumentoPct: 6.6, // Parámetro macroeconómico aprobado
-  factorAumento: 1.066,
-  proyeccion2027: 1676901515, // 1.573.078.344 * 1.066
-  incrementoNominal: 103823171,
+  tasaAumentoPct: 6.0, // Parámetro macroeconómico aprobado
+  factorAumento: 1.06,
+  proyeccion2027: 1667463045, // 1.573.078.344 * 1.06
+  incrementoNominal: 94384701,
   recaudo2024: 1067037785,
   recaudo2025: 457065634,
-  justificacion: 'Dado que no existe una serie histórica extendida con suficiente número de observaciones para ajustar modelos estocásticos (ARIMA / Holt / Regresiones), se aplica la metodología de indexación sobre el recaudo base 2026 ajustado por el parámetro macroeconómico oficial aprobado del 6,6%.'
+  justificacion: 'Dado que no existe una serie histórica extendida con suficiente número de observaciones para ajustar modelos estocásticos (ARIMA / Holt / Regresiones), se aplica la metodología de indexación sobre el recaudo base 2026 ajustado por el parámetro macroeconómico oficial aprobado del 6,0%.'
 };
 
 export function exportR18CSV(): void {
@@ -1413,26 +1413,26 @@ export const R14_HISTORICAL_SERIES: R14HistoricalRecord[] = [
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Política de Gratuidad "Puedo Estudiar" (Proyectado)',
     recurso: '14-Fondo Solidario de Educación - Gratuidad',
-    totalRecaudo: 53133892930,
-    variacionAnualCOP: 3289715697,
-    variacionAnualPct: 6.60,
+    totalRecaudo: 52834827867,
+    variacionAnualCOP: 2990650634,
+    variacionAnualPct: 6.00,
     tipo: 'proyeccion',
-    notaNormativa: 'Proyección institucional con parámetro macroeconómico oficial aprobado (+6,6%)'
+    notaNormativa: 'Proyección institucional con parámetro macroeconómico oficial aprobado (+6,0%)'
   }
 ];
 
 export const R14_FORECAST_MODELS: R14ForecastModel[] = [
   {
     id: 'macro',
-    name: 'Parámetro Macroeconómico Aprobado (+6,6%)',
-    shortName: 'Macro +6,6%',
+    name: 'Parámetro Macroeconómico Aprobado (+6,0%)',
+    shortName: 'Macro +6,0%',
     tag: 'Oficial Aprobado',
-    formula: 'Recaudo 2026 × 1,066',
-    projected2027: 53133892930,
-    incrementoNominal: 3289715697,
-    variacionPct: 6.60,
+    formula: 'Recaudo 2026 × 1,060',
+    projected2027: 52834827867,
+    incrementoNominal: 2990650634,
+    variacionPct: 6.00,
     color: '#06b6d4',
-    interpretation: 'Alineado con el criterio macroeconómico institucional de prudencia presupuestal (+6,6%). Proporciona un piso de ingresos garantizado y defendible ante el Consejo Superior.',
+    interpretation: 'Alineado con el criterio macroeconómico institucional de prudencia presupuestal (+6,0%). Proporciona un piso de ingresos garantizado y defendible ante el Consejo Superior.',
     isOfficial: true
   },
   {
@@ -1552,8 +1552,8 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
     vigencia: 2019,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Excedentes Financieros de Cooperativas',
-    recurso: '13-Excedentes Financieros Cooperativas',
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016',
+    recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
     totalRecaudo: 900973803,
     variacionAnualCOP: 0,
     variacionAnualPct: 0,
@@ -1563,8 +1563,8 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
     vigencia: 2020,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Excedentes Financieros de Cooperativas',
-    recurso: '13-Excedentes Financieros Cooperativas',
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016',
+    recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
     totalRecaudo: 2208758036,
     variacionAnualCOP: 1307784233,
     variacionAnualPct: 145.15,
@@ -1574,8 +1574,8 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
     vigencia: 2021,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Excedentes Financieros de Cooperativas',
-    recurso: '13-Excedentes Financieros Cooperativas',
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016',
+    recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
     totalRecaudo: 1315131132,
     variacionAnualCOP: -893626904,
     variacionAnualPct: -40.46,
@@ -1585,8 +1585,8 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
     vigencia: 2022,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Excedentes Financieros de Cooperativas',
-    recurso: '13-Excedentes Financieros Cooperativas',
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016',
+    recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
     totalRecaudo: 4431510384,
     variacionAnualCOP: 3116379252,
     variacionAnualPct: 236.96,
@@ -1596,8 +1596,8 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
     vigencia: 2023,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Excedentes Financieros de Cooperativas',
-    recurso: '13-Excedentes Financieros Cooperativas',
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016',
+    recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
     totalRecaudo: 1867826108,
     variacionAnualCOP: -2563684276,
     variacionAnualPct: -57.85,
@@ -1607,8 +1607,8 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
     vigencia: 2024,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Excedentes Financieros de Cooperativas',
-    recurso: '13-Excedentes Financieros Cooperativas',
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016',
+    recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
     totalRecaudo: 2078952994,
     variacionAnualCOP: 211126886,
     variacionAnualPct: 11.30,
@@ -1618,8 +1618,8 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
     vigencia: 2025,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Excedentes Financieros de Cooperativas',
-    recurso: '13-Excedentes Financieros Cooperativas',
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016',
+    recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
     totalRecaudo: 2080840690,
     variacionAnualCOP: 1887696,
     variacionAnualPct: 0.09,
@@ -1629,8 +1629,8 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
     vigencia: 2026,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Excedentes Financieros de Cooperativas (Base Referencia)',
-    recurso: '13-Excedentes Financieros Cooperativas',
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016 (Base Referencia)',
+    recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
     totalRecaudo: 1530000000,
     variacionAnualCOP: -550840690,
     variacionAnualPct: -26.47,
@@ -1640,28 +1640,28 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Excedentes Financieros de Cooperativas (Proyectado)',
-    recurso: '13-Excedentes Financieros Cooperativas',
-    totalRecaudo: 1630980000,
-    variacionAnualCOP: 100980000,
-    variacionAnualPct: 6.60,
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016 (Proyectado)',
+    recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
+    totalRecaudo: 1621800000,
+    variacionAnualCOP: 91800000,
+    variacionAnualPct: 6.00,
     tipo: 'proyeccion',
-    notaNormativa: 'Proyección prudente con parámetro macroeconómico oficial (+6,6%) sobre la base real de 2026'
+    notaNormativa: 'Proyección prudente con parámetro macroeconómico oficial (+6,0%) sobre la base real de 2026'
   }
 ];
 
 export const R13_FORECAST_MODELS: R13ForecastModel[] = [
   {
     id: 'macro',
-    name: 'Base Prudente Macroeconómica (+6,6%)',
-    shortName: 'Macro +6,6% (Base Real)',
+    name: 'Base Prudente Macroeconómica (+6,0%)',
+    shortName: 'Macro +6,0% (Base Real)',
     tag: 'Prudente Oficial',
-    formula: 'Recaudo 2026 × 1,066',
-    projected2027: 1630980000,
-    incrementoNominal: 100980000,
-    variacionPct: 6.60,
+    formula: 'Recaudo 2026 × 1,060',
+    projected2027: 1621800000,
+    incrementoNominal: 91800000,
+    variacionPct: 6.00,
     color: '#f97316',
-    interpretation: 'Toma como ancla la realidad deprimida de 2026 ($1.530M) y aplica únicamente la indexación macroeconómica (+6,6%). Protege el flujo de caja contra el déficit de compromisos.',
+    interpretation: 'Toma como ancla la realidad deprimida de 2026 ($1.530M) y aplica únicamente la indexación macroeconómica (+6,0%). Protege el flujo de caja contra el déficit de compromisos.',
     alertaRiesgo: 'Bajo Riesgo. La opción más prudente para formular el anteproyecto de presupuesto.',
     riskLevel: 'bajo',
     isOfficial: true
@@ -1716,7 +1716,7 @@ export const R13_FORECAST_MODELS: R13ForecastModel[] = [
 export function exportR13CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'media' = 'macro'): void {
   const model = R13_FORECAST_MODELS.find(m => m.id === selectedModelId) || R13_FORECAST_MODELS[0];
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += `PROYECCION RECURSO 13 - EXCEDENTES FINANCIEROS DE COOPERATIVAS (LEY 1819/2016) - VIGENCIA 2027\n`;
+  csvContent += `PROYECCION RECURSO 13 - EXCEDENTES COOPERATIVAS ART.142, LEY 1819 DEL 2016 - VIGENCIA 2027\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
   csvContent += `Modelo Seleccionado:;${model.name}\n`;
   csvContent += `Base Recaudo 2026 (COP):;${R13_BASE_2026}\n`;
@@ -1745,12 +1745,190 @@ export function exportR13CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'me
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `Proyeccion_Recurso_13_Excedentes_Cooperativas_2027.csv`);
+  link.setAttribute('download', `Proyeccion_Recurso_13_Excedentes_Cooperativas_Art142_Ley1819_2027.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
 
+// =========================================================================
+// RECURSO 17 - DEVOLUCIÓN DE DESCUENTO POR VOTACIÓN (LEY 403/1997 Y LEY 815/2003)
+// =========================================================================
 
+export interface R17HistoricalRecord {
+  vigencia: number;
+  unidad: string;
+  concepto: string;
+  recurso: string;
+  totalRecaudo: number;
+  variacionAnualCOP: number;
+  variacionAnualPct: number;
+  tipo: 'historico' | 'base2026' | 'proyeccion';
+  notaNormativa: string;
+}
 
+export interface R17ForecastModel {
+  id: 'macro' | 'inercial' | 'wma' | 'media';
+  name: string;
+  shortName: string;
+  tag: 'Oficial Aprobado' | 'Piso Inercial' | 'Ponderado WMA-3' | 'Media Trienal';
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  color: string;
+  interpretation: string;
+  alertaRiesgo: string;
+  riskLevel: 'bajo' | 'medio' | 'alto';
+  isOfficial?: boolean;
+}
 
+export const R17_BASE_2026 = 4728146085;
+
+export const R17_HISTORICAL_SERIES: R17HistoricalRecord[] = [
+  {
+    vigencia: 2024,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Devolución Descuento por Votación',
+    recurso: '17-Devolución Descuento por Votación',
+    totalRecaudo: 4531561319,
+    variacionAnualCOP: 0,
+    variacionAnualPct: 0,
+    tipo: 'historico',
+    notaNormativa: 'Reembolso liquidado por el MHCP por sufragantes comicios territoriales e institucionales (Arts. 1 y 2 Ley 403 de 1997)'
+  },
+  {
+    vigencia: 2025,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Devolución Descuento por Votación',
+    recurso: '17-Devolución Descuento por Votación',
+    totalRecaudo: 5183761916,
+    variacionAnualCOP: 652200597,
+    variacionAnualPct: 14.39,
+    tipo: 'historico',
+    notaNormativa: 'Pico de recaudo por alta afluencia de certificados de votación vigentes y ajuste de liquidación (+14,39%)'
+  },
+  {
+    vigencia: 2026,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Devolución Descuento por Votación (Base Referencia)',
+    recurso: '17-Devolución Descuento por Votación',
+    totalRecaudo: 4728146085,
+    variacionAnualCOP: -455615831,
+    variacionAnualPct: -8.79,
+    tipo: 'base2026',
+    notaNormativa: 'Recaudo base certificado para proyecciones institucionales (-8,79% vs 2025)'
+  },
+  {
+    vigencia: 2027,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Devolución Descuento por Votación (Proyectado)',
+    recurso: '17-Devolución Descuento por Votación',
+    totalRecaudo: 5011834850,
+    variacionAnualCOP: 283688765,
+    variacionAnualPct: 6.00,
+    tipo: 'proyeccion',
+    notaNormativa: 'Proyección institucional técnica con parámetro macroeconómico oficial aprobado (+6,0%) sobre la base real de 2026'
+  }
+];
+
+export const R17_FORECAST_MODELS: R17ForecastModel[] = [
+  {
+    id: 'macro',
+    name: 'Parámetro Macroeconómico Aprobado (+6,0%)',
+    shortName: 'Macro +6,0% (Base Real)',
+    tag: 'Oficial Aprobado',
+    formula: 'Recaudo 2026 × 1,060',
+    projected2027: 5011834850,
+    incrementoNominal: 283688765,
+    variacionPct: 6.00,
+    color: '#0284c7',
+    interpretation: 'Aplica el parámetro macroeconómico aprobado institucional del +6,0% sobre la base real certificada de 2026 ($4.728M). Satisface los criterios del Ministerio de Hacienda y Crédito Público (MHCP).',
+    alertaRiesgo: 'Bajo Riesgo. Modelo oficial prudente, respaldado en la indexación de costos de matrícula.',
+    riskLevel: 'bajo',
+    isOfficial: true
+  },
+  {
+    id: 'inercial',
+    name: 'Piso Inercial Estricto (0,0% / Base 2026)',
+    shortName: 'Piso Inercial ($4.728M)',
+    tag: 'Piso Inercial',
+    formula: 'Recaudo 2026 (Crecimiento Cero)',
+    projected2027: 4728146085,
+    incrementoNominal: 0,
+    variacionPct: 0.00,
+    color: '#64748b',
+    interpretation: 'Escenario de estrés sin ajuste nominal. Mantiene el valor exacto reconocido en 2026 ante una eventual restricción fiscal del orden nacional.',
+    alertaRiesgo: 'Riesgo Nulo de Desfase. Presupuesto ultra-defensivo de caja.',
+    riskLevel: 'bajo',
+    isOfficial: false
+  },
+  {
+    id: 'wma',
+    name: 'Promedio Móvil Ponderado Trienal (WMA-3 Ponderación 3:2:1)',
+    shortName: 'WMA-3 Ponderado',
+    tag: 'Ponderado WMA-3',
+    formula: '(4.728M·3 + 5.184M·2 + 4.532M·1) / 6',
+    projected2027: 4847253901,
+    incrementoNominal: 119107816,
+    variacionPct: 2.52,
+    color: '#f59e0b',
+    interpretation: 'Pondera con 50% de peso la base 2026, 33,3% a 2025 y 16,7% a 2024, mitigando la oscilación entre comicios electorales y alcanzando $4.847M (+2,52%).',
+    alertaRiesgo: 'Bajo Riesgo. Modelo estadístico ponderado de suavizamiento.',
+    riskLevel: 'bajo',
+    isOfficial: false
+  },
+  {
+    id: 'media',
+    name: 'Media Trienal Histórica (2024–2026)',
+    shortName: 'Media Trienal ($4.814M)',
+    tag: 'Media Trienal',
+    formula: 'Promedio(2024, 2025, 2026)',
+    projected2027: 4814489773,
+    incrementoNominal: 86343688,
+    variacionPct: 1.83,
+    color: '#a855f7',
+    interpretation: 'Promedio aritmético simple de los tres años de datos oficiales disponibles en la UPTC, reflejando el flujo medio trienal de reembolsos de la Nación.',
+    alertaRiesgo: 'Bajo Riesgo. Proyección conservadora con crecimiento moderado del +1,83%.',
+    riskLevel: 'bajo',
+    isOfficial: false
+  }
+];
+
+export function exportR17CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'media' = 'macro'): void {
+  const model = R17_FORECAST_MODELS.find(m => m.id === selectedModelId) || R17_FORECAST_MODELS[0];
+  let csvContent = 'data:text/csv;charset=utf-8,';
+  csvContent += `PROYECCION RECURSO 17 - DEVOLUCION DESCUENTO POR VOTACION (LEY 403/1997 Y 815/2003) - VIGENCIA 2027\n`;
+  csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Modelo Seleccionado:;${model.name}\n`;
+  csvContent += `Base Recaudo 2026 (COP):;${R17_BASE_2026}\n`;
+  csvContent += `Variacion vs Recaudo 2026:;+${model.variacionPct.toFixed(2)}%\n`;
+  csvContent += `Proyeccion 2027 (COP):;${model.projected2027}\n`;
+  csvContent += `Incremento Nominal (COP):;+${model.incrementoNominal}\n`;
+  csvContent += `Evaluacion de Riesgo de Caja:;${model.alertaRiesgo}\n\n`;
+
+  csvContent += `MODELOS DE PROYECCION EVALUADOS 2027\n`;
+  csvContent += `Modelo;Formula;Proyeccion 2027 (COP);Proyeccion ($M);Incremento (COP);Variacion (%);Evaluacion de Riesgo;Criterio\n`;
+  for (const m of R17_FORECAST_MODELS) {
+    csvContent += `"${m.name}";"${m.formula}";"${m.projected2027}";"${(m.projected2027 / 1e6).toFixed(2)}";"+${m.incrementoNominal}";"+${m.variacionPct.toFixed(2)}%";"${m.alertaRiesgo}";"${m.interpretation}"\n`;
+  }
+  csvContent += `\n`;
+
+  csvContent += `SERIE HISTORICA Y PROYECCION (2024-2027)\n`;
+  csvContent += `Vigencia;Unidad;Concepto;Recurso;Total Recaudo (COP);Total Recaudo ($M);Variacion Anual (COP);Variacion Anual (%);Tipo;Marco Legal / Nota\n`;
+  for (const h of R17_HISTORICAL_SERIES) {
+    const is2027 = h.vigencia === 2027;
+    const recaudo = is2027 ? model.projected2027 : h.totalRecaudo;
+    const varCOP = is2027 ? model.incrementoNominal : h.variacionAnualCOP;
+    const varPct = is2027 ? model.variacionPct : h.variacionAnualPct;
+    csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${recaudo}";"${(recaudo / 1e6).toFixed(2)}";"${varCOP >= 0 ? '+' : ''}${varCOP}";"${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
+  }
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Proyeccion_Recurso_17_Descuento_Votacion_2027.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}

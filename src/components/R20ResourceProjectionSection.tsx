@@ -8,7 +8,7 @@ import {
   RefreshCw, SlidersHorizontal, Sparkles, AlertTriangle, CheckCircle2, 
   Info, Building2, Table, Filter, ArrowUpRight, Scale, ChevronDown, ChevronUp,
   Search, CheckCheck, Landmark, DollarSign, Wallet, FileText, Award, GraduationCap,
-  Coins
+  Coins, Vote
 } from 'lucide-react';
 import { 
   R20Record, R20ForecastModelResult, R20ConceptForecast, 
@@ -23,18 +23,23 @@ import {
   R14_BASE_2026, R14_HISTORICAL_SERIES, R14_FORECAST_MODELS,
   R14HistoricalRecord, R14ForecastModel, exportR14CSV,
   R13HistoricalRecord, R13ForecastModel, R13_BASE_2026,
-  R13_HISTORICAL_SERIES, R13_FORECAST_MODELS, exportR13CSV
+  R13_HISTORICAL_SERIES, R13_FORECAST_MODELS, exportR13CSV,
+  R17HistoricalRecord, R17ForecastModel, R17_BASE_2026,
+  R17_HISTORICAL_SERIES, R17_FORECAST_MODELS, exportR17CSV
 } from '../lib/r20ProjectionEngine';
 
 export function R20ResourceProjectionSection() {
-  // Selector de Recurso Principal: R10.0 (Aportes Nación) | R13 (Cooperativas) | R14 (Gratuidad) | R18 (Art. 87 CESU) | R20 (Propios) | R21 (Devolución IVA) | Consolidado
-  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'r10' | 'r13' | 'r14' | 'r18' | 'r20' | 'r21' | 'consolidado'>('r10');
+  // Selector de Recurso Principal: R10.0 (Aportes Nación) | R13 (Cooperativas) | R14 (Gratuidad) | R17 (Votación) | R18 (Art. 87 CESU) | R20 (Propios) | R21 (Devolución IVA) | Consolidado
+  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'r10' | 'r13' | 'r14' | 'r17' | 'r18' | 'r20' | 'r21' | 'consolidado'>('r10');
 
   // Modelo activo para R13 (Excedentes de Cooperativas)
   const [r13SelectedModel, setR13SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media'>('macro');
 
   // Modelo activo para R14 (Política de Gratuidad)
   const [r14SelectedModel, setR14SelectedModel] = useState<'macro' | 'linear' | 'holt' | 'optimista'>('macro');
+
+  // Modelo activo para R17 (Devolución de Descuento por Votación)
+  const [r17SelectedModel, setR17SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media'>('macro');
 
   // Datos R20
   const [records, setRecords] = useState<R20Record[]>([]);
@@ -304,7 +309,37 @@ export function R20ResourceProjectionSection() {
   }, [r13ActiveModel]);
 
   // =========================================================================
-  // MODELACIÓN COMBINADA INSTITUCIONAL (R10 + R13 + R14 + R18 + R20 + R21)
+  // MODELACIÓN Y SERIE HISTÓRICA RECURSO 17 (DESCUENTO POR VOTACIÓN)
+  // =========================================================================
+  const r17ActiveModel = useMemo(() => {
+    return R17_FORECAST_MODELS.find(m => m.id === r17SelectedModel) || R17_FORECAST_MODELS[0];
+  }, [r17SelectedModel]);
+
+  const r17ChartSeries = useMemo(() => {
+    return R17_HISTORICAL_SERIES.map((h) => {
+      const is2027 = h.vigencia === 2027;
+      const recaudo = is2027 ? r17ActiveModel.projected2027 : h.totalRecaudo;
+      const variacionCOP = is2027 ? r17ActiveModel.incrementoNominal : h.variacionAnualCOP;
+      const variacionPct = is2027 ? r17ActiveModel.variacionPct : h.variacionAnualPct;
+
+      return {
+        year: `${h.vigencia}`,
+        numericYear: h.vigencia,
+        vigencia: h.vigencia,
+        recaudo: recaudo,
+        recaudoMillones: Number((recaudo / 1e6).toFixed(2)),
+        variacionCOP: variacionCOP,
+        variacionPct: variacionPct,
+        tipo: h.tipo,
+        notaNormativa: is2027 ? `${r17ActiveModel.name} — ${r17ActiveModel.formula}` : h.notaNormativa,
+        is2027: is2027,
+        is2026: h.vigencia === 2026
+      };
+    });
+  }, [r17ActiveModel]);
+
+  // =========================================================================
+  // MODELACIÓN COMBINADA INSTITUCIONAL (R10 + R13 + R14 + R17 + R18 + R20 + R21)
   // =========================================================================
   const combinedSummary = useMemo(() => {
     const r20_2024 = matrixSummary.totalesPorAno[2024] || 0;
@@ -322,20 +357,25 @@ export function R20ResourceProjectionSection() {
     const r10_2026 = PGN_2027_DATA.basePresupuestal2026; // 351.357.927.407
     const r10_2027 = PGN_2027_DATA.funcionamientoR10;    // 395.704.592.082
 
+    const r13_2024 = 2078952994;
+    const r13_2025 = 2080840690;
+    const r13_2026 = R13_BASE_2026;                     // 1.530.000.000
+    const r13_2027 = r13ActiveModel.projected2027;      // 1.621.800.000 (o modelo seleccionado)
+
     const r14_2024 = 37090700264;
     const r14_2025 = 36210311946;
     const r14_2026 = R14_BASE_2026;                     // 49.844.177.233
-    const r14_2027 = r14ActiveModel.projected2027;      // 53.133.892.930 (o modelo seleccionado)
+    const r14_2027 = r14ActiveModel.projected2027;      // 52.834.827.867 (o modelo seleccionado)
+
+    const r17_2024 = 4531561319;
+    const r17_2025 = 5183761916;
+    const r17_2026 = R17_BASE_2026;                     // 4.728.146.085
+    const r17_2027 = r17ActiveModel.projected2027;      // 5.011.834.850 (o modelo seleccionado)
 
     const r18_2024 = R18_PROJECTION_DATA.recaudo2024;    // 1.067.037.785
     const r18_2025 = R18_PROJECTION_DATA.recaudo2025;    // 457.065.634
     const r18_2026 = R18_PROJECTION_DATA.base2026;       // 1.573.078.344
-    const r18_2027 = R18_PROJECTION_DATA.proyeccion2027; // 1.676.901.515
-
-    const r13_2024 = 2078952994;
-    const r13_2025 = 2080840690;
-    const r13_2026 = R13_BASE_2026;                     // 1.530.000.000
-    const r13_2027 = r13ActiveModel.projected2027;      // 1.630.980.000 (o modelo seleccionado)
+    const r18_2027 = R18_PROJECTION_DATA.proyeccion2027; // 1.667.463.045
 
     const autogestion_2024 = r20_2024 + r21_2024;
     const autogestion_2025 = r20_2025 + r21_2025;
@@ -343,10 +383,10 @@ export function R20ResourceProjectionSection() {
     const autogestion_2027 = r20_2027 + r21_2027;
     const varAutogestion = autogestion_2026 > 0 ? ((autogestion_2027 - autogestion_2026) / autogestion_2026) * 100 : 0;
 
-    const nacion_2024 = r10_2024 + r14_2024 + r18_2024 + r13_2024;
-    const nacion_2025 = r10_2025 + r14_2025 + r18_2025 + r13_2025;
-    const nacion_2026 = r10_2026 + r14_2026 + r18_2026 + r13_2026;
-    const nacion_2027 = r10_2027 + r14_2027 + r18_2027 + r13_2027;
+    const nacion_2024 = r10_2024 + r13_2024 + r14_2024 + r17_2024 + r18_2024;
+    const nacion_2025 = r10_2025 + r13_2025 + r14_2025 + r17_2025 + r18_2025;
+    const nacion_2026 = r10_2026 + r13_2026 + r14_2026 + r17_2026 + r18_2026;
+    const nacion_2027 = r10_2027 + r13_2027 + r14_2027 + r17_2027 + r18_2027;
     const varNacion = nacion_2026 > 0 ? ((nacion_2027 - nacion_2026) / nacion_2026) * 100 : 0;
 
     const grand_total_2024 = nacion_2024 + autogestion_2024;
@@ -359,6 +399,7 @@ export function R20ResourceProjectionSection() {
       r10: { y24: r10_2024, y25: r10_2025, y26: r10_2026, y27: r10_2027, part: (r10_2027 / grand_total_2027) * 100, varPct: PGN_2027_DATA.variacionPct },
       r13: { y24: r13_2024, y25: r13_2025, y26: r13_2026, y27: r13_2027, part: (r13_2027 / grand_total_2027) * 100, varPct: r13ActiveModel.variacionPct },
       r14: { y24: r14_2024, y25: r14_2025, y26: r14_2026, y27: r14_2027, part: (r14_2027 / grand_total_2027) * 100, varPct: r14ActiveModel.variacionPct },
+      r17: { y24: r17_2024, y25: r17_2025, y26: r17_2026, y27: r17_2027, part: (r17_2027 / grand_total_2027) * 100, varPct: r17ActiveModel.variacionPct },
       r18: { y24: r18_2024, y25: r18_2025, y26: r18_2026, y27: r18_2027, part: (r18_2027 / grand_total_2027) * 100, varPct: R18_PROJECTION_DATA.tasaAumentoPct },
       r20: { y24: r20_2024, y25: r20_2025, y26: r20_2026, y27: r20_2027, part: (r20_2027 / grand_total_2027) * 100 },
       r21: { y24: r21_2024, y25: r21_2025, y26: r21_2026, y27: r21_2027, part: (r21_2027 / grand_total_2027) * 100 },
@@ -366,7 +407,7 @@ export function R20ResourceProjectionSection() {
       autogestion: { y24: autogestion_2024, y25: autogestion_2025, y26: autogestion_2026, y27: autogestion_2027, varPct: varAutogestion },
       total: { y24: grand_total_2024, y25: grand_total_2025, y26: grand_total_2026, y27: grand_total_2027, varPct: varGrandTotal }
     };
-  }, [matrixSummary, r21Records, r21BestModel, r14ActiveModel, r13ActiveModel]);
+  }, [matrixSummary, r21Records, r21BestModel, r13ActiveModel, r14ActiveModel, r17ActiveModel]);
 
   // Generación de puntos para gráfica R20 (incluye ARIMA)
   const chartSeries = useMemo(() => {
@@ -543,9 +584,9 @@ export function R20ResourceProjectionSection() {
             }`}
           >
             <Coins size={15} />
-            <span>Recurso 13 (Cooperativas)</span>
+            <span>Excedentes Cooperativas Art.142, Ley 1819 del 2016</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
-              $1.631M (+6,6%)
+              $1.622M (+6%)
             </span>
           </button>
 
@@ -560,7 +601,22 @@ export function R20ResourceProjectionSection() {
             <GraduationCap size={15} />
             <span>Recurso 14 (Política Gratuidad)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
-              $53.134M (+6,6%)
+              $52.835M (+6%)
+            </span>
+          </button>
+
+          <button
+            onClick={() => setSelectedRecursoTab('r17')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs transition-all ${
+              selectedRecursoTab === 'r17'
+                ? 'bg-sky-500 text-black shadow-lg scale-[1.02]'
+                : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Vote size={15} />
+            <span>Recurso 17 (Descuento Votación)</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
+              $5.012M (+6%)
             </span>
           </button>
 
@@ -575,7 +631,7 @@ export function R20ResourceProjectionSection() {
             <Award size={15} />
             <span>Recurso 18 (Art. 87 CESU)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
-              $1.677M (+6,6%)
+              $1.667M (+6%)
             </span>
           </button>
 
@@ -618,7 +674,7 @@ export function R20ResourceProjectionSection() {
             }`}
           >
             <Layers size={15} />
-            <span>Consolidado Global (R10 + R13 + R14 + R18 + R20 + R21)</span>
+            <span>Consolidado Global (R10 + R13 + R14 + R17 + R18 + R20 + R21)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/30 text-white font-bold">
               Total Institucional
             </span>
@@ -1188,16 +1244,16 @@ export function R20ResourceProjectionSection() {
                         <AlertTriangle size={13} /> Caída Recaudo 2026: -26,47% (-$550.8M)
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                        <TrendingUp size={13} /> Parámetro Macro Oficial: +6,6%
+                        <TrendingUp size={13} /> Parámetro Macro Oficial: +6,0%
                       </span>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
-                      Recurso 13: Excedentes Financieros de Entidades del Sector Cooperativo
+                      Recurso 13: Excedentes Cooperativas Art.142, Ley 1819 del 2016
                     </h3>
                     <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
                       Conforme al artículo 142 de la Ley 1819 de 2016 (art. 19-4 E.T.), el 20% del excedente financiero tomado de los fondos de educación y solidaridad de las cooperativas se destina a financiar cupos y programas en Instituciones de Educación Superior públicas.
                       <br />
-                      <strong className="text-amber-300">Alerta de Desempeño 2026:</strong> En la última vigencia, el recaudo real cerró en <strong className="text-white">$ 1.530.000.000 COP</strong>, sufriendo una contracción severa de <strong className="text-rose-400">-$550.840.690 COP (-26,47%)</strong> respecto a 2025 y ubicándose marcadamente <strong className="text-rose-300">por debajo de lo proyectado</strong>. Proyectar sobre promedios históricos desconociendo este piso generaría déficit de tesorería. Por ello, se recomienda adoptar con prudencia el <strong className="text-emerald-300">Escenario Base Macroeconómico (+6,6% sobre base real = $ 1.630.980.000 COP)</strong>.
+                      <strong className="text-amber-300">Alerta de Desempeño 2026:</strong> En la última vigencia, el recaudo real cerró en <strong className="text-white">$ 1.530.000.000 COP</strong>, sufriendo una contracción severa de <strong className="text-rose-400">-$550.840.690 COP (-26,47%)</strong> respecto a 2025 y ubicándose marcadamente <strong className="text-rose-300">por debajo de lo proyectado</strong>. Proyectar sobre promedios históricos desconociendo este piso generaría déficit de tesorería. Por ello, se recomienda adoptar con prudencia el <strong className="text-emerald-300">Escenario Base Macroeconómico (+6,0% sobre base real = $ 1.621.800.000 COP)</strong>.
                     </p>
                   </div>
                 </div>
@@ -1385,7 +1441,7 @@ export function R20ResourceProjectionSection() {
               <div>
                 <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
                   <BarChart3 size={20} className="text-amber-400" />
-                  Evolución y Proyección de Excedentes de Cooperativas (2019–2027)
+                  Evolución y Proyección de Excedentes Cooperativas Art.142, Ley 1819 del 2016 (2019–2027)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-1">
                   Comportamiento histórico de 8 vigencias evidenciando el pico atípico de 2022, la contracción 2026 (-26,47%) y la proyección 2027.
@@ -1546,7 +1602,7 @@ export function R20ResourceProjectionSection() {
               <div>
                 <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
                   <Table size={18} className="text-amber-400" />
-                  Tabla: Histórico y Proyección Recurso 13 — Excedentes de Cooperativas (2019–2027)
+                  Tabla: Histórico y Proyección Recurso 13 — Excedentes Cooperativas Art.142, Ley 1819 del 2016 (2019–2027)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-0.5">
                   Registro cronológico de los aportes del sector solidario con análisis del desempeño real 2026.
@@ -1790,10 +1846,10 @@ export function R20ResourceProjectionSection() {
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
                     <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
                       <CheckCircle2 size={15} />
-                      <span>3. Sustentación del Modelo Macroeconómico (+6,6%)</span>
+                      <span>3. Sustentación del Modelo Macroeconómico (+6,0%)</span>
                     </div>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
-                      La presupuestación oficial parte del <strong className="text-white">recaudo real ejecutado ($1.530M)</strong> y le aplica la tasa macroeconómica aprobada del <strong className="text-emerald-300">+6,6%</strong>, arrojando <strong className="text-emerald-300">$ 1.630.980.000 COP</strong>. Esto reconoce la inflación esperada sin inflar la base, blindando la posición de liquidez de la UPTC.
+                      La presupuestación oficial parte del <strong className="text-white">recaudo real ejecutado ($1.530M)</strong> y le aplica la tasa macroeconómica aprobada del <strong className="text-emerald-300">+6,0%</strong>, arrojando <strong className="text-emerald-300">$ 1.621.800.000 COP</strong>. Esto reconoce la inflación esperada sin inflar la base, blindando la posición de liquidez de la UPTC.
                     </p>
                   </div>
 
@@ -1838,7 +1894,7 @@ export function R20ResourceProjectionSection() {
                         Serie Histórica desde 2021 (n = 6 vigencias)
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                        <TrendingUp size={13} /> Referencia Macroeconómica: +6,6%
+                        <TrendingUp size={13} /> Referencia Macroeconómica: +6,0%
                       </span>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
@@ -1846,7 +1902,7 @@ export function R20ResourceProjectionSection() {
                     </h3>
                     <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
                       Recurso creado en 2021 mediante el Fondo Solidario para la Educación (Decreto 1667/2021) y formalizado con fuerza de ley permanente mediante la <strong className="text-white">Ley 2307 de 2023 ("Puedo Estudiar")</strong>. Financia el 100% de la matrícula neta de los estudiantes de pregrado de la UPTC.
-                      Con un recaudo base en 2026 de <strong className="text-teal-300">$ 49.844.177.233 COP</strong>, se evalúa el piso prudente de indexación macroeconómica (+6,6% = <strong className="text-emerald-300">$ 53.134M</strong>) frente a los modelos de tendencia histórica OLS (<strong className="text-sky-300">$ 54.459M</strong>, R²=94,7%) y suavizamiento Holt (<strong className="text-purple-300">$ 53.802M</strong>).
+                      Con un recaudo base en 2026 de <strong className="text-teal-300">$ 49.844.177.233 COP</strong>, se evalúa el piso prudente de indexación macroeconómica (+6,0% = <strong className="text-emerald-300">$ 52.835M</strong>) frente a los modelos de tendencia histórica OLS (<strong className="text-sky-300">$ 54.459M</strong>, R²=94,7%) y suavizamiento Holt (<strong className="text-purple-300">$ 53.802M</strong>).
                     </p>
                   </div>
                 </div>
@@ -2293,7 +2349,7 @@ export function R20ResourceProjectionSection() {
                   Matriz Comparativa de Modelos de Proyección 2027 (R14)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-0.5">
-                  Contraste entre el piso macroeconómico oficial (+6,6%) y los modelos de regresión y suavizamiento estadístico.
+                  Contraste entre el piso macroeconómico oficial (+6,0%) y los modelos de regresión y suavizamiento estadístico.
                 </p>
               </div>
             </div>
@@ -2398,7 +2454,607 @@ export function R20ResourceProjectionSection() {
                     2. <strong className="text-white">Cambio Estructural con la Ley 2307 de 2023:</strong> La ley eliminó los límites de edad y extendió la gratuidad como derecho universal en instituciones públicas, lo que explica el salto presupuestal de <strong>$23.206M (2023)</strong> a <strong>$37.091M (2024)</strong> y <strong>$49.844M (2026)</strong>.
                   </p>
                   <p>
-                    3. <strong className="text-white">Recomendación Institucional para el Escenario Base:</strong> Aunque el modelo de regresión lineal proyecta <strong>$54.459M COP (+9,26%, R²=94,65%)</strong> reflejando la alta expansión del programa, se aconseja adoptar para el anteproyecto presupuestal el <strong className="text-emerald-300">Parámetro Macroeconómico Oficial del +6,6% ($53.134M COP)</strong>. Esta postura prudente asegura el equilibrio financiero frente a posibles rezagos en las liquidaciones semestrales del Ministerio de Educación Nacional.
+                    3. <strong className="text-white">Recomendación Institucional para el Escenario Base:</strong> Aunque el modelo de regresión lineal proyecta <strong>$54.459M COP (+9,26%, R²=94,65%)</strong> reflejando la alta expansión del programa, se aconseja adoptar para el anteproyecto presupuestal el <strong className="text-emerald-300">Parámetro Macroeconómico Oficial del +6,0% ($52.835M COP)</strong>. Esta postura prudente asegura el equilibrio financiero frente a posibles rezagos en las liquidaciones semestrales del Ministerio de Educación Nacional.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN 0.45: RECURSO 17 (DEVOLUCIÓN DESCUENTO POR VOTACIÓN - LEY 403)     */}
+      {/* ========================================================================= */}
+      {selectedRecursoTab === 'r17' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* HEADER HERO R17 */}
+          <div className="bg-gradient-to-br from-surface-container-high/90 to-background border border-sky-500/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-sky-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+            <div className="relative z-10">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0 border border-sky-500/30 shadow-lg">
+                    <Vote size={28} />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-xs font-mono uppercase tracking-wider font-bold text-sky-400 bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/30">
+                        Compensación Legal • Ley 403 de 1997 & Ley 815 de 2003
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                        <TrendingUp size={13} /> Parámetro Macroeconómico Aprobado: +6,0%
+                      </span>
+                      <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
+                        Serie Oficial 2024–2026 (n = 3 vigencias)
+                      </span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
+                      Recurso 17: Devolución de Descuento por Votación
+                    </h3>
+                    <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
+                      Reembolso presupuestal reconocido y transferido anualmente por el Ministerio de Hacienda y Crédito Público (MHCP) con cargo al PGN para compensar a la UPTC por el <strong>descuento del 10% en matrícula</strong> otorgado a los estudiantes que ejercieron su derecho al voto en comicios oficiales.
+                      Con un recaudo base en 2026 de <strong className="text-sky-300">$ 4.728.146.085 COP</strong> (-8,79% tras el pico electoral 2025 de $5.184M), se proyecta la vigencia 2027 aplicando el parámetro macroeconómico institucional oficial del <strong className="text-emerald-300">+6,0%</strong> (<strong className="text-emerald-300">$ 5.011.834.850 COP</strong>), evaluando adicionalmente escenarios inerciales y de medias ponderadas.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 shrink-0">
+                  <button
+                    onClick={() => exportR17CSV(r17SelectedModel)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs shadow-lg shadow-sky-500/20 transition-all hover:scale-[1.02] cursor-pointer"
+                  >
+                    <Download size={15} />
+                    <span>Descargar Certificado R17 (CSV)</span>
+                  </button>
+                  <div className="flex items-center gap-2 text-right">
+                    <span className="text-[11px] font-mono text-on-surface-variant">
+                      Base Recaudo 2026: <strong className="text-sky-300">{formatCurrencyShortCOP(R17_BASE_2026)}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SELECTOR INTERACTIVO DE MODELOS R17 */}
+              <div className="mt-6 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-semibold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-amber-400" />
+                    Seleccionar Escenario de Proyección R17 para 2027:
+                  </span>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Modelo Activo: <strong className="text-white">{r17ActiveModel.name}</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {R17_FORECAST_MODELS.map((m) => {
+                    const isSelected = r17SelectedModel === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => setR17SelectedModel(m.id)}
+                        className={`p-4 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden ${
+                          isSelected
+                            ? 'bg-sky-500/15 border-sky-400 ring-2 ring-sky-500/40 shadow-lg scale-[1.02]'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                            isSelected ? 'bg-sky-500 text-black font-extrabold' : 'bg-white/10 text-on-surface-variant'
+                          }`}>
+                            {m.tag}
+                          </span>
+                          {m.isOfficial && (
+                            <span className="text-[9px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                              Oficial Aprobado
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-bold text-xs text-white mt-1">
+                          {m.shortName}
+                        </div>
+                        <div className="font-mono text-lg font-extrabold text-sky-300 mt-0.5">
+                          {formatCurrencyShortCOP(m.projected2027)}
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
+                          <span className="text-emerald-400 font-bold">+{m.variacionPct.toFixed(2)}%</span>
+                          <span>+{formatCurrencyShortCOP(m.incrementoNominal)}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* TARJETAS KPI DE IMPACTO R17 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                {/* KPI 1: Proyección 2027 */}
+                <div className="p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-sky-300 uppercase tracking-wider">
+                      Proyección 2027 (R17)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-sky-500/20 text-sky-200 px-2 py-0.5 rounded border border-sky-500/30">
+                      {r17ActiveModel.tag}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-sky-300 block">
+                      {formatCurrencyShortCOP(r17ActiveModel.projected2027)}
+                    </span>
+                    <span className="text-[11px] font-mono text-white/90 block mt-0.5">
+                      {formatCurrencyCOP(r17ActiveModel.projected2027)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-sky-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Fórmula:</span>
+                    <strong className="text-sky-200 font-mono">{r17ActiveModel.formula}</strong>
+                  </div>
+                </div>
+
+                {/* KPI 2: Recaudo Base 2026 */}
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                      Recaudo Referencia 2026
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-white/10 text-white px-2 py-0.5 rounded border border-white/20">
+                      Base Oficial
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-bold text-white block">
+                      {formatCurrencyShortCOP(R17_BASE_2026)}
+                    </span>
+                    <span className="text-[11px] font-mono text-on-surface-variant block mt-0.5">
+                      {formatCurrencyCOP(R17_BASE_2026)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Ajuste vs 2025:</span>
+                    <strong className="text-rose-300 font-mono">-8,79% (-$455,6M)</strong>
+                  </div>
+                </div>
+
+                {/* KPI 3: Incremento Nominal */}
+                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
+                      Incremento Nominal 2027
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
+                      +{r17ActiveModel.variacionPct.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-emerald-400 block">
+                      +{formatCurrencyShortCOP(r17ActiveModel.incrementoNominal)}
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
+                      +{formatCurrencyCOP(r17ActiveModel.incrementoNominal)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Variación Anual</span>
+                    <strong className="text-emerald-300 font-mono">+{formatCurrencyShortCOP(r17ActiveModel.incrementoNominal)} Adicionales</strong>
+                  </div>
+                </div>
+
+                {/* KPI 4: Descuento Legal y Cobertura */}
+                <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">
+                      Beneficio por Votación
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded border border-amber-500/30">
+                      Ley 403 / 1997
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-amber-300 block">
+                      10,0%
+                    </span>
+                    <span className="text-[11px] font-mono text-amber-200/90 block mt-0.5">
+                      Sobre Matrícula Liquidada
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-amber-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Histórico Reciente</span>
+                    <strong className="text-sky-300 font-mono">2024: $4.532M • 2025: $5.184M</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* GRÁFICO HISTÓRICO RECHARTS DE COMPORTAMIENTO R17 (2024-2027) */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-sky-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
+                  <BarChart3 size={20} className="text-sky-400" />
+                  Evolución y Proyección de Devolución por Descuento de Votación (2024–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Serie oficial de compensaciones liquidadas por el MHCP a la UPTC y proyección 2027 ({r17ActiveModel.name}).
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-sky-400"></span>
+                  Recaudos Históricos (2024–2025)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-sky-600"></span>
+                  Base 2026 ($4.728M)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
+                  <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
+                  Proyección 2027 ({formatCurrencyShortCOP(r17ActiveModel.projected2027)})
+                </span>
+              </div>
+            </div>
+
+            <div className="h-[340px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={r17ChartSeries} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <defs>
+                    <linearGradient id="r17BarGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#0284c7" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="r17Bar2027" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#34d399" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="r17AreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0284c7" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#0284c7" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                  />
+                  
+                  <YAxis 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                    tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`}
+                    domain={[0, 6000000000]}
+                  />
+
+                  <RechartsTooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload;
+                      return (
+                        <div className="bg-surface-container-high/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl min-w-[280px]">
+                          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+                            <span className="font-mono font-bold text-white text-sm">
+                              Vigencia {item.vigencia}
+                            </span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                              item.is2027 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                                : item.is2026
+                                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+                                : 'bg-white/10 text-white border border-white/20'
+                            }`}>
+                              {item.is2027 ? 'PROYECCIÓN 2027' : item.is2026 ? 'BASE 2026' : 'HISTÓRICO REAL'}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-on-surface-variant">Total Recaudo:</span>
+                              <span className="font-mono font-bold text-sky-300 text-sm">
+                                {formatCurrencyShortCOP(item.recaudo)}
+                              </span>
+                            </div>
+                            <div className="text-right text-[11px] font-mono text-white/80">
+                              {formatCurrencyCOP(item.recaudo)}
+                            </div>
+
+                            {item.variacionCOP !== 0 && (
+                              <div className="flex justify-between items-baseline pt-2 border-t border-white/10">
+                                <span className="text-on-surface-variant">Variación vs. año ant:</span>
+                                <span className={`font-mono font-bold ${item.variacionCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {item.variacionCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(item.variacionCOP)} ({item.variacionPct >= 0 ? '+' : ''}{item.variacionPct.toFixed(2)}%)
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="pt-2 border-t border-white/10 text-[10px] text-on-surface-variant italic">
+                              {item.notaNormativa}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+
+                  <Area 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    fill="url(#r17AreaGrad)" 
+                    stroke="none" 
+                  />
+
+                  <Bar dataKey="recaudo" radius={[8, 8, 0, 0]}>
+                    {r17ChartSeries.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.is2027 ? 'url(#r17Bar2027)' : 'url(#r17BarGradient)'}
+                        stroke={entry.is2027 ? '#10b981' : 'none'}
+                        strokeWidth={entry.is2027 ? 2 : 0}
+                      />
+                    ))}
+                  </Bar>
+
+                  <Line 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    stroke="#f59e0b" 
+                    strokeWidth={2.5}
+                    dot={{ fill: '#f59e0b', r: 4 }}
+                    activeDot={{ r: 6, fill: '#f59e0b', stroke: '#fff', strokeWidth: 2 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-4 p-3.5 rounded-2xl bg-black/30 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-sky-300">
+                <Info size={16} className="shrink-0" />
+                <span>
+                  <strong>Dinámica del Recurso:</strong> Los reembolsos por descuento de votación reflejan la participación electoral estudiantil en elecciones oficiales (congreso, presidencia, regionales o consultas populares). El recaudo creció fuertemente en 2025 (+14,39%) y se reajustó en 2026 a <strong>$4.728M</strong>.
+                </span>
+              </div>
+              <span className="font-mono text-emerald-400 font-bold shrink-0">
+                Proyección Activa ({r17ActiveModel.tag}): {formatCurrencyCOP(r17ActiveModel.projected2027)}
+              </span>
+            </div>
+          </div>
+
+          {/* TABLA 1: HISTÓRICO Y PROYECCIÓN R17 */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-sky-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Table size={18} className="text-sky-400" />
+                  Tabla: Histórico y Proyección de Recaudos Recurso 17 — Descuento por Votación (2024–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Detalle cronológico de las compensaciones presupuestales del Ministerio de Hacienda y proyección 2027.
+                </p>
+              </div>
+              <button
+                onClick={() => exportR17CSV(r17SelectedModel)}
+                className="flex items-center gap-1.5 text-xs text-sky-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+              >
+                <Download size={14} />
+                <span>Exportar Tabla CSV</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Vigencia</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Concepto Presupuestal</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Recurso</th>
+                    <th className="p-4 font-semibold text-right text-sky-300">Total Recaudo ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Variación Anual ($)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Variación (%)</th>
+                    <th className="p-4 font-semibold text-left text-on-surface-variant">Criterio / Soporte</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R17_HISTORICAL_SERIES.map((h) => {
+                    const is2027 = h.vigencia === 2027;
+                    const is2026 = h.vigencia === 2026;
+                    const recaudo = is2027 ? r17ActiveModel.projected2027 : h.totalRecaudo;
+                    const varCOP = is2027 ? r17ActiveModel.incrementoNominal : h.variacionAnualCOP;
+                    const varPct = is2027 ? r17ActiveModel.variacionPct : h.variacionAnualPct;
+
+                    return (
+                      <tr 
+                        key={h.vigencia} 
+                        className={`transition-colors ${
+                          is2027 
+                            ? 'bg-emerald-500/10 hover:bg-emerald-500/20 font-semibold' 
+                            : is2026 
+                            ? 'bg-sky-500/10 hover:bg-sky-500/20 font-medium' 
+                            : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold font-mono">
+                          <span className={`px-2.5 py-1 rounded-lg text-xs ${
+                            is2027 
+                              ? 'bg-emerald-500 text-black font-extrabold' 
+                              : is2026 
+                              ? 'bg-sky-500 text-black font-extrabold' 
+                              : 'bg-white/10 text-white'
+                          }`}>
+                            {h.vigencia}
+                          </span>
+                        </td>
+                        <td className={`p-4 ${is2027 ? 'text-emerald-200 font-bold' : is2026 ? 'text-sky-200 font-bold' : 'text-white'}`}>
+                          {h.concepto}
+                        </td>
+                        <td className="p-4 font-mono text-on-surface-variant text-[11px]">
+                          {h.recurso}
+                        </td>
+                        <td className={`p-4 text-right font-mono font-bold ${
+                          is2027 ? 'text-emerald-300 text-sm' : is2026 ? 'text-sky-300' : 'text-white'
+                        }`}>
+                          {formatCurrencyCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono">
+                          {varCOP !== 0 ? (
+                            <span className={varCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                              {varCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(varCOP)}
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold">
+                          {varPct !== 0 ? (
+                            <span className={`px-2 py-0.5 rounded text-[11px] ${
+                              is2027 
+                                ? 'bg-emerald-500/30 text-emerald-300 font-extrabold' 
+                                : varPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            }`}>
+                              {varPct >= 0 ? '+' : ''}{varPct.toFixed(2)}%
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-on-surface-variant text-[11px] italic">
+                          {is2027 ? `${r17ActiveModel.name} — ${r17ActiveModel.formula}` : h.notaNormativa}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TABLA 2: MATRIZ DE MODELOS MATEMÁTICOS EVALUADOS */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-sky-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Calculator size={18} className="text-sky-400" />
+                  Matriz Comparativa de Modelos de Estimación R17 (Vigencia 2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Comparación técnica de los cuatro escenarios de proyección sobre la base 2026 ($4.728.146.085 COP).
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Modelo / Metodología</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Fórmula / Ecuación</th>
+                    <th className="p-4 font-semibold text-right text-sky-300">Proyección 2027 ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Cifra ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Incremento ($)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Variación %</th>
+                    <th className="p-4 font-semibold text-center text-purple-300">Nivel de Riesgo</th>
+                    <th className="p-4 font-semibold text-center text-white">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R17_FORECAST_MODELS.map((m) => {
+                    const isSelected = r17SelectedModel === m.id;
+                    const safeRisk = (m.riskLevel || 'bajo').toUpperCase();
+                    return (
+                      <tr 
+                        key={m.id}
+                        className={`transition-colors ${
+                          isSelected 
+                            ? 'bg-sky-500/15 font-semibold' 
+                            : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold text-white flex items-center gap-2">
+                          <span 
+                            className="w-2.5 h-2.5 rounded-full shrink-0" 
+                            style={{ backgroundColor: m.color }}
+                          />
+                          <div>
+                            <span className="block">{m.name}</span>
+                            <span className="text-[10px] text-on-surface-variant font-normal block">{m.interpretation}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 font-mono text-on-surface-variant text-[11px]">
+                          {m.formula}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-sky-300 text-sm">
+                          {formatCurrencyCOP(m.projected2027)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(m.projected2027)}
+                        </td>
+                        <td className="p-4 text-right font-mono text-emerald-400 font-bold">
+                          +{formatCurrencyShortCOP(m.incrementoNominal)}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold text-emerald-300">
+                          +{m.variacionPct.toFixed(2)}%
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            {safeRisk}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          {isSelected ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-sky-500 text-black">
+                              <CheckCircle2 size={12} /> Activo
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setR17SelectedModel(m.id)}
+                              className="px-2.5 py-1 rounded-full text-[10px] font-mono text-sky-300 hover:text-white bg-white/5 hover:bg-white/15 border border-white/10 transition-colors cursor-pointer"
+                            >
+                              Aplicar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* PANEL DE JUSTIFICACIÓN METODOLÓGICA Y CONTEXTO NORMATIVO */}
+          <div className="p-6 md:p-8 rounded-[28px] bg-gradient-to-r from-surface-container-high/90 to-background border border-sky-500/30 shadow-xl">
+            <div className="flex flex-col md:flex-row items-start gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/30">
+                <Scale size={24} />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider font-bold text-sky-400">
+                    Marco Legal y Dictamen Financiero
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                    Ley 403 de 1997 • Ley 815 de 2003
+                  </span>
+                </div>
+                <h4 className="text-xl font-bold text-white tracking-tight">
+                  Mecanismo de Liquidación y Justificación de la Proyección 2027
+                </h4>
+                <div className="text-xs md:text-sm text-on-surface-variant space-y-2 leading-relaxed">
+                  <p>
+                    1. <strong className="text-white">Naturaleza del Reembolso Nacional:</strong> El descuento del 10% en el valor de la matrícula a favor de los sufragantes es un beneficio legal otorgado por mandato del Artículo 1 de la Ley 815 de 2003. La norma establece expresamente que el Ministerio de Hacienda y Crédito Público (MHCP) debe transferir a las universidades públicas los recursos equivalentes a las sumas que dejen de percibir por la aplicación del citado descuento, con cargo al Presupuesto General de la Nación.
+                  </p>
+                  <p>
+                    2. <strong className="text-white">Estacionalidad Electoral y Base de Referencia 2026:</strong> La fluctuación histórica entre <strong>$4.532M (2024)</strong>, el pico de <strong>$5.184M (2025)</strong> y el cierre en <strong>$4.728M (2026)</strong> responde a los calendarios electorales y a la caducidad reglamentaria de los certificados electorales. Tomar el recaudo base 2026 ($4.728.146.085 COP) provee una línea base depurada y libre de rezagos contables de comicios anteriores.
+                  </p>
+                  <p>
+                    3. <strong className="text-white">Indexación con Parámetro Macroeconómico Oficial (+6,0%):</strong> Al proyectar el 2027 con el <strong className="text-emerald-300">+6,0% ($5.011.834.850 COP)</strong>, la universidad indexa el valor monetario del subsidio en proporción al incremento en las tarifas de matrícula aprobadas y al IPC estimado, preservando el equilibrio presupuestal y asegurando una solicitud consistente ante el Ministerio de Hacienda.
                   </p>
                 </div>
               </div>
@@ -2428,7 +3084,7 @@ export function R20ResourceProjectionSection() {
                         Transferencia con Destinación Específica • CESU
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                        <TrendingUp size={13} /> Parámetro Macroeconómico Aprobado: +6,6%
+                        <TrendingUp size={13} /> Parámetro Macroeconómico Aprobado: +6,0%
                       </span>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
@@ -2436,7 +3092,7 @@ export function R20ResourceProjectionSection() {
                     </h3>
                     <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
                       Recurso de la Nación asignado conforme al <strong className="text-white">Artículo 87 de la Ley 30 de 1992</strong> y distribuido según las fórmulas del Consejo Nacional de Educación Superior (CESU) basadas en acreditación institucional, calidad académica y número de estudiantes. 
-                      Dado que no se cuenta con una serie temporal extendida para modelos estocásticos, la proyección 2027 toma como base el recaudo 2026 (<strong className="text-purple-300">$ 1.573.078.344 COP</strong>) indexado con el parámetro macroeconómico oficial aprobado del <strong className="text-emerald-300">+6,6%</strong>.
+                      Dado que no se cuenta con una serie temporal extendida para modelos estocásticos, la proyección 2027 toma como base el recaudo 2026 (<strong className="text-purple-300">$ 1.573.078.344 COP</strong>) indexado con el parámetro macroeconómico oficial aprobado del <strong className="text-emerald-300">+6,0%</strong>.
                     </p>
                   </div>
                 </div>
@@ -2466,7 +3122,7 @@ export function R20ResourceProjectionSection() {
                       Proyección 2027 (R18)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-200 px-2 py-0.5 rounded border border-purple-500/30">
-                      +6,6% Indexado
+                      +6,0% Indexado
                     </span>
                   </div>
                   <div>
@@ -2567,7 +3223,7 @@ export function R20ResourceProjectionSection() {
                   Evolución y Proyección de Aportes Artículo 87 CESU (2024–2027)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Comportamiento histórico de las transferencias CESU y proyección con indexación macroeconómica (+6,6%).
+                  Comportamiento histórico de las transferencias CESU y proyección con indexación macroeconómica (+6,0%).
                 </p>
               </div>
 
@@ -2582,7 +3238,7 @@ export function R20ResourceProjectionSection() {
                 </span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
                   <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
-                  Proyección 2027 ($1.677M)
+                  Proyección 2027 ($1.667M)
                 </span>
               </div>
             </div>
@@ -2637,7 +3293,7 @@ export function R20ResourceProjectionSection() {
                                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
                                 : 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
                             }`}>
-                              {item.is2027 ? 'PROYECCIÓN (+6,6%)' : 'HISTÓRICO REAL'}
+                              {item.is2027 ? 'PROYECCIÓN (+6,0%)' : 'HISTÓRICO REAL'}
                             </span>
                           </div>
 
@@ -2708,7 +3364,7 @@ export function R20ResourceProjectionSection() {
                 </span>
               </div>
               <span className="font-mono text-emerald-400 font-bold shrink-0">
-                Ajuste 2027 (+6,6%): $ 1.676.901.515 COP
+                Ajuste 2027 (+6,0%): $ 1.667.463.045 COP
               </span>
             </div>
           </div>
@@ -2833,14 +3489,14 @@ export function R20ResourceProjectionSection() {
                   </span>
                 </div>
                 <h4 className="text-xl font-bold text-white tracking-tight">
-                  ¿Por qué se aplica indexación macroeconómica (+6,6%) en lugar de modelos ARIMA?
+                  ¿Por qué se aplica indexación macroeconómica (+6,0%) en lugar de modelos ARIMA?
                 </h4>
                 <div className="text-xs md:text-sm text-on-surface-variant space-y-2 leading-relaxed">
                   <p>
                     1. <strong className="text-white">Insuficiencia de Grados de Libertad para Series Temporales:</strong> Los modelos autorregresivos y de suavizamiento estocástico (ARIMA, Holt-Winters) requieren series históricas continuas con un mínimo técnico de observaciones ($n \ge 10$) para estimar parámetros como la autocorrelación ($\phi_1$) o la deriva ($c$) con validez estadística. Con únicamente 3 vigencias homogéneas de registro (2024–2026), cualquier ajuste econométrico generaría sobreajuste espurio (*overfitting*).
                   </p>
                   <p>
-                    2. <strong className="text-white">Aplicación del Parámetro Macroeconómico Oficial:</strong> Siguiendo el acuerdo de directrices macroeconómicas de presupuesto, se indexa el recaudo base 2026 de <strong>$ 1.573.078.344 COP</strong> en un <strong>+6,6%</strong>, arrojando una proyección 2027 de <strong>$ 1.676.901.515 COP</strong>.
+                    2. <strong className="text-white">Aplicación del Parámetro Macroeconómico Oficial:</strong> Siguiendo el acuerdo de directrices macroeconómicas de presupuesto, se indexa el recaudo base 2026 de <strong>$ 1.573.078.344 COP</strong> en un <strong>+6,0%</strong>, arrojando una proyección 2027 de <strong>$ 1.667.463.045 COP</strong>.
                   </p>
                   <p>
                     3. <strong className="text-white">Certeza para la Junta Directiva:</strong> Este método proporciona una cifra prudente, técnicamente defendible y alineada con los parámetros aprobados de política fiscal institucional.
@@ -3879,10 +4535,10 @@ export function R20ResourceProjectionSection() {
                   Presupuesto Global Consolidado UPTC
                 </span>
                 <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
-                  Consolidado Global: Giros de la Nación (R10 + R13 + R14 + R18) + Propios (R20) + Devolución IVA (R21)
+                  Consolidado Global: Giros de la Nación (R10 + R13 + R14 + R17 + R18) + Propios (R20) + Devolución IVA (R21)
                 </h3>
                 <p className="text-xs md:text-sm text-on-surface-variant max-w-2xl mt-1 leading-relaxed">
-                  Visión unificada del presupuesto de ingresos institucional 2027. Integra las transferencias de la Nación (PGN 2027, Excedentes Cooperativas Ley 1819, Política de Gratuidad Ley 2307 y Art. 87 CESU) junto con las proyecciones de autogestión de la UPTC.
+                  Visión unificada del presupuesto de ingresos institucional 2027. Integra las transferencias de la Nación (PGN 2027, Excedentes Cooperativas Ley 1819, Política de Gratuidad Ley 2307, Descuento Votación Ley 403 y Art. 87 CESU) junto con las proyecciones de autogestión de la UPTC.
                 </p>
               </div>
 
@@ -3894,7 +4550,7 @@ export function R20ResourceProjectionSection() {
                 </div>
 
                 <div className="text-left sm:text-right">
-                  <span className="text-[11px] uppercase tracking-wider text-indigo-400 block font-bold">TOTAL INSTITUCIONAL 2027 (R10+R13+R14+R18+R20+R21)</span>
+                  <span className="text-[11px] uppercase tracking-wider text-indigo-400 block font-bold">TOTAL INSTITUCIONAL 2027 (R10+R13+R14+R17+R18+R20+R21)</span>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-mono font-extrabold text-emerald-400">
                       {formatCurrencyShortCOP(combinedSummary.total.y27)}
@@ -3970,7 +4626,7 @@ export function R20ResourceProjectionSection() {
                     <td className="p-4 font-bold text-white flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                       <div>
-                        <span>Recurso 13 — Excedentes Financieros de Cooperativas</span>
+                        <span>Recurso 13 — Excedentes Cooperativas Art.142, Ley 1819 del 2016</span>
                         <span className="text-[10px] block text-amber-300 font-normal">Art. 142 Ley 1819/2016 • {r13ActiveModel.name}</span>
                       </div>
                     </td>
@@ -4029,13 +4685,45 @@ export function R20ResourceProjectionSection() {
                     </td>
                   </tr>
 
+                  {/* Fila R17 (Descuento Votación) */}
+                  <tr className="hover:bg-white/5 transition-colors bg-sky-500/5">
+                    <td className="p-4 font-bold text-white flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                      <div>
+                        <span>Recurso 17 — Devolución Descuento por Votación</span>
+                        <span className="text-[10px] block text-sky-300 font-normal">Ley 403/1997 & Ley 815/2003 (MHCP) • {r17ActiveModel.name}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(combinedSummary.r17.y24)}
+                    </td>
+                    <td className="p-4 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(combinedSummary.r17.y25)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-sky-300">
+                      {formatCurrencyShortCOP(combinedSummary.r17.y26)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
+                      {formatCurrencyCOP(combinedSummary.r17.y27)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-white">
+                      {formatCurrencyShortCOP(combinedSummary.r17.y27)}
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
+                      +{combinedSummary.r17.varPct.toFixed(2)}%
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-sky-300">
+                      {combinedSummary.r17.part.toFixed(1)}%
+                    </td>
+                  </tr>
+
                   {/* Fila R18 */}
                   <tr className="hover:bg-white/5 transition-colors bg-purple-500/5">
                     <td className="p-4 font-bold text-white flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
                       <div>
                         <span>Recurso 18 — Aportes Artículo 87 CESU</span>
-                        <span className="text-[10px] block text-purple-300 font-normal">Fondo de calidad CESU (Base 2026 indexada +6,6%)</span>
+                        <span className="text-[10px] block text-purple-300 font-normal">Fondo de calidad CESU (Base 2026 indexada +6,0%)</span>
                       </div>
                     </td>
                     <td className="p-4 text-right font-mono text-on-surface-variant">
@@ -4061,10 +4749,10 @@ export function R20ResourceProjectionSection() {
                     </td>
                   </tr>
 
-                  {/* Subtotal Giros de la Nación (R10 + R13 + R14 + R18) */}
+                  {/* Subtotal Giros de la Nación (R10 + R13 + R14 + R17 + R18) */}
                   <tr className="bg-cyan-500/10 font-semibold text-cyan-200 border-t border-cyan-500/20">
                     <td className="p-4 pl-8 text-cyan-300 italic flex items-center gap-2">
-                      <span>↳ Subtotal Giros y Fondos de la Nación (R10 + R13 + R14 + R18)</span>
+                      <span>↳ Subtotal Giros y Fondos de la Nación (R10 + R13 + R14 + R17 + R18)</span>
                     </td>
                     <td className="p-4 text-right font-mono">
                       {formatCurrencyShortCOP(combinedSummary.nacion.y24)}
@@ -4085,7 +4773,7 @@ export function R20ResourceProjectionSection() {
                       +{combinedSummary.nacion.varPct.toFixed(2)}%
                     </td>
                     <td className="p-4 text-center font-mono text-cyan-200 font-bold">
-                      {(combinedSummary.r10.part + combinedSummary.r13.part + combinedSummary.r14.part + combinedSummary.r18.part).toFixed(1)}%
+                      {(combinedSummary.r10.part + combinedSummary.r13.part + combinedSummary.r14.part + combinedSummary.r17.part + combinedSummary.r18.part).toFixed(1)}%
                     </td>
                   </tr>
 
@@ -4187,7 +4875,7 @@ export function R20ResourceProjectionSection() {
                   <tr className="shadow-lg">
                     <td className="p-4 font-extrabold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
                       <Landmark size={16} className="text-indigo-400 shrink-0" />
-                      <span>TOTAL CONSOLIDADO UPTC (R10 + R13 + R14 + R18 + R20 + R21)</span>
+                      <span>TOTAL CONSOLIDADO UPTC (R10 + R13 + R14 + R17 + R18 + R20 + R21)</span>
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-white">
                       {formatCurrencyShortCOP(combinedSummary.total.y24)}
