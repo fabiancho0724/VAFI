@@ -1713,13 +1713,13 @@ export function R20ResourceProjectionSection() {
                         </td>
                         <td className="p-4 text-center">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                            m.riskLevel === 'bajo' 
+                            (m.riskLevel || 'bajo') === 'bajo' 
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                              : m.riskLevel === 'medio'
+                              : (m.riskLevel || 'bajo') === 'medio'
                               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                               : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                           }`}>
-                            {m.riskLevel.toUpperCase()}
+                            {(m.riskLevel || 'bajo').toUpperCase()}
                           </span>
                         </td>
                         <td className="p-4 text-center">

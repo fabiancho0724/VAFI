@@ -1542,6 +1542,7 @@ export interface R13ForecastModel {
   color: string;
   interpretation: string;
   alertaRiesgo: string;
+  riskLevel: 'bajo' | 'medio' | 'alto';
   isOfficial?: boolean;
 }
 
@@ -1662,6 +1663,7 @@ export const R13_FORECAST_MODELS: R13ForecastModel[] = [
     color: '#f97316',
     interpretation: 'Toma como ancla la realidad deprimida de 2026 ($1.530M) y aplica únicamente la indexación macroeconómica (+6,6%). Protege el flujo de caja contra el déficit de compromisos.',
     alertaRiesgo: 'Bajo Riesgo. La opción más prudente para formular el anteproyecto de presupuesto.',
+    riskLevel: 'bajo',
     isOfficial: true
   },
   {
@@ -1676,6 +1678,7 @@ export const R13_FORECAST_MODELS: R13ForecastModel[] = [
     color: '#ef4444',
     interpretation: 'Mantiene plano el valor de 2026 sin asumir recuperación alguna en los excedentes de las cooperativas. Máxima cautela ante incertidumbre macroeconómica del sector solidario.',
     alertaRiesgo: 'Riesgo Nulo de Déficit. Presupuesto ultra-defensivo.',
+    riskLevel: 'bajo',
     isOfficial: false
   },
   {
@@ -1690,6 +1693,7 @@ export const R13_FORECAST_MODELS: R13ForecastModel[] = [
     color: '#eab308',
     interpretation: 'Asigna el 50% de peso a la caída de 2026 y el 50% restante a la estabilidad de 2024-2025, modelando una recuperación gradual hacia la media.',
     alertaRiesgo: 'Riesgo Moderado. Requiere que el sector cooperativo recupere utilidades operativas.',
+    riskLevel: 'medio',
     isOfficial: false
   },
   {
@@ -1704,6 +1708,7 @@ export const R13_FORECAST_MODELS: R13ForecastModel[] = [
     color: '#a855f7',
     interpretation: 'Promedia las cuatro vigencias posteriores al shock atípico de 2022. Supone que la caída de 2026 fue transitoria y se normalizará el giro.',
     alertaRiesgo: 'Riesgo Alto. Puede revivir la brecha presupuestal de 2026 si el sector no repunta.',
+    riskLevel: 'alto',
     isOfficial: false
   }
 ];
