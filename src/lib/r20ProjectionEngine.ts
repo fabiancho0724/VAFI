@@ -953,3 +953,256 @@ export function exportR21CSV(models: R20ForecastModelResult[], records: R20Recor
   link.click();
   document.body.removeChild(link);
 }
+
+// =========================================================================
+// RECURSO 10.0 - APORTES DE LA NACIÓN (FUNCIONAMIENTO) - PGN 2027
+// =========================================================================
+
+export interface R10BaseComponent2026 {
+  subRecurso: string;
+  denominacion: string;
+  recaudoEfectivo: number;
+  ingresoFaltante: number;
+  totalRecaudo: number;
+  participacionPct: number;
+}
+
+export const R10_BASE_COMPONENTS_2026: R10BaseComponent2026[] = [
+  {
+    subRecurso: 'R10',
+    denominacion: 'Aporte Ordinario Nación - Funcionamiento',
+    recaudoEfectivo: 238714266246,
+    ingresoFaltante: 88355901123,
+    totalRecaudo: 327070167369,
+    participacionPct: (327070167369 / 351357927407) * 100 // 93.09%
+  },
+  {
+    subRecurso: 'R10.5',
+    denominacion: 'Aportes Fomento / Base Presupuestal',
+    recaudoEfectivo: 11208316954,
+    ingresoFaltante: 0,
+    totalRecaudo: 11208316954,
+    participacionPct: (11208316954 / 351357927407) * 100 // 3.19%
+  },
+  {
+    subRecurso: 'R10.1',
+    denominacion: 'Aportes Nación - PIC Convencional',
+    recaudoEfectivo: 5623807220,
+    ingresoFaltante: 2165253520,
+    totalRecaudo: 7789060740,
+    participacionPct: (7789060740 / 351357927407) * 100 // 2.22%
+  },
+  {
+    subRecurso: 'R10.2',
+    denominacion: 'Aportes Nación - PIC Territorial',
+    recaudoEfectivo: 3060211833,
+    ingresoFaltante: 0,
+    totalRecaudo: 3060211833,
+    participacionPct: (3060211833 / 351357927407) * 100 // 0.87%
+  },
+  {
+    subRecurso: 'R10.3',
+    denominacion: 'Aportes Adicionales a la Base',
+    recaudoEfectivo: 0,
+    ingresoFaltante: 2229170511,
+    totalRecaudo: 2229170511,
+    participacionPct: (2229170511 / 351357927407) * 100 // 0.63%
+  }
+];
+
+export const R10_BASE_TOTAL_2026 = 351357927407; // 351.357.927.407 COP
+
+export const PGN_2027_DATA = {
+  vigencia: 2027,
+  institucion: 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)',
+  normaLegal: 'Proyecto / Ley de Presupuesto General de la Nación (PGN 2027)',
+  funcionamientoR10: 395704592082, // A. PRESUPUESTO DE FUNCIONAMIENTO
+  inversion: 8310959010,           // C. PRESUPUESTO DE INVERSIÓN (2202 Calidad y Fomento / 0700 Intersubsectorial)
+  totalPresupuestoEjecutora: 404015551092, // TOTAL PRESUPUESTO UNIDAD EJECUTORA
+  basePresupuestal2026: 351357927407,
+  variacionNominal: 395704592082 - 351357927407, // +44.346.664.675 COP
+  variacionPct: ((395704592082 - 351357927407) / 351357927407) * 100, // +12.62%
+  variacionVsR10Ordinario: 395704592082 - 327070167369, // +68.634.424.713 COP
+  variacionVsR10OrdinarioPct: ((395704592082 - 327070167369) / 327070167369) * 100 // +20.98%
+};
+
+export interface R10HistoricalRecord {
+  vigencia: number;
+  unidad: string;
+  concepto: string;
+  recurso: string;
+  totalRecaudo: number;
+  variacionAnualCOP: number;
+  variacionAnualPct: number;
+  tipo: 'historico' | 'base2026' | 'pgn2027';
+  notaNormativa: string;
+}
+
+export const R10_HISTORICAL_SERIES: R10HistoricalRecord[] = [
+  {
+    vigencia: 2016,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Funcionamiento',
+    recurso: '10-APORTE NACION',
+    totalRecaudo: 118124822897,
+    variacionAnualCOP: 0,
+    variacionAnualPct: 0,
+    tipo: 'historico',
+    notaNormativa: 'Transferencia Legal Ley 30/1992 Art. 86'
+  },
+  {
+    vigencia: 2017,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Funcionamiento',
+    recurso: '10-APORTE NACION',
+    totalRecaudo: 131992813286,
+    variacionAnualCOP: 13867990389,
+    variacionAnualPct: 11.74,
+    tipo: 'historico',
+    notaNormativa: 'Ajuste IPC + Puntos Adicionales Nación'
+  },
+  {
+    vigencia: 2018,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Funcionamiento',
+    recurso: '10-APORTE NACION',
+    totalRecaudo: 139561046999,
+    variacionAnualCOP: 7568233713,
+    variacionAnualPct: 5.73,
+    tipo: 'historico',
+    notaNormativa: 'Transferencia Base Presupuestal'
+  },
+  {
+    vigencia: 2019,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Funcionamiento',
+    recurso: '10-APORTE NACION',
+    totalRecaudo: 149868926819,
+    variacionAnualCOP: 10307879820,
+    variacionAnualPct: 7.39,
+    tipo: 'historico',
+    notaNormativa: 'Acuerdos de Financiación Educación Superior'
+  },
+  {
+    vigencia: 2020,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Funcionamiento',
+    recurso: '10-APORTE NACION',
+    totalRecaudo: 166028418675,
+    variacionAnualCOP: 16159491856,
+    variacionAnualPct: 10.78,
+    tipo: 'historico',
+    notaNormativa: 'Aportes Funcionamiento + Medidas Emergencia'
+  },
+  {
+    vigencia: 2021,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Funcionamiento',
+    recurso: '10-APORTE NACION',
+    totalRecaudo: 171313529978,
+    variacionAnualCOP: 5285111303,
+    variacionAnualPct: 3.18,
+    tipo: 'historico',
+    notaNormativa: 'Aporte Ordinario Ley 30'
+  },
+  {
+    vigencia: 2022,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Funcionamiento',
+    recurso: '10-APORTE NACION',
+    totalRecaudo: 193437536665,
+    variacionAnualCOP: 22124006687,
+    variacionAnualPct: 12.91,
+    tipo: 'historico',
+    notaNormativa: 'Ajuste Salarial Docente y Administrativo'
+  },
+  {
+    vigencia: 2023,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Funcionamiento',
+    recurso: '10-APORTE NACION',
+    totalRecaudo: 228401208107,
+    variacionAnualCOP: 34963671442,
+    variacionAnualPct: 18.07,
+    tipo: 'historico',
+    notaNormativa: 'Ajuste Decreto Salarial + Adición Presupuestal'
+  },
+  {
+    vigencia: 2024,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Funcionamiento',
+    recurso: '10.0-Aportes Nacion - Funcionamiento',
+    totalRecaudo: 252310024180,
+    variacionAnualCOP: 23908816073,
+    variacionAnualPct: 10.47,
+    tipo: 'historico',
+    notaNormativa: 'Aportes Ordinarios Funcionamiento'
+  },
+  {
+    vigencia: 2025,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Funcionamiento ($274.240M) + PIC Convencional ($10.081M) + PIC Territorial ($2.835M)',
+    recurso: '10.0 + 10.1 + 10.2 Aportes Nación',
+    totalRecaudo: 287156616808,
+    variacionAnualCOP: 34846592628,
+    variacionAnualPct: 13.81,
+    tipo: 'historico',
+    notaNormativa: 'Integración Funcionamiento Ordinario y Planes de Fomento (PIC)'
+  },
+  {
+    vigencia: 2026,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Base Presupuestal Unificada (R10 + R10.1 + R10.2 + R10.3 + R10.5)',
+    recurso: '10.0 Base Consolidada de Referencia',
+    totalRecaudo: 351357927407,
+    variacionAnualCOP: 64201310599,
+    variacionAnualPct: 22.36,
+    tipo: 'base2026',
+    notaNormativa: 'Base Presupuestal Certificada (Efectivo $258.606M + Faltante $92.750M)'
+  },
+  {
+    vigencia: 2027,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'A. PRESUPUESTO DE FUNCIONAMIENTO (PGN 2027)',
+    recurso: '10.0-Aportes Nación Funcionamiento',
+    totalRecaudo: 395704592082,
+    variacionAnualCOP: 44346664675,
+    variacionAnualPct: 12.62,
+    tipo: 'pgn2027',
+    notaNormativa: 'Asignación FIJA por Ley — Presupuesto General de la Nación 2027'
+  }
+];
+
+export function exportR10CSV(): void {
+  let csvContent = 'data:text/csv;charset=utf-8,';
+  csvContent += `RECURSO 10.0 - APORTES NACION (FUNCIONAMIENTO) - PRESUPUESTO GENERAL DE LA NACION 2027\n`;
+  csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Asignacion Fija PGN 2027 Funcionamiento (COP):;${PGN_2027_DATA.funcionamientoR10}\n`;
+  csvContent += `Asignacion PGN 2027 Inversion (COP):;${PGN_2027_DATA.inversion}\n`;
+  csvContent += `Total Presupuesto PGN Unidad Ejecutora (COP):;${PGN_2027_DATA.totalPresupuestoEjecutora}\n`;
+  csvContent += `Base Presupuestal 2026 (COP):;${PGN_2027_DATA.basePresupuestal2026}\n`;
+  csvContent += `Variacion Nominal vs Base 2026 (COP):;+${PGN_2027_DATA.variacionNominal}\n`;
+  csvContent += `Variacion Porcentual vs Base 2026:;+${PGN_2027_DATA.variacionPct.toFixed(2)}%\n\n`;
+
+  csvContent += `DESGLOSE BASE PRESUPUESTAL 2026 (COMPONENTES R10)\n`;
+  csvContent += `Sub-Recurso;Denominacion;Recaudo Efectivo 2026;Ingreso Faltante 2026;Total Recaudo 2026 (Base);Participacion (%)\n`;
+  for (const c of R10_BASE_COMPONENTS_2026) {
+    csvContent += `"${c.subRecurso}";"${c.denominacion}";"${c.recaudoEfectivo}";"${c.ingresoFaltante}";"${c.totalRecaudo}";"${c.participacionPct.toFixed(2)}%"\n`;
+  }
+  csvContent += `"TOTAL BASE 2026";"Base Presupuestal Unificada R10";"258606602253";"92750325154";"${R10_BASE_TOTAL_2026}";"100.00%"\n\n`;
+
+  csvContent += `SERIE HISTORICA DE APORTES DE LA NACION (2016-2027)\n`;
+  csvContent += `Vigencia;Unidad;Concepto;Recurso;Total Recaudo (COP);Total Recaudo ($M);Variacion Anual (COP);Variacion Anual (%);Tipo;Marco Legal / Nota\n`;
+  for (const h of R10_HISTORICAL_SERIES) {
+    csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${h.totalRecaudo}";"${(h.totalRecaudo / 1e6).toFixed(2)}";"${h.variacionAnualCOP >= 0 ? '+' : ''}${h.variacionAnualCOP}";"${h.variacionAnualPct >= 0 ? '+' : ''}${h.variacionAnualPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
+  }
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Recurso_10_Aportes_Nacion_PGN_2027.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
