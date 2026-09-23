@@ -290,11 +290,11 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
           }`}
         >
           <TrendingUp size={18} />
-          <span>Proyección de Recursos 2027 (R10, R20 & R21)</span>
+          <span>Proyección de Recursos 2027 (R10, R18, R20 & R21)</span>
           <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
             activeBudgetTab === 'r20-proyeccion' ? 'bg-black/30 text-white' : 'bg-amber-500/20 text-amber-300'
           }`}>
-            R10 + R20 + R21
+            R10 + R18 + R20 + R21
           </span>
         </button>
       </div>

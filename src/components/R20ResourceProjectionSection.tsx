@@ -7,7 +7,7 @@ import {
   TrendingUp, TrendingDown, Calculator, BarChart3, Layers, Download, 
   RefreshCw, SlidersHorizontal, Sparkles, AlertTriangle, CheckCircle2, 
   Info, Building2, Table, Filter, ArrowUpRight, Scale, ChevronDown, ChevronUp,
-  Search, CheckCheck, Landmark, DollarSign, Wallet, FileText
+  Search, CheckCheck, Landmark, DollarSign, Wallet, FileText, Award
 } from 'lucide-react';
 import { 
   R20Record, R20ForecastModelResult, R20ConceptForecast, 
@@ -17,12 +17,13 @@ import {
   formatCurrencyCOP, formatCurrencyShortCOP, exportProjectionCSV,
   R21_HISTORICAL_RECORDS, fetchAndParseR21, exportR21CSV,
   R10BaseComponent2026, R10_BASE_COMPONENTS_2026, R10_BASE_TOTAL_2026,
-  PGN_2027_DATA, R10HistoricalRecord, R10_HISTORICAL_SERIES, exportR10CSV
+  PGN_2027_DATA, R10HistoricalRecord, R10_HISTORICAL_SERIES, exportR10CSV,
+  R18HistoricalRecord, R18_HISTORICAL_SERIES, R18_PROJECTION_DATA, exportR18CSV
 } from '../lib/r20ProjectionEngine';
 
 export function R20ResourceProjectionSection() {
-  // Selector de Recurso Principal: R10.0 (Aportes Nación) | R20 (Propios) | R21 (Devolución IVA) | Consolidado
-  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'r10' | 'r20' | 'r21' | 'consolidado'>('r10');
+  // Selector de Recurso Principal: R10.0 (Aportes Nación) | R18 (Art. 87 CESU) | R20 (Propios) | R21 (Devolución IVA) | Consolidado
+  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'r10' | 'r18' | 'r20' | 'r21' | 'consolidado'>('r10');
 
   // Datos R20
   const [records, setRecords] = useState<R20Record[]>([]);
@@ -214,7 +215,25 @@ export function R20ResourceProjectionSection() {
   }, []);
 
   // =========================================================================
-  // MODELACIÓN COMBINADA INSTITUCIONAL (R10 + R20 + R21)
+  // SERIE DE DATOS PARA GRÁFICO HISTÓRICO RECURSO 18 (ART. 87 CESU)
+  // =========================================================================
+  const r18ChartSeries = useMemo(() => {
+    return R18_HISTORICAL_SERIES.map((h) => ({
+      year: `${h.vigencia}`,
+      numericYear: h.vigencia,
+      vigencia: h.vigencia,
+      recaudo: h.totalRecaudo,
+      recaudoMillones: Number((h.totalRecaudo / 1e6).toFixed(2)),
+      variacionCOP: h.variacionAnualCOP,
+      variacionPct: h.variacionAnualPct,
+      tipo: h.tipo,
+      notaNormativa: h.notaNormativa,
+      is2027: h.vigencia === 2027
+    }));
+  }, []);
+
+  // =========================================================================
+  // MODELACIÓN COMBINADA INSTITUCIONAL (R10 + R18 + R20 + R21)
   // =========================================================================
   const combinedSummary = useMemo(() => {
     const r20_2024 = matrixSummary.totalesPorAno[2024] || 0;
@@ -232,22 +251,35 @@ export function R20ResourceProjectionSection() {
     const r10_2026 = PGN_2027_DATA.basePresupuestal2026; // 351.357.927.407
     const r10_2027 = PGN_2027_DATA.funcionamientoR10;    // 395.704.592.082
 
+    const r18_2024 = R18_PROJECTION_DATA.recaudo2024;    // 1.067.037.785
+    const r18_2025 = R18_PROJECTION_DATA.recaudo2025;    // 457.065.634
+    const r18_2026 = R18_PROJECTION_DATA.base2026;       // 1.573.078.344
+    const r18_2027 = R18_PROJECTION_DATA.proyeccion2027; // 1.676.901.515
+
     const autogestion_2024 = r20_2024 + r21_2024;
     const autogestion_2025 = r20_2025 + r21_2025;
     const autogestion_2026 = r20_2026 + r21_2026;
     const autogestion_2027 = r20_2027 + r21_2027;
     const varAutogestion = autogestion_2026 > 0 ? ((autogestion_2027 - autogestion_2026) / autogestion_2026) * 100 : 0;
 
-    const grand_total_2024 = r10_2024 + autogestion_2024;
-    const grand_total_2025 = r10_2025 + autogestion_2025;
-    const grand_total_2026 = r10_2026 + autogestion_2026;
-    const grand_total_2027 = r10_2027 + autogestion_2027;
+    const nacion_2024 = r10_2024 + r18_2024;
+    const nacion_2025 = r10_2025 + r18_2025;
+    const nacion_2026 = r10_2026 + r18_2026;
+    const nacion_2027 = r10_2027 + r18_2027;
+    const varNacion = nacion_2026 > 0 ? ((nacion_2027 - nacion_2026) / nacion_2026) * 100 : 0;
+
+    const grand_total_2024 = nacion_2024 + autogestion_2024;
+    const grand_total_2025 = nacion_2025 + autogestion_2025;
+    const grand_total_2026 = nacion_2026 + autogestion_2026;
+    const grand_total_2027 = nacion_2027 + autogestion_2027;
     const varGrandTotal = grand_total_2026 > 0 ? ((grand_total_2027 - grand_total_2026) / grand_total_2026) * 100 : 0;
 
     return {
       r10: { y24: r10_2024, y25: r10_2025, y26: r10_2026, y27: r10_2027, part: (r10_2027 / grand_total_2027) * 100, varPct: PGN_2027_DATA.variacionPct },
+      r18: { y24: r18_2024, y25: r18_2025, y26: r18_2026, y27: r18_2027, part: (r18_2027 / grand_total_2027) * 100, varPct: R18_PROJECTION_DATA.tasaAumentoPct },
       r20: { y24: r20_2024, y25: r20_2025, y26: r20_2026, y27: r20_2027, part: (r20_2027 / grand_total_2027) * 100 },
       r21: { y24: r21_2024, y25: r21_2025, y26: r21_2026, y27: r21_2027, part: (r21_2027 / grand_total_2027) * 100 },
+      nacion: { y24: nacion_2024, y25: nacion_2025, y26: nacion_2026, y27: nacion_2027, varPct: varNacion },
       autogestion: { y24: autogestion_2024, y25: autogestion_2025, y26: autogestion_2026, y27: autogestion_2027, varPct: varAutogestion },
       total: { y24: grand_total_2024, y25: grand_total_2025, y26: grand_total_2026, y27: grand_total_2027, varPct: varGrandTotal }
     };
@@ -416,6 +448,21 @@ export function R20ResourceProjectionSection() {
             <span>Recurso 10.0 (Aportes Nación)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
               $395.705M PGN Fijo
+            </span>
+          </button>
+
+          <button
+            onClick={() => setSelectedRecursoTab('r18')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs transition-all ${
+              selectedRecursoTab === 'r18'
+                ? 'bg-purple-500 text-white shadow-lg scale-[1.02]'
+                : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Award size={15} />
+            <span>Recurso 18 (Art. 87 CESU)</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
+              $1.677M (+6,6%)
             </span>
           </button>
 
@@ -993,6 +1040,451 @@ export function R20ResourceProjectionSection() {
                   </p>
                   <p>
                     3. <strong className="text-white">Inversión Complementaria:</strong> El PGN 2027 asigna adicionalmente a la UPTC la suma de <strong>$ 8.310.959.010 COP</strong> para Inversión en Calidad y Fomento de la Educación Superior (Rubro 2202 / 0700 Intersubsectorial), elevando el total de la unidad ejecutora a <strong>$ 404.015.551.092 COP</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN 0.5: RECURSO 18 (ARTÍCULO 87 CESU - CALIDAD Y FOMENTO)            */}
+      {/* ========================================================================= */}
+      {selectedRecursoTab === 'r18' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* HEADER HERO R18 */}
+          <div className="bg-gradient-to-br from-surface-container-high/90 to-background border border-purple-500/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+            <div className="relative z-10">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-500/20 flex items-center justify-center text-purple-400 shrink-0 border border-purple-500/30 shadow-lg">
+                    <Award size={28} />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-xs font-mono uppercase tracking-wider font-bold text-purple-400 bg-purple-500/20 px-3 py-1 rounded-full border border-purple-500/30">
+                        Transferencia con Destinación Específica • CESU
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                        <TrendingUp size={13} /> Parámetro Macroeconómico Aprobado: +6,6%
+                      </span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
+                      Recurso 18: Aportes Artículo 87 CESU
+                    </h3>
+                    <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
+                      Recurso de la Nación asignado conforme al <strong className="text-white">Artículo 87 de la Ley 30 de 1992</strong> y distribuido según las fórmulas del Consejo Nacional de Educación Superior (CESU) basadas en acreditación institucional, calidad académica y número de estudiantes. 
+                      Dado que no se cuenta con una serie temporal extendida para modelos estocásticos, la proyección 2027 toma como base el recaudo 2026 (<strong className="text-purple-300">$ 1.573.078.344 COP</strong>) indexado con el parámetro macroeconómico oficial aprobado del <strong className="text-emerald-300">+6,6%</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 shrink-0">
+                  <button
+                    onClick={exportR18CSV}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs shadow-lg shadow-purple-500/20 transition-all hover:scale-[1.02] cursor-pointer"
+                  >
+                    <Download size={15} />
+                    <span>Descargar Certificado R18 (CSV)</span>
+                  </button>
+                  <div className="flex items-center gap-2 text-right">
+                    <span className="text-[11px] font-mono text-on-surface-variant">
+                      Base Recaudo 2026: <strong className="text-purple-300">{formatCurrencyShortCOP(R18_PROJECTION_DATA.base2026)}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TARJETAS KPI DE IMPACTO */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                {/* KPI 1: Proyección 2027 */}
+                <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-purple-300 uppercase tracking-wider">
+                      Proyección 2027 (R18)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-200 px-2 py-0.5 rounded border border-purple-500/30">
+                      +6,6% Indexado
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-purple-300 block">
+                      {formatCurrencyShortCOP(R18_PROJECTION_DATA.proyeccion2027)}
+                    </span>
+                    <span className="text-[11px] font-mono text-white/90 block mt-0.5">
+                      {formatCurrencyCOP(R18_PROJECTION_DATA.proyeccion2027)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-purple-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Base 2026 × 1,066</span>
+                    <strong className="text-purple-200">Parámetro Oficial</strong>
+                  </div>
+                </div>
+
+                {/* KPI 2: Recaudo de Referencia 2026 */}
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                      Recaudo Referencia 2026
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-white/10 text-white px-2 py-0.5 rounded border border-white/20">
+                      Vigencia Base
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-bold text-white block">
+                      {formatCurrencyShortCOP(R18_PROJECTION_DATA.base2026)}
+                    </span>
+                    <span className="text-[11px] font-mono text-on-surface-variant block mt-0.5">
+                      {formatCurrencyCOP(R18_PROJECTION_DATA.base2026)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Recaudo Efectivo</span>
+                    <strong className="text-sky-300">$ 1.573.078.344 COP</strong>
+                  </div>
+                </div>
+
+                {/* KPI 3: Crecimiento Nominal */}
+                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
+                      Incremento Nominal 2027
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
+                      +{R18_PROJECTION_DATA.tasaAumentoPct.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-emerald-400 block">
+                      +{formatCurrencyShortCOP(R18_PROJECTION_DATA.incrementoNominal)}
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
+                      +{formatCurrencyCOP(R18_PROJECTION_DATA.incrementoNominal)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Variación Anual</span>
+                    <strong className="text-emerald-300">+$103,82M Adicionales</strong>
+                  </div>
+                </div>
+
+                {/* KPI 4: Histórico Reciente */}
+                <div className="p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-sky-300 uppercase tracking-wider">
+                      Histórico Reciente (2024–2025)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-sky-500/20 text-sky-200 px-2 py-0.5 rounded border border-sky-500/30">
+                      Antecedentes
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-sky-300 block">
+                      {formatCurrencyShortCOP(R18_PROJECTION_DATA.recaudo2024)}
+                    </span>
+                    <span className="text-[11px] font-mono text-sky-200/90 block mt-0.5">
+                      2024: $1.067M • 2025: $457M
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-sky-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Recaudo 2025</span>
+                    <strong className="text-amber-300">{formatCurrencyShortCOP(R18_PROJECTION_DATA.recaudo2025)}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* GRÁFICO HISTÓRICO RECHARTS DE COMPORTAMIENTO (2024-2027) */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-purple-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
+                  <BarChart3 size={20} className="text-purple-400" />
+                  Evolución y Proyección de Aportes Artículo 87 CESU (2024–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Comportamiento histórico de las transferencias CESU y proyección con indexación macroeconómica (+6,6%).
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-purple-400"></span>
+                  Recaudos Anteriores (2024–2025)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-purple-600"></span>
+                  Base 2026 ($1.573M)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
+                  <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
+                  Proyección 2027 ($1.677M)
+                </span>
+              </div>
+            </div>
+
+            <div className="h-[340px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={r18ChartSeries} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <defs>
+                    <linearGradient id="r18BarGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#c084fc" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#7e22ce" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="r18Bar2027" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#34d399" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="r18AreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#a855f7" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#a855f7" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                  />
+                  
+                  <YAxis 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                    tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`}
+                    domain={[0, 2000000000]}
+                  />
+
+                  <RechartsTooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload;
+                      return (
+                        <div className="bg-surface-container-high/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl min-w-[280px]">
+                          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+                            <span className="font-mono font-bold text-white text-sm">
+                              Vigencia {item.vigencia}
+                            </span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                              item.is2027 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                                : 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                            }`}>
+                              {item.is2027 ? 'PROYECCIÓN (+6,6%)' : 'HISTÓRICO REAL'}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-on-surface-variant">Total Recaudo:</span>
+                              <span className="font-mono font-bold text-purple-300 text-sm">
+                                {formatCurrencyShortCOP(item.recaudo)}
+                              </span>
+                            </div>
+                            <div className="text-right text-[11px] font-mono text-white/80">
+                              {formatCurrencyCOP(item.recaudo)}
+                            </div>
+
+                            {item.variacionCOP !== 0 && (
+                              <div className="flex justify-between items-baseline pt-2 border-t border-white/10">
+                                <span className="text-on-surface-variant">Variación vs. año ant:</span>
+                                <span className={`font-mono font-bold ${item.variacionCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {item.variacionCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(item.variacionCOP)} ({item.variacionPct >= 0 ? '+' : ''}{item.variacionPct.toFixed(2)}%)
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="pt-2 border-t border-white/10 text-[10px] text-on-surface-variant italic">
+                              {item.notaNormativa}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+
+                  <Area 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    fill="url(#r18AreaGrad)" 
+                    stroke="none" 
+                  />
+
+                  <Bar dataKey="recaudo" radius={[8, 8, 0, 0]}>
+                    {r18ChartSeries.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.is2027 ? 'url(#r18Bar2027)' : 'url(#r18BarGradient)'}
+                        stroke={entry.is2027 ? '#10b981' : 'none'}
+                        strokeWidth={entry.is2027 ? 2 : 0}
+                      />
+                    ))}
+                  </Bar>
+
+                  <Line 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    stroke="#f59e0b" 
+                    strokeWidth={2.5}
+                    dot={{ fill: '#f59e0b', r: 4 }}
+                    activeDot={{ r: 6, fill: '#f59e0b', stroke: '#fff', strokeWidth: 2 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-4 p-3.5 rounded-2xl bg-black/30 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-purple-300">
+                <Info size={16} className="shrink-0" />
+                <span>
+                  <strong>Dinámica del Recurso:</strong> Los giros del Artículo 87 CESU dependen de las evaluaciones periódicas de acreditación y calidad de las universidades públicas, oscilando entre <strong>$1.067M (2024)</strong> y <strong>$457M (2025)</strong>, recuperándose fuertemente en <strong>2026 ($1.573M)</strong>.
+                </span>
+              </div>
+              <span className="font-mono text-emerald-400 font-bold shrink-0">
+                Ajuste 2027 (+6,6%): $ 1.676.901.515 COP
+              </span>
+            </div>
+          </div>
+
+          {/* TABLA HISTÓRICO Y PROYECCIÓN R18 */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-purple-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Table size={18} className="text-purple-400" />
+                  Tabla: Histórico y Proyección de Recaudos Recurso 18 — Art. 87 CESU (2024–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Detalle cronológico de recaudos certificados y proyección con indexación macroeconómica.
+                </p>
+              </div>
+              <button
+                onClick={exportR18CSV}
+                className="flex items-center gap-1.5 text-xs text-purple-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+              >
+                <Download size={14} />
+                <span>Exportar Tabla CSV</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Vigencia</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Concepto Presupuestal</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Recurso</th>
+                    <th className="p-4 font-semibold text-right text-purple-300">Total Recaudo ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Variación Anual ($)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Variación (%)</th>
+                    <th className="p-4 font-semibold text-left text-on-surface-variant">Criterio / Soporte</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R18_HISTORICAL_SERIES.map((h) => {
+                    const is2027 = h.vigencia === 2027;
+                    const is2026 = h.vigencia === 2026;
+                    return (
+                      <tr 
+                        key={h.vigencia} 
+                        className={`transition-colors ${
+                          is2027 
+                            ? 'bg-emerald-500/10 hover:bg-emerald-500/20 font-semibold' 
+                            : is2026 
+                            ? 'bg-purple-500/10 hover:bg-purple-500/20 font-medium' 
+                            : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold font-mono">
+                          <span className={`px-2.5 py-1 rounded-lg text-xs ${
+                            is2027 
+                              ? 'bg-emerald-500 text-black font-extrabold' 
+                              : is2026 
+                              ? 'bg-purple-500 text-white font-extrabold' 
+                              : 'bg-white/10 text-white'
+                          }`}>
+                            {h.vigencia}
+                          </span>
+                        </td>
+                        <td className={`p-4 ${is2027 ? 'text-emerald-200 font-bold' : is2026 ? 'text-purple-200 font-bold' : 'text-white'}`}>
+                          {h.concepto}
+                        </td>
+                        <td className="p-4 font-mono text-on-surface-variant text-[11px]">
+                          {h.recurso}
+                        </td>
+                        <td className={`p-4 text-right font-mono font-bold ${
+                          is2027 ? 'text-emerald-300 text-sm' : is2026 ? 'text-purple-300' : 'text-white'
+                        }`}>
+                          {formatCurrencyCOP(h.totalRecaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(h.totalRecaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono">
+                          {h.variacionAnualCOP !== 0 ? (
+                            <span className={h.variacionAnualCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                              {h.variacionAnualCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(h.variacionAnualCOP)}
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold">
+                          {h.variacionAnualPct !== 0 ? (
+                            <span className={`px-2 py-0.5 rounded text-[11px] ${
+                              is2027 
+                                ? 'bg-emerald-500/30 text-emerald-300 font-extrabold' 
+                                : h.variacionAnualPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            }`}>
+                              {h.variacionAnualPct >= 0 ? '+' : ''}{h.variacionAnualPct.toFixed(2)}%
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-on-surface-variant text-[11px] italic">
+                          {h.notaNormativa}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* PANEL DE JUSTIFICACIÓN METODOLÓGICA */}
+          <div className="p-6 md:p-8 rounded-[28px] bg-gradient-to-r from-surface-container-high/90 to-background border border-purple-500/30 shadow-xl">
+            <div className="flex flex-col md:flex-row items-start gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/30">
+                <Scale size={24} />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider font-bold text-purple-400">
+                    Justificación Metodológica Financiera
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    Indexación Macroeconómica Directa
+                  </span>
+                </div>
+                <h4 className="text-xl font-bold text-white tracking-tight">
+                  ¿Por qué se aplica indexación macroeconómica (+6,6%) en lugar de modelos ARIMA?
+                </h4>
+                <div className="text-xs md:text-sm text-on-surface-variant space-y-2 leading-relaxed">
+                  <p>
+                    1. <strong className="text-white">Insuficiencia de Grados de Libertad para Series Temporales:</strong> Los modelos autorregresivos y de suavizamiento estocástico (ARIMA, Holt-Winters) requieren series históricas continuas con un mínimo técnico de observaciones ($n \ge 10$) para estimar parámetros como la autocorrelación ($\phi_1$) o la deriva ($c$) con validez estadística. Con únicamente 3 vigencias homogéneas de registro (2024–2026), cualquier ajuste econométrico generaría sobreajuste espurio (*overfitting*).
+                  </p>
+                  <p>
+                    2. <strong className="text-white">Aplicación del Parámetro Macroeconómico Oficial:</strong> Siguiendo el acuerdo de directrices macroeconómicas de presupuesto, se indexa el recaudo base 2026 de <strong>$ 1.573.078.344 COP</strong> en un <strong>+6,6%</strong>, arrojando una proyección 2027 de <strong>$ 1.676.901.515 COP</strong>.
+                  </p>
+                  <p>
+                    3. <strong className="text-white">Certeza para la Junta Directiva:</strong> Este método proporciona una cifra prudente, técnicamente defendible y alineada con los parámetros aprobados de política fiscal institucional.
                   </p>
                 </div>
               </div>
@@ -2028,10 +2520,10 @@ export function R20ResourceProjectionSection() {
                   Presupuesto Global Consolidado UPTC
                 </span>
                 <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
-                  Consolidado Global: Aportes Nación (R10.0) + Propios (R20) + Devolución IVA (R21)
+                  Consolidado Global: Aportes Nación (R10 + R18) + Propios (R20) + Devolución IVA (R21)
                 </h3>
                 <p className="text-xs md:text-sm text-on-surface-variant max-w-2xl mt-1 leading-relaxed">
-                  Visión unificada del presupuesto de ingresos institucional 2027. Combina los giros fijos asignados por la Nación en el PGN 2027 con las proyecciones de autogestión de la UPTC.
+                  Visión unificada del presupuesto de ingresos institucional 2027. Integra las asignaciones de la Nación (PGN 2027 y Art. 87 CESU) junto con las proyecciones de autogestión de la UPTC.
                 </p>
               </div>
 
@@ -2043,7 +2535,7 @@ export function R20ResourceProjectionSection() {
                 </div>
 
                 <div className="text-left sm:text-right">
-                  <span className="text-[11px] uppercase tracking-wider text-indigo-400 block font-bold">TOTAL INSTITUCIONAL 2027 (R10 + R20 + R21)</span>
+                  <span className="text-[11px] uppercase tracking-wider text-indigo-400 block font-bold">TOTAL INSTITUCIONAL 2027 (R10+R18+R20+R21)</span>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-mono font-extrabold text-emerald-400">
                       {formatCurrencyShortCOP(combinedSummary.total.y27)}
@@ -2060,7 +2552,7 @@ export function R20ResourceProjectionSection() {
             </div>
           </div>
 
-          {/* TABLA COMPARATIVA R10 vs R20 vs R21 */}
+          {/* TABLA COMPARATIVA R10 vs R18 vs R20 vs R21 */}
           <div className="glass-card p-6 md:p-8 rounded-[28px]">
             <h4 className="text-lg font-display text-white font-bold mb-4 flex items-center gap-2">
               <Table size={18} className="text-indigo-400" />
@@ -2111,6 +2603,66 @@ export function R20ResourceProjectionSection() {
                     </td>
                     <td className="p-4 text-center font-mono font-bold text-cyan-300">
                       {combinedSummary.r10.part.toFixed(1)}%
+                    </td>
+                  </tr>
+
+                  {/* Fila R18 */}
+                  <tr className="hover:bg-white/5 transition-colors bg-purple-500/5">
+                    <td className="p-4 font-bold text-white flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                      <div>
+                        <span>Recurso 18 — Aportes Artículo 87 CESU</span>
+                        <span className="text-[10px] block text-purple-300 font-normal">Fondo de calidad CESU (Base 2026 indexada +6,6%)</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(combinedSummary.r18.y24)}
+                    </td>
+                    <td className="p-4 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(combinedSummary.r18.y25)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-sky-300">
+                      {formatCurrencyShortCOP(combinedSummary.r18.y26)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
+                      {formatCurrencyCOP(combinedSummary.r18.y27)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-bold text-white">
+                      {formatCurrencyShortCOP(combinedSummary.r18.y27)}
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
+                      +{combinedSummary.r18.varPct.toFixed(2)}%
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-purple-300">
+                      {combinedSummary.r18.part.toFixed(1)}%
+                    </td>
+                  </tr>
+
+                  {/* Subtotal Aportes Nación (R10 + R18) */}
+                  <tr className="bg-cyan-500/10 font-semibold text-cyan-200 border-t border-cyan-500/20">
+                    <td className="p-4 pl-8 text-cyan-300 italic flex items-center gap-2">
+                      <span>↳ Subtotal Giros de la Nación (R10 + R18)</span>
+                    </td>
+                    <td className="p-4 text-right font-mono">
+                      {formatCurrencyShortCOP(combinedSummary.nacion.y24)}
+                    </td>
+                    <td className="p-4 text-right font-mono">
+                      {formatCurrencyShortCOP(combinedSummary.nacion.y25)}
+                    </td>
+                    <td className="p-4 text-right font-mono text-sky-200">
+                      {formatCurrencyShortCOP(combinedSummary.nacion.y26)}
+                    </td>
+                    <td className="p-4 text-right font-mono text-emerald-300 font-bold">
+                      {formatCurrencyCOP(combinedSummary.nacion.y27)}
+                    </td>
+                    <td className="p-4 text-right font-mono text-white font-bold">
+                      {formatCurrencyShortCOP(combinedSummary.nacion.y27)}
+                    </td>
+                    <td className="p-4 text-center font-mono text-emerald-300">
+                      +{combinedSummary.nacion.varPct.toFixed(2)}%
+                    </td>
+                    <td className="p-4 text-center font-mono text-cyan-200 font-bold">
+                      {(combinedSummary.r10.part + combinedSummary.r18.part).toFixed(1)}%
                     </td>
                   </tr>
 
@@ -2212,7 +2764,7 @@ export function R20ResourceProjectionSection() {
                   <tr className="shadow-lg">
                     <td className="p-4 font-extrabold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
                       <Landmark size={16} className="text-indigo-400 shrink-0" />
-                      <span>TOTAL CONSOLIDADO UPTC (R10 + R20 + R21)</span>
+                      <span>TOTAL CONSOLIDADO UPTC (R10 + R18 + R20 + R21)</span>
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-white">
                       {formatCurrencyShortCOP(combinedSummary.total.y24)}

@@ -1206,3 +1206,105 @@ export function exportR10CSV(): void {
   document.body.removeChild(link);
 }
 
+// =========================================================================
+// RECURSO 18 - ARTÍCULO 87 CESU
+// =========================================================================
+
+export interface R18HistoricalRecord {
+  vigencia: number;
+  unidad: string;
+  concepto: string;
+  recurso: string;
+  totalRecaudo: number;
+  variacionAnualCOP: number;
+  variacionAnualPct: number;
+  tipo: 'historico' | 'proyeccion';
+  notaNormativa: string;
+}
+
+export const R18_HISTORICAL_SERIES: R18HistoricalRecord[] = [
+  {
+    vigencia: 2024,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes Art. 87 Ley 30 - CESU',
+    recurso: '18-Articulo 87 CESU',
+    totalRecaudo: 1067037785,
+    variacionAnualCOP: 0,
+    variacionAnualPct: 0,
+    tipo: 'historico',
+    notaNormativa: 'Transferencia Fondo Art. 87 Ley 30 / Acuerdo CESU'
+  },
+  {
+    vigencia: 2025,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes Art. 87 Ley 30 - CESU',
+    recurso: '18-Articulo 87 CESU',
+    totalRecaudo: 457065634,
+    variacionAnualCOP: -609972151,
+    variacionAnualPct: -57.17,
+    tipo: 'historico',
+    notaNormativa: 'Giro Efectivo según distribución y puntaje de acreditación CESU'
+  },
+  {
+    vigencia: 2026,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes Art. 87 Ley 30 - CESU',
+    recurso: '18-Articulo 87 CESU',
+    totalRecaudo: 1573078344,
+    variacionAnualCOP: 1116012710,
+    variacionAnualPct: 244.17,
+    tipo: 'historico',
+    notaNormativa: 'Recaudo de referencia aprobado para proyección institucional'
+  },
+  {
+    vigencia: 2027,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes Art. 87 Ley 30 - CESU (Proyectado +6.6%)',
+    recurso: '18-Articulo 87 CESU',
+    totalRecaudo: 1676901515,
+    variacionAnualCOP: 103823171,
+    variacionAnualPct: 6.60,
+    tipo: 'proyeccion',
+    notaNormativa: 'Proyección técnica con parámetro macroeconómico aprobado (+6,6%)'
+  }
+];
+
+export const R18_PROJECTION_DATA = {
+  vigencia: 2027,
+  recurso: '18-Articulo 87 CESU',
+  denominacion: 'Recurso 18 — Aportes Artículo 87 de la Ley 30 de 1992 (CESU)',
+  base2026: 1573078344,
+  tasaAumentoPct: 6.6, // Parámetro macroeconómico aprobado
+  factorAumento: 1.066,
+  proyeccion2027: 1676901515, // 1.573.078.344 * 1.066
+  incrementoNominal: 103823171,
+  recaudo2024: 1067037785,
+  recaudo2025: 457065634,
+  justificacion: 'Dado que no existe una serie histórica extendida con suficiente número de observaciones para ajustar modelos estocásticos (ARIMA / Holt / Regresiones), se aplica la metodología de indexación sobre el recaudo base 2026 ajustado por el parámetro macroeconómico oficial aprobado del 6,6%.'
+};
+
+export function exportR18CSV(): void {
+  let csvContent = 'data:text/csv;charset=utf-8,';
+  csvContent += `PROYECCION RECURSO 18 - ARTICULO 87 CESU - VIGENCIA 2027\n`;
+  csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Base Recaudo 2026 (COP):;${R18_PROJECTION_DATA.base2026}\n`;
+  csvContent += `Parametro Macroeconomico Aprobado:;+${R18_PROJECTION_DATA.tasaAumentoPct.toFixed(1)}%\n`;
+  csvContent += `Proyeccion 2027 (COP):;${R18_PROJECTION_DATA.proyeccion2027}\n`;
+  csvContent += `Incremento Nominal (COP):;+${R18_PROJECTION_DATA.incrementoNominal}\n\n`;
+
+  csvContent += `HISTORICO Y PROYECCION (2024-2027)\n`;
+  csvContent += `Vigencia;Unidad;Concepto;Recurso;Total Recaudo (COP);Total Recaudo ($M);Variacion Anual (COP);Variacion Anual (%);Tipo;Marco Legal / Criterio\n`;
+  for (const h of R18_HISTORICAL_SERIES) {
+    csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${h.totalRecaudo}";"${(h.totalRecaudo / 1e6).toFixed(2)}";"${h.variacionAnualCOP >= 0 ? '+' : ''}${h.variacionAnualCOP}";"${h.variacionAnualPct >= 0 ? '+' : ''}${h.variacionAnualPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
+  }
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Proyeccion_Recurso_18_Articulo_87_CESU_2027.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
