@@ -1963,64 +1963,49 @@ export interface Official17ConceptComputedRow {
   id: string;
   order: number;
   concepto: string;
+  nombre: string;
   codigoConcepto: string;
+  codigo: string;
   recurso: string;
   grupo: 'nacion' | 'propios' | 'iva';
   recaudo2024: number;
+  y24: number;
   recaudo2025: number;
+  y25: number;
   base2026: number;
+  y26: number;
   projected2027: number;
+  y27: number;
   projected2027Millions: number;
   variationPct: number;
+  varPct: number;
   variationCOP: number;
   participationPct: number;
+  part: number;
   selectedModelId: string;
   selectedModelName: string;
   isCustom: boolean;
 }
 
+export interface Official17SubtotalItem {
+  y24: number;
+  y25: number;
+  y26: number;
+  y27: number;
+  variationPct: number;
+  varPct: number;
+  participationPct: number;
+  part: number;
+}
+
 export interface Official17ConsolidatedSummary {
   rows: Official17ConceptComputedRow[];
-  subtotalNacion: {
-    y24: number;
-    y25: number;
-    y26: number;
-    y27: number;
-    variationPct: number;
-    participationPct: number;
-  };
-  subtotalPropios: {
-    y24: number;
-    y25: number;
-    y26: number;
-    y27: number;
-    variationPct: number;
-    participationPct: number;
-  };
-  subtotalIVA: {
-    y24: number;
-    y25: number;
-    y26: number;
-    y27: number;
-    variationPct: number;
-    participationPct: number;
-  };
-  subtotalAutogestion: {
-    y24: number;
-    y25: number;
-    y26: number;
-    y27: number;
-    variationPct: number;
-    participationPct: number;
-  };
-  totalConsolidado: {
-    y24: number;
-    y25: number;
-    y26: number;
-    y27: number;
-    variationPct: number;
-    participationPct: number;
-  };
+  subtotalNacion: Official17SubtotalItem;
+  subtotalPropios: Official17SubtotalItem;
+  subtotalIVA: Official17SubtotalItem;
+  subtotalIva: Official17SubtotalItem;
+  subtotalAutogestion: Official17SubtotalItem;
+  totalConsolidado: Official17SubtotalItem;
 }
 
 export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
@@ -2351,17 +2336,25 @@ export function computeOfficial17Consolidated(
       id: def.id,
       order: def.order,
       concepto: def.concepto,
+      nombre: def.concepto,
       codigoConcepto: def.codigoConcepto,
+      codigo: def.codigoConcepto,
       recurso: def.recurso,
       grupo: def.grupo,
       recaudo2024: def.recaudo2024,
+      y24: def.recaudo2024,
       recaudo2025: def.recaudo2025,
+      y25: def.recaudo2025,
       base2026: def.base2026,
+      y26: def.base2026,
       projected2027: projVal,
+      y27: projVal,
       projected2027Millions: Number((projVal / 1e6).toFixed(2)),
       variationPct: varPct,
+      varPct: varPct,
       variationCOP: varCOP,
       participationPct: 0,
+      part: 0,
       selectedModelId,
       selectedModelName,
       isCustom
@@ -2405,54 +2398,43 @@ export function computeOfficial17Consolidated(
   // Participación porcentual de cada concepto sobre el gran total
   const denom = totalY27 > 0 ? totalY27 : 1;
   for (const r of computedRows) {
-    r.participationPct = Number(((r.projected2027 / denom) * 100).toFixed(2));
+    const partVal = Number(((r.projected2027 / denom) * 100).toFixed(2));
+    r.participationPct = partVal;
+    r.part = partVal;
   }
 
   const calcVar = (y27: number, y26: number) => y26 > 0 ? Number((((y27 - y26) / y26) * 100).toFixed(2)) : 0;
   const calcPart = (y27: number) => denom > 0 ? Number(((y27 / denom) * 100).toFixed(2)) : 0;
 
+  const makeSubtotal = (y24: number, y25: number, y26: number, y27: number, isTotal = false): Official17SubtotalItem => {
+    const vPct = calcVar(y27, y26);
+    const pPct = isTotal ? 100.00 : calcPart(y27);
+    return {
+      y24,
+      y25,
+      y26,
+      y27,
+      variationPct: vPct,
+      varPct: vPct,
+      participationPct: pPct,
+      part: pPct
+    };
+  };
+
+  const nacSub = makeSubtotal(nacionY24, nacionY25, nacionY26, nacionY27);
+  const propSub = makeSubtotal(propiosY24, propiosY25, propiosY26, propiosY27);
+  const ivaSub = makeSubtotal(ivaY24, ivaY25, ivaY26, ivaY27);
+  const autoSub = makeSubtotal(autogestionY24, autogestionY25, autogestionY26, autogestionY27);
+  const totSub = makeSubtotal(totalY24, totalY25, totalY26, totalY27, true);
+
   return {
     rows: computedRows,
-    subtotalNacion: {
-      y24: nacionY24,
-      y25: nacionY25,
-      y26: nacionY26,
-      y27: nacionY27,
-      variationPct: calcVar(nacionY27, nacionY26),
-      participationPct: calcPart(nacionY27)
-    },
-    subtotalPropios: {
-      y24: propiosY24,
-      y25: propiosY25,
-      y26: propiosY26,
-      y27: propiosY27,
-      variationPct: calcVar(propiosY27, propiosY26),
-      participationPct: calcPart(propiosY27)
-    },
-    subtotalIVA: {
-      y24: ivaY24,
-      y25: ivaY25,
-      y26: ivaY26,
-      y27: ivaY27,
-      variationPct: calcVar(ivaY27, ivaY26),
-      participationPct: calcPart(ivaY27)
-    },
-    subtotalAutogestion: {
-      y24: autogestionY24,
-      y25: autogestionY25,
-      y26: autogestionY26,
-      y27: autogestionY27,
-      variationPct: calcVar(autogestionY27, autogestionY26),
-      participationPct: calcPart(autogestionY27)
-    },
-    totalConsolidado: {
-      y24: totalY24,
-      y25: totalY25,
-      y26: totalY26,
-      y27: totalY27,
-      variationPct: calcVar(totalY27, totalY26),
-      participationPct: 100.00
-    }
+    subtotalNacion: nacSub,
+    subtotalPropios: propSub,
+    subtotalIVA: ivaSub,
+    subtotalIva: ivaSub,
+    subtotalAutogestion: autoSub,
+    totalConsolidado: totSub
   };
 }
 

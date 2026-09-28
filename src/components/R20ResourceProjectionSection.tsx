@@ -4139,7 +4139,7 @@ export function R20ResourceProjectionSection() {
                             </span>
                           </td>
                           <td className="p-3.5 text-center font-mono font-bold text-purple-300">
-                            {row.participacionPct.toFixed(1)}%
+                            {(row.participationPct ?? row.part ?? 0)icipacionPct.toFixed(1)}%
                           </td>
                           <td className="p-3.5 text-center font-mono text-[10px] text-on-surface-variant">
                             {row.modeloUtilizado}
@@ -4770,30 +4770,30 @@ export function R20ResourceProjectionSection() {
                 <div className="p-3 rounded-xl bg-surface-container-high/60 border border-white/5">
                   <span className="text-[10px] uppercase tracking-wider text-on-surface-variant block font-medium">Recaudo Base 2026</span>
                   <span className="text-base font-mono font-bold text-sky-300">
-                    {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y26)}
+                    {formatCurrencyShortCOP((official17Consolidated.totalConsolidado?.y26 ?? 0))}
                   </span>
                   <span className="text-[10px] font-mono text-on-surface-variant block truncate">
-                    {formatCurrencyCOP(official17Consolidated.totalConsolidado.y26)}
+                    {formatCurrencyCOP((official17Consolidated.totalConsolidado?.y26 ?? 0))}
                   </span>
                 </div>
 
                 <div className="p-3 rounded-xl bg-surface-container-high/60 border border-white/5">
                   <span className="text-[10px] uppercase tracking-wider text-cyan-300 block font-medium">Giros Nación 2027</span>
                   <span className="text-base font-mono font-bold text-cyan-300">
-                    {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y27)}
+                    {formatCurrencyShortCOP((official17Consolidated.subtotalNacion?.y27 ?? 0))}
                   </span>
                   <span className="text-[10px] font-mono text-emerald-400 block">
-                    +{official17Consolidated.subtotalNacion.varPct.toFixed(2)}% ({official17Consolidated.subtotalNacion.part.toFixed(1)}%)
+                    +{(official17Consolidated.subtotalNacion?.variationPct ?? 0).toFixed(2)}% ({(official17Consolidated.subtotalNacion?.participationPct ?? 0).toFixed(1)}%)
                   </span>
                 </div>
 
                 <div className="p-3 rounded-xl bg-surface-container-high/60 border border-white/5">
                   <span className="text-[10px] uppercase tracking-wider text-amber-300 block font-medium">Autogestión (Propios + IVA)</span>
                   <span className="text-base font-mono font-bold text-amber-300">
-                    {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y27)}
+                    {formatCurrencyShortCOP((official17Consolidated.subtotalAutogestion?.y27 ?? 0))}
                   </span>
                   <span className="text-[10px] font-mono text-emerald-400 block">
-                    +{official17Consolidated.subtotalAutogestion.varPct.toFixed(2)}% ({official17Consolidated.subtotalAutogestion.part.toFixed(1)}%)
+                    +{(official17Consolidated.subtotalAutogestion?.variationPct ?? 0).toFixed(2)}% ({(official17Consolidated.subtotalAutogestion?.participationPct ?? 0).toFixed(1)}%)
                   </span>
                 </div>
 
@@ -4801,14 +4801,14 @@ export function R20ResourceProjectionSection() {
                   <span className="text-[10px] uppercase tracking-wider text-indigo-300 block font-bold">TOTAL UPTC 2027</span>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-lg font-mono font-extrabold text-emerald-400">
-                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y27)}
+                      {formatCurrencyShortCOP((official17Consolidated.totalConsolidado?.y27 ?? 0))}
                     </span>
                     <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded">
-                      +{official17Consolidated.totalConsolidado.varPct.toFixed(2)}%
+                      +{(official17Consolidated.totalConsolidado?.variationPct ?? 0).toFixed(2)}%
                     </span>
                   </div>
                   <span className="text-[10px] font-mono text-white/90 block truncate">
-                    {formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}
+                    {formatCurrencyCOP((official17Consolidated.totalConsolidado?.y27 ?? 0))}
                   </span>
                 </div>
               </div>
@@ -4912,14 +4912,14 @@ export function R20ResourceProjectionSection() {
                           {row.order}
                         </td>
                         <td className="p-3 font-semibold text-white">
-                          <div className="font-medium text-white">{row.nombre}</div>
+                          <div className="font-medium text-white">{(row.concepto || row.nombre || '')}</div>
                           {row.isCustom && (
                             <span className="text-[10px] font-mono text-amber-400 font-normal">Valor editado manualmente</span>
                           )}
                         </td>
                         <td className="p-3 font-mono text-indigo-300">
                           <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[11px]">
-                            {row.codigo}
+                            {(row.codigoConcepto || row.codigo || '')}
                           </span>
                         </td>
                         <td className="p-3 font-sans text-sky-200 text-[11px]">
@@ -4928,13 +4928,13 @@ export function R20ResourceProjectionSection() {
                           </span>
                         </td>
                         <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.y24 > 0 ? formatCurrencyShortCOP(row.y24) : '—'}
+                          {(row.recaudo2024 ?? row.y24 ?? 0) > 0 ? formatCurrencyShortCOP((row.recaudo2024 ?? row.y24 ?? 0)) : '—'}
                         </td>
                         <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.y25 > 0 ? formatCurrencyShortCOP(row.y25) : '—'}
+                          {(row.recaudo2025 ?? row.y25 ?? 0) > 0 ? formatCurrencyShortCOP((row.recaudo2025 ?? row.y25 ?? 0)) : '—'}
                         </td>
                         <td className="p-3 text-right font-mono font-semibold text-sky-300">
-                          {formatCurrencyShortCOP(row.y26)}
+                          {formatCurrencyShortCOP((row.base2026 ?? row.y26 ?? 0))}
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
@@ -4944,13 +4944,13 @@ export function R20ResourceProjectionSection() {
                         </td>
                         <td className="p-3 text-center font-mono font-bold">
                           <span className={`px-1.5 py-0.5 rounded text-[11px] ${
-                            row.varPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
+                            (row.variationPct ?? row.varPct ?? 0) >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
                           }`}>
-                            {row.varPct >= 0 ? '+' : ''}{row.varPct.toFixed(2)}%
+                            {(row.variationPct ?? row.varPct ?? 0) >= 0 ? '+' : ''}{(row.variationPct ?? row.varPct ?? 0).toFixed(2)}%
                           </span>
                         </td>
                         <td className="p-3 text-center font-mono font-bold text-purple-300">
-                          {row.part.toFixed(2)}%
+                          {(row.participationPct ?? row.part ?? 0).toFixed(2)}%
                         </td>
                         <td className="p-3">
                           {isEditing ? (
@@ -5031,16 +5031,16 @@ export function R20ResourceProjectionSection() {
                       {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y26)}
                     </td>
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
-                      {formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}
+                      {formatCurrencyCOP((official17Consolidated.subtotalNacion?.y27 ?? 0))}
                     </td>
                     <td className="p-3.5 text-right font-mono text-white font-bold">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y27)}
+                      {formatCurrencyShortCOP((official17Consolidated.subtotalNacion?.y27 ?? 0))}
                     </td>
                     <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      +{official17Consolidated.subtotalNacion.varPct.toFixed(2)}%
+                      +{(official17Consolidated.subtotalNacion?.variationPct ?? 0).toFixed(2)}%
                     </td>
                     <td className="p-3.5 text-center font-mono text-cyan-200 font-bold">
-                      {official17Consolidated.subtotalNacion.part.toFixed(2)}%
+                      {(official17Consolidated.subtotalNacion?.participationPct ?? 0).toFixed(2)}%
                     </td>
                     <td className="p-3.5 text-xs text-cyan-300/80 italic">
                       6 Conceptos Presupuestales
@@ -5067,14 +5067,14 @@ export function R20ResourceProjectionSection() {
                           {row.order}
                         </td>
                         <td className="p-3 font-semibold text-white">
-                          <div className="font-medium text-white">{row.nombre}</div>
+                          <div className="font-medium text-white">{(row.concepto || row.nombre || '')}</div>
                           {row.isCustom && (
                             <span className="text-[10px] font-mono text-amber-400 font-normal">Valor editado manualmente</span>
                           )}
                         </td>
                         <td className="p-3 font-mono text-indigo-300">
                           <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[11px]">
-                            {row.codigo}
+                            {(row.codigoConcepto || row.codigo || '')}
                           </span>
                         </td>
                         <td className="p-3 font-sans text-amber-200 text-[11px]">
@@ -5083,13 +5083,13 @@ export function R20ResourceProjectionSection() {
                           </span>
                         </td>
                         <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.y24 > 0 ? formatCurrencyShortCOP(row.y24) : '—'}
+                          {(row.recaudo2024 ?? row.y24 ?? 0) > 0 ? formatCurrencyShortCOP((row.recaudo2024 ?? row.y24 ?? 0)) : '—'}
                         </td>
                         <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.y25 > 0 ? formatCurrencyShortCOP(row.y25) : '—'}
+                          {(row.recaudo2025 ?? row.y25 ?? 0) > 0 ? formatCurrencyShortCOP((row.recaudo2025 ?? row.y25 ?? 0)) : '—'}
                         </td>
                         <td className="p-3 text-right font-mono font-semibold text-sky-300">
-                          {formatCurrencyShortCOP(row.y26)}
+                          {formatCurrencyShortCOP((row.base2026 ?? row.y26 ?? 0))}
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
@@ -5099,13 +5099,13 @@ export function R20ResourceProjectionSection() {
                         </td>
                         <td className="p-3 text-center font-mono font-bold">
                           <span className={`px-1.5 py-0.5 rounded text-[11px] ${
-                            row.varPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
+                            (row.variationPct ?? row.varPct ?? 0) >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
                           }`}>
-                            {row.varPct >= 0 ? '+' : ''}{row.varPct.toFixed(2)}%
+                            {(row.variationPct ?? row.varPct ?? 0) >= 0 ? '+' : ''}{(row.variationPct ?? row.varPct ?? 0).toFixed(2)}%
                           </span>
                         </td>
                         <td className="p-3 text-center font-mono font-bold text-purple-300">
-                          {row.part.toFixed(2)}%
+                          {(row.participationPct ?? row.part ?? 0).toFixed(2)}%
                         </td>
                         <td className="p-3">
                           {isEditing ? (
@@ -5192,10 +5192,10 @@ export function R20ResourceProjectionSection() {
                       {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y27)}
                     </td>
                     <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      +{official17Consolidated.subtotalPropios.varPct.toFixed(2)}%
+                      +{(official17Consolidated.subtotalPropios?.variationPct ?? 0).toFixed(2)}%
                     </td>
                     <td className="p-3.5 text-center font-mono text-amber-300 font-bold">
-                      {official17Consolidated.subtotalPropios.part.toFixed(2)}%
+                      {(official17Consolidated.subtotalPropios?.participationPct ?? 0).toFixed(2)}%
                     </td>
                     <td className="p-3.5 text-xs text-amber-300/80 italic">
                       10 Conceptos Presupuestales
@@ -5222,14 +5222,14 @@ export function R20ResourceProjectionSection() {
                           {row.order}
                         </td>
                         <td className="p-3 font-semibold text-white">
-                          <div className="font-medium text-white">{row.nombre}</div>
+                          <div className="font-medium text-white">{(row.concepto || row.nombre || '')}</div>
                           {row.isCustom && (
                             <span className="text-[10px] font-mono text-amber-400 font-normal">Valor editado manualmente</span>
                           )}
                         </td>
                         <td className="p-3 font-mono text-indigo-300">
                           <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[11px]">
-                            {row.codigo}
+                            {(row.codigoConcepto || row.codigo || '')}
                           </span>
                         </td>
                         <td className="p-3 font-sans text-emerald-200 text-[11px]">
@@ -5238,13 +5238,13 @@ export function R20ResourceProjectionSection() {
                           </span>
                         </td>
                         <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.y24 > 0 ? formatCurrencyShortCOP(row.y24) : '—'}
+                          {(row.recaudo2024 ?? row.y24 ?? 0) > 0 ? formatCurrencyShortCOP((row.recaudo2024 ?? row.y24 ?? 0)) : '—'}
                         </td>
                         <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.y25 > 0 ? formatCurrencyShortCOP(row.y25) : '—'}
+                          {(row.recaudo2025 ?? row.y25 ?? 0) > 0 ? formatCurrencyShortCOP((row.recaudo2025 ?? row.y25 ?? 0)) : '—'}
                         </td>
                         <td className="p-3 text-right font-mono font-semibold text-sky-300">
-                          {formatCurrencyShortCOP(row.y26)}
+                          {formatCurrencyShortCOP((row.base2026 ?? row.y26 ?? 0))}
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
@@ -5254,13 +5254,13 @@ export function R20ResourceProjectionSection() {
                         </td>
                         <td className="p-3 text-center font-mono font-bold">
                           <span className={`px-1.5 py-0.5 rounded text-[11px] ${
-                            row.varPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
+                            (row.variationPct ?? row.varPct ?? 0) >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
                           }`}>
-                            {row.varPct >= 0 ? '+' : ''}{row.varPct.toFixed(2)}%
+                            {(row.variationPct ?? row.varPct ?? 0) >= 0 ? '+' : ''}{(row.variationPct ?? row.varPct ?? 0).toFixed(2)}%
                           </span>
                         </td>
                         <td className="p-3 text-center font-mono font-bold text-purple-300">
-                          {row.part.toFixed(2)}%
+                          {(row.participationPct ?? row.part ?? 0).toFixed(2)}%
                         </td>
                         <td className="p-3">
                           {isEditing ? (
@@ -5347,10 +5347,10 @@ export function R20ResourceProjectionSection() {
                       {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y27)}
                     </td>
                     <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      +{official17Consolidated.subtotalIva.varPct.toFixed(2)}%
+                      +{(official17Consolidated.subtotalIva?.variationPct ?? 0).toFixed(2)}%
                     </td>
                     <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      {official17Consolidated.subtotalIva.part.toFixed(2)}%
+                      {(official17Consolidated.subtotalIva?.participationPct ?? 0).toFixed(2)}%
                     </td>
                     <td className="p-3.5 text-xs text-emerald-300/80 italic">
                       1 Concepto Presupuestal
@@ -5372,16 +5372,16 @@ export function R20ResourceProjectionSection() {
                       {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y26)}
                     </td>
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-extrabold">
-                      {formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}
+                      {formatCurrencyCOP((official17Consolidated.subtotalAutogestion?.y27 ?? 0))}
                     </td>
                     <td className="p-3.5 text-right font-mono text-white font-extrabold">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y27)}
+                      {formatCurrencyShortCOP((official17Consolidated.subtotalAutogestion?.y27 ?? 0))}
                     </td>
                     <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      +{official17Consolidated.subtotalAutogestion.varPct.toFixed(2)}%
+                      +{(official17Consolidated.subtotalAutogestion?.variationPct ?? 0).toFixed(2)}%
                     </td>
                     <td className="p-3.5 text-center font-mono text-white font-bold">
-                      {official17Consolidated.subtotalAutogestion.part.toFixed(2)}%
+                      {(official17Consolidated.subtotalAutogestion?.participationPct ?? 0).toFixed(2)}%
                     </td>
                     <td className="p-3.5 text-xs text-on-surface-variant italic">
                       11 Conceptos de Autogestión
@@ -5403,16 +5403,16 @@ export function R20ResourceProjectionSection() {
                       {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y25)}
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-sky-300 bg-sky-500/20">
-                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y26)}
+                      {formatCurrencyShortCOP((official17Consolidated.totalConsolidado?.y26 ?? 0))}
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-emerald-300 bg-emerald-500/20 text-sm">
-                      {formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}
+                      {formatCurrencyCOP((official17Consolidated.totalConsolidado?.y27 ?? 0))}
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-white text-sm">
-                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y27)}
+                      {formatCurrencyShortCOP((official17Consolidated.totalConsolidado?.y27 ?? 0))}
                     </td>
                     <td className="p-4 text-center font-mono font-extrabold text-emerald-400 bg-emerald-500/20">
-                      +{official17Consolidated.totalConsolidado.varPct.toFixed(2)}%
+                      +{(official17Consolidated.totalConsolidado?.variationPct ?? 0).toFixed(2)}%
                     </td>
                     <td className="p-4 text-center font-mono font-extrabold text-indigo-300">
                       100.00%
@@ -5454,7 +5454,7 @@ export function R20ResourceProjectionSection() {
                 <p><strong>Fecha de Expedición:</strong> {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p><strong>Vigencia Proyectada:</strong> 2027</p>
                 <p><strong>Moneda:</strong> Pesos Colombianos (COP)</p>
-                <p><strong>Total Institucional:</strong> {formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}</p>
+                <p><strong>Total Institucional:</strong> {formatCurrencyCOP((official17Consolidated.totalConsolidado?.y27 ?? 0))}</p>
               </div>
             </div>
 
@@ -5462,22 +5462,22 @@ export function R20ResourceProjectionSection() {
             <div className="grid grid-cols-4 gap-3 mb-4 text-xs">
               <div className="border border-slate-300 p-2 rounded bg-slate-50">
                 <span className="text-[10px] uppercase text-slate-500 font-bold block">Recaudo Base 2026</span>
-                <span className="text-sm font-mono font-bold text-slate-900">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y26)}</span>
+                <span className="text-sm font-mono font-bold text-slate-900">{formatCurrencyCOP((official17Consolidated.totalConsolidado?.y26 ?? 0))}</span>
               </div>
               <div className="border border-slate-300 p-2 rounded bg-slate-50">
                 <span className="text-[10px] uppercase text-slate-500 font-bold block">Giros de la Nación 2027</span>
-                <span className="text-sm font-mono font-bold text-indigo-900">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}</span>
-                <span className="text-[10px] text-slate-600 block">({official17Consolidated.subtotalNacion.part.toFixed(1)}% del presupuesto)</span>
+                <span className="text-sm font-mono font-bold text-indigo-900">{formatCurrencyCOP((official17Consolidated.subtotalNacion?.y27 ?? 0))}</span>
+                <span className="text-[10px] text-slate-600 block">({(official17Consolidated.subtotalNacion?.participationPct ?? 0).toFixed(1)}% del presupuesto)</span>
               </div>
               <div className="border border-slate-300 p-2 rounded bg-slate-50">
                 <span className="text-[10px] uppercase text-slate-500 font-bold block">Autogestión UPTC 2027</span>
-                <span className="text-sm font-mono font-bold text-slate-900">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}</span>
-                <span className="text-[10px] text-slate-600 block">({official17Consolidated.subtotalAutogestion.part.toFixed(1)}% del presupuesto)</span>
+                <span className="text-sm font-mono font-bold text-slate-900">{formatCurrencyCOP((official17Consolidated.subtotalAutogestion?.y27 ?? 0))}</span>
+                <span className="text-[10px] text-slate-600 block">({(official17Consolidated.subtotalAutogestion?.participationPct ?? 0).toFixed(1)}% del presupuesto)</span>
               </div>
               <div className="border border-indigo-300 p-2 rounded bg-indigo-50">
                 <span className="text-[10px] uppercase text-indigo-700 font-bold block">TOTAL PROYECTADO 2027</span>
-                <span className="text-sm font-mono font-extrabold text-indigo-950">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}</span>
-                <span className="text-[10px] text-emerald-700 font-bold block">Variación: +{official17Consolidated.totalConsolidado.varPct.toFixed(2)}%</span>
+                <span className="text-sm font-mono font-extrabold text-indigo-950">{formatCurrencyCOP((official17Consolidated.totalConsolidado?.y27 ?? 0))}</span>
+                <span className="text-[10px] text-emerald-700 font-bold block">Variación: +{(official17Consolidated.totalConsolidado?.variationPct ?? 0).toFixed(2)}%</span>
               </div>
             </div>
 
@@ -5509,16 +5509,16 @@ export function R20ResourceProjectionSection() {
                 {official17Consolidated.rows.filter(r => r.grupo === 'nacion').map(row => (
                   <tr key={row.id} className="border-b border-slate-200 hover:bg-slate-50">
                     <td className="border border-slate-300 p-1 text-center font-mono">{row.order}</td>
-                    <td className="border border-slate-300 p-1 font-medium">{row.nombre}</td>
-                    <td className="border border-slate-300 p-1 font-mono text-center">{row.codigo}</td>
+                    <td className="border border-slate-300 p-1 font-medium">{(row.concepto || row.nombre || '')}</td>
+                    <td className="border border-slate-300 p-1 font-mono text-center">{(row.codigoConcepto || row.codigo || '')}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y24 > 0 ? formatCurrencyCOP(row.y24) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y25 > 0 ? formatCurrencyCOP(row.y25) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.y26)}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{(row.recaudo2024 ?? row.y24 ?? 0) > 0 ? formatCurrencyCOP((row.recaudo2024 ?? row.y24 ?? 0)) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{(row.recaudo2025 ?? row.y25 ?? 0) > 0 ? formatCurrencyCOP((row.recaudo2025 ?? row.y25 ?? 0)) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP((row.base2026 ?? row.y26 ?? 0))}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.varPct.toFixed(2)}%</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">{row.part.toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">+{(row.variationPct ?? row.varPct ?? 0).toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">{(row.participationPct ?? row.part ?? 0).toFixed(2)}%</td>
                     <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
                   </tr>
                 ))}
@@ -5530,10 +5530,10 @@ export function R20ResourceProjectionSection() {
                   <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y24)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y25)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y26)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalNacion.varPct.toFixed(2)}%</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalNacion.part.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP((official17Consolidated.subtotalNacion?.y27 ?? 0))}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP((official17Consolidated.subtotalNacion?.y27 ?? 0))}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{(official17Consolidated.subtotalNacion?.variationPct ?? 0).toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">{(official17Consolidated.subtotalNacion?.participationPct ?? 0).toFixed(2)}%</td>
                   <td className="border border-slate-300 p-1.5 text-slate-500 italic">6 Conceptos</td>
                 </tr>
 
@@ -5546,16 +5546,16 @@ export function R20ResourceProjectionSection() {
                 {official17Consolidated.rows.filter(r => r.grupo === 'propios').map(row => (
                   <tr key={row.id} className="border-b border-slate-200 hover:bg-slate-50">
                     <td className="border border-slate-300 p-1 text-center font-mono">{row.order}</td>
-                    <td className="border border-slate-300 p-1 font-medium">{row.nombre}</td>
-                    <td className="border border-slate-300 p-1 font-mono text-center">{row.codigo}</td>
+                    <td className="border border-slate-300 p-1 font-medium">{(row.concepto || row.nombre || '')}</td>
+                    <td className="border border-slate-300 p-1 font-mono text-center">{(row.codigoConcepto || row.codigo || '')}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y24 > 0 ? formatCurrencyCOP(row.y24) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y25 > 0 ? formatCurrencyCOP(row.y25) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.y26)}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{(row.recaudo2024 ?? row.y24 ?? 0) > 0 ? formatCurrencyCOP((row.recaudo2024 ?? row.y24 ?? 0)) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{(row.recaudo2025 ?? row.y25 ?? 0) > 0 ? formatCurrencyCOP((row.recaudo2025 ?? row.y25 ?? 0)) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP((row.base2026 ?? row.y26 ?? 0))}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.varPct.toFixed(2)}%</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">{row.part.toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">+{(row.variationPct ?? row.varPct ?? 0).toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">{(row.participationPct ?? row.part ?? 0).toFixed(2)}%</td>
                     <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
                   </tr>
                 ))}
@@ -5569,8 +5569,8 @@ export function R20ResourceProjectionSection() {
                   <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y26)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalPropios.varPct.toFixed(2)}%</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalPropios.part.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{(official17Consolidated.subtotalPropios?.variationPct ?? 0).toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">{(official17Consolidated.subtotalPropios?.participationPct ?? 0).toFixed(2)}%</td>
                   <td className="border border-slate-300 p-1.5 text-slate-500 italic">10 Conceptos</td>
                 </tr>
 
@@ -5583,16 +5583,16 @@ export function R20ResourceProjectionSection() {
                 {official17Consolidated.rows.filter(r => r.grupo === 'iva').map(row => (
                   <tr key={row.id} className="border-b border-slate-200 hover:bg-slate-50">
                     <td className="border border-slate-300 p-1 text-center font-mono">{row.order}</td>
-                    <td className="border border-slate-300 p-1 font-medium">{row.nombre}</td>
-                    <td className="border border-slate-300 p-1 font-mono text-center">{row.codigo}</td>
+                    <td className="border border-slate-300 p-1 font-medium">{(row.concepto || row.nombre || '')}</td>
+                    <td className="border border-slate-300 p-1 font-mono text-center">{(row.codigoConcepto || row.codigo || '')}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y24 > 0 ? formatCurrencyCOP(row.y24) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y25 > 0 ? formatCurrencyCOP(row.y25) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.y26)}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{(row.recaudo2024 ?? row.y24 ?? 0) > 0 ? formatCurrencyCOP((row.recaudo2024 ?? row.y24 ?? 0)) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{(row.recaudo2025 ?? row.y25 ?? 0) > 0 ? formatCurrencyCOP((row.recaudo2025 ?? row.y25 ?? 0)) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP((row.base2026 ?? row.y26 ?? 0))}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.varPct.toFixed(2)}%</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">{row.part.toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">+{(row.variationPct ?? row.varPct ?? 0).toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">{(row.participationPct ?? row.part ?? 0).toFixed(2)}%</td>
                     <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
                   </tr>
                 ))}
@@ -5606,8 +5606,8 @@ export function R20ResourceProjectionSection() {
                   <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalIva.y26)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalIva.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalIva.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalIva.varPct.toFixed(2)}%</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalIva.part.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{(official17Consolidated.subtotalIva?.variationPct ?? 0).toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">{(official17Consolidated.subtotalIva?.participationPct ?? 0).toFixed(2)}%</td>
                   <td className="border border-slate-300 p-1.5 text-slate-500 italic">1 Concepto</td>
                 </tr>
 
@@ -5619,10 +5619,10 @@ export function R20ResourceProjectionSection() {
                   <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y24)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y25)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y26)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-slate-900">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalAutogestion.varPct.toFixed(2)}%</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalAutogestion.part.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-slate-900">{formatCurrencyCOP((official17Consolidated.subtotalAutogestion?.y27 ?? 0))}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP((official17Consolidated.subtotalAutogestion?.y27 ?? 0))}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{(official17Consolidated.subtotalAutogestion?.variationPct ?? 0).toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">{(official17Consolidated.subtotalAutogestion?.participationPct ?? 0).toFixed(2)}%</td>
                   <td className="border border-slate-300 p-1.5 text-slate-600 italic">11 Conceptos</td>
                 </tr>
               </tbody>
@@ -5635,10 +5635,10 @@ export function R20ResourceProjectionSection() {
                   </td>
                   <td className="border border-slate-600 p-2 text-right font-mono">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y24)}</td>
                   <td className="border border-slate-600 p-2 text-right font-mono">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y25)}</td>
-                  <td className="border border-slate-600 p-2 text-right font-mono text-sky-300">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y26)}</td>
-                  <td className="border border-slate-600 p-2 text-right font-mono text-emerald-400 bg-slate-950 text-xs">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}</td>
-                  <td className="border border-slate-600 p-2 text-right font-mono text-white text-xs">{formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y27)}</td>
-                  <td className="border border-slate-600 p-2 text-center font-mono text-emerald-300">+{official17Consolidated.totalConsolidado.varPct.toFixed(2)}%</td>
+                  <td className="border border-slate-600 p-2 text-right font-mono text-sky-300">{formatCurrencyCOP((official17Consolidated.totalConsolidado?.y26 ?? 0))}</td>
+                  <td className="border border-slate-600 p-2 text-right font-mono text-emerald-400 bg-slate-950 text-xs">{formatCurrencyCOP((official17Consolidated.totalConsolidado?.y27 ?? 0))}</td>
+                  <td className="border border-slate-600 p-2 text-right font-mono text-white text-xs">{formatCurrencyShortCOP((official17Consolidated.totalConsolidado?.y27 ?? 0))}</td>
+                  <td className="border border-slate-600 p-2 text-center font-mono text-emerald-300">+{(official17Consolidated.totalConsolidado?.variationPct ?? 0).toFixed(2)}%</td>
                   <td className="border border-slate-600 p-2 text-center font-mono">100.00%</td>
                   <td className="border border-slate-600 p-2 font-mono text-slate-300">17 Conceptos</td>
                 </tr>
