@@ -8,7 +8,8 @@ import {
   RefreshCw, SlidersHorizontal, Sparkles, AlertTriangle, CheckCircle2, 
   Info, Building2, Table, Filter, ArrowUpRight, Scale, ChevronDown, ChevronUp,
   Search, CheckCheck, Landmark, DollarSign, Wallet, FileText, Award, GraduationCap,
-  Coins, Vote, Printer, Edit3, Save, RotateCcw, FileSpreadsheet, X
+  Coins, Vote, Printer, Edit3, Save, RotateCcw, FileSpreadsheet, X,
+  Activity, ShieldCheck
 } from 'lucide-react';
 import { 
   R20Record, R20ForecastModelResult, R20ConceptForecast, 
@@ -4818,7 +4819,7 @@ export function R20ResourceProjectionSection() {
           {/* Barra de Selección Rápida de Escenarios */}
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-surface-container-high/80 border border-white/10">
             <div className="flex items-center gap-2">
-              <Sliders size={16} className="text-indigo-400" />
+              <SlidersHorizontal size={16} className="text-indigo-400" />
               <span className="text-xs font-semibold text-white">Escenarios Rápidos de Proyección:</span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
