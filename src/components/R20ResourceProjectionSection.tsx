@@ -8,7 +8,7 @@ import {
   RefreshCw, SlidersHorizontal, Sparkles, AlertTriangle, CheckCircle2, 
   Info, Building2, Table, Filter, ArrowUpRight, Scale, ChevronDown, ChevronUp,
   Search, CheckCheck, Landmark, DollarSign, Wallet, FileText, Award, GraduationCap,
-  Coins, Vote
+  Coins, Vote, Printer, Edit3, Save, RotateCcw, FileSpreadsheet, X
 } from 'lucide-react';
 import { 
   R20Record, R20ForecastModelResult, R20ConceptForecast, 
@@ -25,7 +25,10 @@ import {
   R13HistoricalRecord, R13ForecastModel, R13_BASE_2026,
   R13_HISTORICAL_SERIES, R13_FORECAST_MODELS, exportR13CSV,
   R17HistoricalRecord, R17ForecastModel, R17_BASE_2026,
-  R17_HISTORICAL_SERIES, R17_FORECAST_MODELS, exportR17CSV
+  R17_HISTORICAL_SERIES, R17_FORECAST_MODELS, exportR17CSV,
+  OFFICIAL_17_CONCEPTS_CATALOG, Official17ConceptDefinition,
+  Official17ConceptComputedRow, Official17ConsolidatedSummary,
+  computeOfficial17Consolidated, exportConsolidated17ConceptsCSV
 } from '../lib/r20ProjectionEngine';
 
 export function R20ResourceProjectionSection() {
@@ -40,6 +43,12 @@ export function R20ResourceProjectionSection() {
 
   // Modelo activo para R17 (Devolución de Descuento por Votación)
   const [r17SelectedModel, setR17SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media'>('macro');
+
+  // Selección y personalización de valores para los 17 conceptos oficiales en el Consolidado
+  const [official17Selections, setOfficial17Selections] = useState<Record<string, { modelId: string; customValue?: number }>>({});
+  const [isDownloadingConsolidatedPDF, setIsDownloadingConsolidatedPDF] = useState(false);
+  const [editingConceptId, setEditingConceptId] = useState<string | null>(null);
+  const [customInputValue, setCustomInputValue] = useState<string>('');
 
   // Datos R20
   const [records, setRecords] = useState<R20Record[]>([]);
@@ -408,6 +417,182 @@ export function R20ResourceProjectionSection() {
       total: { y24: grand_total_2024, y25: grand_total_2025, y26: grand_total_2026, y27: grand_total_2027, varPct: varGrandTotal }
     };
   }, [matrixSummary, r21Records, r21BestModel, r13ActiveModel, r14ActiveModel, r17ActiveModel]);
+
+  // =========================================================================
+  // MODELACIÓN CONSOLIDADA INSTITUCIONAL DE 17 CONCEPTOS OFICIALES
+  // =========================================================================
+  const effective17Selections = useMemo(() => {
+    const map: Record<string, { modelId: string; customValue?: number }> = { ...official17Selections };
+    if (!map['c2_r13_cooperativas']) {
+      map['c2_r13_cooperativas'] = { modelId: r13SelectedModel };
+    }
+    if (!map['c4_r14_gratuidad']) {
+      map['c4_r14_gratuidad'] = { modelId: r14SelectedModel };
+    }
+    if (!map['c5_r17_votacion']) {
+      map['c5_r17_votacion'] = { modelId: r17SelectedModel };
+    }
+    return map;
+  }, [official17Selections, r13SelectedModel, r14SelectedModel, r17SelectedModel]);
+
+  const official17Consolidated: Official17ConsolidatedSummary = useMemo(() => {
+    return computeOfficial17Consolidated(effective17Selections);
+  }, [effective17Selections]);
+
+  const handleModelChange17 = (conceptId: string, newModelId: string) => {
+    if (newModelId === 'custom') {
+      const currentVal = official17Consolidated.rows.find(r => r.id === conceptId)?.projected2027 || 0;
+      setEditingConceptId(conceptId);
+      setCustomInputValue(String(Math.round(currentVal)));
+    } else {
+      setOfficial17Selections(prev => ({
+        ...prev,
+        [conceptId]: { modelId: newModelId, customValue: undefined }
+      }));
+      if (conceptId === 'c2_r13_cooperativas' && ['macro', 'inercial', 'wma', 'media'].includes(newModelId)) {
+        setR13SelectedModel(newModelId as any);
+      } else if (conceptId === 'c4_r14_gratuidad' && ['macro', 'linear', 'holt', 'optimista'].includes(newModelId)) {
+        setR14SelectedModel(newModelId as any);
+      } else if (conceptId === 'c5_r17_votacion' && ['macro', 'inercial', 'wma', 'media'].includes(newModelId)) {
+        setR17SelectedModel(newModelId as any);
+      }
+      if (editingConceptId === conceptId) {
+        setEditingConceptId(null);
+      }
+    }
+  };
+
+  const handleSaveCustomValue = (conceptId: string) => {
+    const cleanStr = customInputValue.replace(/[^0-9.-]+/g, '');
+    const num = parseFloat(cleanStr);
+    if (!isNaN(num) && num >= 0) {
+      setOfficial17Selections(prev => ({
+        ...prev,
+        [conceptId]: { modelId: 'custom', customValue: Math.round(num) }
+      }));
+    }
+    setEditingConceptId(null);
+  };
+
+  const handleCancelCustomValue = () => {
+    setEditingConceptId(null);
+  };
+
+  const applyOfficialScenario = () => {
+    const sel: Record<string, { modelId: string; customValue?: number }> = {};
+    for (const c of OFFICIAL_17_CONCEPTS_CATALOG) {
+      sel[c.id] = { modelId: c.defaultModelId };
+    }
+    setOfficial17Selections(sel);
+    setR13SelectedModel('macro');
+    setR14SelectedModel('macro');
+    setR17SelectedModel('macro');
+    setEditingConceptId(null);
+  };
+
+  const applyInercialScenario = () => {
+    const sel: Record<string, { modelId: string; customValue?: number }> = {};
+    for (const c of OFFICIAL_17_CONCEPTS_CATALOG) {
+      const inercial = c.models.find(m => m.id === 'inercial');
+      sel[c.id] = { modelId: inercial ? 'inercial' : c.defaultModelId };
+    }
+    setOfficial17Selections(sel);
+    setR13SelectedModel('inercial');
+    setR14SelectedModel('inercial');
+    setR17SelectedModel('inercial');
+    setEditingConceptId(null);
+  };
+
+  const applyStatisticalScenario = () => {
+    const sel: Record<string, { modelId: string; customValue?: number }> = {
+      'c1_r10_funcionamiento': { modelId: 'pgn' },
+      'c2_r13_cooperativas': { modelId: 'wma' },
+      'c3_r13_balance': { modelId: 'saldo2026' },
+      'c4_r14_gratuidad': { modelId: 'linear' },
+      'c5_r17_votacion': { modelId: 'wma' },
+      'c6_r18_cesu': { modelId: 'macro' },
+      'c17_r21_iva': { modelId: 'holt' }
+    };
+    for (const c of OFFICIAL_17_CONCEPTS_CATALOG) {
+      if (c.grupo === 'propios') {
+        sel[c.id] = { modelId: 'ipc7' };
+      }
+    }
+    setOfficial17Selections(sel);
+    setR13SelectedModel('wma');
+    setR14SelectedModel('linear');
+    setR17SelectedModel('wma');
+    setEditingConceptId(null);
+  };
+
+  const handleDownloadConsolidatedPDF = async () => {
+    setIsDownloadingConsolidatedPDF(true);
+    const reportTitle = `Consolidado_Proyeccion_UPTC_2027_${new Date().toISOString().slice(0, 10)}`;
+
+    try {
+      if (!(window as any).html2pdf) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('No se pudo cargar la librería html2pdf'));
+          document.head.appendChild(script);
+          setTimeout(() => reject(new Error('Tiempo de espera agotado')), 4000);
+        });
+      }
+
+      const element = document.getElementById('printable-consolidated-projection');
+      if (!element || !(window as any).html2pdf) {
+        window.print();
+        setIsDownloadingConsolidatedPDF(false);
+        return;
+      }
+
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.id = 'printable-consolidated-projection-clone';
+      clone.style.position = 'fixed';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = '1250px';
+      clone.style.display = 'block';
+      clone.style.visibility = 'visible';
+      clone.style.opacity = '1';
+      clone.style.background = '#ffffff';
+      clone.style.color = '#0f172a';
+
+      clone.querySelectorAll('*').forEach((el: any) => {
+        el.style.visibility = 'visible';
+        el.style.opacity = '1';
+      });
+
+      document.body.appendChild(clone);
+
+      const opt = {
+        margin: [6, 6, 6, 6],
+        filename: `${reportTitle}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      await (window as any).html2pdf().set(opt).from(clone).save();
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone);
+      }
+    } catch (err) {
+      console.warn('Fallback a impresión nativa:', err);
+      window.print();
+    } finally {
+      setIsDownloadingConsolidatedPDF(false);
+    }
+  };
 
   // Generación de puntos para gráfica R20 (incluye ARIMA)
   const chartSeries = useMemo(() => {
@@ -4523,384 +4708,971 @@ export function R20ResourceProjectionSection() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* SECCIÓN 3: CONSOLIDADO GLOBAL (R20 PROPIOS + R21 DEVOLUCIÓN IVA)          */}
+            {/* ========================================================================= */}
+      {/* SECCIÓN 3: CONSOLIDADO INSTITUCIONAL DE 17 CONCEPTOS OFICIALES (2027)     */}
       {/* ========================================================================= */}
       {selectedRecursoTab === 'consolidado' && (
         <div className="space-y-6 animate-in fade-in">
+          {/* Tarjeta Principal / Hero */}
           <div className="glass-card p-6 md:p-8 rounded-[28px] border border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 via-surface-container-high/90 to-background shadow-xl">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              <div>
-                <span className="text-xs font-mono uppercase tracking-wider font-bold text-indigo-400 bg-indigo-500/20 px-3 py-1 rounded-full border border-indigo-500/30">
-                  Presupuesto Global Consolidado UPTC
-                </span>
-                <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
-                  Consolidado Global: Giros de la Nación (R10 + R13 + R14 + R17 + R18) + Propios (R20) + Devolución IVA (R21)
+              <div className="max-w-3xl">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="text-xs font-mono uppercase tracking-wider font-bold text-indigo-400 bg-indigo-500/20 px-3 py-1 rounded-full border border-indigo-500/30 flex items-center gap-1.5">
+                    <Sparkles size={13} className="text-indigo-400" />
+                    Presupuesto Oficial UPTC — Formato Vigencia 2027
+                  </span>
+                  <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 font-semibold">
+                    17 Conceptos Presupuestales
+                  </span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight">
+                  Consolidado Institucional de Proyecciones 2027
                 </h3>
-                <p className="text-xs md:text-sm text-on-surface-variant max-w-2xl mt-1 leading-relaxed">
-                  Visión unificada del presupuesto de ingresos institucional 2027. Integra las transferencias de la Nación (PGN 2027, Excedentes Cooperativas Ley 1819, Política de Gratuidad Ley 2307, Descuento Votación Ley 403 y Art. 87 CESU) junto con las proyecciones de autogestión de la UPTC.
+                <p className="text-xs md:text-sm text-on-surface-variant mt-2 leading-relaxed">
+                  Matriz consolidada en el formato institucional por código presupuestal y recurso. Permite elegir o personalizar el modelo y valor proyectado para cada concepto individualmente, recalculando en tiempo real subtotales de Nación, Recursos Propios, Devolución IVA y el Total General UPTC.
                 </p>
+
+                {/* Botones de Exportación */}
+                <div className="flex flex-wrap items-center gap-3 mt-4">
+                  <button
+                    onClick={handleDownloadConsolidatedPDF}
+                    disabled={isDownloadingConsolidatedPDF}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white text-xs font-bold shadow-lg shadow-red-900/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    title="Exportar documento oficial en formato PDF para presentación institucional"
+                  >
+                    {isDownloadingConsolidatedPDF ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Generando PDF...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText size={15} />
+                        <span>Descargar PDF Oficial</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => exportConsolidated17ConceptsCSV(official17Consolidated)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-bold shadow-lg shadow-emerald-900/30 transition-all active:scale-95 cursor-pointer"
+                    title="Descargar matriz completa en formato CSV compatible con Excel"
+                  >
+                    <FileSpreadsheet size={15} />
+                    <span>Exportar CSV Oficial</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-black/40 p-5 rounded-2xl border border-white/15">
-                <div className="text-left sm:text-right pr-0 sm:pr-4 border-b sm:border-b-0 sm:border-r border-white/10 pb-3 sm:pb-0">
-                  <span className="text-[11px] uppercase tracking-wider text-on-surface-variant block font-medium">Recaudo Total Base 2026</span>
-                  <span className="text-xl font-mono font-bold text-sky-300">{formatCurrencyShortCOP(combinedSummary.total.y26)}</span>
-                  <span className="text-[10px] font-mono text-on-surface-variant block">{formatCurrencyCOP(combinedSummary.total.y26)}</span>
+              {/* Indicadores Clave de la Proyección (KPIs) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-[320px] bg-black/40 p-4 rounded-2xl border border-white/10">
+                <div className="p-3 rounded-xl bg-surface-container-high/60 border border-white/5">
+                  <span className="text-[10px] uppercase tracking-wider text-on-surface-variant block font-medium">Recaudo Base 2026</span>
+                  <span className="text-base font-mono font-bold text-sky-300">
+                    {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y26)}
+                  </span>
+                  <span className="text-[10px] font-mono text-on-surface-variant block truncate">
+                    {formatCurrencyCOP(official17Consolidated.totalConsolidado.y26)}
+                  </span>
                 </div>
 
-                <div className="text-left sm:text-right">
-                  <span className="text-[11px] uppercase tracking-wider text-indigo-400 block font-bold">TOTAL INSTITUCIONAL 2027 (R10+R13+R14+R17+R18+R20+R21)</span>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-mono font-extrabold text-emerald-400">
-                      {formatCurrencyShortCOP(combinedSummary.total.y27)}
+                <div className="p-3 rounded-xl bg-surface-container-high/60 border border-white/5">
+                  <span className="text-[10px] uppercase tracking-wider text-cyan-300 block font-medium">Giros Nación 2027</span>
+                  <span className="text-base font-mono font-bold text-cyan-300">
+                    {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y27)}
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-400 block">
+                    +{official17Consolidated.subtotalNacion.varPct.toFixed(2)}% ({official17Consolidated.subtotalNacion.part.toFixed(1)}%)
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-surface-container-high/60 border border-white/5">
+                  <span className="text-[10px] uppercase tracking-wider text-amber-300 block font-medium">Autogestión (Propios + IVA)</span>
+                  <span className="text-base font-mono font-bold text-amber-300">
+                    {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y27)}
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-400 block">
+                    +{official17Consolidated.subtotalAutogestion.varPct.toFixed(2)}% ({official17Consolidated.subtotalAutogestion.part.toFixed(1)}%)
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-indigo-500/20 border border-indigo-500/30">
+                  <span className="text-[10px] uppercase tracking-wider text-indigo-300 block font-bold">TOTAL UPTC 2027</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-mono font-extrabold text-emerald-400">
+                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y27)}
                     </span>
-                    <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded">
-                      +{combinedSummary.total.varPct.toFixed(2)}%
+                    <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded">
+                      +{official17Consolidated.totalConsolidado.varPct.toFixed(2)}%
                     </span>
                   </div>
-                  <span className="text-[11px] font-mono font-semibold text-white block">
-                    {formatCurrencyCOP(combinedSummary.total.y27)}
+                  <span className="text-[10px] font-mono text-white/90 block truncate">
+                    {formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* TABLA COMPARATIVA R10 vs R13 vs R14 vs R18 vs R20 vs R21 */}
-          <div className="glass-card p-6 md:p-8 rounded-[28px]">
-            <h4 className="text-lg font-display text-white font-bold mb-4 flex items-center gap-2">
-              <Table size={18} className="text-indigo-400" />
-              Matriz Consolidada de Recursos Presupuestales Institucionales (2024–2027)
-            </h4>
+          {/* Barra de Selección Rápida de Escenarios */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-surface-container-high/80 border border-white/10">
+            <div className="flex items-center gap-2">
+              <Sliders size={16} className="text-indigo-400" />
+              <span className="text-xs font-semibold text-white">Escenarios Rápidos de Proyección:</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={applyOfficialScenario}
+                className="px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs font-medium border border-indigo-500/30 transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Aplica +6,0% de ley a giros de la Nación y modelos institucionales base"
+              >
+                <ShieldCheck size={13} />
+                <span>Oficial (+6,0% Nación & Criterios Institucionales)</span>
+              </button>
+              <button
+                onClick={applyStatisticalScenario}
+                className="px-3 py-1.5 rounded-lg bg-surface-container-highest hover:bg-white/10 text-on-surface text-xs font-medium border border-white/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Aplica promedios ponderados WMA-3, regresión lineal y Holt-Winters"
+              >
+                <Activity size={13} className="text-teal-400" />
+                <span>Estadístico (WMA-3 / Regresión)</span>
+              </button>
+              <button
+                onClick={applyInercialScenario}
+                className="px-3 py-1.5 rounded-lg bg-surface-container-highest hover:bg-white/10 text-on-surface text-xs font-medium border border-white/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Mantiene los recaudos de la base 2026 (crecimiento cero)"
+              >
+                <Scale size={13} className="text-amber-400" />
+                <span>Inercial (Base 2026)</span>
+              </button>
+              <button
+                onClick={applyOfficialScenario}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors cursor-pointer"
+                title="Restablecer valores predeterminados"
+              >
+                <RotateCcw size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* TABLA PRINCIPAL: 17 CONCEPTOS OFICIALES */}
+          <div className="glass-card p-4 md:p-6 rounded-[28px] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Table size={18} className="text-indigo-400" />
+                  Matriz Oficial de Proyección Presupuestal UPTC (2024–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant">
+                  Estructurada exactamente según el catálogo oficial de conceptos y fuentes de financiación. Haga clic en el selector o en el lápiz para personalizar cualquier valor.
+                </p>
+              </div>
+              <div className="text-xs text-on-surface-variant font-mono">
+                Valores en <strong className="text-white">COP ($)</strong> y en <strong className="text-emerald-400">Millones ($M)</strong>
+              </div>
+            </div>
 
             <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
               <table className="w-full text-left text-xs">
                 <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
                   <tr>
-                    <th className="p-4 font-semibold text-white">Fuente / Recurso Presupuestal</th>
-                    <th className="p-4 font-semibold text-right text-on-surface-variant">Recaudo 2024</th>
-                    <th className="p-4 font-semibold text-right text-on-surface-variant">Recaudo 2025</th>
-                    <th className="p-4 font-semibold text-right text-sky-300">Recaudo 2026 (Base)</th>
-                    <th className="p-4 font-semibold text-right text-emerald-300">Total 2027 ($ COP)</th>
-                    <th className="p-4 font-semibold text-right text-white">Total 2027 ($M)</th>
-                    <th className="p-4 font-semibold text-center text-amber-300">Variación %</th>
-                    <th className="p-4 font-semibold text-center text-purple-300">Participación (%)</th>
+                    <th className="p-3.5 font-semibold text-white w-10 text-center">N°</th>
+                    <th className="p-3.5 font-semibold text-white min-w-[220px]">Concepto Presupuestal</th>
+                    <th className="p-3.5 font-semibold text-indigo-300 min-w-[140px]">Código Concepto</th>
+                    <th className="p-3.5 font-semibold text-sky-300 min-w-[170px]">Recurso</th>
+                    <th className="p-3.5 font-semibold text-right text-on-surface-variant whitespace-nowrap">2024</th>
+                    <th className="p-3.5 font-semibold text-right text-on-surface-variant whitespace-nowrap">2025</th>
+                    <th className="p-3.5 font-semibold text-right text-sky-300 whitespace-nowrap">Base 2026</th>
+                    <th className="p-3.5 font-semibold text-right text-emerald-300 whitespace-nowrap">Proy. 2027 ($ COP)</th>
+                    <th className="p-3.5 font-semibold text-right text-white whitespace-nowrap">Proy. 2027 ($M)</th>
+                    <th className="p-3.5 font-semibold text-center text-amber-300 whitespace-nowrap">Var %</th>
+                    <th className="p-3.5 font-semibold text-center text-purple-300 whitespace-nowrap">Part %</th>
+                    <th className="p-3.5 font-semibold text-left text-white min-w-[230px]">Modelo / Elección de Valor</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 font-sans">
-                  {/* Fila R10.0 */}
-                  <tr className="hover:bg-white/5 transition-colors bg-cyan-500/5">
-                    <td className="p-4 font-bold text-white flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
-                      <div>
-                        <span>Recurso 10.0 — Aportes de la Nación (Funcionamiento)</span>
-                        <span className="text-[10px] block text-cyan-300 font-normal">Fijado por Ley (Presupuesto General de la Nación 2027)</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r10.y24)}
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r10.y25)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-sky-300">
-                      {formatCurrencyShortCOP(combinedSummary.r10.y26)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                      {formatCurrencyCOP(combinedSummary.r10.y27)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-white">
-                      {formatCurrencyShortCOP(combinedSummary.r10.y27)}
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
-                      +{combinedSummary.r10.varPct.toFixed(2)}%
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold text-cyan-300">
-                      {combinedSummary.r10.part.toFixed(1)}%
+                  {/* ========================================================= */}
+                  {/* GRUPO 1: GIROS DE LA NACIÓN (Filas 1 a 6)                  */}
+                  {/* ========================================================= */}
+                  <tr className="bg-cyan-500/10 border-t-2 border-cyan-500/30">
+                    <td colSpan={12} className="px-4 py-2 font-bold text-cyan-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                      <Landmark size={14} className="text-cyan-400" />
+                      <span>1. Giros y Transferencias de la Nación (Leyes 30/1992, 1819/2016, 2307/2023, 403/1997 y CESU)</span>
                     </td>
                   </tr>
 
-                  {/* Fila R13 (Cooperativas) */}
-                  <tr className="hover:bg-white/5 transition-colors bg-amber-600/5">
-                    <td className="p-4 font-bold text-white flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                      <div>
-                        <span>Recurso 13 — Excedentes Cooperativas Art.142, Ley 1819 del 2016</span>
-                        <span className="text-[10px] block text-amber-300 font-normal">Art. 142 Ley 1819/2016 • {r13ActiveModel.name}</span>
-                      </div>
+                  {official17Consolidated.rows.filter(r => r.grupo === 'nacion').map(row => {
+                    const cDef = OFFICIAL_17_CONCEPTS_CATALOG.find(c => c.id === row.id);
+                    const isEditing = editingConceptId === row.id;
+
+                    return (
+                      <tr key={row.id} className="hover:bg-white/5 transition-colors">
+                        <td className="p-3 text-center font-mono font-bold text-on-surface-variant">
+                          {row.order}
+                        </td>
+                        <td className="p-3 font-semibold text-white">
+                          <div className="font-medium text-white">{row.nombre}</div>
+                          {row.isCustom && (
+                            <span className="text-[10px] font-mono text-amber-400 font-normal">Valor editado manualmente</span>
+                          )}
+                        </td>
+                        <td className="p-3 font-mono text-indigo-300">
+                          <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[11px]">
+                            {row.codigo}
+                          </span>
+                        </td>
+                        <td className="p-3 font-sans text-sky-200 text-[11px]">
+                          <span className="px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20">
+                            {row.recurso}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right font-mono text-on-surface-variant">
+                          {row.y24 > 0 ? formatCurrencyShortCOP(row.y24) : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono text-on-surface-variant">
+                          {row.y25 > 0 ? formatCurrencyShortCOP(row.y25) : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono font-semibold text-sky-300">
+                          {formatCurrencyShortCOP(row.y26)}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-emerald-300">
+                          {formatCurrencyCOP(row.projected2027)}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(row.projected2027)}
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold">
+                          <span className={`px-1.5 py-0.5 rounded text-[11px] ${
+                            row.varPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
+                          }`}>
+                            {row.varPct >= 0 ? '+' : ''}{row.varPct.toFixed(2)}%
+                          </span>
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold text-purple-300">
+                          {row.part.toFixed(2)}%
+                        </td>
+                        <td className="p-3">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1.5">
+                              <div className="relative flex-1">
+                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[10px] font-mono">$</span>
+                                <input
+                                  type="text"
+                                  value={customInputValue}
+                                  onChange={(e) => setCustomInputValue(e.target.value)}
+                                  className="w-full pl-5 pr-2 py-1 text-xs rounded bg-surface-container-highest text-white border border-indigo-400 font-mono focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                  placeholder="Valor COP..."
+                                  autoFocus
+                                />
+                              </div>
+                              <button
+                                onClick={() => handleSaveCustomValue(row.id)}
+                                title="Guardar valor personalizado"
+                                className="p-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer"
+                              >
+                                <Save size={13} />
+                              </button>
+                              <button
+                                onClick={handleCancelCustomValue}
+                                title="Cancelar"
+                                className="p-1.5 rounded bg-surface-container-highest hover:bg-red-500/20 text-on-surface-variant hover:text-red-300 transition-colors cursor-pointer"
+                              >
+                                <X size={13} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={effective17Selections[row.id]?.modelId || row.selectedModelId}
+                                onChange={(e) => handleModelChange17(row.id, e.target.value)}
+                                className="flex-1 bg-surface-container-high hover:bg-surface-container-highest text-white text-xs px-2.5 py-1.5 rounded-lg border border-white/10 hover:border-white/20 font-sans focus:border-indigo-400 outline-none transition-colors truncate cursor-pointer"
+                              >
+                                {cDef?.models.map(m => (
+                                  <option key={m.id} value={m.id} className="bg-surface-container-highest text-white">
+                                    {m.name} ({formatCurrencyShortCOP(m.value)})
+                                  </option>
+                                ))}
+                                <option value="custom" className="bg-surface-container-highest text-indigo-300">
+                                  ✏️ Personalizado{effective17Selections[row.id]?.modelId === 'custom' ? ` (${formatCurrencyShortCOP(row.projected2027)})` : '...'}
+                                </option>
+                              </select>
+                              {effective17Selections[row.id]?.modelId === 'custom' && (
+                                <button
+                                  onClick={() => {
+                                    setEditingConceptId(row.id);
+                                    setCustomInputValue(String(Math.round(row.projected2027)));
+                                  }}
+                                  title="Editar valor personalizado"
+                                  className="p-1.5 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 transition-colors cursor-pointer"
+                                >
+                                  <Edit3 size={13} />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {/* Subtotal Giros de la Nación */}
+                  <tr className="bg-cyan-500/15 font-semibold text-cyan-200 border-t border-b border-cyan-500/30">
+                    <td colSpan={4} className="p-3.5 pl-6 text-cyan-300 italic">
+                      ↳ Subtotal Giros y Transferencias de la Nación (Conceptos 1 al 6)
                     </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r13.y24)}
+                    <td className="p-3.5 text-right font-mono">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y24)}
                     </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r13.y25)}
+                    <td className="p-3.5 text-right font-mono">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y25)}
                     </td>
-                    <td className="p-4 text-right font-mono font-bold text-sky-300">
-                      {formatCurrencyShortCOP(combinedSummary.r13.y26)}
+                    <td className="p-3.5 text-right font-mono text-sky-200">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y26)}
                     </td>
-                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                      {formatCurrencyCOP(combinedSummary.r13.y27)}
+                    <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
+                      {formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}
                     </td>
-                    <td className="p-4 text-right font-mono font-bold text-white">
-                      {formatCurrencyShortCOP(combinedSummary.r13.y27)}
+                    <td className="p-3.5 text-right font-mono text-white font-bold">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y27)}
                     </td>
-                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
-                      +{combinedSummary.r13.varPct.toFixed(2)}%
+                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
+                      +{official17Consolidated.subtotalNacion.varPct.toFixed(2)}%
                     </td>
-                    <td className="p-4 text-center font-mono font-bold text-amber-400">
-                      {combinedSummary.r13.part.toFixed(1)}%
+                    <td className="p-3.5 text-center font-mono text-cyan-200 font-bold">
+                      {official17Consolidated.subtotalNacion.part.toFixed(2)}%
+                    </td>
+                    <td className="p-3.5 text-xs text-cyan-300/80 italic">
+                      6 Conceptos Presupuestales
                     </td>
                   </tr>
 
-                  {/* Fila R14 (Gratuidad) */}
-                  <tr className="hover:bg-white/5 transition-colors bg-teal-500/5">
-                    <td className="p-4 font-bold text-white flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
-                      <div>
-                        <span>Recurso 14 — Política de Gratuidad en Matrícula</span>
-                        <span className="text-[10px] block text-teal-300 font-normal">Ley 2307/2023 (FSE) • {r14ActiveModel.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r14.y24)}
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r14.y25)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-sky-300">
-                      {formatCurrencyShortCOP(combinedSummary.r14.y26)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                      {formatCurrencyCOP(combinedSummary.r14.y27)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-white">
-                      {formatCurrencyShortCOP(combinedSummary.r14.y27)}
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
-                      +{combinedSummary.r14.varPct.toFixed(2)}%
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold text-teal-300">
-                      {combinedSummary.r14.part.toFixed(1)}%
+                  {/* ========================================================= */}
+                  {/* GRUPO 2: RECURSOS PROPIOS (Filas 7 a 16)                   */}
+                  {/* ========================================================= */}
+                  <tr className="bg-amber-500/10 border-t-2 border-amber-500/30">
+                    <td colSpan={12} className="px-4 py-2 font-bold text-amber-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                      <Building2 size={14} className="text-amber-400" />
+                      <span>2. Recursos Propios UPTC (20-Propios — Derechos Pecuniarios, Matrículas y Servicios de Autogestión)</span>
                     </td>
                   </tr>
 
-                  {/* Fila R17 (Descuento Votación) */}
-                  <tr className="hover:bg-white/5 transition-colors bg-sky-500/5">
-                    <td className="p-4 font-bold text-white flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
-                      <div>
-                        <span>Recurso 17 — Devolución Descuento por Votación</span>
-                        <span className="text-[10px] block text-sky-300 font-normal">Ley 403/1997 & Ley 815/2003 (MHCP) • {r17ActiveModel.name}</span>
-                      </div>
+                  {official17Consolidated.rows.filter(r => r.grupo === 'propios').map(row => {
+                    const cDef = OFFICIAL_17_CONCEPTS_CATALOG.find(c => c.id === row.id);
+                    const isEditing = editingConceptId === row.id;
+
+                    return (
+                      <tr key={row.id} className="hover:bg-white/5 transition-colors">
+                        <td className="p-3 text-center font-mono font-bold text-on-surface-variant">
+                          {row.order}
+                        </td>
+                        <td className="p-3 font-semibold text-white">
+                          <div className="font-medium text-white">{row.nombre}</div>
+                          {row.isCustom && (
+                            <span className="text-[10px] font-mono text-amber-400 font-normal">Valor editado manualmente</span>
+                          )}
+                        </td>
+                        <td className="p-3 font-mono text-indigo-300">
+                          <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[11px]">
+                            {row.codigo}
+                          </span>
+                        </td>
+                        <td className="p-3 font-sans text-amber-200 text-[11px]">
+                          <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                            {row.recurso}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right font-mono text-on-surface-variant">
+                          {row.y24 > 0 ? formatCurrencyShortCOP(row.y24) : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono text-on-surface-variant">
+                          {row.y25 > 0 ? formatCurrencyShortCOP(row.y25) : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono font-semibold text-sky-300">
+                          {formatCurrencyShortCOP(row.y26)}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-emerald-300">
+                          {formatCurrencyCOP(row.projected2027)}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(row.projected2027)}
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold">
+                          <span className={`px-1.5 py-0.5 rounded text-[11px] ${
+                            row.varPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
+                          }`}>
+                            {row.varPct >= 0 ? '+' : ''}{row.varPct.toFixed(2)}%
+                          </span>
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold text-purple-300">
+                          {row.part.toFixed(2)}%
+                        </td>
+                        <td className="p-3">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1.5">
+                              <div className="relative flex-1">
+                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[10px] font-mono">$</span>
+                                <input
+                                  type="text"
+                                  value={customInputValue}
+                                  onChange={(e) => setCustomInputValue(e.target.value)}
+                                  className="w-full pl-5 pr-2 py-1 text-xs rounded bg-surface-container-highest text-white border border-indigo-400 font-mono focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                  placeholder="Valor COP..."
+                                  autoFocus
+                                />
+                              </div>
+                              <button
+                                onClick={() => handleSaveCustomValue(row.id)}
+                                title="Guardar valor personalizado"
+                                className="p-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer"
+                              >
+                                <Save size={13} />
+                              </button>
+                              <button
+                                onClick={handleCancelCustomValue}
+                                title="Cancelar"
+                                className="p-1.5 rounded bg-surface-container-highest hover:bg-red-500/20 text-on-surface-variant hover:text-red-300 transition-colors cursor-pointer"
+                              >
+                                <X size={13} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={effective17Selections[row.id]?.modelId || row.selectedModelId}
+                                onChange={(e) => handleModelChange17(row.id, e.target.value)}
+                                className="flex-1 bg-surface-container-high hover:bg-surface-container-highest text-white text-xs px-2.5 py-1.5 rounded-lg border border-white/10 hover:border-white/20 font-sans focus:border-indigo-400 outline-none transition-colors truncate cursor-pointer"
+                              >
+                                {cDef?.models.map(m => (
+                                  <option key={m.id} value={m.id} className="bg-surface-container-highest text-white">
+                                    {m.name} ({formatCurrencyShortCOP(m.value)})
+                                  </option>
+                                ))}
+                                <option value="custom" className="bg-surface-container-highest text-indigo-300">
+                                  ✏️ Personalizado{effective17Selections[row.id]?.modelId === 'custom' ? ` (${formatCurrencyShortCOP(row.projected2027)})` : '...'}
+                                </option>
+                              </select>
+                              {effective17Selections[row.id]?.modelId === 'custom' && (
+                                <button
+                                  onClick={() => {
+                                    setEditingConceptId(row.id);
+                                    setCustomInputValue(String(Math.round(row.projected2027)));
+                                  }}
+                                  title="Editar valor personalizado"
+                                  className="p-1.5 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 transition-colors cursor-pointer"
+                                >
+                                  <Edit3 size={13} />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {/* Subtotal Recursos Propios */}
+                  <tr className="bg-amber-500/15 font-semibold text-amber-200 border-t border-b border-amber-500/30">
+                    <td colSpan={4} className="p-3.5 pl-6 text-amber-300 italic">
+                      ↳ Subtotal Recursos Propios (Conceptos 7 al 16)
                     </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r17.y24)}
+                    <td className="p-3.5 text-right font-mono">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y24)}
                     </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r17.y25)}
+                    <td className="p-3.5 text-right font-mono">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y25)}
                     </td>
-                    <td className="p-4 text-right font-mono font-bold text-sky-300">
-                      {formatCurrencyShortCOP(combinedSummary.r17.y26)}
+                    <td className="p-3.5 text-right font-mono text-sky-200">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y26)}
                     </td>
-                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                      {formatCurrencyCOP(combinedSummary.r17.y27)}
+                    <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
+                      {formatCurrencyCOP(official17Consolidated.subtotalPropios.y27)}
                     </td>
-                    <td className="p-4 text-right font-mono font-bold text-white">
-                      {formatCurrencyShortCOP(combinedSummary.r17.y27)}
+                    <td className="p-3.5 text-right font-mono text-white font-bold">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y27)}
                     </td>
-                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
-                      +{combinedSummary.r17.varPct.toFixed(2)}%
+                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
+                      +{official17Consolidated.subtotalPropios.varPct.toFixed(2)}%
                     </td>
-                    <td className="p-4 text-center font-mono font-bold text-sky-300">
-                      {combinedSummary.r17.part.toFixed(1)}%
+                    <td className="p-3.5 text-center font-mono text-amber-300 font-bold">
+                      {official17Consolidated.subtotalPropios.part.toFixed(2)}%
+                    </td>
+                    <td className="p-3.5 text-xs text-amber-300/80 italic">
+                      10 Conceptos Presupuestales
                     </td>
                   </tr>
 
-                  {/* Fila R18 */}
-                  <tr className="hover:bg-white/5 transition-colors bg-purple-500/5">
-                    <td className="p-4 font-bold text-white flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
-                      <div>
-                        <span>Recurso 18 — Aportes Artículo 87 CESU</span>
-                        <span className="text-[10px] block text-purple-300 font-normal">Fondo de calidad CESU (Base 2026 indexada +6,0%)</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r18.y24)}
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r18.y25)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-sky-300">
-                      {formatCurrencyShortCOP(combinedSummary.r18.y26)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                      {formatCurrencyCOP(combinedSummary.r18.y27)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-white">
-                      {formatCurrencyShortCOP(combinedSummary.r18.y27)}
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
-                      +{combinedSummary.r18.varPct.toFixed(2)}%
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold text-purple-300">
-                      {combinedSummary.r18.part.toFixed(1)}%
+                  {/* ========================================================= */}
+                  {/* GRUPO 3: DEVOLUCIÓN IVA (Fila 17)                         */}
+                  {/* ========================================================= */}
+                  <tr className="bg-emerald-500/10 border-t-2 border-emerald-500/30">
+                    <td colSpan={12} className="px-4 py-2 font-bold text-emerald-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                      <TrendingUp size={14} className="text-emerald-400" />
+                      <span>3. Devolución IVA (21-Devolucion IVA — Beneficio Tributario IES Art. 92 Ley 30 / Art. 481 E.T.)</span>
                     </td>
                   </tr>
 
-                  {/* Subtotal Giros de la Nación (R10 + R13 + R14 + R17 + R18) */}
-                  <tr className="bg-cyan-500/10 font-semibold text-cyan-200 border-t border-cyan-500/20">
-                    <td className="p-4 pl-8 text-cyan-300 italic flex items-center gap-2">
-                      <span>↳ Subtotal Giros y Fondos de la Nación (R10 + R13 + R14 + R17 + R18)</span>
+                  {official17Consolidated.rows.filter(r => r.grupo === 'iva').map(row => {
+                    const cDef = OFFICIAL_17_CONCEPTS_CATALOG.find(c => c.id === row.id);
+                    const isEditing = editingConceptId === row.id;
+
+                    return (
+                      <tr key={row.id} className="hover:bg-white/5 transition-colors">
+                        <td className="p-3 text-center font-mono font-bold text-on-surface-variant">
+                          {row.order}
+                        </td>
+                        <td className="p-3 font-semibold text-white">
+                          <div className="font-medium text-white">{row.nombre}</div>
+                          {row.isCustom && (
+                            <span className="text-[10px] font-mono text-amber-400 font-normal">Valor editado manualmente</span>
+                          )}
+                        </td>
+                        <td className="p-3 font-mono text-indigo-300">
+                          <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[11px]">
+                            {row.codigo}
+                          </span>
+                        </td>
+                        <td className="p-3 font-sans text-emerald-200 text-[11px]">
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                            {row.recurso}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right font-mono text-on-surface-variant">
+                          {row.y24 > 0 ? formatCurrencyShortCOP(row.y24) : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono text-on-surface-variant">
+                          {row.y25 > 0 ? formatCurrencyShortCOP(row.y25) : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono font-semibold text-sky-300">
+                          {formatCurrencyShortCOP(row.y26)}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-emerald-300">
+                          {formatCurrencyCOP(row.projected2027)}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(row.projected2027)}
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold">
+                          <span className={`px-1.5 py-0.5 rounded text-[11px] ${
+                            row.varPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
+                          }`}>
+                            {row.varPct >= 0 ? '+' : ''}{row.varPct.toFixed(2)}%
+                          </span>
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold text-purple-300">
+                          {row.part.toFixed(2)}%
+                        </td>
+                        <td className="p-3">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1.5">
+                              <div className="relative flex-1">
+                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[10px] font-mono">$</span>
+                                <input
+                                  type="text"
+                                  value={customInputValue}
+                                  onChange={(e) => setCustomInputValue(e.target.value)}
+                                  className="w-full pl-5 pr-2 py-1 text-xs rounded bg-surface-container-highest text-white border border-indigo-400 font-mono focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                  placeholder="Valor COP..."
+                                  autoFocus
+                                />
+                              </div>
+                              <button
+                                onClick={() => handleSaveCustomValue(row.id)}
+                                title="Guardar valor personalizado"
+                                className="p-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer"
+                              >
+                                <Save size={13} />
+                              </button>
+                              <button
+                                onClick={handleCancelCustomValue}
+                                title="Cancelar"
+                                className="p-1.5 rounded bg-surface-container-highest hover:bg-red-500/20 text-on-surface-variant hover:text-red-300 transition-colors cursor-pointer"
+                              >
+                                <X size={13} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={effective17Selections[row.id]?.modelId || row.selectedModelId}
+                                onChange={(e) => handleModelChange17(row.id, e.target.value)}
+                                className="flex-1 bg-surface-container-high hover:bg-surface-container-highest text-white text-xs px-2.5 py-1.5 rounded-lg border border-white/10 hover:border-white/20 font-sans focus:border-indigo-400 outline-none transition-colors truncate cursor-pointer"
+                              >
+                                {cDef?.models.map(m => (
+                                  <option key={m.id} value={m.id} className="bg-surface-container-highest text-white">
+                                    {m.name} ({formatCurrencyShortCOP(m.value)})
+                                  </option>
+                                ))}
+                                <option value="custom" className="bg-surface-container-highest text-indigo-300">
+                                  ✏️ Personalizado{effective17Selections[row.id]?.modelId === 'custom' ? ` (${formatCurrencyShortCOP(row.projected2027)})` : '...'}
+                                </option>
+                              </select>
+                              {effective17Selections[row.id]?.modelId === 'custom' && (
+                                <button
+                                  onClick={() => {
+                                    setEditingConceptId(row.id);
+                                    setCustomInputValue(String(Math.round(row.projected2027)));
+                                  }}
+                                  title="Editar valor personalizado"
+                                  className="p-1.5 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 transition-colors cursor-pointer"
+                                >
+                                  <Edit3 size={13} />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {/* Subtotal Devolución IVA */}
+                  <tr className="bg-emerald-500/15 font-semibold text-emerald-200 border-t border-b border-emerald-500/30">
+                    <td colSpan={4} className="p-3.5 pl-6 text-emerald-300 italic">
+                      ↳ Subtotal Devolución IVA (Concepto 17)
                     </td>
-                    <td className="p-4 text-right font-mono">
-                      {formatCurrencyShortCOP(combinedSummary.nacion.y24)}
+                    <td className="p-3.5 text-right font-mono">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y24)}
                     </td>
-                    <td className="p-4 text-right font-mono">
-                      {formatCurrencyShortCOP(combinedSummary.nacion.y25)}
+                    <td className="p-3.5 text-right font-mono">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y25)}
                     </td>
-                    <td className="p-4 text-right font-mono text-sky-200">
-                      {formatCurrencyShortCOP(combinedSummary.nacion.y26)}
+                    <td className="p-3.5 text-right font-mono text-sky-200">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y26)}
                     </td>
-                    <td className="p-4 text-right font-mono text-emerald-300 font-bold">
-                      {formatCurrencyCOP(combinedSummary.nacion.y27)}
+                    <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
+                      {formatCurrencyCOP(official17Consolidated.subtotalIva.y27)}
                     </td>
-                    <td className="p-4 text-right font-mono text-white font-bold">
-                      {formatCurrencyShortCOP(combinedSummary.nacion.y27)}
+                    <td className="p-3.5 text-right font-mono text-white font-bold">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y27)}
                     </td>
-                    <td className="p-4 text-center font-mono text-emerald-300">
-                      +{combinedSummary.nacion.varPct.toFixed(2)}%
+                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
+                      +{official17Consolidated.subtotalIva.varPct.toFixed(2)}%
                     </td>
-                    <td className="p-4 text-center font-mono text-cyan-200 font-bold">
-                      {(combinedSummary.r10.part + combinedSummary.r13.part + combinedSummary.r14.part + combinedSummary.r17.part + combinedSummary.r18.part).toFixed(1)}%
+                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
+                      {official17Consolidated.subtotalIva.part.toFixed(2)}%
+                    </td>
+                    <td className="p-3.5 text-xs text-emerald-300/80 italic">
+                      1 Concepto Presupuestal
                     </td>
                   </tr>
 
-                  {/* Fila R20 */}
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="p-4 font-bold text-white flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                      <div>
-                        <span>Recurso 20 — Recursos Propios</span>
-                        <span className="text-[10px] block text-amber-300 font-normal">Gestión académica y administrativa (Matrículas posgrado, servicios)</span>
-                      </div>
+                  {/* Subtotal Autogestión Institucional (Propios + Devolución IVA) */}
+                  <tr className="bg-white/10 font-bold text-white border-t-2 border-white/20">
+                    <td colSpan={4} className="p-3.5 pl-6 text-white italic">
+                      ↳ Subtotal Autogestión UPTC (Recursos Propios + Devolución IVA)
                     </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r20.y24)}
+                    <td className="p-3.5 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y24)}
                     </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r20.y25)}
+                    <td className="p-3.5 text-right font-mono text-on-surface-variant">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y25)}
                     </td>
-                    <td className="p-4 text-right font-mono font-bold text-sky-300">
-                      {formatCurrencyShortCOP(combinedSummary.r20.y26)}
+                    <td className="p-3.5 text-right font-mono text-sky-200">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y26)}
                     </td>
-                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                      {formatCurrencyCOP(combinedSummary.r20.y27)}
+                    <td className="p-3.5 text-right font-mono text-emerald-300 font-extrabold">
+                      {formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}
                     </td>
-                    <td className="p-4 text-right font-mono font-bold text-white">
-                      {formatCurrencyShortCOP(combinedSummary.r20.y27)}
+                    <td className="p-3.5 text-right font-mono text-white font-extrabold">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y27)}
                     </td>
-                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
-                      +{matrixSummary.variacionTotalPct.toFixed(2)}%
+                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
+                      +{official17Consolidated.subtotalAutogestion.varPct.toFixed(2)}%
                     </td>
-                    <td className="p-4 text-center font-mono font-bold text-amber-300">
-                      {combinedSummary.r20.part.toFixed(1)}%
+                    <td className="p-3.5 text-center font-mono text-white font-bold">
+                      {official17Consolidated.subtotalAutogestion.part.toFixed(2)}%
                     </td>
-                  </tr>
-
-                  {/* Fila R21 */}
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="p-4 font-bold text-white flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                      <div>
-                        <span>Recurso 21 — Devolución IVA (IES)</span>
-                        <span className="text-[10px] block text-emerald-300 font-normal">Beneficio tributario Art. 92 Ley 30 / Art. 481 E.T.</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r21.y24)}
-                    </td>
-                    <td className="p-4 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(combinedSummary.r21.y25)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-sky-300">
-                      {formatCurrencyShortCOP(combinedSummary.r21.y26)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                      {formatCurrencyCOP(combinedSummary.r21.y27)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-white">
-                      {formatCurrencyShortCOP(combinedSummary.r21.y27)}
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold text-emerald-400">
-                      +{r21BestModel ? r21BestModel.variationPct.toFixed(2) : 7.00}%
-                    </td>
-                    <td className="p-4 text-center font-mono font-bold text-emerald-300">
-                      {combinedSummary.r21.part.toFixed(1)}%
-                    </td>
-                  </tr>
-
-                  {/* Subtotal Autogestión (R20 + R21) */}
-                  <tr className="bg-white/5 font-semibold text-on-surface-variant border-t border-white/10">
-                    <td className="p-4 pl-8 text-on-surface-variant italic flex items-center gap-2">
-                      <span>↳ Subtotal Autogestión Institucional (R20 + R21)</span>
-                    </td>
-                    <td className="p-4 text-right font-mono">
-                      {formatCurrencyShortCOP(combinedSummary.autogestion.y24)}
-                    </td>
-                    <td className="p-4 text-right font-mono">
-                      {formatCurrencyShortCOP(combinedSummary.autogestion.y25)}
-                    </td>
-                    <td className="p-4 text-right font-mono text-sky-200">
-                      {formatCurrencyShortCOP(combinedSummary.autogestion.y26)}
-                    </td>
-                    <td className="p-4 text-right font-mono text-emerald-200">
-                      {formatCurrencyCOP(combinedSummary.autogestion.y27)}
-                    </td>
-                    <td className="p-4 text-right font-mono text-white">
-                      {formatCurrencyShortCOP(combinedSummary.autogestion.y27)}
-                    </td>
-                    <td className="p-4 text-center font-mono text-emerald-300">
-                      +{combinedSummary.autogestion.varPct.toFixed(2)}%
-                    </td>
-                    <td className="p-4 text-center font-mono text-white">
-                      {(combinedSummary.r20.part + combinedSummary.r21.part).toFixed(1)}%
+                    <td className="p-3.5 text-xs text-on-surface-variant italic">
+                      11 Conceptos de Autogestión
                     </td>
                   </tr>
                 </tbody>
 
                 {/* Total Combinado General */}
-                <tfoot className="border-t-2 border-indigo-500/40 bg-black/40 font-bold text-white text-xs">
+                <tfoot className="border-t-2 border-indigo-500/50 bg-black/60 font-bold text-white text-xs">
                   <tr className="shadow-lg">
-                    <td className="p-4 font-extrabold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
-                      <Landmark size={16} className="text-indigo-400 shrink-0" />
-                      <span>TOTAL CONSOLIDADO UPTC (R10 + R13 + R14 + R17 + R18 + R20 + R21)</span>
+                    <td colSpan={4} className="p-4 font-extrabold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
+                      <Landmark size={17} className="text-indigo-400 shrink-0" />
+                      <span>TOTAL CONSOLIDADO UPTC 2027 (17 CONCEPTOS)</span>
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-white">
-                      {formatCurrencyShortCOP(combinedSummary.total.y24)}
+                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y24)}
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-white">
-                      {formatCurrencyShortCOP(combinedSummary.total.y25)}
+                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y25)}
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-sky-300 bg-sky-500/20">
-                      {formatCurrencyShortCOP(combinedSummary.total.y26)}
+                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y26)}
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-emerald-300 bg-emerald-500/20 text-sm">
-                      {formatCurrencyCOP(combinedSummary.total.y27)}
+                      {formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-white text-sm">
-                      {formatCurrencyShortCOP(combinedSummary.total.y27)}
+                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y27)}
                     </td>
-                    <td className="p-4 text-center font-mono font-extrabold text-emerald-400 bg-emerald-500/10">
-                      +{combinedSummary.total.varPct.toFixed(2)}%
+                    <td className="p-4 text-center font-mono font-extrabold text-emerald-400 bg-emerald-500/20">
+                      +{official17Consolidated.totalConsolidado.varPct.toFixed(2)}%
                     </td>
                     <td className="p-4 text-center font-mono font-extrabold text-indigo-300">
-                      100.0%
+                      100.00%
+                    </td>
+                    <td className="p-4 text-xs font-mono text-indigo-300 font-bold">
+                      17 Conceptos Presupuestales
                     </td>
                   </tr>
                 </tfoot>
               </table>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* ELEMENTO IMPRIMIBLE / EXPORTABLE A PDF (OCULTO EN PANTALLA)                */}
+          {/* ========================================================================= */}
+          <div
+            id="printable-consolidated-projection"
+            style={{ display: 'none' }}
+            className="p-8 bg-white text-slate-900 font-sans"
+          >
+            {/* Encabezado Institucional Oficial */}
+            <div className="border-b-2 border-slate-800 pb-4 mb-4 flex justify-between items-start">
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 uppercase">
+                  Universidad Pedagógica y Tecnológica de Colombia (UPTC)
+                </h1>
+                <h2 className="text-sm font-semibold text-slate-700">
+                  Vicerrectoría Administrativa y Financiera (VAFI) — Dirección de Planeación y Presupuesto
+                </h2>
+                <h3 className="text-base font-bold text-indigo-900 mt-1">
+                  PROYECCIÓN PRESUPUESTAL CONSOLIDADA INSTITUCIONAL — VIGENCIA 2027
+                </h3>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Matriz Oficial de 17 Conceptos Presupuestales por Código Presupuestal y Fuente de Financiación
+                </p>
+              </div>
+              <div className="text-right text-xs text-slate-600 border border-slate-300 rounded p-2 bg-slate-50">
+                <p><strong>Fecha de Expedición:</strong> {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p><strong>Vigencia Proyectada:</strong> 2027</p>
+                <p><strong>Moneda:</strong> Pesos Colombianos (COP)</p>
+                <p><strong>Total Institucional:</strong> {formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}</p>
+              </div>
+            </div>
+
+            {/* Resumen de Metas */}
+            <div className="grid grid-cols-4 gap-3 mb-4 text-xs">
+              <div className="border border-slate-300 p-2 rounded bg-slate-50">
+                <span className="text-[10px] uppercase text-slate-500 font-bold block">Recaudo Base 2026</span>
+                <span className="text-sm font-mono font-bold text-slate-900">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y26)}</span>
+              </div>
+              <div className="border border-slate-300 p-2 rounded bg-slate-50">
+                <span className="text-[10px] uppercase text-slate-500 font-bold block">Giros de la Nación 2027</span>
+                <span className="text-sm font-mono font-bold text-indigo-900">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}</span>
+                <span className="text-[10px] text-slate-600 block">({official17Consolidated.subtotalNacion.part.toFixed(1)}% del presupuesto)</span>
+              </div>
+              <div className="border border-slate-300 p-2 rounded bg-slate-50">
+                <span className="text-[10px] uppercase text-slate-500 font-bold block">Autogestión UPTC 2027</span>
+                <span className="text-sm font-mono font-bold text-slate-900">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}</span>
+                <span className="text-[10px] text-slate-600 block">({official17Consolidated.subtotalAutogestion.part.toFixed(1)}% del presupuesto)</span>
+              </div>
+              <div className="border border-indigo-300 p-2 rounded bg-indigo-50">
+                <span className="text-[10px] uppercase text-indigo-700 font-bold block">TOTAL PROYECTADO 2027</span>
+                <span className="text-sm font-mono font-extrabold text-indigo-950">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}</span>
+                <span className="text-[10px] text-emerald-700 font-bold block">Variación: +{official17Consolidated.totalConsolidado.varPct.toFixed(2)}%</span>
+              </div>
+            </div>
+
+            {/* Tabla de 17 Conceptos para PDF */}
+            <table className="w-full text-left border-collapse border border-slate-300 text-[10px] mb-6">
+              <thead>
+                <tr className="bg-slate-800 text-white uppercase text-[9px] tracking-wider">
+                  <th className="border border-slate-400 p-1.5 text-center w-6">N°</th>
+                  <th className="border border-slate-400 p-1.5">Concepto Presupuestal</th>
+                  <th className="border border-slate-400 p-1.5 text-center">Código Concepto</th>
+                  <th className="border border-slate-400 p-1.5">Recurso</th>
+                  <th className="border border-slate-400 p-1.5 text-right">2024 (COP)</th>
+                  <th className="border border-slate-400 p-1.5 text-right">2025 (COP)</th>
+                  <th className="border border-slate-400 p-1.5 text-right">Base 2026 (COP)</th>
+                  <th className="border border-slate-400 p-1.5 text-right bg-slate-900">Proy. 2027 (COP)</th>
+                  <th className="border border-slate-400 p-1.5 text-right">Proy. 2027 ($M)</th>
+                  <th className="border border-slate-400 p-1.5 text-center">Var %</th>
+                  <th className="border border-slate-400 p-1.5 text-center">Part %</th>
+                  <th className="border border-slate-400 p-1.5">Criterio / Modelo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Grupo 1: Nación */}
+                <tr className="bg-slate-200 font-bold text-slate-900">
+                  <td colSpan={12} className="border border-slate-300 p-1 pl-2">
+                    1. GIROS Y TRANSFERENCIAS DE LA NACIÓN
+                  </td>
+                </tr>
+                {official17Consolidated.rows.filter(r => r.grupo === 'nacion').map(row => (
+                  <tr key={row.id} className="border-b border-slate-200 hover:bg-slate-50">
+                    <td className="border border-slate-300 p-1 text-center font-mono">{row.order}</td>
+                    <td className="border border-slate-300 p-1 font-medium">{row.nombre}</td>
+                    <td className="border border-slate-300 p-1 font-mono text-center">{row.codigo}</td>
+                    <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y24 > 0 ? formatCurrencyCOP(row.y24) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y25 > 0 ? formatCurrencyCOP(row.y25) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.y26)}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.varPct.toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">{row.part.toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
+                  </tr>
+                ))}
+                {/* Subtotal Nación */}
+                <tr className="bg-slate-100 font-bold text-slate-900 border-t-2 border-slate-400">
+                  <td colSpan={4} className="border border-slate-300 p-1.5 pl-4 italic">
+                    Subtotal Giros de la Nación (Conceptos 1 al 6)
+                  </td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y24)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y25)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y26)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y27)}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalNacion.varPct.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalNacion.part.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-slate-500 italic">6 Conceptos</td>
+                </tr>
+
+                {/* Grupo 2: Propios */}
+                <tr className="bg-slate-200 font-bold text-slate-900">
+                  <td colSpan={12} className="border border-slate-300 p-1 pl-2">
+                    2. RECURSOS PROPIOS (20-PROPIOS)
+                  </td>
+                </tr>
+                {official17Consolidated.rows.filter(r => r.grupo === 'propios').map(row => (
+                  <tr key={row.id} className="border-b border-slate-200 hover:bg-slate-50">
+                    <td className="border border-slate-300 p-1 text-center font-mono">{row.order}</td>
+                    <td className="border border-slate-300 p-1 font-medium">{row.nombre}</td>
+                    <td className="border border-slate-300 p-1 font-mono text-center">{row.codigo}</td>
+                    <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y24 > 0 ? formatCurrencyCOP(row.y24) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y25 > 0 ? formatCurrencyCOP(row.y25) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.y26)}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.varPct.toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">{row.part.toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
+                  </tr>
+                ))}
+                {/* Subtotal Propios */}
+                <tr className="bg-slate-100 font-bold text-slate-900 border-t-2 border-slate-400">
+                  <td colSpan={4} className="border border-slate-300 p-1.5 pl-4 italic">
+                    Subtotal Recursos Propios (Conceptos 7 al 16)
+                  </td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y24)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y25)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y26)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y27)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y27)}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalPropios.varPct.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalPropios.part.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-slate-500 italic">10 Conceptos</td>
+                </tr>
+
+                {/* Grupo 3: IVA */}
+                <tr className="bg-slate-200 font-bold text-slate-900">
+                  <td colSpan={12} className="border border-slate-300 p-1 pl-2">
+                    3. DEVOLUCIÓN IVA (21-DEVOLUCION IVA)
+                  </td>
+                </tr>
+                {official17Consolidated.rows.filter(r => r.grupo === 'iva').map(row => (
+                  <tr key={row.id} className="border-b border-slate-200 hover:bg-slate-50">
+                    <td className="border border-slate-300 p-1 text-center font-mono">{row.order}</td>
+                    <td className="border border-slate-300 p-1 font-medium">{row.nombre}</td>
+                    <td className="border border-slate-300 p-1 font-mono text-center">{row.codigo}</td>
+                    <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y24 > 0 ? formatCurrencyCOP(row.y24) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono">{row.y25 > 0 ? formatCurrencyCOP(row.y25) : '—'}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.y26)}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
+                    <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.varPct.toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-center font-mono">{row.part.toFixed(2)}%</td>
+                    <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
+                  </tr>
+                ))}
+                {/* Subtotal Devolución IVA */}
+                <tr className="bg-slate-100 font-bold text-slate-900 border-t-2 border-slate-400">
+                  <td colSpan={4} className="border border-slate-300 p-1.5 pl-4 italic">
+                    Subtotal Devolución IVA (Concepto 17)
+                  </td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalIva.y24)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalIva.y25)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalIva.y26)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalIva.y27)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalIva.y27)}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalIva.varPct.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalIva.part.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-slate-500 italic">1 Concepto</td>
+                </tr>
+
+                {/* Subtotal Autogestión (Propios + IVA) */}
+                <tr className="bg-slate-200 font-bold text-slate-900 border-t-2 border-slate-500">
+                  <td colSpan={4} className="border border-slate-300 p-1.5 pl-4 italic">
+                    Subtotal Autogestión Institucional (Recursos Propios + Devolución IVA)
+                  </td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y24)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y25)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y26)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-slate-900">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}</td>
+                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y27)}</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalAutogestion.varPct.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalAutogestion.part.toFixed(2)}%</td>
+                  <td className="border border-slate-300 p-1.5 text-slate-600 italic">11 Conceptos</td>
+                </tr>
+              </tbody>
+
+              {/* Total Presupuesto UPTC 2027 */}
+              <tfoot>
+                <tr className="bg-slate-900 text-white font-extrabold text-[11px] border-t-2 border-slate-950">
+                  <td colSpan={4} className="border border-slate-600 p-2 uppercase">
+                    TOTAL PRESUPUESTO CONSOLIDADO UPTC 2027 (17 CONCEPTOS)
+                  </td>
+                  <td className="border border-slate-600 p-2 text-right font-mono">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y24)}</td>
+                  <td className="border border-slate-600 p-2 text-right font-mono">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y25)}</td>
+                  <td className="border border-slate-600 p-2 text-right font-mono text-sky-300">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y26)}</td>
+                  <td className="border border-slate-600 p-2 text-right font-mono text-emerald-400 bg-slate-950 text-xs">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}</td>
+                  <td className="border border-slate-600 p-2 text-right font-mono text-white text-xs">{formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y27)}</td>
+                  <td className="border border-slate-600 p-2 text-center font-mono text-emerald-300">+{official17Consolidated.totalConsolidado.varPct.toFixed(2)}%</td>
+                  <td className="border border-slate-600 p-2 text-center font-mono">100.00%</td>
+                  <td className="border border-slate-600 p-2 font-mono text-slate-300">17 Conceptos</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            {/* Bloque de Firmas y Validación Institucional */}
+            <div className="mt-8 pt-6 border-t border-slate-400 grid grid-cols-3 gap-8 text-center text-xs">
+              <div>
+                <div className="border-b border-slate-600 pb-1 mb-2 h-12 flex items-end justify-center font-serif italic text-slate-400">
+                  Firma digitalizada
+                </div>
+                <p className="font-bold text-slate-900 uppercase">Profesional Especializado</p>
+                <p className="text-slate-600 text-[10px]">Área de Planeación y Análisis Financiero</p>
+                <p className="text-slate-500 text-[9px] mt-0.5">Elaboró Proyección Presupuestal</p>
+              </div>
+
+              <div>
+                <div className="border-b border-slate-600 pb-1 mb-2 h-12 flex items-end justify-center font-serif italic text-slate-400">
+                  Firma digitalizada
+                </div>
+                <p className="font-bold text-slate-900 uppercase">Director de Planeación</p>
+                <p className="text-slate-600 text-[10px]">Dirección de Planeación Institucional UPTC</p>
+                <p className="text-slate-500 text-[9px] mt-0.5">Revisó y Validó Modelación</p>
+              </div>
+
+              <div>
+                <div className="border-b border-slate-600 pb-1 mb-2 h-12 flex items-end justify-center font-serif italic text-slate-400">
+                  Firma digitalizada
+                </div>
+                <p className="font-bold text-slate-900 uppercase">Vicerrector Administrativo y Financiero</p>
+                <p className="text-slate-600 text-[10px]">Vicerrectoría Administrativa y Financiera (VAFI)</p>
+                <p className="text-slate-500 text-[9px] mt-0.5">Aprobó Presentación Presupuestal 2027</p>
+              </div>
             </div>
           </div>
         </div>

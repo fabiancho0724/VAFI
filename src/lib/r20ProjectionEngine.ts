@@ -1932,3 +1932,577 @@ export function exportR17CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'me
   link.click();
   document.body.removeChild(link);
 }
+
+// =========================================================================
+// CATÁLOGO OFICIAL DE 17 CONCEPTOS PRESUPUESTALES INSTITUCIONALES (2027)
+// =========================================================================
+
+export interface Official17ConceptModelOption {
+  id: string;
+  name: string;
+  value: number;
+  variationPct: number;
+  description?: string;
+}
+
+export interface Official17ConceptDefinition {
+  id: string;
+  order: number;
+  concepto: string;
+  codigoConcepto: string;
+  recurso: string;
+  grupo: 'nacion' | 'propios' | 'iva';
+  recaudo2024: number;
+  recaudo2025: number;
+  base2026: number;
+  defaultModelId: string;
+  models: Official17ConceptModelOption[];
+}
+
+export interface Official17ConceptComputedRow {
+  id: string;
+  order: number;
+  concepto: string;
+  codigoConcepto: string;
+  recurso: string;
+  grupo: 'nacion' | 'propios' | 'iva';
+  recaudo2024: number;
+  recaudo2025: number;
+  base2026: number;
+  projected2027: number;
+  projected2027Millions: number;
+  variationPct: number;
+  variationCOP: number;
+  participationPct: number;
+  selectedModelId: string;
+  selectedModelName: string;
+  isCustom: boolean;
+}
+
+export interface Official17ConsolidatedSummary {
+  rows: Official17ConceptComputedRow[];
+  subtotalNacion: {
+    y24: number;
+    y25: number;
+    y26: number;
+    y27: number;
+    variationPct: number;
+    participationPct: number;
+  };
+  subtotalPropios: {
+    y24: number;
+    y25: number;
+    y26: number;
+    y27: number;
+    variationPct: number;
+    participationPct: number;
+  };
+  subtotalIVA: {
+    y24: number;
+    y25: number;
+    y26: number;
+    y27: number;
+    variationPct: number;
+    participationPct: number;
+  };
+  subtotalAutogestion: {
+    y24: number;
+    y25: number;
+    y26: number;
+    y27: number;
+    variationPct: number;
+    participationPct: number;
+  };
+  totalConsolidado: {
+    y24: number;
+    y25: number;
+    y26: number;
+    y27: number;
+    variationPct: number;
+    participationPct: number;
+  };
+}
+
+export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
+  {
+    id: 'c1_r10_funcionamiento',
+    order: 1,
+    concepto: 'Aportes para Funcionamiento',
+    codigoConcepto: '1.1.02.06.006.01.01',
+    recurso: '10.0-Aportes Nacion - Funcionamiento',
+    grupo: 'nacion',
+    recaudo2024: 252310024180,
+    recaudo2025: 287156616808,
+    base2026: 351357927407,
+    defaultModelId: 'pgn',
+    models: [
+      { id: 'pgn', name: 'Fijado Ley PGN 2027 (Oficial Aprobado)', value: 395704592082, variationPct: 12.62 },
+      { id: 'macro6', name: 'Indexación Macro (+6,0%)', value: 372439403051, variationPct: 6.00 },
+      { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 351357927407, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c2_r13_cooperativas',
+    order: 2,
+    concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016',
+    codigoConcepto: '1.1.02.06.006.06.00',
+    recurso: '13-Cooperativas',
+    grupo: 'nacion',
+    recaudo2024: 2078952994,
+    recaudo2025: 2080840690,
+    base2026: 1530000000,
+    defaultModelId: 'macro',
+    models: [
+      { id: 'macro', name: 'Macro +6,0% (Base Real Aprobada)', value: 1621800000, variationPct: 6.00 },
+      { id: 'inercial', name: 'Piso Inercial 2026 ($1.530M)', value: 1530000000, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 1726969809, variationPct: 12.87 },
+      { id: 'media', name: 'Media Histórica (8 Años)', value: 1986347506, variationPct: 29.83 }
+    ]
+  },
+  {
+    id: 'c3_r13_balance',
+    order: 3,
+    concepto: 'Recursos del Balance - Cooperativas',
+    codigoConcepto: '1.2.10.02.022',
+    recurso: '13-Cooperativas',
+    grupo: 'nacion',
+    recaudo2024: 0,
+    recaudo2025: 0,
+    base2026: 1887697,
+    defaultModelId: 'saldo2026',
+    models: [
+      { id: 'saldo2026', name: 'Saldo Certificado Balance ($1,88M)', value: 1887697, variationPct: 0.00 },
+      { id: 'macro6', name: 'Indexación Macro (+6,0%)', value: 2000959, variationPct: 6.00 },
+      { id: 'cero', name: 'Sin Recursos del Balance ($0)', value: 0, variationPct: -100.00 }
+    ]
+  },
+  {
+    id: 'c4_r14_gratuidad',
+    order: 4,
+    concepto: 'Politica Gratuidad',
+    codigoConcepto: '1.1.02.06.006.06.02',
+    recurso: '14-Matriculas FSE',
+    grupo: 'nacion',
+    recaudo2024: 37090700264,
+    recaudo2025: 36210311946,
+    base2026: 49844177233,
+    defaultModelId: 'macro',
+    models: [
+      { id: 'macro', name: 'Macro +6,0% (Piso Oficial Aprobado)', value: 52834827867, variationPct: 6.00 },
+      { id: 'linear', name: 'Regresión Lineal OLS (R²=94,7%)', value: 54459255459, variationPct: 9.26 },
+      { id: 'holt', name: 'Suavizamiento Holt', value: 53801597430, variationPct: 7.94 },
+      { id: 'optimista', name: 'Escenario Expansión (+13%)', value: 56323920274, variationPct: 13.00 },
+      { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 49844177233, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c5_r17_votacion',
+    order: 5,
+    concepto: 'Devolucion de descuento por votacion',
+    codigoConcepto: '1.1.02.06.006.01.04',
+    recurso: '17-Devolucion descuento electoral',
+    grupo: 'nacion',
+    recaudo2024: 4531561319,
+    recaudo2025: 5183761916,
+    base2026: 4728146085,
+    defaultModelId: 'macro',
+    models: [
+      { id: 'macro', name: 'Macro +6,0% (Base Real Aprobada)', value: 5011834850, variationPct: 6.00 },
+      { id: 'inercial', name: 'Piso Inercial 2026 ($4.728M)', value: 4728146085, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Móvil WMA-3', value: 4847253901, variationPct: 2.52 },
+      { id: 'media', name: 'Media Trienal 2024-2026', value: 4814489773, variationPct: 1.83 }
+    ]
+  },
+  {
+    id: 'c6_r18_cesu',
+    order: 6,
+    concepto: 'Articulo 87 CESU',
+    codigoConcepto: '1.1.02.06.006.01.05',
+    recurso: '18-Articulo 87 CESU',
+    grupo: 'nacion',
+    recaudo2024: 1067037785,
+    recaudo2025: 457065634,
+    base2026: 1573078344,
+    defaultModelId: 'macro',
+    models: [
+      { id: 'macro', name: 'Macro +6,0% (Parámetro Aprobado)', value: 1667463045, variationPct: 6.00 },
+      { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 1573078344, variationPct: 0.00 },
+      { id: 'media', name: 'Media Trienal 2024-2026', value: 1032393921, variationPct: -34.37 }
+    ]
+  },
+  {
+    id: 'c7_r20_certificaciones',
+    order: 7,
+    concepto: 'Certificaciones y constancias',
+    codigoConcepto: '1.1.02.02.015',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 0,
+    recaudo2025: 54987450,
+    base2026: 44343950,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 47004587, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 47448027, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 44343950, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c8_r20_comercio',
+    order: 8,
+    concepto: 'Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua',
+    codigoConcepto: '1.1.02.05.002.06',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 3928052683,
+    recaudo2025: 4040183778,
+    base2026: 2562971129,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 2716749397, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 2742379108, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 2562971129, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c9_r20_minerales',
+    order: 9,
+    concepto: 'Minerales; electricidad, gas y agua',
+    codigoConcepto: '1.1.02.05.002.01',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 166121321,
+    recaudo2025: 157320243,
+    base2026: 83257428,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 88252874, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 89085448, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 83257428, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c10_r20_derechos_comp',
+    order: 10,
+    concepto: 'Pregrado - Certificaciones, constancias académicas y derechos complementarios',
+    codigoConcepto: '1.1.02.02.116.01.01.04',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 3393625320,
+    recaudo2025: 3479161986,
+    base2026: 3773314576,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 3999713451, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 4037446596, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 3773314576, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c11_r20_grado',
+    order: 11,
+    concepto: 'Pregrado - Derechos de grado',
+    codigoConcepto: '1.1.02.02.116.01.01.02',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 961979248,
+    recaudo2025: 1012888550,
+    base2026: 736345940,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 780526696, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 787890156, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 736345940, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c12_r20_inscripciones',
+    order: 12,
+    concepto: 'Pregrado - Inscripciones',
+    codigoConcepto: '1.1.02.02.116.01.01.01',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 3021726000,
+    recaudo2025: 2588882800,
+    base2026: 2026330700,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 2147910542, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 2168173849, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 2026330700, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c13_r20_matriculas',
+    order: 13,
+    concepto: 'Pregrado - Matrículas',
+    codigoConcepto: '1.1.02.02.116.01.01.03',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 8026314399,
+    recaudo2025: 5540609886,
+    base2026: 3772946201,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 3999322973, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 4037052435, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 3772946201, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c14_r20_productos_metalicos',
+    order: 14,
+    concepto: 'Productos metálicos, maquinaria y equipo',
+    codigoConcepto: '1.1.02.05.002.04',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 6017390,
+    recaudo2025: 9526385,
+    base2026: 9307590,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 9866045, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 9959121, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 9307590, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c15_r20_sanciones',
+    order: 15,
+    concepto: 'Sanciones administrativas',
+    codigoConcepto: '1.1.02.03.001.05',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 29849852,
+    recaudo2025: 47224591,
+    base2026: 23297850,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 24695721, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 24928700, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 23297850, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c16_r20_financieros',
+    order: 16,
+    concepto: 'Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing',
+    codigoConcepto: '1.1.02.05.002.07',
+    recurso: '20-Propios',
+    grupo: 'propios',
+    recaudo2024: 227673982,
+    recaudo2025: 318870325,
+    base2026: 155686149,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0%', value: 165027318, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 166584179, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 155686149, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c17_r21_iva',
+    order: 17,
+    concepto: 'Devolución IVA - Instituciones de Educación Superior',
+    codigoConcepto: '1.1.02.06.006.02',
+    recurso: '21-Devolucion IVA',
+    grupo: 'iva',
+    recaudo2024: 4000000000,
+    recaudo2025: 7981747901,
+    base2026: 4672217269,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 4952550305, variationPct: 6.00 },
+      { id: 'meta7', name: 'Modelo Referencia (+7,0%)', value: 4999272477, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 4672217269, variationPct: 0.00 },
+      { id: 'holt', name: 'Suavizamiento Holt (+4,66%)', value: 4890000000, variationPct: 4.66 }
+    ]
+  }
+];
+
+export function computeOfficial17Consolidated(
+  userSelections?: Record<string, { modelId: string; customValue?: number }>
+): Official17ConsolidatedSummary {
+  const selections = userSelections || {};
+  
+  // Calcular proyecciones por fila
+  const computedRows: Official17ConceptComputedRow[] = OFFICIAL_17_CONCEPTS_CATALOG.map(def => {
+    const userSel = selections[def.id];
+    let selectedModelId = userSel ? userSel.modelId : def.defaultModelId;
+    let projVal = 0;
+    let selectedModelName = '';
+    let isCustom = false;
+
+    if (selectedModelId === 'custom' && userSel && typeof userSel.customValue === 'number' && !isNaN(userSel.customValue)) {
+      projVal = userSel.customValue;
+      selectedModelName = 'Personalizado';
+      isCustom = true;
+    } else {
+      const foundModel = def.models.find(m => m.id === selectedModelId) || def.models[0];
+      selectedModelId = foundModel.id;
+      projVal = foundModel.value;
+      selectedModelName = foundModel.name;
+    }
+
+    const varCOP = projVal - def.base2026;
+    const varPct = def.base2026 > 0 ? (varCOP / def.base2026) * 100 : (projVal > 0 ? 100 : 0);
+
+    return {
+      id: def.id,
+      order: def.order,
+      concepto: def.concepto,
+      codigoConcepto: def.codigoConcepto,
+      recurso: def.recurso,
+      grupo: def.grupo,
+      recaudo2024: def.recaudo2024,
+      recaudo2025: def.recaudo2025,
+      base2026: def.base2026,
+      projected2027: projVal,
+      projected2027Millions: Number((projVal / 1e6).toFixed(2)),
+      variationPct: varPct,
+      variationCOP: varCOP,
+      participationPct: 0,
+      selectedModelId,
+      selectedModelName,
+      isCustom
+    };
+  });
+
+  // Totales y subtotales
+  let nacionY24 = 0, nacionY25 = 0, nacionY26 = 0, nacionY27 = 0;
+  let propiosY24 = 0, propiosY25 = 0, propiosY26 = 0, propiosY27 = 0;
+  let ivaY24 = 0, ivaY25 = 0, ivaY26 = 0, ivaY27 = 0;
+
+  for (const r of computedRows) {
+    if (r.grupo === 'nacion') {
+      nacionY24 += r.recaudo2024;
+      nacionY25 += r.recaudo2025;
+      nacionY26 += r.base2026;
+      nacionY27 += r.projected2027;
+    } else if (r.grupo === 'propios') {
+      propiosY24 += r.recaudo2024;
+      propiosY25 += r.recaudo2025;
+      propiosY26 += r.base2026;
+      propiosY27 += r.projected2027;
+    } else if (r.grupo === 'iva') {
+      ivaY24 += r.recaudo2024;
+      ivaY25 += r.recaudo2025;
+      ivaY26 += r.base2026;
+      ivaY27 += r.projected2027;
+    }
+  }
+
+  const autogestionY24 = propiosY24 + ivaY24;
+  const autogestionY25 = propiosY25 + ivaY25;
+  const autogestionY26 = propiosY26 + ivaY26;
+  const autogestionY27 = propiosY27 + ivaY27;
+
+  const totalY24 = nacionY24 + autogestionY24;
+  const totalY25 = nacionY25 + autogestionY25;
+  const totalY26 = nacionY26 + autogestionY26;
+  const totalY27 = nacionY27 + autogestionY27;
+
+  // Participación porcentual de cada concepto sobre el gran total
+  const denom = totalY27 > 0 ? totalY27 : 1;
+  for (const r of computedRows) {
+    r.participationPct = Number(((r.projected2027 / denom) * 100).toFixed(2));
+  }
+
+  const calcVar = (y27: number, y26: number) => y26 > 0 ? Number((((y27 - y26) / y26) * 100).toFixed(2)) : 0;
+  const calcPart = (y27: number) => denom > 0 ? Number(((y27 / denom) * 100).toFixed(2)) : 0;
+
+  return {
+    rows: computedRows,
+    subtotalNacion: {
+      y24: nacionY24,
+      y25: nacionY25,
+      y26: nacionY26,
+      y27: nacionY27,
+      variationPct: calcVar(nacionY27, nacionY26),
+      participationPct: calcPart(nacionY27)
+    },
+    subtotalPropios: {
+      y24: propiosY24,
+      y25: propiosY25,
+      y26: propiosY26,
+      y27: propiosY27,
+      variationPct: calcVar(propiosY27, propiosY26),
+      participationPct: calcPart(propiosY27)
+    },
+    subtotalIVA: {
+      y24: ivaY24,
+      y25: ivaY25,
+      y26: ivaY26,
+      y27: ivaY27,
+      variationPct: calcVar(ivaY27, ivaY26),
+      participationPct: calcPart(ivaY27)
+    },
+    subtotalAutogestion: {
+      y24: autogestionY24,
+      y25: autogestionY25,
+      y26: autogestionY26,
+      y27: autogestionY27,
+      variationPct: calcVar(autogestionY27, autogestionY26),
+      participationPct: calcPart(autogestionY27)
+    },
+    totalConsolidado: {
+      y24: totalY24,
+      y25: totalY25,
+      y26: totalY26,
+      y27: totalY27,
+      variationPct: calcVar(totalY27, totalY26),
+      participationPct: 100.00
+    }
+  };
+}
+
+export function exportConsolidated17ConceptsCSV(summary: Official17ConsolidatedSummary): void {
+  let csv = '\uFEFF'; // Byte Order Mark for Excel UTF-8 compatibility
+  csv += 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n';
+  csv += 'VICERRECTORIA ADMINISTRATIVA Y FINANCIERA (VAFI)\n';
+  csv += 'CONSOLIDADO DE PROYECCION INSTITUCIONAL DE INGRESOS - VIGENCIA 2027\n';
+  csv += `Fecha de Generacion:;${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}\n`;
+  csv += `Total Consolidado 2027:;$ ${summary.totalConsolidado.y27.toLocaleString('es-CO')};Variacion Global:;+${summary.totalConsolidado.variationPct.toFixed(2)}%\n\n`;
+
+  csv += 'Concepto;Código concepto;Recurso;Recaudo 2024;Recaudo 2025;Recaudo Base 2026;Proyección 2027 (COP);Proyección 2027 ($M);Variación vs 2026 (%);Participación Presupuestal (%);Método o Criterio Seleccionado\n';
+
+  // Filas individuales
+  for (const r of summary.rows) {
+    const cName = `"${r.concepto.replace(/"/g, '""')}"`;
+    const cCode = `"${r.codigoConcepto}"`;
+    const cRec = `"${r.recurso}"`;
+    const y24 = `$ ${Math.round(r.recaudo2024).toLocaleString('es-CO')}`;
+    const y25 = `$ ${Math.round(r.recaudo2025).toLocaleString('es-CO')}`;
+    const y26 = `$ ${Math.round(r.base2026).toLocaleString('es-CO')}`;
+    const y27 = `$ ${Math.round(r.projected2027).toLocaleString('es-CO')}`;
+    const y27M = `$ ${r.projected2027Millions.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M`;
+    const varPct = `${r.variationPct >= 0 ? '+' : ''}${r.variationPct.toFixed(2)}%`;
+    const partPct = `${r.participationPct.toFixed(2)}%`;
+    const model = `"${r.selectedModelName.replace(/"/g, '""')}"`;
+
+    csv += `${cName};${cCode};${cRec};${y24};${y25};${y26};${y27};${y27M};${varPct};${partPct};${model}\n`;
+  }
+
+  // Subtotal Nacion
+  csv += `\n"SUBTOTAL GIROS Y FONDOS DE LA NACION (6 CONCEPTOS)";"";"NACION";"$ ${Math.round(summary.subtotalNacion.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalNacion.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalNacion.variationPct.toFixed(2)}%";"${summary.subtotalNacion.participationPct.toFixed(2)}%";"Transferencias y Fondos Nacionales"\n`;
+
+  // Subtotal Propios
+  csv += `"SUBTOTAL RECURSOS PROPIOS - R20 (10 CONCEPTOS)";"";"20-PROPIOS";"$ ${Math.round(summary.subtotalPropios.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalPropios.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalPropios.variationPct.toFixed(2)}%";"${summary.subtotalPropios.participationPct.toFixed(2)}%";"Autogestión Académica y Administrativa"\n`;
+
+  // Subtotal IVA
+  csv += `"SUBTOTAL DEVOLUCION IVA - R21 (1 CONCEPTO)";"1.1.02.06.006.02";"21-DEVOLUCION IVA";"$ ${Math.round(summary.subtotalIVA.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalIVA.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalIVA.variationPct.toFixed(2)}%";"${summary.subtotalIVA.participationPct.toFixed(2)}%";"Beneficio Tributario Art. 92 Ley 30"\n`;
+
+  // Total Consolidado
+  csv += `\n"TOTAL CONSOLIDADO UPTC 2027 (17 CONCEPTOS)";"";"UPTC CONSOLIDADO";"$ ${Math.round(summary.totalConsolidado.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y27).toLocaleString('es-CO')}";"$ ${(summary.totalConsolidado.y27 / 1e6).toFixed(2)}M";"+${summary.totalConsolidado.variationPct.toFixed(2)}%";"100.00%";"Consolidado Total Institucional"\n`;
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Consolidado_Proyeccion_UPTC_2027_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
