@@ -4140,7 +4140,7 @@ export function R20ResourceProjectionSection() {
                             </span>
                           </td>
                           <td className="p-3.5 text-center font-mono font-bold text-purple-300">
-                            {(row.participationPct ?? row.part ?? 0)icipacionPct.toFixed(1)}%
+                            {row.participacionPct.toFixed(1)}%
                           </td>
                           <td className="p-3.5 text-center font-mono text-[10px] text-on-surface-variant">
                             {row.modeloUtilizado}
