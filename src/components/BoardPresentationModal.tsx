@@ -10,7 +10,7 @@ import {
   PieChart, Pie, Cell 
 } from 'recharts';
 import { StrictResourceProjection, StrictTotals } from '../lib/strictProjections';
-import { NACION_FIXED_CODES } from './CashFlowIncomeFixedVsProjected';
+import { NACION_FIXED_CODES, BASE_PRESUPUESTAL_CODES } from './CashFlowIncomeFixedVsProjected';
 
 const formatCurrency = (value: number) => 
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -73,6 +73,7 @@ export function BoardPresentationModal({
     '10.1': { baseLegal: 'Resolución MEN - Plan Fomento Calidad (PIC Convencional)', entidad: 'MEN - Subdirección Apoyo IES', calendarNote: 'Recaudo efectivo $5.624M + Giro pendiente $2.165M' },
     '10.2': { baseLegal: 'Resolución MEN - Fomento a la Calidad Regional', entidad: 'MEN', calendarNote: 'Recaudo 100% efectivo ($3.060M) completado' },
     '10.3': { baseLegal: 'Resolución MEN - Fortalecimiento a la Gestión', entidad: 'MEN', calendarNote: 'Giro programado en SIIF para noviembre ($2.229M)' },
+    '10.4': { baseLegal: 'Resolución MEN - Plan Fomento Calidad (PIC Territorial)', entidad: 'MEN - Subdirección Apoyo IES', calendarNote: 'Aportes de fomento e inversión territorial' },
     '10.5': { baseLegal: 'Ley 2307/2023 / Decreto Reglamentario MEN (Gratuidad)', entidad: 'MEN / Fondo Gratuidad', calendarNote: 'Recaudo 100% efectivo ($11.208M) completado' },
     '12': { baseLegal: 'Ley 1697/2013 - Estampilla Pro-UNAL y Otras Estatales', entidad: 'Ministerio de Hacienda / DIAN', calendarNote: 'Transferencias de recaudos tributarios nacionales' },
     '13': { baseLegal: 'Art. 142 Ley 1819/2016 / DIAN (Excedentes Cooperativos)', entidad: 'Sector Cooperativo / DIAN', calendarNote: 'Recaudo 100% efectivo ($1.535M) completado' },
@@ -113,15 +114,15 @@ export function BoardPresentationModal({
     return { fixedResources: fixed, projectedResources: projected };
   }, [resources]);
 
-  // Agregados Fijos
-  const fixedAggregates = useMemo(() => {
+  // Función utilitaria para calcular totales de una lista de recursos fijos
+  const computeFixedAggregatesList = (list: StrictResourceProjection[]) => {
     let recaudoReal = 0;
     let proyectadoSepDic = 0;
     let totalIngresos = 0;
     let aforoOficial = 0;
     let mesesProy = [0, 0, 0, 0];
 
-    fixedResources.forEach(r => {
+    list.forEach(r => {
       recaudoReal += r.ingresosReales;
       const m = r.ingresosPorMesProyectado || [0, 0, 0, 0];
       proyectadoSepDic += m.reduce((a, b) => a + b, 0);
@@ -136,7 +137,38 @@ export function BoardPresentationModal({
 
     const recaudoAvancePct = totalIngresos > 0 ? (recaudoReal / totalIngresos) * 100 : 0;
     return { recaudoReal, proyectadoSepDic, totalIngresos, aforoOficial, mesesProy, recaudoAvancePct };
+  };
+
+  // Agregados Fijos Globales
+  const fixedAggregates = useMemo(() => {
+    return computeFixedAggregatesList(fixedResources);
   }, [fixedResources, balanceMetaMap]);
+
+  // Partición en 1. Recursos Base Presupuestal y 2. Demás Recursos que No Hacen Base
+  const baseFixedResources = useMemo(() => {
+    const list = fixedResources.filter(r => BASE_PRESUPUESTAL_CODES.includes(r.recurso));
+    const sortOrder = ['10', '10.0', '10.1', '10.2', '10.3', '10.4'];
+    return [...list].sort((a, b) => {
+      const ia = sortOrder.indexOf(a.recurso);
+      const ib = sortOrder.indexOf(b.recurso);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      return a.recurso.localeCompare(b.recurso, undefined, { numeric: true });
+    });
+  }, [fixedResources]);
+
+  const nonBaseFixedResources = useMemo(() => {
+    const list = fixedResources.filter(r => !BASE_PRESUPUESTAL_CODES.includes(r.recurso));
+    return [...list].sort((a, b) => a.recurso.localeCompare(b.recurso, undefined, { numeric: true }));
+  }, [fixedResources]);
+
+  // Subtotales independientes por categoría
+  const baseAggregates = useMemo(() => {
+    return computeFixedAggregatesList(baseFixedResources);
+  }, [baseFixedResources, balanceMetaMap]);
+
+  const nonBaseAggregates = useMemo(() => {
+    return computeFixedAggregatesList(nonBaseFixedResources);
+  }, [nonBaseFixedResources, balanceMetaMap]);
 
   // Agregados Proyectados
   const projectedAggregates = useMemo(() => {
@@ -860,12 +892,35 @@ export function BoardPresentationModal({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 font-sans">
-              {fixedResources.map(r => {
+              {/* CATEGORÍA 1: BASE PRESUPUESTAL */}
+              <tr className="bg-gradient-to-r from-blue-950/90 via-blue-900/40 to-slate-950/80 border-t-2 border-b border-blue-500/40">
+                <td colSpan={9} className="py-2 px-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                      <span className="font-bold text-[10px] font-mono uppercase tracking-wider text-blue-100">
+                        1. Recursos que Hacen Base Presupuestal (R10, R10.1, R10.2, R10.3, R10.4)
+                      </span>
+                      <span className="text-[9px] bg-blue-500/20 text-blue-300 font-mono px-1.5 py-0.2 rounded border border-blue-500/30">
+                        Ley 30/1992 Art. 86 & PIC
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-blue-300 font-mono font-bold">
+                      Subtotal: {formatCurrencyShort(baseAggregates.totalIngresos)}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+
+              {baseFixedResources.map(r => {
                 const meta = METADATOS_FIJOS[r.recurso] || {
                   baseLegal: 'Aportes de la Nación - Presupuesto General',
                   entidad: 'Gobierno Nacional',
                   calendarNote: 'Giro programado en SIIF'
                 };
+                const displayName = r.recurso === '13' && (r.nombre === 'Cooperativas' || r.nombre === '13-Cooperativas')
+                  ? 'Excedentes Cooperativas Art.142, Ley 1819 del 2016'
+                  : r.nombre;
                 const afo = balanceMetaMap[r.recurso]?.aforo || r.totalIngresos;
                 const mSum = (r.ingresosPorMesProyectado || [0, 0, 0, 0]).reduce((a, b) => a + b, 0);
                 const pct = afo > 0 ? (r.totalIngresos / afo) * 100 : 100;
@@ -877,8 +932,8 @@ export function BoardPresentationModal({
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
                       <span>R{r.recurso}</span>
                     </td>
-                    <td className="p-2.5 text-slate-200 font-sans font-medium" title={r.nombre}>
-                      {r.nombre}
+                    <td className="p-2.5 text-slate-200 font-sans font-medium" title={displayName}>
+                      {displayName}
                     </td>
                     <td className="p-2.5 text-slate-300 font-sans text-[10px]">
                       <div className="font-semibold text-blue-200">{meta.baseLegal}</div>
@@ -906,19 +961,151 @@ export function BoardPresentationModal({
                     </td>
                     <td className="p-2.5 text-center font-sans">
                       <span className="text-[9px] bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+                        <Lock size={9} /> Base Ley 30
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* SUBTOTAL CATEGORÍA 1 */}
+              <tr className="border-t-2 border-b-2 border-blue-500/30 font-bold text-[10px] bg-blue-950/50 font-mono text-blue-100">
+                <td colSpan={3} className="p-2 uppercase font-sans tracking-wide">
+                  <div className="flex items-center gap-1 pl-1 text-blue-300">
+                    <span className="text-blue-400 font-black">↳</span>
+                    <span>SUBTOTAL BASE PRESUPUESTAL ({baseFixedResources.length} Recursos)</span>
+                  </div>
+                </td>
+                <td className="p-2 text-right text-slate-300">
+                  {formatCurrencyShort(baseAggregates.aforoOficial)}
+                </td>
+                <td className="p-2 text-right text-emerald-400">
+                  {formatCurrencyShort(baseAggregates.recaudoReal)}
+                </td>
+                <td className="p-2 text-right text-sky-300 font-black">
+                  {formatCurrencyShort(baseAggregates.proyectadoSepDic)}
+                </td>
+                <td className="p-2 text-right font-black text-emerald-300 text-xs bg-emerald-500/15">
+                  {formatCurrencyShort(baseAggregates.totalIngresos)}
+                </td>
+                <td className="p-2 text-center text-emerald-300">
+                  {baseAggregates.aforoOficial > 0 ? ((baseAggregates.totalIngresos / baseAggregates.aforoOficial) * 100).toFixed(0) : 100}%
+                </td>
+                <td className="p-2 text-center text-[9px] text-blue-300 font-bold font-sans">
+                  Base Legal
+                </td>
+              </tr>
+
+              {/* CATEGORÍA 2: SIN BASE */}
+              <tr className="bg-gradient-to-r from-indigo-950/90 via-slate-900/60 to-slate-950/80 border-t-2 border-b border-indigo-500/40">
+                <td colSpan={9} className="py-2 px-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
+                      <span className="font-bold text-[10px] font-mono uppercase tracking-wider text-indigo-100">
+                        2. Demás Recursos que NO Hacen Base Presupuestal
+                      </span>
+                      <span className="text-[9px] bg-indigo-500/20 text-indigo-300 font-mono px-1.5 py-0.2 rounded border border-indigo-500/30">
+                        Fondos Especiales, Inversión Art. 87 & Estampillas
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-indigo-300 font-mono font-bold">
+                      Subtotal: {formatCurrencyShort(nonBaseAggregates.totalIngresos)}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+
+              {nonBaseFixedResources.map(r => {
+                const meta = METADATOS_FIJOS[r.recurso] || {
+                  baseLegal: 'Aportes de la Nación - Presupuesto General',
+                  entidad: 'Gobierno Nacional',
+                  calendarNote: 'Giro programado en SIIF'
+                };
+                const displayName = r.recurso === '13' && (r.nombre === 'Cooperativas' || r.nombre === '13-Cooperativas')
+                  ? 'Excedentes Cooperativas Art.142, Ley 1819 del 2016'
+                  : r.nombre;
+                const afo = balanceMetaMap[r.recurso]?.aforo || r.totalIngresos;
+                const mSum = (r.ingresosPorMesProyectado || [0, 0, 0, 0]).reduce((a, b) => a + b, 0);
+                const pct = afo > 0 ? (r.totalIngresos / afo) * 100 : 100;
+                const avanceRecaudo = r.totalIngresos > 0 ? (r.ingresosReales / r.totalIngresos) * 100 : 0;
+
+                return (
+                  <tr key={r.recurso} className="hover:bg-indigo-500/5 transition-colors font-mono">
+                    <td className="p-2.5 font-bold text-indigo-300 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                      <span>R{r.recurso}</span>
+                    </td>
+                    <td className="p-2.5 text-slate-200 font-sans font-medium" title={displayName}>
+                      {displayName}
+                    </td>
+                    <td className="p-2.5 text-slate-300 font-sans text-[10px]">
+                      <div className="font-semibold text-indigo-200">{meta.baseLegal}</div>
+                      <div className="text-[9px] text-slate-400">{meta.entidad}</div>
+                    </td>
+                    <td className="p-2.5 text-right text-slate-400">
+                      {formatCurrencyShort(afo)}
+                    </td>
+                    <td className="p-2.5 text-right text-emerald-400 font-semibold">
+                      {formatCurrencyShort(r.ingresosReales)}
+                      <span className="text-[9px] text-emerald-400/70 block">({avanceRecaudo.toFixed(0)}%)</span>
+                    </td>
+                    <td className="p-2.5 text-right text-sky-300 font-bold bg-sky-500/5">
+                      {formatCurrencyShort(mSum)}
+                    </td>
+                    <td className="p-2.5 text-right font-black text-emerald-300 text-xs bg-emerald-500/10">
+                      {formatCurrencyShort(r.totalIngresos)}
+                    </td>
+                    <td className="p-2.5 text-center">
+                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                        pct >= 99.5 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300'
+                      }`}>
+                        {pct.toFixed(0)}%
+                      </span>
+                    </td>
+                    <td className="p-2.5 text-center font-sans">
+                      <span className="text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
                         <Lock size={9} /> 100% SIIF
                       </span>
                     </td>
                   </tr>
                 );
               })}
+
+              {/* SUBTOTAL CATEGORÍA 2 */}
+              <tr className="border-t-2 border-b-2 border-indigo-500/30 font-bold text-[10px] bg-indigo-950/50 font-mono text-indigo-100">
+                <td colSpan={3} className="p-2 uppercase font-sans tracking-wide">
+                  <div className="flex items-center gap-1 pl-1 text-indigo-300">
+                    <span className="text-indigo-400 font-black">↳</span>
+                    <span>SUBTOTAL SIN BASE PRESUPUESTAL ({nonBaseFixedResources.length} Recursos)</span>
+                  </div>
+                </td>
+                <td className="p-2 text-right text-slate-300">
+                  {formatCurrencyShort(nonBaseAggregates.aforoOficial)}
+                </td>
+                <td className="p-2 text-right text-emerald-400">
+                  {formatCurrencyShort(nonBaseAggregates.recaudoReal)}
+                </td>
+                <td className="p-2 text-right text-sky-300 font-black">
+                  {formatCurrencyShort(nonBaseAggregates.proyectadoSepDic)}
+                </td>
+                <td className="p-2 text-right font-black text-emerald-300 text-xs bg-emerald-500/15">
+                  {formatCurrencyShort(nonBaseAggregates.totalIngresos)}
+                </td>
+                <td className="p-2 text-center text-indigo-300">
+                  {nonBaseAggregates.aforoOficial > 0 ? ((nonBaseAggregates.totalIngresos / nonBaseAggregates.aforoOficial) * 100).toFixed(0) : 100}%
+                </td>
+                <td className="p-2 text-center text-[9px] text-indigo-300 font-bold font-sans">
+                  No Base
+                </td>
+              </tr>
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-blue-500/40 font-bold text-xs bg-blue-950/60 font-mono">
                 <td colSpan={3} className="p-3 text-white uppercase font-sans tracking-wide">
-                  TOTAL INGRESOS FIJOS DE LA NACIÓN ({fixedResources.length} Recursos)
+                  GRAN TOTAL INGRESOS FIJOS DE LA NACIÓN ({fixedResources.length} Recursos)
                 </td>
-                <td className="p-3 text-right text-slate-300">
+                <td className="p-3 text-right text-slate-200">
                   {formatCurrencyShort(fixedAggregates.aforoOficial)}
                 </td>
                 <td className="p-3 text-right text-emerald-400">
@@ -934,7 +1121,7 @@ export function BoardPresentationModal({
                   {((fixedAggregates.totalIngresos / (fixedAggregates.aforoOficial || 1)) * 100).toFixed(0)}%
                 </td>
                 <td className="p-3 text-center text-[10px] text-blue-300 font-bold font-sans">
-                  Garantía Ley
+                  ✓ Garantía Ley
                 </td>
               </tr>
             </tfoot>

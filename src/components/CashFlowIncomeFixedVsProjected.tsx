@@ -20,7 +20,8 @@ const formatCurrencyShort = (value: number) => {
   return `$ ${value.toLocaleString('es-CO')}`;
 };
 
-export const NACION_FIXED_CODES = ['10', '10.0', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.0', '16.1', '16.2', '17', '18'];
+export const NACION_FIXED_CODES = ['10', '10.0', '10.1', '10.2', '10.3', '10.4', '10.5', '12', '13', '14', '16', '16.0', '16.1', '16.2', '17', '18'];
+export const BASE_PRESUPUESTAL_CODES = ['10', '10.0', '10.1', '10.2', '10.3', '10.4'];
 
 export interface CashFlowIncomeFixedVsProjectedProps {
   resources: StrictResourceProjection[];
@@ -63,6 +64,7 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
     '10.1': { baseLegal: 'Resolución MEN - Plan Fomento Calidad (PIC Convencional)', entidad: 'MEN - Subdirección Apoyo IES', calendarNote: 'Recaudo efectivo $5.624M + Giro pendiente $2.165M' },
     '10.2': { baseLegal: 'Resolución MEN - Fomento a la Calidad Regional', entidad: 'MEN', calendarNote: 'Recaudo 100% efectivo ($3.060M) completado' },
     '10.3': { baseLegal: 'Resolución MEN - Fortalecimiento a la Gestión', entidad: 'MEN', calendarNote: 'Giro programado en SIIF para noviembre ($2.229M)' },
+    '10.4': { baseLegal: 'Resolución MEN - Plan Fomento Calidad (PIC Territorial)', entidad: 'MEN - Subdirección Apoyo IES', calendarNote: 'Aportes de fomento e inversión territorial' },
     '10.5': { baseLegal: 'Ley 2307/2023 / Decreto Reglamentario MEN (Gratuidad)', entidad: 'MEN / Fondo Gratuidad', calendarNote: 'Recaudo 100% efectivo ($11.208M) completado' },
     '12': { baseLegal: 'Ley 1697/2013 - Estampilla Pro-UNAL y Otras Estatales', entidad: 'Ministerio de Hacienda / DIAN', calendarNote: 'Transferencias de recaudos tributarios nacionales' },
     '13': { baseLegal: 'Art. 142 Ley 1819/2016 / DIAN (Excedentes Cooperativos)', entidad: 'Sector Cooperativo / DIAN', calendarNote: 'Recaudo 100% efectivo ($1.535M) completado' },
@@ -104,27 +106,28 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
     return { fixedResources: fixed, projectedResources: projected };
   }, [resources]);
 
-  // Cálculos de agregados para Ingresos Fijos (Nación)
-  const fixedAggregates = useMemo(() => {
+  // Función utilitaria para calcular totales y proyecciones de una lista de recursos fijos
+  const computeFixedAggregatesList = (list: StrictResourceProjection[]) => {
     let recaudoReal = 0;
     let proyectadoSepDic = 0;
     let totalIngresos = 0;
     let aforoOficial = 0;
     let mesesProy = [0, 0, 0, 0];
 
-    fixedResources.forEach(r => {
+    list.forEach(r => {
       recaudoReal += r.ingresosReales;
-      const mSum = (r.ingresosPorMesProyectado || [0, 0, 0, 0]).reduce((a, b) => a + b, 0);
+      const m = r.ingresosPorMesProyectado || [0, 0, 0, 0];
+      const mSum = m.reduce((a, b) => a + b, 0);
       proyectadoSepDic += mSum;
       totalIngresos += r.totalIngresos;
       const afo = balanceMetaMap[r.recurso]?.aforo || r.totalIngresos;
       aforoOficial += afo;
 
-      if (r.ingresosPorMesProyectado && r.ingresosPorMesProyectado.length === 4) {
-        mesesProy[0] += r.ingresosPorMesProyectado[0];
-        mesesProy[1] += r.ingresosPorMesProyectado[1];
-        mesesProy[2] += r.ingresosPorMesProyectado[2];
-        mesesProy[3] += r.ingresosPorMesProyectado[3];
+      if (m.length === 4) {
+        mesesProy[0] += m[0];
+        mesesProy[1] += m[1];
+        mesesProy[2] += m[2];
+        mesesProy[3] += m[3];
       }
     });
 
@@ -132,6 +135,11 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
     const recaudoAvancePct = totalIngresos > 0 ? (recaudoReal / totalIngresos) * 100 : 0;
 
     return { recaudoReal, proyectadoSepDic, totalIngresos, aforoOficial, mesesProy, cumplimientoPct, recaudoAvancePct };
+  };
+
+  // Cálculos de agregados para Ingresos Fijos (Nación)
+  const fixedAggregates = useMemo(() => {
+    return computeFixedAggregatesList(fixedResources);
   }, [fixedResources, balanceMetaMap]);
 
   // Cálculos de agregados para Ingresos Proyectados (Propios y Variables)
@@ -182,6 +190,32 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
     });
   }, [fixedResources, searchTerm]);
 
+  // Partición en 1. Recursos Base Presupuestal y 2. Demás Recursos que No Hacen Base
+  const baseFixedResources = useMemo(() => {
+    const list = filteredFixed.filter(r => BASE_PRESUPUESTAL_CODES.includes(r.recurso));
+    const sortOrder = ['10', '10.0', '10.1', '10.2', '10.3', '10.4'];
+    return [...list].sort((a, b) => {
+      const ia = sortOrder.indexOf(a.recurso);
+      const ib = sortOrder.indexOf(b.recurso);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      return a.recurso.localeCompare(b.recurso, undefined, { numeric: true });
+    });
+  }, [filteredFixed]);
+
+  const nonBaseFixedResources = useMemo(() => {
+    const list = filteredFixed.filter(r => !BASE_PRESUPUESTAL_CODES.includes(r.recurso));
+    return [...list].sort((a, b) => a.recurso.localeCompare(b.recurso, undefined, { numeric: true }));
+  }, [filteredFixed]);
+
+  // Subtotales para cada categoría
+  const baseAggregates = useMemo(() => {
+    return computeFixedAggregatesList(baseFixedResources);
+  }, [baseFixedResources, balanceMetaMap]);
+
+  const nonBaseAggregates = useMemo(() => {
+    return computeFixedAggregatesList(nonBaseFixedResources);
+  }, [nonBaseFixedResources, balanceMetaMap]);
+
   const filteredProjected = useMemo(() => {
     if (!searchTerm.trim()) return projectedResources;
     const q = searchTerm.toLowerCase();
@@ -202,22 +236,49 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
     csv += `FLUJO DE INGRESOS FIJOS (REGLAMENTADOS POR GIROS DE LA NACION) - VIGENCIA 2026
 `;
     csv += `Corte de Recaudo: 31 de Agosto | Giros Programados: Septiembre a Diciembre
+`;
+    csv += `Clasificación: Recursos que Hacen Base Presupuestal vs. Demás Recursos que No Hacen Base
 
 `;
-    csv += `Recurso;Nombre del Recurso;Fundamento Legal / Entidad;Aforo Oficial (COP);Recaudo Real 31/08 (COP);Giro Sep (COP);Giro Oct (COP);Giro Nov (COP);Giro Dic (COP);Total Giros Sep-Dic (COP);Total Ingreso Fijo (COP);% Cumplimiento;Certeza Juridica
+    csv += `Categoria;Recurso;Nombre del Recurso;Fundamento Legal / Entidad;Aforo Oficial (COP);Recaudo Real 31/08 (COP);Giro Sep (COP);Giro Oct (COP);Giro Nov (COP);Giro Dic (COP);Total Giros Sep-Dic (COP);Total Ingreso Fijo (COP);% Cumplimiento;Certeza Juridica
 `;
 
-    fixedResources.forEach(r => {
-      const meta = METADATOS_FIJOS[r.recurso] || { baseLegal: 'Aportes Nación', entidad: 'Gobierno Nacional' };
+    // 1. RECURSOS QUE HACEN BASE PRESUPUESTAL
+    baseFixedResources.forEach(r => {
+      const meta = METADATOS_FIJOS[r.recurso] || { baseLegal: 'Aportes Nación - Ley 30 Art. 86', entidad: 'Gobierno Nacional' };
+      const displayName = r.recurso === '13' && (r.nombre === 'Cooperativas' || r.nombre === '13-Cooperativas')
+        ? 'Excedentes Cooperativas Art.142, Ley 1819 del 2016'
+        : r.nombre;
       const afo = balanceMetaMap[r.recurso]?.aforo || r.totalIngresos;
       const m = r.ingresosPorMesProyectado || [0, 0, 0, 0];
       const mSum = m.reduce((a, b) => a + b, 0);
       const pct = afo > 0 ? ((r.totalIngresos / afo) * 100).toFixed(1) : '100.0';
-      csv += `"R${r.recurso}";"${r.nombre}";"${meta.baseLegal} - ${meta.entidad}";"${Math.round(afo)}";"${Math.round(r.ingresosReales)}";"${Math.round(m[0])}";"${Math.round(m[1])}";"${Math.round(m[2])}";"${Math.round(m[3])}";"${Math.round(mSum)}";"${Math.round(r.totalIngresos)}";"${pct}%";"100% Fijo SIIF"
+      csv += `"1. BASE PRESUPUESTAL";"R${r.recurso}";"${displayName}";"${meta.baseLegal} - ${meta.entidad}";"${Math.round(afo)}";"${Math.round(r.ingresosReales)}";"${Math.round(m[0])}";"${Math.round(m[1])}";"${Math.round(m[2])}";"${Math.round(m[3])}";"${Math.round(mSum)}";"${Math.round(r.totalIngresos)}";"${pct}%";"Base Ley 30"
 `;
     });
 
-    csv += `"TOTAL FIJOS NACION";"Transferencias de la Nación y Normativa";"Presupuesto General de la Nación";"${Math.round(fixedAggregates.aforoOficial)}";"${Math.round(fixedAggregates.recaudoReal)}";"${Math.round(fixedAggregates.mesesProy[0])}";"${Math.round(fixedAggregates.mesesProy[1])}";"${Math.round(fixedAggregates.mesesProy[2])}";"${Math.round(fixedAggregates.mesesProy[3])}";"${Math.round(fixedAggregates.proyectadoSepDic)}";"${Math.round(fixedAggregates.totalIngresos)}";"${fixedAggregates.cumplimientoPct.toFixed(1)}%";"100% Certeza"
+    csv += `"SUBTOTAL 1";"BASE PRESUPUESTAL";"SUBTOTAL RECURSOS BASE PRESUPUESTAL (${baseFixedResources.length} Recursos)";"Ley 30/1992 Art. 86 & PIC";"${Math.round(baseAggregates.aforoOficial)}";"${Math.round(baseAggregates.recaudoReal)}";"${Math.round(baseAggregates.mesesProy[0])}";"${Math.round(baseAggregates.mesesProy[1])}";"${Math.round(baseAggregates.mesesProy[2])}";"${Math.round(baseAggregates.mesesProy[3])}";"${Math.round(baseAggregates.proyectadoSepDic)}";"${Math.round(baseAggregates.totalIngresos)}";"${baseAggregates.cumplimientoPct.toFixed(1)}%";"100% Base"
+`;
+
+    // 2. DEMÁS RECURSOS QUE NO HACEN BASE
+    nonBaseFixedResources.forEach(r => {
+      const meta = METADATOS_FIJOS[r.recurso] || { baseLegal: 'Aportes Nación', entidad: 'Gobierno Nacional' };
+      const displayName = r.recurso === '13' && (r.nombre === 'Cooperativas' || r.nombre === '13-Cooperativas')
+        ? 'Excedentes Cooperativas Art.142, Ley 1819 del 2016'
+        : r.nombre;
+      const afo = balanceMetaMap[r.recurso]?.aforo || r.totalIngresos;
+      const m = r.ingresosPorMesProyectado || [0, 0, 0, 0];
+      const mSum = m.reduce((a, b) => a + b, 0);
+      const pct = afo > 0 ? ((r.totalIngresos / afo) * 100).toFixed(1) : '100.0';
+      csv += `"2. SIN BASE PRESUPUESTAL";"R${r.recurso}";"${displayName}";"${meta.baseLegal} - ${meta.entidad}";"${Math.round(afo)}";"${Math.round(r.ingresosReales)}";"${Math.round(m[0])}";"${Math.round(m[1])}";"${Math.round(m[2])}";"${Math.round(m[3])}";"${Math.round(mSum)}";"${Math.round(r.totalIngresos)}";"${pct}%";"100% SIIF"
+`;
+    });
+
+    csv += `"SUBTOTAL 2";"NO HACEN BASE";"SUBTOTAL RECURSOS SIN BASE PRESUPUESTAL (${nonBaseFixedResources.length} Recursos)";"Fondos Especiales, Inversión Art. 87 & Estampillas";"${Math.round(nonBaseAggregates.aforoOficial)}";"${Math.round(nonBaseAggregates.recaudoReal)}";"${Math.round(nonBaseAggregates.mesesProy[0])}";"${Math.round(nonBaseAggregates.mesesProy[1])}";"${Math.round(nonBaseAggregates.mesesProy[2])}";"${Math.round(nonBaseAggregates.mesesProy[3])}";"${Math.round(nonBaseAggregates.proyectadoSepDic)}";"${Math.round(nonBaseAggregates.totalIngresos)}";"${nonBaseAggregates.cumplimientoPct.toFixed(1)}%";"100% SIIF"
+`;
+
+    // GRAN TOTAL
+    csv += `"GRAN TOTAL";"TOTAL FIJOS NACION";"GRAN TOTAL INGRESOS FIJOS DE LA NACION (${filteredFixed.length} Recursos)";"Presupuesto General de la Nación";"${Math.round(fixedAggregates.aforoOficial)}";"${Math.round(fixedAggregates.recaudoReal)}";"${Math.round(fixedAggregates.mesesProy[0])}";"${Math.round(fixedAggregates.mesesProy[1])}";"${Math.round(fixedAggregates.mesesProy[2])}";"${Math.round(fixedAggregates.mesesProy[3])}";"${Math.round(fixedAggregates.proyectadoSepDic)}";"${Math.round(fixedAggregates.totalIngresos)}";"${fixedAggregates.cumplimientoPct.toFixed(1)}%";"100% Certeza"
 `;
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -360,7 +421,18 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
             </div>
           </div>
 
-          <div className="mt-3 bg-blue-500/10 rounded-lg p-2 border border-blue-500/20 flex items-center justify-between text-[11px]">
+          <div className="mt-3 grid grid-cols-2 gap-1.5 pt-2 border-t border-blue-500/10 text-[10px] font-mono">
+            <div className="bg-blue-500/10 rounded-lg p-1.5 border border-blue-500/20">
+              <span className="text-blue-300/80 block">Base Presupuestal:</span>
+              <span className="text-blue-200 font-bold">{formatCurrencyShort(baseAggregates.totalIngresos)}</span>
+            </div>
+            <div className="bg-indigo-500/10 rounded-lg p-1.5 border border-indigo-500/20">
+              <span className="text-indigo-300/80 block">Sin Base (Otros):</span>
+              <span className="text-indigo-200 font-bold">{formatCurrencyShort(nonBaseAggregates.totalIngresos)}</span>
+            </div>
+          </div>
+
+          <div className="mt-2.5 bg-blue-500/10 rounded-lg p-2 border border-blue-500/20 flex items-center justify-between text-[11px]">
             <span className="text-blue-300 font-medium flex items-center gap-1">
               <Lock size={12} className="text-blue-400" /> Certeza de Giro:
             </span>
@@ -583,12 +655,35 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 font-sans">
-                {filteredFixed.map(r => {
+                {/* CATEGORÍA 1: RECURSOS QUE HACEN BASE PRESUPUESTAL */}
+                <tr className="bg-gradient-to-r from-blue-950/90 via-blue-900/40 to-slate-950/80 border-t-2 border-b border-blue-500/50">
+                  <td colSpan={showMonthlyBreakdown ? 13 : 9} className="py-2.5 px-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-blue-400 ring-2 ring-blue-400/40"></span>
+                        <span className="font-bold text-xs font-mono uppercase tracking-wider text-blue-100">
+                          1. Recursos que Hacen Base Presupuestal (R10, R10.1, R10.2, R10.3, R10.4)
+                        </span>
+                        <span className="text-[10px] bg-blue-500/20 text-blue-300 font-mono px-2 py-0.5 rounded-full border border-blue-500/40 font-semibold">
+                          Ley 30/1992 Art. 86 & Fomento a la Calidad PIC
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-blue-300 font-mono font-bold bg-blue-950/70 px-2.5 py-0.5 rounded border border-blue-500/30">
+                        {baseFixedResources.length} Recursos | Subtotal: {formatCurrencyShort(baseAggregates.totalIngresos)}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+
+                {baseFixedResources.map(r => {
                   const meta = METADATOS_FIJOS[r.recurso] || {
                     baseLegal: 'Aportes de la Nación - Presupuesto General',
                     entidad: 'Gobierno Nacional',
                     calendarNote: 'Giro programado en SIIF'
                   };
+                  const displayName = r.recurso === '13' && (r.nombre === 'Cooperativas' || r.nombre === '13-Cooperativas')
+                    ? 'Excedentes Cooperativas Art.142, Ley 1819 del 2016'
+                    : r.nombre;
                   const afo = balanceMetaMap[r.recurso]?.aforo || r.totalIngresos;
                   const m = r.ingresosPorMesProyectado || [0, 0, 0, 0];
                   const mSum = m.reduce((a, b) => a + b, 0);
@@ -601,8 +696,8 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
                         <span className="w-2 h-2 rounded-full bg-blue-400"></span>
                         <span>R{r.recurso}</span>
                       </td>
-                      <td className="p-3 text-slate-200 font-sans font-medium" title={r.nombre}>
-                        {r.nombre}
+                      <td className="p-3 text-slate-200 font-sans font-medium" title={displayName}>
+                        {displayName}
                       </td>
                       <td className="p-3 text-slate-300 font-sans text-[11px]">
                         <div className="font-semibold text-blue-200">{meta.baseLegal}</div>
@@ -638,19 +733,176 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
                       </td>
                       <td className="p-3 text-center font-sans">
                         <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
-                          <Lock size={10} /> 100% Fijo SIIF
+                          <Lock size={10} /> Base Ley 30
                         </span>
                       </td>
                     </tr>
                   );
                 })}
+
+                {/* FILA DE SUBTOTAL CATEGORÍA 1 */}
+                <tr className="border-t-2 border-b-2 border-blue-500/30 font-bold text-xs bg-blue-950/50 font-mono text-blue-100">
+                  <td colSpan={3} className="p-3 uppercase font-sans tracking-wide">
+                    <div className="flex items-center gap-1.5 pl-2 text-blue-300">
+                      <span className="text-blue-400 font-black">↳</span>
+                      <span>SUBTOTAL RECURSOS BASE PRESUPUESTAL ({baseFixedResources.length} Recursos)</span>
+                    </div>
+                  </td>
+                  <td className="p-3 text-right text-slate-300 font-semibold">
+                    {formatCurrencyShort(baseAggregates.aforoOficial)}
+                  </td>
+                  <td className="p-3 text-right text-emerald-400 font-semibold">
+                    {formatCurrencyShort(baseAggregates.recaudoReal)}
+                  </td>
+                  {showMonthlyBreakdown && (
+                    <>
+                      <td className="p-2.5 text-right text-blue-300 font-mono bg-blue-950/40">{formatCurrencyShort(baseAggregates.mesesProy[0])}</td>
+                      <td className="p-2.5 text-right text-blue-300 font-mono bg-blue-950/40">{formatCurrencyShort(baseAggregates.mesesProy[1])}</td>
+                      <td className="p-2.5 text-right text-blue-300 font-mono bg-blue-950/40">{formatCurrencyShort(baseAggregates.mesesProy[2])}</td>
+                      <td className="p-2.5 text-right text-blue-300 font-mono bg-blue-950/40">{formatCurrencyShort(baseAggregates.mesesProy[3])}</td>
+                    </>
+                  )}
+                  <td className="p-3 text-right text-sky-300 font-bold bg-sky-500/10">
+                    {formatCurrencyShort(baseAggregates.proyectadoSepDic)}
+                  </td>
+                  <td className="p-3 text-right text-emerald-300 font-black text-sm bg-emerald-500/15">
+                    {formatCurrencyShort(baseAggregates.totalIngresos)}
+                  </td>
+                  <td className="p-3 text-center text-blue-300 font-bold">
+                    {baseAggregates.cumplimientoPct.toFixed(1)}%
+                  </td>
+                  <td className="p-3 text-center text-[10px] text-blue-300 font-sans font-semibold">
+                    Base Legal
+                  </td>
+                </tr>
+
+                {/* CATEGORÍA 2: DEMÁS RECURSOS QUE NO HACEN BASE PRESUPUESTAL */}
+                <tr className="bg-gradient-to-r from-indigo-950/90 via-slate-900/60 to-slate-950/80 border-t-2 border-b border-indigo-500/50">
+                  <td colSpan={showMonthlyBreakdown ? 13 : 9} className="py-2.5 px-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 ring-2 ring-indigo-400/40"></span>
+                        <span className="font-bold text-xs font-mono uppercase tracking-wider text-indigo-100">
+                          2. Demás Recursos que NO Hacen Base Presupuestal
+                        </span>
+                        <span className="text-[10px] bg-indigo-500/20 text-indigo-300 font-mono px-2 py-0.5 rounded-full border border-indigo-500/40 font-semibold">
+                          Fondos Especiales, Inversión Art. 87 & Estampillas
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-indigo-300 font-mono font-bold bg-indigo-950/70 px-2.5 py-0.5 rounded border border-indigo-500/30">
+                        {nonBaseFixedResources.length} Recursos | Subtotal: {formatCurrencyShort(nonBaseAggregates.totalIngresos)}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+
+                {nonBaseFixedResources.map(r => {
+                  const meta = METADATOS_FIJOS[r.recurso] || {
+                    baseLegal: 'Aportes de la Nación - Presupuesto General',
+                    entidad: 'Gobierno Nacional',
+                    calendarNote: 'Giro programado en SIIF'
+                  };
+                  const displayName = r.recurso === '13' && (r.nombre === 'Cooperativas' || r.nombre === '13-Cooperativas')
+                    ? 'Excedentes Cooperativas Art.142, Ley 1819 del 2016'
+                    : r.nombre;
+                  const afo = balanceMetaMap[r.recurso]?.aforo || r.totalIngresos;
+                  const m = r.ingresosPorMesProyectado || [0, 0, 0, 0];
+                  const mSum = m.reduce((a, b) => a + b, 0);
+                  const pct = afo > 0 ? (r.totalIngresos / afo) * 100 : 100;
+                  const avanceRecaudo = r.totalIngresos > 0 ? (r.ingresosReales / r.totalIngresos) * 100 : 0;
+
+                  return (
+                    <tr key={r.recurso} className="hover:bg-indigo-500/5 transition-colors font-mono">
+                      <td className="p-3 font-bold text-indigo-300 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
+                        <span>R{r.recurso}</span>
+                      </td>
+                      <td className="p-3 text-slate-200 font-sans font-medium" title={displayName}>
+                        {displayName}
+                      </td>
+                      <td className="p-3 text-slate-300 font-sans text-[11px]">
+                        <div className="font-semibold text-indigo-200">{meta.baseLegal}</div>
+                        <div className="text-[10px] text-slate-400">{meta.entidad}</div>
+                      </td>
+                      <td className="p-3 text-right text-slate-400">
+                        {formatCurrencyShort(afo)}
+                      </td>
+                      <td className="p-3 text-right text-emerald-400 font-semibold">
+                        {formatCurrencyShort(r.ingresosReales)}
+                        <span className="text-[9px] text-emerald-400/80 block">({avanceRecaudo.toFixed(0)}%)</span>
+                      </td>
+                      {showMonthlyBreakdown && (
+                        <>
+                          <td className="p-2.5 text-right text-indigo-300/90 text-[11px] bg-indigo-950/20">{formatCurrencyShort(m[0])}</td>
+                          <td className="p-2.5 text-right text-indigo-300/90 text-[11px] bg-indigo-950/20">{formatCurrencyShort(m[1])}</td>
+                          <td className="p-2.5 text-right text-indigo-300/90 text-[11px] bg-indigo-950/20">{formatCurrencyShort(m[2])}</td>
+                          <td className="p-2.5 text-right text-indigo-300/90 text-[11px] bg-indigo-950/20">{formatCurrencyShort(m[3])}</td>
+                        </>
+                      )}
+                      <td className="p-3 text-right text-sky-300 font-bold bg-sky-500/5">
+                        {formatCurrencyShort(mSum)}
+                      </td>
+                      <td className="p-3 text-right font-black text-emerald-300 text-sm bg-emerald-500/10">
+                        {formatCurrencyShort(r.totalIngresos)}
+                      </td>
+                      <td className="p-3 text-center">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          pct >= 99.5 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300'
+                        }`}>
+                          {pct.toFixed(0)}%
+                        </span>
+                      </td>
+                      <td className="p-3 text-center font-sans">
+                        <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+                          <Lock size={10} /> 100% SIIF
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {/* FILA DE SUBTOTAL CATEGORÍA 2 */}
+                <tr className="border-t-2 border-b-2 border-indigo-500/30 font-bold text-xs bg-indigo-950/50 font-mono text-indigo-100">
+                  <td colSpan={3} className="p-3 uppercase font-sans tracking-wide">
+                    <div className="flex items-center gap-1.5 pl-2 text-indigo-300">
+                      <span className="text-indigo-400 font-black">↳</span>
+                      <span>SUBTOTAL RECURSOS SIN BASE PRESUPUESTAL ({nonBaseFixedResources.length} Recursos)</span>
+                    </div>
+                  </td>
+                  <td className="p-3 text-right text-slate-300 font-semibold">
+                    {formatCurrencyShort(nonBaseAggregates.aforoOficial)}
+                  </td>
+                  <td className="p-3 text-right text-emerald-400 font-semibold">
+                    {formatCurrencyShort(nonBaseAggregates.recaudoReal)}
+                  </td>
+                  {showMonthlyBreakdown && (
+                    <>
+                      <td className="p-2.5 text-right text-indigo-300 font-mono bg-indigo-950/40">{formatCurrencyShort(nonBaseAggregates.mesesProy[0])}</td>
+                      <td className="p-2.5 text-right text-indigo-300 font-mono bg-indigo-950/40">{formatCurrencyShort(nonBaseAggregates.mesesProy[1])}</td>
+                      <td className="p-2.5 text-right text-indigo-300 font-mono bg-indigo-950/40">{formatCurrencyShort(nonBaseAggregates.mesesProy[2])}</td>
+                      <td className="p-2.5 text-right text-indigo-300 font-mono bg-indigo-950/40">{formatCurrencyShort(nonBaseAggregates.mesesProy[3])}</td>
+                    </>
+                  )}
+                  <td className="p-3 text-right text-sky-300 font-bold bg-sky-500/10">
+                    {formatCurrencyShort(nonBaseAggregates.proyectadoSepDic)}
+                  </td>
+                  <td className="p-3 text-right text-emerald-300 font-black text-sm bg-emerald-500/15">
+                    {formatCurrencyShort(nonBaseAggregates.totalIngresos)}
+                  </td>
+                  <td className="p-3 text-center text-indigo-300 font-bold">
+                    {nonBaseAggregates.cumplimientoPct.toFixed(1)}%
+                  </td>
+                  <td className="p-3 text-center text-[10px] text-indigo-300 font-sans font-semibold">
+                    No Base
+                  </td>
+                </tr>
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-blue-500/40 font-bold text-xs bg-blue-950/40 font-mono">
+                <tr className="border-t-2 border-blue-500/40 font-bold text-xs bg-blue-950/60 font-mono">
                   <td colSpan={3} className="p-3 text-white uppercase font-sans tracking-wide">
-                    TOTAL INGRESOS FIJOS DE LA NACIÓN ({filteredFixed.length} Recursos)
+                    GRAN TOTAL INGRESOS FIJOS DE LA NACIÓN ({filteredFixed.length} Recursos)
                   </td>
-                  <td className="p-3 text-right text-slate-300">
+                  <td className="p-3 text-right text-slate-200">
                     {formatCurrencyShort(fixedAggregates.aforoOficial)}
                   </td>
                   <td className="p-3 text-right text-emerald-400">
@@ -658,16 +910,16 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
                   </td>
                   {showMonthlyBreakdown && (
                     <>
-                      <td className="p-2.5 text-right text-blue-300 font-mono">{formatCurrencyShort(fixedAggregates.mesesProy[0])}</td>
-                      <td className="p-2.5 text-right text-blue-300 font-mono">{formatCurrencyShort(fixedAggregates.mesesProy[1])}</td>
-                      <td className="p-2.5 text-right text-blue-300 font-mono">{formatCurrencyShort(fixedAggregates.mesesProy[2])}</td>
-                      <td className="p-2.5 text-right text-blue-300 font-mono">{formatCurrencyShort(fixedAggregates.mesesProy[3])}</td>
+                      <td className="p-2.5 text-right text-blue-300 font-mono bg-blue-950/60">{formatCurrencyShort(fixedAggregates.mesesProy[0])}</td>
+                      <td className="p-2.5 text-right text-blue-300 font-mono bg-blue-950/60">{formatCurrencyShort(fixedAggregates.mesesProy[1])}</td>
+                      <td className="p-2.5 text-right text-blue-300 font-mono bg-blue-950/60">{formatCurrencyShort(fixedAggregates.mesesProy[2])}</td>
+                      <td className="p-2.5 text-right text-blue-300 font-mono bg-blue-950/60">{formatCurrencyShort(fixedAggregates.mesesProy[3])}</td>
                     </>
                   )}
-                  <td className="p-3 text-right text-sky-300 font-black bg-sky-500/10">
+                  <td className="p-3 text-right text-sky-300 font-black bg-sky-500/15">
                     {formatCurrencyShort(fixedAggregates.proyectadoSepDic)}
                   </td>
-                  <td className="p-3 text-right text-emerald-300 font-black text-sm bg-emerald-500/20">
+                  <td className="p-3 text-right text-emerald-300 font-black text-sm bg-emerald-500/25">
                     {formatCurrency(fixedAggregates.totalIngresos)}
                   </td>
                   <td className="p-3 text-center text-emerald-300">

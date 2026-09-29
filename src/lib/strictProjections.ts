@@ -151,7 +151,7 @@ export interface StrictProjectionResult {
   suggestions: AISuggestion[];
 }
 
-const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18'];
+const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.4', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18'];
 
 export const GIROS_SIIF_PROYECTADOS: Record<string, number[]> = {
   '10':   [20695590222, 23508369040, 23456386438, 20695555423],
@@ -159,6 +159,7 @@ export const GIROS_SIIF_PROYECTADOS: Record<string, number[]> = {
   '10.1': [0, 2165253520, 0, 0],
   '10.2': [0, 0, 0, 0],
   '10.3': [0, 0, 2229170511, 0],
+  '10.4': [0, 0, 0, 0],
   '10.5': [0, 0, 0, 0],
   '13':   [0, 0, 0, 0],
   '14':   [0, 0, 0, 0],
