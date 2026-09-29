@@ -29,7 +29,7 @@ const formatCurrencyShort = (value: number) => {
 };
 
 export const NACION_FIXED_CODES = ['10', '10.0', '10.1', '10.2', '10.3', '10.4', '10.5', '12', '13', '14', '16', '16.0', '16.1', '16.2', '17', '18'];
-export const BASE_PRESUPUESTAL_CODES = ['10', '10.0', '10.1', '10.2', '10.3', '10.4'];
+export const BASE_PRESUPUESTAL_CODES = ['10', '10.0', '10.1', '10.2', '10.3', '10.4', '10.5'];
 
 export interface CashFlowIncomeFixedVsProjectedProps {
   resources: StrictResourceProjection[];
@@ -201,7 +201,7 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
   // Partición en 1. Recursos Base Presupuestal y 2. Demás Recursos que No Hacen Base
   const baseFixedResources = useMemo(() => {
     const list = filteredFixed.filter(r => BASE_PRESUPUESTAL_CODES.includes(r.recurso));
-    const sortOrder = ['10', '10.0', '10.1', '10.2', '10.3', '10.4'];
+    const sortOrder = ['10', '10.0', '10.1', '10.2', '10.3', '10.4', '10.5'];
     return [...list].sort((a, b) => {
       const ia = sortOrder.indexOf(a.recurso);
       const ib = sortOrder.indexOf(b.recurso);
@@ -670,10 +670,10 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-blue-400 ring-2 ring-blue-400/40"></span>
                         <span className="font-bold text-xs font-mono uppercase tracking-wider text-blue-100">
-                          1. Recursos que Hacen Base Presupuestal (R10, R10.1, R10.2, R10.3, R10.4)
+                          1. Recursos que Hacen Base Presupuestal (R10, R10.1, R10.2, R10.3, R10.4, R10.5)
                         </span>
                         <span className="text-[10px] bg-blue-500/20 text-blue-300 font-mono px-2 py-0.5 rounded-full border border-blue-500/40 font-semibold">
-                          Ley 30/1992 Art. 86 & Fomento a la Calidad PIC
+                          Ley 30/1992 Art. 86, Fomento Calidad PIC & Gratuidad Ley 2307
                         </span>
                       </div>
                       <span className="text-[11px] text-blue-300 font-mono font-bold bg-blue-950/70 px-2.5 py-0.5 rounded border border-blue-500/30">

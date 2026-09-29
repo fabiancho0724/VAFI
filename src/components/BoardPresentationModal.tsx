@@ -155,7 +155,7 @@ export function BoardPresentationModal({
   // Partición en 1. Recursos Base Presupuestal y 2. Demás Recursos que No Hacen Base
   const baseFixedResources = useMemo(() => {
     const list = fixedResources.filter(r => BASE_PRESUPUESTAL_CODES.includes(r.recurso));
-    const sortOrder = ['10', '10.0', '10.1', '10.2', '10.3', '10.4'];
+    const sortOrder = ['10', '10.0', '10.1', '10.2', '10.3', '10.4', '10.5'];
     return [...list].sort((a, b) => {
       const ia = sortOrder.indexOf(a.recurso);
       const ib = sortOrder.indexOf(b.recurso);
@@ -907,10 +907,10 @@ export function BoardPresentationModal({
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-blue-400"></span>
                       <span className="font-bold text-[10px] font-mono uppercase tracking-wider text-blue-100">
-                        1. Recursos que Hacen Base Presupuestal (R10, R10.1, R10.2, R10.3, R10.4)
+                        1. Recursos que Hacen Base Presupuestal (R10, R10.1, R10.2, R10.3, R10.4, R10.5)
                       </span>
                       <span className="text-[9px] bg-blue-500/20 text-blue-300 font-mono px-1.5 py-0.2 rounded border border-blue-500/30">
-                        Ley 30/1992 Art. 86 & PIC
+                        Ley 30/1992 Art. 86, PIC & Gratuidad Ley 2307
                       </span>
                     </div>
                     <span className="text-[10px] text-blue-300 font-mono font-bold">
