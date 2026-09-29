@@ -10,14 +10,22 @@ import { StrictResourceProjection, StrictTotals, GIROS_SIIF_PROYECTADOS } from '
 import { RECURSOS_FIJOS_RESOLUCION } from '../lib/constants';
 import { BoardPresentationModal } from './BoardPresentationModal';
 
-const formatCurrency = (value: number) => 
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+const formatCurrency = (value: number) => {
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: maxDec })} M`;
+};
 
 const formatCurrencyShort = (value: number) => {
-  if (Math.abs(value) >= 1e12) return `$ ${(value / 1e12).toFixed(2)} B`;
-  if (Math.abs(value) >= 1e9) return `$ ${(value / 1e9).toFixed(2)} MM`;
-  if (Math.abs(value) >= 1e6) return `$ ${(value / 1e6).toFixed(1)} M`;
-  return `$ ${value.toLocaleString('es-CO')}`;
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: maxDec })} M`;
 };
 
 export const NACION_FIXED_CODES = ['10', '10.0', '10.1', '10.2', '10.3', '10.4', '10.5', '12', '13', '14', '16', '16.0', '16.1', '16.2', '17', '18'];
@@ -338,7 +346,7 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
             Flujo de Ingresos: Fijos de la Nación vs. Proyectados
           </h2>
           <p className="text-xs text-slate-300 mt-1 max-w-3xl">
-            Diferenciación analítica entre los <strong>recaudos fijos garantizados por giros de la Nación</strong> (con respaldo legal en SIIF) y los <strong>ingresos proyectados de gestión propia y convenios</strong> (sujetos a estacionalidad académica y recaudo).
+            Diferenciación analítica entre los <strong>recaudos fijos garantizados por giros de la Nación</strong> (con respaldo legal en SIIF) y los <strong>ingresos proyectados de gestión propia y convenios</strong> (sujetos a estacionalidad académica y recaudo). <span className="text-amber-300 font-mono font-medium">(Cifras expresadas en millones de pesos - $ M)</span>
           </p>
         </div>
 

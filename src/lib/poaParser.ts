@@ -104,20 +104,21 @@ export function parseColombianCurrency(val: any): number {
 }
 
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0
-  }).format(value);
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: maxDec })} M`;
 }
 
 export function formatCurrencyShort(value: number): string {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(2)}B`;
-  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}MM`;
-  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(1)}M`;
-  return `${sign}$${abs.toLocaleString('es-CO')}`;
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: maxDec })} M`;
 }
 
 export function formatPercent(value: number): string {

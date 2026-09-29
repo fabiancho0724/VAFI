@@ -72,21 +72,24 @@ export interface R20UnitForecast {
   participacionPct: number;
 }
 
-// Formateador de moneda colombiana completo
+// Formateador de moneda en Millones de Pesos Colombianos ($ M)
 export function formatCurrencyCOP(val: number): string {
-  if (isNaN(val)) return '$0';
-  return '$ ' + Math.round(val).toLocaleString('es-CO');
+  if (val === undefined || val === null || isNaN(val) || val === 0) return '$ 0 M';
+  const inM = val / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: maxDec })} M`;
 }
 
-// Formateador de moneda abreviado en Millones / Billones
+// Formateador de moneda abreviado en Millones ($ M)
 export function formatCurrencyShortCOP(val: number): string {
-  if (isNaN(val)) return '$0';
-  const abs = Math.abs(val);
-  const sign = val < 0 ? '-' : '';
-  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(2)}B`;
-  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}M`;
-  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(1)}M`;
-  return `${sign}$${abs.toLocaleString('es-CO')}`;
+  if (val === undefined || val === null || isNaN(val) || val === 0) return '$ 0 M';
+  const inM = val / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: maxDec })} M`;
 }
 
 // Carga asíncrona del CSV con fallback de datos estáticos

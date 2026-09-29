@@ -10,13 +10,22 @@ import {
   AllocationAlert 
 } from '../lib/resourceAllocationEngine';
 
-const formatCurrency = (value: number) => 
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+const formatCurrency = (value: number) => {
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: maxDec })} M`;
+};
 
 const formatCurrencyShort = (value: number) => {
-  if (Math.abs(value) >= 1e9) return `$ ${(value / 1e9).toFixed(2)} MM`;
-  if (Math.abs(value) >= 1e6) return `$ ${(value / 1e6).toFixed(1)} M`;
-  return `$ ${value.toLocaleString('es-CO')}`;
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: maxDec })} M`;
 };
 
 interface Props {

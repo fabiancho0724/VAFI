@@ -8,19 +8,21 @@ const SPECIFIC_RESOURCES = Array.from(new Set(budgetData.filter(d => d.category 
 const MAIN_CATEGORIES = ['Recursos Nación', 'Recursos Propios'] as const;
 
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: maxDec })} M`;
 }
 
 function formatCurrencyShort(value: number) {
-  if (value >= 1e12) return `$${(value / 1e12).toFixed(1)}B`;
-  if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}MM`;
-  if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
-  return `$${value}`;
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: maxDec })} M`;
 }
 
 const YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026];

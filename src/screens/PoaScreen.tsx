@@ -719,21 +719,21 @@ export function PoaScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
                 <BarChart3 size={16} className="text-[#ffcc29]" />
                 Programado vs Solicitado vs Disponible (Top 8 Recursos)
               </h4>
-              <p className="text-xs text-slate-400">Comparativa en miles de millones de pesos ($MM)</p>
+              <p className="text-xs text-slate-400">Comparativa en millones de pesos ($ M)</p>
 
               <div className="h-80 w-full pt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={recursoSummary.slice(0, 8).map(r => ({
                     name: `R${r.key}`,
-                    Programado: r.programado / 1e9,
-                    Solicitudes: r.solicitudes / 1e9,
-                    Disponible: r.disponible / 1e9
+                    Programado: r.programado / 1e6,
+                    Solicitudes: r.solicitudes / 1e6,
+                    Disponible: r.disponible / 1e6
                   }))}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} />
-                    <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${v}B`} />
+                    <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
                     <RechartsTooltip 
-                      formatter={(val: any) => [`$${Number(val).toFixed(2)}B COP`, '']}
+                      formatter={(val: any) => [`$${Number(val).toLocaleString('es-CO', {maximumFractionDigits: 1})}M COP`, '']}
                       contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '11px' }}
                     />
                     <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
@@ -751,7 +751,7 @@ export function PoaScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
                 <Building2 size={16} className="text-emerald-400" />
                 Top 8 Unidades con Mayor Saldo Disponible
               </h4>
-              <p className="text-xs text-slate-400">Concentración de recursos libres por facultad / seccional</p>
+              <p className="text-xs text-slate-400">Concentración de recursos libres por facultad / seccional (en millones - $ M)</p>
 
               <div className="h-80 w-full pt-4">
                 <ResponsiveContainer width="100%" height="100%">
@@ -759,15 +759,15 @@ export function PoaScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
                     layout="vertical"
                     data={unidadSummary.slice(0, 8).map(u => ({
                       name: u.name.length > 25 ? u.name.substring(0, 25) + '...' : u.name,
-                      disponible: u.disponible / 1e9,
+                      disponible: u.disponible / 1e6,
                       fullName: u.name
                     }))}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
-                    <XAxis type="number" stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${v}B`} />
+                    <XAxis type="number" stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
                     <YAxis type="category" dataKey="name" stroke="#94a3b8" fontSize={10} width={130} />
                     <RechartsTooltip 
-                      formatter={(val: any) => [`$${Number(val).toFixed(2)}B COP`, 'Disponible']}
+                      formatter={(val: any) => [`$${Number(val).toLocaleString('es-CO', {maximumFractionDigits: 1})}M COP`, 'Disponible']}
                       contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '11px' }}
                     />
                     <Bar dataKey="disponible" fill="#4ade80" radius={[0, 4, 4, 0]} />

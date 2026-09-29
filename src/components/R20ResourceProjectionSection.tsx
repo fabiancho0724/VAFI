@@ -1086,7 +1086,7 @@ export function R20ResourceProjectionSection() {
                     stroke="#94a3b8" 
                     tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
                     tickLine={{ stroke: '#ffffff20' }}
-                    tickFormatter={(val) => `$${(val / 1e9).toFixed(0)}B`}
+                    tickFormatter={(val) => `$${(val / 1e6).toLocaleString('es-CO')}M`}
                     domain={[0, 420000000000]}
                   />
 
@@ -3920,7 +3920,7 @@ export function R20ResourceProjectionSection() {
                 {formatCurrencyShortCOP(matrixSummary.total2026)}
               </div>
               <p className="text-[11px] text-on-surface-variant mt-2 font-mono">
-                COP: <strong className="text-white">{formatCurrencyCOP(matrixSummary.total2026)}</strong>
+                Total: <strong className="text-white">{formatCurrencyCOP(matrixSummary.total2026)}</strong>
               </p>
             </div>
 
@@ -4884,9 +4884,9 @@ export function R20ResourceProjectionSection() {
                     <th className="p-3.5 font-semibold text-sky-300 min-w-[170px]">Recurso</th>
                     <th className="p-3.5 font-semibold text-right text-on-surface-variant whitespace-nowrap">2024</th>
                     <th className="p-3.5 font-semibold text-right text-on-surface-variant whitespace-nowrap">2025</th>
-                    <th className="p-3.5 font-semibold text-right text-sky-300 whitespace-nowrap">Base 2026</th>
-                    <th className="p-3.5 font-semibold text-right text-emerald-300 whitespace-nowrap">Proy. 2027 ($ COP)</th>
-                    <th className="p-3.5 font-semibold text-right text-white whitespace-nowrap">Proy. 2027 ($M)</th>
+                    <th className="p-3.5 font-semibold text-right text-sky-300 whitespace-nowrap">Base 2026 ($ M)</th>
+                    <th className="p-3.5 font-semibold text-right text-emerald-300 whitespace-nowrap">Proy. 2027 ($ M Det.)</th>
+                    <th className="p-3.5 font-semibold text-right text-white whitespace-nowrap">Proy. 2027 ($ M)</th>
                     <th className="p-3.5 font-semibold text-center text-amber-300 whitespace-nowrap">Var %</th>
                     <th className="p-3.5 font-semibold text-center text-purple-300 whitespace-nowrap">Part %</th>
                     <th className="p-3.5 font-semibold text-left text-white min-w-[230px]">Modelo / Elección de Valor</th>

@@ -12,14 +12,22 @@ import {
 import { StrictResourceProjection, StrictTotals } from '../lib/strictProjections';
 import { NACION_FIXED_CODES, BASE_PRESUPUESTAL_CODES } from './CashFlowIncomeFixedVsProjected';
 
-const formatCurrency = (value: number) => 
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+const formatCurrency = (value: number) => {
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: maxDec })} M`;
+};
 
 const formatCurrencyShort = (value: number) => {
-  if (Math.abs(value) >= 1e12) return `$ ${(value / 1e12).toFixed(2)} B`;
-  if (Math.abs(value) >= 1e9) return `$ ${(value / 1e9).toFixed(2)} MM`;
-  if (Math.abs(value) >= 1e6) return `$ ${(value / 1e6).toFixed(1)} M`;
-  return `$ ${value.toLocaleString('es-CO')}`;
+  if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
+  const inM = value / 1e6;
+  const abs = Math.abs(inM);
+  const sign = inM < 0 ? '-' : '';
+  const maxDec = abs < 1 && abs > 0 ? 2 : 1;
+  return `${sign}$ ${abs.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: maxDec })} M`;
 };
 
 interface BoardPresentationModalProps {
@@ -211,15 +219,15 @@ export function BoardPresentationModal({
   const chartBarData = [
     {
       categoria: 'Fijos Nación',
-      Recaudado: Math.round(fixedAggregates.recaudoReal / 1e9),
-      'Pendiente Sep-Dic': Math.round(fixedAggregates.proyectadoSepDic / 1e9),
-      Total: Math.round(fixedAggregates.totalIngresos / 1e9)
+      Recaudado: Math.round(fixedAggregates.recaudoReal / 1e6),
+      'Pendiente Sep-Dic': Math.round(fixedAggregates.proyectadoSepDic / 1e6),
+      Total: Math.round(fixedAggregates.totalIngresos / 1e6)
     },
     {
       categoria: 'Proyectados',
-      Recaudado: Math.round(projectedAggregates.recaudoReal / 1e9),
-      'Pendiente Sep-Dic': Math.round(projectedAggregates.proyectadoSepDic / 1e9),
-      Total: Math.round(projectedAggregates.totalIngresos / 1e9)
+      Recaudado: Math.round(projectedAggregates.recaudoReal / 1e6),
+      'Pendiente Sep-Dic': Math.round(projectedAggregates.proyectadoSepDic / 1e6),
+      Total: Math.round(projectedAggregates.totalIngresos / 1e6)
     }
   ];
 
@@ -737,15 +745,15 @@ export function BoardPresentationModal({
           {/* GRÁFICO DE BARRAS RECAUDADO VS PENDIENTE (8 COLS) */}
           <div className="lg:col-span-8 p-5 rounded-2xl bg-slate-900/80 border border-white/10">
             <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono flex items-center gap-1.5">
-              <BarChart3 size={14} className="text-emerald-400" /> Ejecución a Corte (31/Ago) vs. Saldo Sep-Dic (Miles de Millones COP)
+              <BarChart3 size={14} className="text-emerald-400" /> Ejecución a Corte (31/Ago) vs. Saldo Sep-Dic (Millones de Pesos - $ M)
             </h4>
             <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartBarData} margin={{ top: 15, right: 30, left: 10, bottom: 5 }}>
                   <XAxis dataKey="categoria" stroke="#94a3b8" fontSize={11} />
-                  <YAxis stroke="#94a3b8" fontSize={10} unit=" MM" />
+                  <YAxis stroke="#94a3b8" fontSize={10} unit=" M" tickFormatter={(v) => `$${v.toLocaleString('es-CO')}`} />
                   <Tooltip 
-                    formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} MM COP`, '']}
+                    formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} M COP`, '']}
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '11px' }}
                   />
                   <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
