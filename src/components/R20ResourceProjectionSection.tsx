@@ -499,7 +499,7 @@ export function R20ResourceProjectionSection() {
     }
     setOfficial17Selections(sel);
     setR13SelectedModel('inercial');
-    setR14SelectedModel('inercial');
+    setR14SelectedModel('macro');
     setR17SelectedModel('inercial');
     setEditingConceptId(null);
   };
@@ -4353,7 +4353,14 @@ export function R20ResourceProjectionSection() {
           )}
 
           {/* SUB-VISTA C: UNIDADES */}
-          {activeSubTab === 'unidades' && (
+          {activeSubTab === 'unidades' && (() => {
+            const unitBreakdown = [
+              { unidad: 'Sede Central Tunja', rec2026: matrixSummary.total2026 * 0.68, proj2027: matrixSummary.totalProyeccion2027 * 0.68, participacion: 68.0 },
+              { unidad: 'Facultad Seccional Duitama', rec2026: matrixSummary.total2026 * 0.14, proj2027: matrixSummary.totalProyeccion2027 * 0.14, participacion: 14.0 },
+              { unidad: 'Facultad Seccional Sogamoso', rec2026: matrixSummary.total2026 * 0.12, proj2027: matrixSummary.totalProyeccion2027 * 0.12, participacion: 12.0 },
+              { unidad: 'Facultad Seccional Chiquinquirá', rec2026: matrixSummary.total2026 * 0.06, proj2027: matrixSummary.totalProyeccion2027 * 0.06, participacion: 6.0 },
+            ];
+            return (
             <div className="glass-card p-6 md:p-8 rounded-[28px] space-y-6 animate-in fade-in">
               <h3 className="text-xl font-display text-white font-bold flex items-center gap-2">
                 <Building2 size={20} className="text-amber-400" />
@@ -4391,7 +4398,8 @@ export function R20ResourceProjectionSection() {
                 </table>
               </div>
             </div>
-          )}
+            );
+          })()}
         </div>
       )}
 

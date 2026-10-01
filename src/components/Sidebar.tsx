@@ -14,7 +14,8 @@ import {
   Bot,
   Coins,
   Award,
-  Layers
+  Layers,
+  Clock
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -50,6 +51,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
          screen === 'historical' ? 'Histórico' :
          screen === 'nomina' ? 'Nómina' :
          screen === 'posgrados' ? 'Posgrados' :
+         screen === 'catedra' ? 'Horas Cátedra' :
          screen === 'predictive' ? 'Proyección Financiera' :
          screen === 'cashflow' ? 'Flujo de Caja' :
          screen === 'informe-gerencial' ? 'Informe Gerencial' :
@@ -92,6 +94,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
         <IconWrapper icon={LineChart} screen="historical" />
         <IconWrapper icon={Users} screen="nomina" />
         <IconWrapper icon={GraduationCap} screen="posgrados" />
+        <IconWrapper icon={Clock} screen="catedra" />
         <IconWrapper icon={BarChart3} screen="predictive" />
         <IconWrapper icon={Coins} screen="cashflow" />
         <IconWrapper icon={Award} screen="informe-gerencial" />

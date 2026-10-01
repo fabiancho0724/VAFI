@@ -11,6 +11,7 @@ import { RepositoryScreen } from './screens/RepositoryScreen';
 import { ExportReportScreen } from './screens/ExportReportScreen';
 import { NominaScreen } from './screens/NominaScreen';
 import { PosgradosScreen } from './screens/PosgradosScreen';
+import { HorasCatedraScreen } from './screens/HorasCatedraScreen';
 import { CoverScreen } from './screens/CoverScreen';
 import { AssistantScreen } from './screens/AssistantScreen';
 import { CashFlowScreen } from './screens/CashFlowScreen';
@@ -91,6 +92,7 @@ export default function App() {
         {currentScreen === 'reports' && <ExportReportScreen onNavigate={handleNavigate} />}
         {currentScreen === 'nomina' && <NominaScreen onNavigate={handleNavigate} />}
         {currentScreen === 'posgrados' && <PosgradosScreen onNavigate={handleNavigate} />}
+        {currentScreen === 'catedra' && <HorasCatedraScreen onNavigate={handleNavigate} />}
         {currentScreen === 'assistant' && <AssistantScreen />}
       </Layout>
     </ErrorBoundary>
