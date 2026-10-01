@@ -22,7 +22,14 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  BarChart3
+  BarChart3,
+  Timer,
+  CheckSquare,
+  RotateCw,
+  Building2,
+  UserCheck,
+  Coins,
+  ShieldAlert
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -33,10 +40,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip as RechartsTooltip,
-  Legend,
-  PieChart,
-  Pie,
-  Cell
+  Legend
 } from 'recharts';
 
 // --- Formateadores oficiales ---
@@ -177,8 +181,100 @@ const VALORES_PUNTO = [
   { vigencia: 2026, norma: 'Decreto 0318 de 2026', valor: 23924, variacion: '+7.00%' }
 ];
 
+// Tarjetas Didácticas (Flashcards) de Control Operativo
+const FLASHCARDS = [
+  {
+    id: 1,
+    titulo: 'Hora Cátedra vs. Hora Reloj',
+    pregunta: '¿Cuál es la diferencia entre hora cátedra y hora reloj?',
+    respuesta:
+      'La hora reloj son 60 minutos reales continuos. La hora cátedra (o académica) es una unidad pedagógica que suele durar entre 45 y 50 minutos según el estatuto curricular de la institución. Para el pago debe parametrizarse con exactitud el factor de conversión para retribuir las horas lectivas efectivamente dictadas.',
+    icono: Timer,
+    categoria: 'Unidades de Tiempo'
+  },
+  {
+    id: 2,
+    titulo: 'Sentencia C-006-96 y Prestaciones',
+    pregunta: '¿Por qué es ilegal pagar a un docente de cátedra por honorarios?',
+    respuesta:
+      'La Corte Constitucional (Sentencia C-006-96) declaró que la labor de los docentes de cátedra subordinados configura una auténtica relación laboral. Por ende, la universidad está legalmente obligada a pagar todas las prestaciones sociales (vacaciones, cesantías, intereses, prima de navidad y prima de servicios) de forma proporcional al tiempo laborado, so pena de demandas millonarias.',
+    icono: ShieldAlert,
+    categoria: 'Jurisprudencia'
+  },
+  {
+    id: 3,
+    titulo: 'Divisor 171.2 vs. 240 Horas',
+    pregunta: '¿Por qué el divisor de 171.2 horas mitiga el riesgo de litigio?',
+    respuesta:
+      'El divisor de 171.2 horas surge de una jornada docente semanal de 40 horas (40 × 4.28 semanas/mes). Reconoce que el docente no puede laborar 240 horas mensuales de docencia directa. Al calcular la tarifa mínima legal con 171.2 ($81.820/h en 2026 con 8 SMMLV), se cumple la convención constitucional y se blindan judicialmente los contratos.',
+    icono: Scale,
+    categoria: 'Modelos Financieros'
+  },
+  {
+    id: 4,
+    titulo: 'Límites de Contratación Semanal',
+    pregunta: '¿Cuáles son los topes de vinculación en cátedra interna y externa?',
+    respuesta:
+      'En Cátedra Interna (Acuerdo 015 de 2009 UPTC, Art. 2): Máximo 1 asignatura y hasta 4 horas semanales, fuera de jornada ordinaria y sin descarga académica. En Cátedra Externa: El estándar institucional limita a máximo 19 horas semanales para evitar que se desnaturalice el régimen de cátedra a tiempo completo.',
+    icono: UserCheck,
+    categoria: 'Límites Operativos'
+  }
+];
+
+// Preguntas del Cuestionario de Evaluación
+const QUIZ_QUESTIONS = [
+  {
+    id: 1,
+    pregunta: '¿Cuál fue el pronunciamiento hito de la Sentencia C-006-96 sobre los docentes de hora cátedra?',
+    opciones: [
+      { texto: 'Permitió contratarlos legalmente mediante orden de prestación de servicios sin prestaciones.', correcta: false },
+      { texto: 'Estableció que son servidores o trabajadores con derecho al pago proporcional de todas sus prestaciones sociales.', correcta: true },
+      { texto: 'Eliminó el escalafón docente y fijó un salario único para toda Colombia.', correcta: false },
+      { texto: 'Fijó que solo tienen derecho a honorarios integrales sin seguridad social.', correcta: false }
+    ],
+    explicacion:
+      'La Corte Constitucional en la Sentencia C-006-96 ratificó que la subordinación académica configura una relación laboral y ordenó el reconocimiento de vacaciones, cesantías, prima de servicios y prima de navidad proporcionales.'
+  },
+  {
+    id: 2,
+    pregunta: 'Bajo la Ley 30 de 1992, ¿cuál es el divisor mensual más seguro jurídicamente para liquidar la tarifa mínima de 8 SMMLV?',
+    opciones: [
+      { texto: 'Divisor estándar de 240 horas (30 días por 8 horas diarias).', correcta: false },
+      { texto: 'Divisor docente de 171.2 horas (basado en jornada semanal máxima de 40 horas).', correcta: true },
+      { texto: 'Divisor de 300 horas al mes.', correcta: false },
+      { texto: 'Divisor de 120 horas lectivas.', correcta: false }
+    ],
+    explicacion:
+      'El divisor de 171.2 horas (40 h/sem × 4.28) refleja la jornada docente real de tiempo completo, arrojando una tarifa que respeta los mínimos constitucionales ($81.820 en 2026) y elimina el riesgo de demandas por nivelación.'
+  },
+  {
+    id: 3,
+    pregunta: 'Según el Artículo 2 del Acuerdo 015 de 2009 de la UPTC, ¿cuál es el límite estricto para Cátedra Interna?',
+    opciones: [
+      { texto: 'Hasta 8 horas semanales en dos facultades.', correcta: false },
+      { texto: 'Máximo una (1) asignatura de menor intensidad y tope legal de hasta cuatro (4) horas semanales.', correcta: true },
+      { texto: 'Sin límite siempre que el docente tenga descarga académica de investigación.', correcta: false },
+      { texto: 'Hasta 12 horas en sábados y domingos.', correcta: false }
+    ],
+    explicacion:
+      'El Artículo 2 limita taxativamente a docentes de planta u ocasionales a máximo una sola asignatura y no más de cuatro (4) horas semanales, requiriendo autorización rectoral.'
+  },
+  {
+    id: 4,
+    pregunta: '¿Qué condición del Artículo 3 del Acuerdo 015 prohíbe taxativamente la asignación de horas cátedra?',
+    opciones: [
+      { texto: 'Haber obtenido título de doctorado en el exterior.', correcta: false },
+      { texto: 'Gozar de descarga académica o realizar la labor dentro de la jornada ordinaria de trabajo.', correcta: true },
+      { texto: 'Pertenecer al Banco de Información de Elegibles.', correcta: false },
+      { texto: 'Tener más de 5 años de antigüedad en la universidad.', correcta: false }
+    ],
+    explicacion:
+      'El Artículo 3 prohíbe asignar cátedra interna dentro de la jornada ordinaria (art. 128 C.P. doble asignación del tesoro) o a docentes que gocen de descarga por investigación, extensión o administración.'
+  }
+];
+
 export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
-  const [activeTab, setActiveTab] = useState<'ejecucion' | 'normativa' | 'simulador' | 'eficiencia'>('ejecucion');
+  const [activeTab, setActiveTab] = useState<'ejecucion' | 'normativa' | 'simulador' | 'control' | 'informe'>('ejecucion');
 
   // Filtros Tablero
   const [filtroNivel, setFiltroNivel] = useState<'todos' | 'pregrado' | 'posgrado'>('todos');
@@ -190,27 +286,67 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
   const [semanasSemestre, setSemanasSemestre] = useState<number>(16);
   const [valorPuntoSim, setValorPuntoSim] = useState<number>(23924);
   const [mesesPago, setMesesPago] = useState<number>(4);
+  const [smmlv2026, setSmmlv2026] = useState<number>(1750905);
+  const [incluirPrestaciones, setIncluirPrestaciones] = useState<boolean>(true);
+  const [modeloComparativo, setModeloComparativo] = useState<'puntos' | 'divisor171' | 'divisor240'>('puntos');
 
-  // Cálculos del simulador
+  // Estados del Glosario de Flashcards
+  const [flippedCardId, setFlippedCardId] = useState<number | null>(null);
+
+  // Estados de Control Operativo
+  const [duracionHoraAcademicaMin, setDuracionHoraAcademicaMin] = useState<number>(50); // 50 minutos
+  const [toleranciaMin, setToleranciaMin] = useState<number>(10); // 10 minutos
+  const [horasProgramadasSemana, setHorasProgramadasSemana] = useState<number>(4);
+  const [minutosRetardo, setMinutosRetardo] = useState<number>(5);
+
+  // Estados del Quiz
+  const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
+  const [showQuizResults, setShowQuizResults] = useState<boolean>(false);
+
+  // Cálculos del simulador por Puntos UPTC
   const categoriaSeleccionada = ESCALA_PUNTOS[categoriaIndex];
-  const valorHora = useMemo(() => {
+  const valorHoraPuntos = useMemo(() => {
     return Math.round(categoriaSeleccionada.puntos * valorPuntoSim);
   }, [categoriaSeleccionada, valorPuntoSim]);
+
+  // Tarifas de los modelos alternativos (Ley 30 de 1992 - 8 SMMLV)
+  const base8SMMLV = useMemo(() => smmlv2026 * 8, [smmlv2026]);
+  const valorHoraDivisor171 = useMemo(() => Math.round(base8SMMLV / 171.2), [base8SMMLV]);
+  const valorHoraDivisor240 = useMemo(() => Math.round(base8SMMLV / 240), [base8SMMLV]);
+
+  // Selección de la tarifa activa
+  const valorHoraActiva = useMemo(() => {
+    if (modeloComparativo === 'divisor171') return valorHoraDivisor171;
+    if (modeloComparativo === 'divisor240') return valorHoraDivisor240;
+    return valorHoraPuntos;
+  }, [modeloComparativo, valorHoraDivisor171, valorHoraDivisor240, valorHoraPuntos]);
 
   const totalHorasSemestre = useMemo(() => {
     return horasSemanales * semanasSemestre;
   }, [horasSemanales, semanasSemestre]);
 
-  const valorTotalContrato = useMemo(() => {
-    return valorHora * totalHorasSemestre;
-  }, [valorHora, totalHorasSemestre]);
+  const valorTotalBaseContrato = useMemo(() => {
+    return valorHoraActiva * totalHorasSemestre;
+  }, [valorHoraActiva, totalHorasSemestre]);
+
+  // Cálculo proporcional de prestaciones sociales (Sentencia C-006-96)
+  // Factores estándar: Cesantías (8.33%), Int. Cesantías (1.00%), Prima de Servicios (8.33%), Vacaciones proporcionales (4.17%) = ~21.83%
+  const factorPrestacional = 0.2183;
+  const valorPrestacionesProporcionales = useMemo(() => {
+    return incluirPrestaciones ? Math.round(valorTotalBaseContrato * factorPrestacional) : 0;
+  }, [incluirPrestaciones, valorTotalBaseContrato]);
+
+  const valorGranTotalContrato = useMemo(() => {
+    return valorTotalBaseContrato + valorPrestacionesProporcionales;
+  }, [valorTotalBaseContrato, valorPrestacionesProporcionales]);
 
   const valorMensualPromedio = useMemo(() => {
-    return mesesPago > 0 ? Math.round(valorTotalContrato / mesesPago) : 0;
-  }, [valorTotalContrato, mesesPago]);
+    return mesesPago > 0 ? Math.round(valorGranTotalContrato / mesesPago) : 0;
+  }, [valorGranTotalContrato, mesesPago]);
 
-  // Validación de Cátedra Interna (Acuerdo 015 de 2009, Art. 2)
+  // Validaciones Legales
   const esExcedidoTopeInterno = modalidad === 'interna' && horasSemanales > 4;
+  const esExcedidoTopeExterno = modalidad === 'externa' && horasSemanales > 19;
 
   // Totales de Ejecución
   const totalCompromiso = 17453995880;
@@ -220,18 +356,30 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
 
   const recursosFiltrados = useMemo(() => {
     if (filtroNivel === 'pregrado') {
-      return RECURSOS_DATA.filter(r => r.nivel.includes('Pregrado'));
+      return RECURSOS_DATA.filter((r) => r.nivel.includes('Pregrado'));
     }
     if (filtroNivel === 'posgrado') {
-      return RECURSOS_DATA.filter(r => r.nivel.includes('Posgrado'));
+      return RECURSOS_DATA.filter((r) => r.nivel.includes('Posgrado'));
     }
     return RECURSOS_DATA;
   }, [filtroNivel]);
 
+  // Puntaje del Quiz
+  const quizScore = useMemo(() => {
+    let score = 0;
+    QUIZ_QUESTIONS.forEach((q) => {
+      const selectedIndex = userAnswers[q.id];
+      if (selectedIndex !== undefined && q.opciones[selectedIndex].correcta) {
+        score++;
+      }
+    });
+    return score;
+  }, [userAnswers]);
+
   // Exportar datos a CSV
   const handleExportCSV = () => {
     const headers = ['Recurso', 'Nivel', 'Clasificacion', 'Compromiso ($ M)', 'Pagado ($ M)', '% Ejecucion'];
-    const rows = RECURSOS_DATA.map(r => [
+    const rows = RECURSOS_DATA.map((r) => [
       `"${r.nombre}"`,
       `"${r.nivel}"`,
       `"${r.tipoBase}"`,
@@ -239,7 +387,7 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
       (r.pagado / 1e6).toFixed(2),
       r.porcentaje.toFixed(1)
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -265,6 +413,10 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
                 <Scale size={13} className="text-primary-container" />
                 Acuerdo No. 015 de 2009
               </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                <ShieldAlert size={13} />
+                Sentencia C-006-96 (Prestaciones)
+              </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 <CheckCircle size={13} />
                 Decreto 1279 de 2002
@@ -277,12 +429,13 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
 
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-white flex items-center gap-3">
               <BookOpen className="text-primary-container w-8 h-8 md:w-10 md:h-10" />
-              Módulo de Horas Cátedra
+              Módulo de Horas Cátedra & Informe Técnico
             </h1>
 
             <p className="text-sm md:text-base text-on-surface-variant max-w-3xl leading-relaxed">
-              Administración normativa, monitoreo de la ejecución presupuestal de nómina temporal docente y simulador oficial
-              de remuneración por hora cátedra de pregrado y posgrados de la Universidad Pedagógica y Tecnológica de Colombia.
+              Sistema integral de administración de horas cátedra: sustento jurisprudencial (Sentencia C-006-96),
+              análisis comparativo de fórmulas (171.2 vs. 240 horas vs. Puntos UPTC), control operativo de asistencia y
+              ejecución presupuestal 2026.
             </p>
           </div>
 
@@ -311,7 +464,7 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
         <div className="mt-8 flex flex-wrap gap-2 border-b border-white/10 pb-1">
           <button
             onClick={() => setActiveTab('ejecucion')}
-            className={`flex items-center gap-2 px-5 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'ejecucion'
                 ? 'bg-white/10 text-primary-container border-b-2 border-primary-container'
                 : 'text-on-surface-variant hover:text-white hover:bg-white/5'
@@ -323,38 +476,50 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
 
           <button
             onClick={() => setActiveTab('normativa')}
-            className={`flex items-center gap-2 px-5 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'normativa'
                 ? 'bg-white/10 text-primary-container border-b-2 border-primary-container'
                 : 'text-on-surface-variant hover:text-white hover:bg-white/5'
             }`}
           >
             <Scale size={16} />
-            <span>Marco Normativo (Acuerdo 015)</span>
+            <span>Marco Legal & C-006-96</span>
           </button>
 
           <button
             onClick={() => setActiveTab('simulador')}
-            className={`flex items-center gap-2 px-5 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'simulador'
                 ? 'bg-white/10 text-primary-container border-b-2 border-primary-container'
                 : 'text-on-surface-variant hover:text-white hover:bg-white/5'
             }`}
           >
             <Sliders size={16} />
-            <span>Simulador & Liquidador</span>
+            <span>Simulador & Fórmulas</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('eficiencia')}
-            className={`flex items-center gap-2 px-5 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
-              activeTab === 'eficiencia'
+            onClick={() => setActiveTab('control')}
+            className={`flex items-center gap-2 px-4 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === 'control'
                 ? 'bg-white/10 text-primary-container border-b-2 border-primary-container'
                 : 'text-on-surface-variant hover:text-white hover:bg-white/5'
             }`}
           >
-            <TrendingUp size={16} />
-            <span>Análisis de Costos & Proyección</span>
+            <Timer size={16} />
+            <span>Control Operativo & Asistencia</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('informe')}
+            className={`flex items-center gap-2 px-4 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === 'informe'
+                ? 'bg-white/10 text-primary-container border-b-2 border-primary-container'
+                : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <FileText size={16} />
+            <span>Informe Técnico & Quiz</span>
           </button>
         </div>
       </div>
@@ -470,21 +635,6 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
                   <Area type="monotone" dataKey="total" name="Total Desembolsado" stroke="#4ade80" fill="transparent" strokeWidth={3} />
                 </ComposedChart>
               </ResponsiveContainer>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-xs">
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                <span className="text-on-surface-variant font-medium">Pico de Liquidación (Mayo):</span>
-                <p className="text-white font-bold mt-1">$ 2.734,9 M (Cierre del primer semestre académico)</p>
-              </div>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                <span className="text-on-surface-variant font-medium">Receso Intersemestral (Julio):</span>
-                <p className="text-white font-bold mt-1">$ 145,5 M (Mínimo estacional por vacaciones)</p>
-              </div>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                <span className="text-on-surface-variant font-medium">Reinicio Segundo Semestre (Agosto):</span>
-                <p className="text-white font-bold mt-1">$ 1.987,3 M (Reanudación de contratos 2026-II)</p>
-              </div>
             </div>
           </div>
 
@@ -621,11 +771,67 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
       )}
 
       {/* ========================================================================= */}
-      {/* PESTAÑA 2: MARCO NORMATIVO ACUERDO 015 DE 2009 */}
+      {/* PESTAÑA 2: MARCO LEGAL, JURISPRUDENCIA (C-006-96) & ACUERDO 015 */}
       {/* ========================================================================= */}
       {activeTab === 'normativa' && (
         <div className="space-y-6">
-          {/* Tarjeta de Resumen Normativo */}
+          {/* Alerta Constitucional: Sentencia C-006-96 */}
+          <div className="rounded-3xl bg-gradient-to-r from-rose-950/70 via-surface-container to-surface-container-high border border-rose-500/40 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-rose-500/20 text-rose-300 border border-rose-500/30 flex-shrink-0">
+                <ShieldAlert size={28} />
+              </div>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-rose-500/30 text-rose-200 border border-rose-500/40">
+                    Jurisprudencia Constitucional Vinculante
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono">Corte Constitucional de Colombia</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-black text-white">
+                  Sentencia C-006-96: Prohibición de Pago por Honorarios & Obligación Prestacional
+                </h3>
+                <p className="text-xs md:text-sm text-slate-200 leading-relaxed">
+                  ¿Sabías que liquidar de forma incorrecta la hora cátedra de un docente o intentar pagarle mediante
+                  <strong> contratos de prestación de servicios (honorarios)</strong> expone a la universidad a
+                  <strong> millonarias demandas laborales</strong>?
+                </p>
+                <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
+                  A partir de la <strong>Sentencia C-006 de 1996</strong>, la ley colombiana exige que los docentes de
+                  hora cátedra, al ejercer su función bajo continua subordinación (cumplimiento de horarios, directrices
+                  académicas y evaluaciones), sean reconocidos como <strong>servidores públicos o trabajadores subordinados</strong> con derecho al
+                  <strong> pago proporcional de todas sus prestaciones sociales</strong>: vacaciones, prima de vacaciones,
+                  cesantías, intereses a las cesantías y prima de Navidad.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-xs">
+              <div className="p-3.5 rounded-xl bg-black/40 border border-rose-500/20">
+                <span className="text-rose-400 font-bold block mb-1">Riesgo de Demanda Laboral:</span>
+                <p className="text-slate-300 text-[11px]">
+                  El principio de "primacía de la realidad sobre las formas" (Art. 53 C.P.) anula cualquier contrato de
+                  prestación de servicios, obligando al pago retroactivo de cesantías y sanciones moratorias.
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-black/40 border border-emerald-500/20">
+                <span className="text-emerald-400 font-bold block mb-1">Obligación Prestacional Proporcional:</span>
+                <p className="text-slate-300 text-[11px]">
+                  Toda liquidación semestral debe liquidar expresamente las alícuotas proporcionales por cada hora
+                  efectivamente dictada durante el período académico.
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-black/40 border border-blue-500/20">
+                <span className="text-blue-400 font-bold block mb-1">Autonomía y Decreto 1279:</span>
+                <p className="text-slate-300 text-[11px]">
+                  El Decreto 1279 de 2002 otorga autonomía a las universidades públicas para fijar su régimen interno
+                  (como el Acuerdo 015 de la UPTC), siempre que respete los mínimos constitucionales.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tarjeta de Resumen Normativo Acuerdo 015 */}
           <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/10 pb-6">
               <div className="space-y-1">
@@ -649,7 +855,7 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
                   className="px-4 py-2 rounded-xl bg-primary-container text-slate-950 text-xs font-bold flex items-center gap-2 hover:bg-amber-400 transition-all shadow-md cursor-pointer"
                 >
                   <Download size={14} />
-                  Descargar Documento Oficial
+                  Descargar Acuerdo PDF
                 </a>
               </div>
             </div>
@@ -660,11 +866,6 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
                 <Award className="text-primary-container" size={18} />
                 Artículo 1: Asignación de Puntos por Hora de Clase en Pregrado
               </h3>
-              <p className="text-xs text-on-surface-variant">
-                La remuneración de los profesores de cátedra se liquida multiplicando el número de puntos fijados por la
-                categoría en el escalafón docente por el valor del punto establecido en el <strong>Decreto 1279 de 2002</strong>.
-              </p>
-
               <div className="overflow-x-auto rounded-2xl border border-white/10">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-white/5 text-slate-300 font-semibold border-b border-white/10 text-[11px] uppercase">
@@ -714,9 +915,8 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
               ))}
             </div>
 
-            {/* Desglose de Artículos 2, 3 y 4 */}
+            {/* Artículos 2 y 3 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/10">
-              {/* Articulo 2 */}
               <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-5 space-y-3">
                 <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
                   <AlertTriangle size={18} />
@@ -724,7 +924,7 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
                 </div>
                 <p className="text-xs text-slate-200 leading-relaxed">
                   Los docentes de tiempo completo y medio tiempo de planta u ocasionales podrán dictar horas de cátedra
-                  adicionales, sujeto a las siguientes condiciones estrictas:
+                  adicionales, sujeto a condiciones estrictas:
                 </p>
                 <ul className="text-xs text-slate-300 space-y-2 list-disc pl-4">
                   <li>
@@ -734,443 +934,822 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
                     Tope legal no superior a cuatro (4) horas semanales de clase.
                   </li>
                   <li>
-                    <strong>Flujo de autorización en cascada:</strong> Justificación de la Dirección de Escuela → Aval Comité de
-                    Currículo → Aprobación Consejo de Facultad → Visto bueno Vicerrectoría Académica → Acto administrativo expedido por el Rector.
+                    <strong>Flujo en cascada:</strong> Justificación de Dirección de Escuela → Aval Comité de Currículo →
+                    Aprobación Consejo de Facultad → Visto bueno Vicerrectoría Académica → Acto administrativo de Rectoría.
                   </li>
                 </ul>
               </div>
 
-              {/* Articulo 3 */}
               <div className="rounded-2xl bg-rose-500/10 border border-rose-500/30 p-5 space-y-3">
                 <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
                   <XCircle size={18} />
-                  Artículo 3: Régimen de Incompatibilidades y Prohibiciones
+                  Artículo 3: Incompatibilidades y Prohibiciones
                 </div>
                 <p className="text-xs text-slate-200 leading-relaxed">
-                  Garantía de transparencia y acatamiento al <strong>Artículo 128 de la Constitución Política</strong> (prohibición de doble asignación del tesoro público):
+                  Garantía del <strong>Artículo 128 de la Constitución Política</strong> (prohibición de doble asignación del tesoro público):
                 </p>
                 <ul className="text-xs text-slate-300 space-y-2 list-disc pl-4">
                   <li>
-                    <strong>Fuera de jornada laboral:</strong> Las horas de cátedra interna deben ser dictadas obligatoriamente
-                    fuera del horario ordinario de trabajo asignado.
+                    <strong>Fuera de jornada laboral:</strong> Obligatoriamente fuera del horario ordinario asignado.
                   </li>
                   <li>
-                    <strong>Incompatibilidad con descarga:</strong> Queda absolutamente prohibida la asignación de horas cátedra
-                    a docentes que gocen de descarga académica por investigación, extensión o administración.
+                    <strong>Incompatibilidad con descarga:</strong> Prohibido para docentes con descarga por investigación, extensión o administración.
                   </li>
                   <li>
-                    <strong>Principio de subsidiariedad:</strong> Solo procede cuando la asignatura no pueda ser cubierta por el
-                    Banco de Información de Elegibles (B.I.E.).
+                    <strong>Principio de subsidiariedad:</strong> Solo procede si no puede ser cubierta por el Banco de Información de Elegibles (B.I.E.).
                   </li>
                 </ul>
               </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* ========================================================================= */}
-      {/* PESTAÑA 3: SIMULADOR Y LIQUIDADOR INTERACTIVO */}
-      {/* ========================================================================= */}
-      {activeTab === 'simulador' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Panel de Configuración (7 Cols) */}
-          <div className="lg:col-span-7 rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          {/* Tarjetas Didácticas (Flashcards) de Términos Operativos */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-4">
+            <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Sliders className="text-primary-container" size={20} />
-                  Parámetros de Liquidación de Cátedra
+                  <BookOpen className="text-primary-container" size={20} />
+                  Glosario de Términos Operativos & Flashcards de Estudio
                 </h3>
                 <p className="text-xs text-on-surface-variant">
-                  Configure las variables de vinculación para calcular la remuneración exacta bajo el Acuerdo 015 de 2009.
+                  Haz clic en cualquier tarjeta didáctica para voltearla y estudiar los conceptos operativos clave.
                 </p>
               </div>
-
-              <button
-                onClick={() => {
-                  setModalidad('externa');
-                  setCategoriaIndex(1);
-                  setHorasSemanales(4);
-                  setSemanasSemestre(16);
-                  setValorPuntoSim(23924);
-                  setMesesPago(4);
-                }}
-                className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 p-2 rounded-lg bg-white/5 cursor-pointer"
-                title="Restablecer valores predeterminados"
-              >
-                <RefreshCw size={13} />
-                <span>Restablecer</span>
-              </button>
+              <span className="text-xs text-slate-400">4 Conceptos Clave</span>
             </div>
 
-            {/* Selector de Modalidad */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Modalidad de Vinculación
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setModalidad('externa')}
-                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                    modalidad === 'externa'
-                      ? 'bg-primary-container/20 border-primary-container text-white shadow-[0_0_15px_rgba(255,204,41,0.2)]'
-                      : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                  }`}
-                >
-                  <div className="font-bold text-sm text-white flex items-center justify-between">
-                    <span>Cátedra Externa</span>
-                    {modalidad === 'externa' && <CheckCircle size={16} className="text-primary-container" />}
-                  </div>
-                  <p className="text-[11px] text-slate-300 mt-1">
-                    Docente contratista temporal por período académico (semestre). Hasta 16 horas semanales.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setModalidad('interna');
-                    if (horasSemanales > 4) setHorasSemanales(4);
-                  }}
-                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                    modalidad === 'interna'
-                      ? 'bg-amber-500/20 border-amber-400 text-white shadow-[0_0_15px_rgba(251,191,36,0.2)]'
-                      : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                  }`}
-                >
-                  <div className="font-bold text-sm text-white flex items-center justify-between">
-                    <span>Cátedra Interna</span>
-                    {modalidad === 'interna' && <CheckCircle size={16} className="text-amber-400" />}
-                  </div>
-                  <p className="text-[11px] text-slate-300 mt-1">
-                    Docente de Planta u Ocasional en jornada adicional (Art. 2). Tope legal: máx. 4 horas/sem.
-                  </p>
-                </button>
-              </div>
-            </div>
-
-            {/* Selector de Escalafón */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                <span>Categoría en el Escalafón Docente</span>
-                <span className="text-primary-container font-mono">{categoriaSeleccionada.puntos.toFixed(2)} puntos/hora</span>
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {ESCALA_PUNTOS.map((c, idx) => (
-                  <button
-                    key={c.categoria}
-                    type="button"
-                    onClick={() => setCategoriaIndex(idx)}
-                    className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                      categoriaIndex === idx
-                        ? 'bg-white/15 border-primary-container text-white font-bold'
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+              {FLASHCARDS.map((card) => {
+                const IconComponent = card.icono;
+                const isFlipped = flippedCardId === card.id;
+                return (
+                  <div
+                    key={card.id}
+                    onClick={() => setFlippedCardId(isFlipped ? null : card.id)}
+                    className={`rounded-2xl border p-5 cursor-pointer transition-all duration-300 flex flex-col justify-between min-h-[220px] ${
+                      isFlipped
+                        ? 'bg-gradient-to-br from-primary-container/20 to-surface-container-high border-primary-container/50 shadow-[0_0_20px_rgba(255,204,41,0.2)]'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    <div className="text-xs">{c.categoria.replace('Profesor ', '')}</div>
-                    <div className="text-sm font-mono text-primary-container mt-0.5">{c.puntos.toFixed(2)} pts</div>
-                  </button>
-                ))}
-              </div>
-              <p className="text-[11px] text-slate-400 italic">
-                Equivalencia: {categoriaSeleccionada.equivalencia}
-              </p>
-            </div>
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-3">
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-primary-container text-[10px] font-bold">
+                          {card.categoria}
+                        </span>
+                        <RotateCw size={13} className="text-slate-400" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white mb-2 flex items-center gap-2">
+                        <IconComponent size={16} className="text-primary-container flex-shrink-0" />
+                        {card.titulo}
+                      </h4>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {isFlipped ? card.respuesta : card.pregunta}
+                      </p>
+                    </div>
 
-            {/* Slider de Intensidad Horaria Semanal */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-300 uppercase tracking-wider">
-                  Intensidad Horaria Semanal
-                </span>
-                <span className="font-mono text-base font-bold text-primary-container">
-                  {horasSemanales} horas / semana
-                </span>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={modalidad === 'interna' ? 6 : 16}
-                value={horasSemanales}
-                onChange={(e) => setHorasSemanales(Number(e.target.value))}
-                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-container"
-              />
-              <div className="flex justify-between text-[10px] text-slate-400">
-                <span>1 hora</span>
-                {modalidad === 'interna' ? (
-                  <span className="text-amber-400 font-bold">Tope legal Art. 2: 4 horas</span>
-                ) : (
-                  <span>8 horas</span>
-                )}
-                <span>{modalidad === 'interna' ? '6 horas (bloqueo)' : '16 horas'}</span>
-              </div>
-
-              {/* Alerta de Tope Legal para Cátedra Interna */}
-              {esExcedidoTopeInterno && (
-                <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs flex items-start gap-2.5">
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0 text-rose-400 mt-0.5" />
-                  <div>
-                    <span className="font-bold">Violación del Artículo 2 del Acuerdo 015 de 2009:</span>
-                    <p className="mt-0.5 text-slate-300">
-                      Los docentes de planta u ocasionales no pueden recibir asignación adicional superior a{' '}
-                      <strong>cuatro (4) horas semanales</strong> de cátedra interna ni más de una (1) asignatura.
-                    </p>
+                    <div className="pt-3 border-t border-white/5 text-[10px] text-slate-400 italic">
+                      {isFlipped ? 'Clic para ver pregunta' : 'Clic para revelar concepto'}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Duración del Semestre y Valor del Punto */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  Semanas Lectivas del Semestre
-                </label>
-                <select
-                  value={semanasSemestre}
-                  onChange={(e) => setSemanasSemestre(Number(e.target.value))}
-                  className="w-full bg-surface-container-high border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary-container"
-                >
-                  <option value={16}>16 Semanas (Semestre Estándar UPTC)</option>
-                  <option value={18}>18 Semanas (Con Evaluaciones y Habilitaciones)</option>
-                  <option value={8}>8 Semanas (Cursos Intensivos o Vacacionales)</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  Valor del Punto D1279 ($ COP)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={valorPuntoSim}
-                    onChange={(e) => setValorPuntoSim(Number(e.target.value))}
-                    className="w-full bg-surface-container-high border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-primary-container"
-                  />
-                  <span className="absolute right-3 top-2 text-[10px] text-slate-400 font-mono">Dcto 318/2026</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Panel de Resultados y Liquidación (5 Cols) */}
-          <div className="lg:col-span-5 rounded-3xl bg-gradient-to-br from-surface-container via-surface-container-high to-black/90 border border-white/10 p-6 md:p-8 shadow-2xl backdrop-blur-xl flex flex-col justify-between space-y-6">
-            <div className="space-y-5">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-xs font-bold uppercase tracking-widest text-primary-container">
-                  Liquidación Oficial Estimada
-                </span>
-                <span
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                    esExcedidoTopeInterno
-                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                  }`}
-                >
-                  {esExcedidoTopeInterno ? 'No Viable Legalmente' : 'Normativamente Conforme'}
-                </span>
-              </div>
-
-              {/* Valor por Hora */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-                <span className="text-xs text-slate-400">Valor por Hora Cátedra Liquidada:</span>
-                <div className="text-2xl font-black text-white font-mono">{formatCOP(valorHora)} / hora</div>
-                <div className="text-[11px] text-slate-400 font-mono">
-                  = {categoriaSeleccionada.puntos.toFixed(2)} pts × {formatCOP(valorPuntoSim)}
-                </div>
-              </div>
-
-              {/* Cifras Globales */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs py-2 border-b border-white/5">
-                  <span className="text-slate-400">Horas Totales en el Período:</span>
-                  <span className="font-mono font-bold text-white">{totalHorasSemestre} horas ({horasSemanales} h/sem × {semanasSemestre} sem)</span>
-                </div>
-
-                <div className="flex items-center justify-between text-xs py-2 border-b border-white/5">
-                  <span className="text-slate-400">Valor Mensual Promedio (4 cuotas):</span>
-                  <span className="font-mono font-bold text-emerald-400 text-sm">{formatCOP(valorMensualPromedio)} / mes</span>
-                </div>
-
-                <div className="pt-2">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
-                    Valor Total del Contrato Semestral:
-                  </span>
-                  <div className="text-3xl font-black text-primary-container font-mono mt-1">
-                    {formatCOP(valorTotalContrato)}
-                  </div>
-                  <span className="text-[11px] text-slate-400">
-                    Sujeto a retenciones de ley y estampillas departamentales (Pro-UPTC, Bienestar del Anciano).
-                  </span>
-                </div>
-              </div>
-
-              {/* Checklist de Cumplimiento Legal */}
-              <div className="rounded-2xl bg-black/40 border border-white/10 p-4 space-y-2 text-xs">
-                <span className="font-bold text-white flex items-center gap-1.5">
-                  <ShieldCheck size={14} className="text-primary-container" />
-                  Control de Restricciones Acuerdo 015
-                </span>
-                <div className="space-y-1 text-slate-300">
-                  <div className="flex items-center gap-2">
-                    {esExcedidoTopeInterno ? (
-                      <XCircle size={14} className="text-rose-400 flex-shrink-0" />
-                    ) : (
-                      <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
-                    )}
-                    <span>Tope legal semanal {modalidad === 'interna' ? '(≤ 4 horas)' : '(≤ 16 horas)'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Sin descarga académica vigente (Art. 3)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
-                    <span>Autorización y resolución rectoral requerida</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center pt-2">
-              <p className="text-[11px] text-slate-400">
-                Fórmula oficial: <span className="font-mono text-white">V = Puntos × ValorPunto × HorasSemanales × Semanas</span>
-              </p>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* PESTAÑA 4: ANÁLISIS DE COSTOS Y EFICIENCIA */}
+      {/* PESTAÑA 3: SIMULADOR & COMPARADOR DE MODELOS FINANCIEROS */}
       {/* ========================================================================= */}
-      {activeTab === 'eficiencia' && (
+      {activeTab === 'simulador' && (
         <div className="space-y-6">
-          {/* Comparativa Costo por Hora Efectiva Dictada */}
+          {/* Selector de Modelos de Cálculo (Diapositivas / Comparador Secuencial) */}
           <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <TrendingUp className="text-primary-container" size={20} />
-                Comparativa de Eficiencia: Costo por Hora Efectiva de Clase
+                <Sliders className="text-primary-container" size={20} />
+                Modelos de Cálculo para Hora Cátedra en Instituciones de Educación Superior
               </h3>
               <p className="text-xs text-on-surface-variant">
-                Comparación entre la remuneración de horas cátedra frente al costo real por hora de aula de docentes de
-                tiempo completo (incluyendo prestaciones sociales, cesantías y primas).
+                Contraste técnico entre los modelos del sector privado (Divisores 171.2 vs 240 horas bajo Ley 30 de 1992) y
+                el sistema de puntos del sector público (Acuerdo 015 UPTC y Decreto 1279).
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Docente Cátedra</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">
-                    Acuerdo 015
-                  </span>
+              {/* Modelo A: Divisor 171.2 Horas */}
+              <button
+                type="button"
+                onClick={() => setModeloComparativo('divisor171')}
+                className={`p-5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  modeloComparativo === 'divisor171'
+                    ? 'bg-emerald-500/15 border-emerald-400 text-white shadow-[0_0_20px_rgba(52,211,153,0.2)]'
+                    : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">
+                      Jornada Docente 40h/sem
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-bold">Bajo Riesgo Litigio</span>
+                  </div>
+                  <h4 className="font-bold text-sm text-white">Divisor 171.2 Horas</h4>
+                  <div className="text-2xl font-black text-emerald-400 font-mono my-2">
+                    {formatCOP(valorHoraDivisor171)} / h
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Fórmula Ley 30: <strong>(8 SMMLV ÷ 171.2 h)</strong>. Reconoce que un profesor de tiempo completo
+                    labora 40h semanales (40 × 4.28 = 171.2h).
+                  </p>
                 </div>
-                <div className="text-2xl font-black text-white font-mono">$ 68.000 COP</div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Promedio ponderado por hora de clase presencial. Se remunera estrictamente por semanas lectivas del
-                  semestre académico (16 o 18 semanas).
-                </p>
-                <div className="text-[11px] text-emerald-400 font-semibold">
-                  Mayor flexibilidad presupuestal para cobertura.
+                <div className="mt-4 pt-2 border-t border-white/10 text-[11px] text-emerald-300">
+                  ✓ Recomendado para blindaje laboral definitivo.
+                </div>
+              </button>
+
+              {/* Modelo B: Divisor Estándar 240 Horas */}
+              <button
+                type="button"
+                onClick={() => setModeloComparativo('divisor240')}
+                className={`p-5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  modeloComparativo === 'divisor240'
+                    ? 'bg-rose-500/15 border-rose-400 text-white shadow-[0_0_20px_rgba(244,63,94,0.2)]'
+                    : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold text-[10px]">
+                      Estándar MinTrabajo
+                    </span>
+                    <span className="text-[10px] text-rose-400 font-bold">Alto Riesgo Litigio</span>
+                  </div>
+                  <h4 className="font-bold text-sm text-white">Divisor 240 Horas</h4>
+                  <div className="text-2xl font-black text-rose-400 font-mono my-2">
+                    {formatCOP(valorHoraDivisor240)} / h
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Fórmula: <strong>(8 SMMLV ÷ 240 h)</strong> (30 días × 8h). Sugerida por Mineducación para abaratar el
+                    costo unitario, pero vulnerable a demandas de nivelación.
+                  </p>
+                </div>
+                <div className="mt-4 pt-2 border-t border-white/10 text-[11px] text-rose-300">
+                  ⚠️ Menor costo unitario inicial, alta contingencia legal.
+                </div>
+              </button>
+
+              {/* Modelo C: Puntos UPTC (Acuerdo 015) */}
+              <button
+                type="button"
+                onClick={() => setModeloComparativo('puntos')}
+                className={`p-5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  modeloComparativo === 'puntos'
+                    ? 'bg-primary-container/20 border-primary-container text-white shadow-[0_0_20px_rgba(255,204,41,0.2)]'
+                    : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <span className="px-2 py-0.5 rounded-full bg-primary-container/20 text-primary-container font-bold text-[10px]">
+                      Sector Público UPTC
+                    </span>
+                    <span className="text-[10px] text-primary-container font-bold">Estatuto Oficial</span>
+                  </div>
+                  <h4 className="font-bold text-sm text-white">Sistema de Puntos UPTC</h4>
+                  <div className="text-2xl font-black text-primary-container font-mono my-2">
+                    {formatCOP(valorHoraPuntos)} / h
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Fórmula Acuerdo 015: <strong>(Puntos Escalafón × Valor Punto D1279)</strong>. Desde 2.50 pts ($59.810)
+                    hasta 3.50 pts ($83.734) según escalafón docente.
+                  </p>
+                </div>
+                <div className="mt-4 pt-2 border-t border-white/10 text-[11px] text-primary-container">
+                  ⭐ Modelo vigente en la Universidad.
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Panel Interactivo de Liquidación */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Parámetros (7 Cols) */}
+            <div className="lg:col-span-7 rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <h4 className="font-bold text-white text-base flex items-center gap-2">
+                  <Sliders className="text-primary-container" size={18} />
+                  Parámetros de Contratación
+                </h4>
+                <button
+                  onClick={() => {
+                    setModalidad('externa');
+                    setCategoriaIndex(1);
+                    setHorasSemanales(4);
+                    setSemanasSemestre(16);
+                    setValorPuntoSim(23924);
+                    setSmmlv2026(1750905);
+                    setIncluirPrestaciones(true);
+                    setModeloComparativo('puntos');
+                  }}
+                  className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 p-2 rounded-lg bg-white/5 cursor-pointer"
+                >
+                  <RefreshCw size={13} />
+                  <span>Restablecer</span>
+                </button>
+              </div>
+
+              {/* Selector de Modalidad */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  Modalidad de Vinculación
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setModalidad('externa')}
+                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      modalidad === 'externa'
+                        ? 'bg-primary-container/20 border-primary-container text-white'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="font-bold text-xs text-white">Cátedra Externa</div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Tope estándar: hasta 19 horas/semana.</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalidad('interna');
+                      if (horasSemanales > 4) setHorasSemanales(4);
+                    }}
+                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      modalidad === 'interna'
+                        ? 'bg-amber-500/20 border-amber-400 text-white'
+                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="font-bold text-xs text-white">Cátedra Interna (Art. 2)</div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Docente UPTC. Tope legal: máx. 4 h/sem.</p>
+                  </button>
                 </div>
               </div>
 
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Docente Ocasional (T.C.)</span>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-bold">
-                    10 - 11 Meses
+              {/* Selector de Escalafón (si aplica Puntos) */}
+              {modeloComparativo === 'puntos' && (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                    <span>Categoría en el Escalafón</span>
+                    <span className="text-primary-container font-mono">{categoriaSeleccionada.puntos.toFixed(2)} pts</span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {ESCALA_PUNTOS.map((c, idx) => (
+                      <button
+                        key={c.categoria}
+                        type="button"
+                        onClick={() => setCategoriaIndex(idx)}
+                        className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                          categoriaIndex === idx
+                            ? 'bg-white/15 border-primary-container text-white font-bold'
+                            : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                        }`}
+                      >
+                        <div className="text-[11px]">{c.categoria.replace('Profesor ', '')}</div>
+                        <div className="text-xs font-mono text-primary-container font-bold">{c.puntos.toFixed(2)} pts</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Slider de Intensidad Horaria Semanal */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-300 uppercase tracking-wider">
+                    Intensidad Horaria Semanal
+                  </span>
+                  <span className="font-mono text-base font-bold text-primary-container">
+                    {horasSemanales} horas / semana
                   </span>
                 </div>
-                <div className="text-2xl font-black text-white font-mono">$ 125.000 COP</div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Costo estimado por hora efectiva de aula considerando carga de preparación, investigación, asesorías y
-                  el paquete prestacional anual completo.
-                </p>
-                <div className="text-[11px] text-blue-300 font-semibold">
-                  Estabilidad docente y acompañamiento institucional continuo.
+                <input
+                  type="range"
+                  min={1}
+                  max={modalidad === 'interna' ? 6 : 22}
+                  value={horasSemanales}
+                  onChange={(e) => setHorasSemanales(Number(e.target.value))}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-container"
+                />
+                <div className="flex justify-between text-[10px] text-slate-400">
+                  <span>1 hora</span>
+                  {modalidad === 'interna' ? (
+                    <span className="text-amber-400 font-bold">Tope Art. 2: 4 horas</span>
+                  ) : (
+                    <span className="text-emerald-400 font-bold">Tope sugerido: 19 horas</span>
+                  )}
+                  <span>{modalidad === 'interna' ? '6 horas (bloqueo)' : '22 horas'}</span>
                 </div>
+
+                {esExcedidoTopeInterno && (
+                  <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-rose-400 flex-shrink-0" />
+                    <span>Infracción Art. 2 Acuerdo 015/2009: No puede superar 4 horas semanales de cátedra interna.</span>
+                  </div>
+                )}
+
+                {esExcedidoTopeExterno && (
+                  <div className="p-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-amber-400 flex-shrink-0" />
+                    <span>Alerta de Sobrecontratación: Superar 19 horas semanales puede desnaturalizar el contrato de cátedra.</span>
+                  </div>
+                )}
               </div>
 
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Docente de Planta</span>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold">
-                    Permanente
-                  </span>
+              {/* Semanas del Semestre & Switch de Prestaciones C-006-96 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Semanas Lectivas
+                  </label>
+                  <select
+                    value={semanasSemestre}
+                    onChange={(e) => setSemanasSemestre(Number(e.target.value))}
+                    className="w-full bg-surface-container-high border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary-container"
+                  >
+                    <option value={16}>16 Semanas (Semestre Estándar UPTC)</option>
+                    <option value={18}>18 Semanas (Con Evaluaciones y Habilitaciones)</option>
+                    <option value={8}>8 Semanas (Cursos Vacacionales)</option>
+                  </select>
                 </div>
-                <div className="text-2xl font-black text-white font-mono">$ 210.000 COP</div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Costo derivado de escalafón salarial, puntos salariales y de bonificación acumulados por producción
-                  académica (Decreto 1279), además de cargas directivas e investigativas.
-                </p>
-                <div className="text-[11px] text-purple-300 font-semibold">
-                  Pilar de acreditación institucional de alta calidad.
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Prestaciones Proporcionales (C-006-96)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIncluirPrestaciones(!incluirPrestaciones)}
+                    className={`w-full py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
+                      incluirPrestaciones
+                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                        : 'bg-white/5 border-white/10 text-slate-400'
+                    }`}
+                  >
+                    <span>{incluirPrestaciones ? 'Incluir (+21.83%)' : 'Solo Salario Base'}</span>
+                    <CheckSquare size={16} className={incluirPrestaciones ? 'text-emerald-400' : 'text-slate-500'} />
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Participación en el Presupuesto Total */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-white/10">
-              <div className="space-y-4">
-                <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Layers className="text-primary-container" size={16} />
-                  Peso Relativo en la Nómina UPTC (2026)
-                </h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  El gasto total de horas cátedra en 2026 (<strong>$ 17.454,0 M</strong>) representa aproximadamente el{' '}
-                  <strong className="text-primary-container">5.3%</strong> de la nómina global de personal de la UPTC (~$ 330.000 M),
-                  mientras que atiende más del <strong>35%</strong> de los grupos de clase en programas de pregrado y posgrados.
-                </p>
-                <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Compromiso Pregrado Cátedra:</span>
-                    <span className="font-mono text-white font-bold">{formatCurrency(8561501314)}</span>
+            {/* Resultados y Liquidación (5 Cols) */}
+            <div className="lg:col-span-5 rounded-3xl bg-gradient-to-br from-surface-container via-surface-container-high to-black/90 border border-white/10 p-6 md:p-8 shadow-2xl backdrop-blur-xl flex flex-col justify-between space-y-6">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <span className="text-xs font-bold uppercase tracking-widest text-primary-container">
+                    Liquidación Integral Estimada
+                  </span>
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                      esExcedidoTopeInterno
+                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    }`}
+                  >
+                    {esExcedidoTopeInterno ? 'No Viable Legalmente' : 'Conforme a Normas'}
+                  </span>
+                </div>
+
+                {/* Tarifa por Hora */}
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                  <span className="text-xs text-slate-400">Tarifa por Hora Liquidada:</span>
+                  <div className="text-2xl font-black text-white font-mono">{formatCOP(valorHoraActiva)} / h</div>
+                  <div className="text-[11px] text-slate-400 font-mono">
+                    Modelo:{' '}
+                    {modeloComparativo === 'divisor171'
+                      ? 'Divisor 171.2 h (Ley 30)'
+                      : modeloComparativo === 'divisor240'
+                      ? 'Divisor 240 h (MinTrabajo)'
+                      : `Acuerdo 015 (${categoriaSeleccionada.puntos.toFixed(2)} pts)`}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Compromiso Posgrado Cátedra:</span>
-                    <span className="font-mono text-white font-bold">{formatCurrency(8892494566)}</span>
+                </div>
+
+                {/* Desglose Económico */}
+                <div className="space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                    <span className="text-slate-400">Horas Totales del Semestre:</span>
+                    <span className="font-mono font-bold text-white">{totalHorasSemestre} h</span>
                   </div>
-                  <div className="flex justify-between border-t border-white/10 pt-2 font-bold text-primary-container">
-                    <span>Total Anual Cátedra 2026:</span>
-                    <span className="font-mono">{formatCurrency(totalCompromiso)}</span>
+
+                  <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                    <span className="text-slate-400">Salario Base Semestral:</span>
+                    <span className="font-mono font-bold text-white">{formatCOP(valorTotalBaseContrato)}</span>
+                  </div>
+
+                  {incluirPrestaciones && (
+                    <div className="flex items-center justify-between py-1.5 border-b border-white/5 text-emerald-300">
+                      <span>Prestaciones C-006-96 (Alícuota 21.83%):</span>
+                      <span className="font-mono font-bold">+{formatCOP(valorPrestacionesProporcionales)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                    <span className="text-slate-400">Promedio Mensual (4 pagos):</span>
+                    <span className="font-mono font-bold text-emerald-400">{formatCOP(valorMensualPromedio)} / mes</span>
+                  </div>
+
+                  <div className="pt-2">
+                    <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                      Costo Total del Contrato Semestral:
+                    </span>
+                    <div className="text-3xl font-black text-primary-container font-mono mt-1">
+                      {formatCOP(valorGranTotalContrato)}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Proyección Indexada 2027 */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Sparkles className="text-primary-container" size={16} />
-                  Proyección Presupuestal Indexada (2027)
+              <div className="text-[11px] text-slate-400 bg-black/40 p-3 rounded-xl border border-white/5">
+                💡 Incluye provisión de cesantías, prima de navidad y vacaciones proporcionales conforme a la
+                Sentencia C-006-96.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* PESTAÑA 4: CONTROL OPERATIVO & ASISTENCIA */}
+      {/* ========================================================================= */}
+      {activeTab === 'control' && (
+        <div className="space-y-6">
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Timer className="text-primary-container" size={20} />
+                Control Operativo de Asistencia: Hora Reloj vs. Hora Cátedra
+              </h3>
+              <p className="text-xs text-on-surface-variant">
+                Reglas institucionales de medición de tiempo real, periodos de gracia (tolerancia) y validación de horas
+                efectivas dictadas antes de autorizar la liquidación de nómina.
+              </p>
+            </div>
+
+            {/* Calculadora Operativa de Asistencia y Tolerancia */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+                <h4 className="font-bold text-white text-sm flex items-center gap-2">
+                  <Sliders size={16} className="text-primary-container" />
+                  Parametrización de la Sesión de Clase
                 </h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Considerando una variación del IPC proyectado del <strong>4.0%</strong> para el año 2027:
-                </p>
-                <div className="p-4 rounded-2xl bg-primary-container/10 border border-primary-container/20 space-y-3 text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-300">Valor Estimado Punto D1279 (2027):</span>
-                    <span className="font-mono font-bold text-primary-container text-base">
-                      $ {Math.round(23924 * 1.04).toLocaleString('es-CO')} COP
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-300 font-medium">
+                    Duración de la Hora Cátedra Académica:
+                  </label>
+                  <select
+                    value={duracionHoraAcademicaMin}
+                    onChange={(e) => setDuracionHoraAcademicaMin(Number(e.target.value))}
+                    className="w-full bg-surface-container-high border border-white/10 rounded-xl px-3 py-2 text-xs text-white"
+                  >
+                    <option value={45}>45 Minutos (Bloque estándar con receso)</option>
+                    <option value={50}>50 Minutos (Estatuto Académico UPTC)</option>
+                    <option value={60}>60 Minutos (Hora Reloj Continua)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-300 font-medium">
+                    Margen de Tolerancia de Llegada (Minutos de Gracia):
+                  </label>
+                  <input
+                    type="number"
+                    value={toleranciaMin}
+                    onChange={(e) => setToleranciaMin(Number(e.target.value))}
+                    className="w-full bg-surface-container-high border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Estándar: 10 minutos de gracia antes de aplicar descuento automático de la sesión.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-300 font-medium">
+                    Minutos de Retardo Registrados en la Sesión:
+                  </label>
+                  <input
+                    type="number"
+                    value={minutosRetardo}
+                    onChange={(e) => setMinutosRetardo(Number(e.target.value))}
+                    className="w-full bg-surface-container-high border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Dictamen del Sistema de Asistencia */}
+              <div className="p-6 rounded-2xl bg-black/40 border border-white/10 flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                      Dictamen del Sistema
+                    </span>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                        minutosRetardo <= toleranciaMin
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                          : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                      }`}
+                    >
+                      {minutosRetardo <= toleranciaMin ? 'Dentro de Tolerancia (Válido)' : 'Excede Tolerancia (Descuento)'}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-300">Presupuesto Proyectado Cátedra 2027:</span>
-                    <span className="font-mono font-bold text-white text-base">
-                      {formatCurrency(totalCompromiso * 1.04)}
-                    </span>
+
+                  <div className="text-2xl font-black text-white font-mono">
+                    {minutosRetardo <= toleranciaMin
+                      ? `${duracionHoraAcademicaMin} min certificados`
+                      : `${Math.max(0, duracionHoraAcademicaMin - minutosRetardo)} min efectivos`}
                   </div>
-                  <div className="text-[11px] text-slate-400 border-t border-primary-container/20 pt-2">
-                    Incremento requerido para sostener la misma asignación de horas lectivas: ~{formatCurrency(totalCompromiso * 0.04)}.
-                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {minutosRetardo <= toleranciaMin
+                      ? `El docente llegó con ${minutosRetardo} minutos de retraso, cubierto por el margen de tolerancia institucional (${toleranciaMin} min). Se liquida el 100% de la hora cátedra programada.`
+                      : `El retraso de ${minutosRetardo} minutos supera el límite de gracia (${toleranciaMin} min). El sistema de control biométrico descuenta el tiempo proporcional y alerta a la Dirección de Escuela.`}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-[11px] text-slate-400 space-y-1">
+                  <span className="font-semibold text-white">Procedimiento de Aprobación Semanal:</span>
+                  <p>
+                    1. Marcación biométrica / firma digital → 2. Revisión de tutorías → 3. Expedición de Concepto
+                    Favorable de la Dirección de Escuela → 4. Giro de nómina.
+                  </p>
                 </div>
               </div>
             </div>
+
+            {/* Protocolo de Control de Horas Efectivas */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-white/10 text-xs">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1.5">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <CheckCircle size={14} className="text-emerald-400" />
+                  Horas Efectivas
+                </span>
+                <p className="text-slate-300 text-[11px]">
+                  Pagar únicamente por el tiempo real dictado y las tutorías validadas en el sistema académico institucional.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1.5">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <CheckCircle size={14} className="text-primary-container" />
+                  Tolerancia Reglamentada
+                </span>
+                <p className="text-slate-300 text-[11px]">
+                  Periodo de gracia de hasta 10 minutos antes de proceder a la penalización o descuento del tiempo de clase.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1.5">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <CheckCircle size={14} className="text-blue-400" />
+                  Concepto Favorable
+                </span>
+                <p className="text-slate-300 text-[11px]">
+                  El Director de Escuela expide semanalmente el concepto favorable indispensable para el desembolso financiero.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* PESTAÑA 5: INFORME TÉCNICO, PLAN DE CAJA & QUIZ INTERACTIVO */}
+      {/* ========================================================================= */}
+      {activeTab === 'informe' && (
+        <div className="space-y-6">
+          {/* Estructura Formal del Informe Técnico */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <FileText className="text-primary-container" size={20} />
+                Estructura Definitiva del Informe Técnico Institucional
+              </h3>
+              <p className="text-xs text-on-surface-variant">
+                Componentes obligatorios para la sustentación y aprobación ante el Consejo Superior Universitario y la
+                Vicerrectoría Administrativa y Financiera.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-primary-container font-bold text-xs uppercase tracking-wider">
+                  <span>1. Introducción & Justificación</span>
+                </div>
+                <h4 className="text-sm font-bold text-white">Mitigación de Riesgos Laborales</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Exposición de contingencias por demandas laborales multimillonarias derivadas de pagos por honorarios y
+                  necesidad de modernización fiscal.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                  <span>2. Marco Normativo</span>
+                </div>
+                <h4 className="text-sm font-bold text-white">Sentencia C-006-96 & Ley 30</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Sustento de la relación laboral subordinada, derecho irrenunciable a prestaciones proporcionales y
+                  autonomía del Decreto 1279 de 2002.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                  <span>3. Propuesta Económica</span>
+                </div>
+                <h4 className="text-sm font-bold text-white">Análisis de Divisores & Puntos</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Contraste financiero entre el divisor de 171.2h (blindaje jurídico), 240h (menor tarifa) y el sistema de
+                  puntos del Acuerdo 015 de la UPTC.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-wider">
+                  <span>4. Control de Asistencia</span>
+                </div>
+                <h4 className="text-sm font-bold text-white">Flujo de Validación Semanal</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Parametrización de hora reloj vs. hora académica, 10 minutos de tolerancia y expedición de Concepto
+                  Favorable por la Dirección de Programa.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                  <span>5. Plan de Mitigación de Caja</span>
+                </div>
+                <h4 className="text-sm font-bold text-white">Retrasos en Giros de Gratuidad</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Mecanismos de liquidez para compensar demoras en transferencias de la Política de Gratuidad (Recurso 10.5)
+                  sin suspender el pago de la nómina docente.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider">
+                  <span>6. Conclusiones y Acuerdos</span>
+                </div>
+                <h4 className="text-sm font-bold text-white">Proyecto de Acto Administrativo</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Redacción de articulado modificatorio para aprobación del Consejo Superior Universitario de la UPTC.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Plan de Mitigación de Riesgos Financieros de Caja (Gratuidad R10.5) */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-4">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Coins className="text-primary-container" size={18} />
+              Plan de Mitigación de Riesgos de Flujo de Caja (Política de Gratuidad R10.5)
+            </h3>
+            <p className="text-xs text-on-surface-variant">
+              En 2026, la UPTC tiene apropiados <strong>$ 142,1 M</strong> en el Recurso 10.5 (Gratuidad). Los retrasos en los
+              giros del Gobierno Nacional requieren medidas de contingencia de tesorería:
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-xs space-y-2">
+                <span className="font-bold text-amber-400">1. Unidad de Caja Temporal:</span>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Uso temporal de excedentes de liquidez de Recursos Propios (R20 / R31) para apalancar la nómina de cátedra
+                  mientras se efectúan los desembolsos de la Nación.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-xs space-y-2">
+                <span className="font-bold text-emerald-400">2. Reintegro Automático:</span>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Restitución automática de los fondos a las cuentas de origen en el mismo instante en que el Ministerio de
+                  Educación radique los recursos de gratuidad.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-xs space-y-2">
+                <span className="font-bold text-blue-400">3. Blindaje de Nómina:</span>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Priorización irrestricta de las cuentas de nómina docente sobre gastos generales o inversiones no
+                  urgentes para evitar cesación de actividades académicas.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Cuestionario Interactivo de Evaluación */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <CheckSquare className="text-primary-container" size={20} />
+                  Evaluación Interactiva: Liquidación y Normativa de Hora Cátedra
+                </h3>
+                <p className="text-xs text-on-surface-variant">
+                  Pon a prueba tus conocimientos sobre la Sentencia C-006-96, divisores mensuales y el Acuerdo 015 de la UPTC.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {showQuizResults && (
+                  <span className="px-3 py-1 rounded-xl bg-primary-container text-slate-950 font-bold text-xs">
+                    Puntaje: {quizScore} de {QUIZ_QUESTIONS.length} ({((quizScore / QUIZ_QUESTIONS.length) * 100).toFixed(0)}%)
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    setUserAnswers({});
+                    setShowQuizResults(false);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw size={13} />
+                  <span>Reiniciar Quiz</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {QUIZ_QUESTIONS.map((q, qIndex) => {
+                const selectedOption = userAnswers[q.id];
+                return (
+                  <div key={q.id} className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3 text-xs">
+                    <span className="font-bold text-white text-sm block">
+                      {qIndex + 1}. {q.pregunta}
+                    </span>
+
+                    <div className="space-y-2">
+                      {q.opciones.map((op, opIndex) => {
+                        const isSelected = selectedOption === opIndex;
+                        let optionStyle = 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10';
+
+                        if (showQuizResults) {
+                          if (op.correcta) {
+                            optionStyle = 'bg-emerald-500/20 border-emerald-500/50 text-emerald-200 font-bold';
+                          } else if (isSelected && !op.correcta) {
+                            optionStyle = 'bg-rose-500/20 border-rose-500/50 text-rose-200';
+                          }
+                        } else if (isSelected) {
+                          optionStyle = 'bg-primary-container/20 border-primary-container text-white font-bold';
+                        }
+
+                        return (
+                          <button
+                            key={opIndex}
+                            type="button"
+                            onClick={() => {
+                              if (!showQuizResults) {
+                                setUserAnswers((prev) => ({ ...prev, [q.id]: opIndex }));
+                              }
+                            }}
+                            className={`w-full p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${optionStyle}`}
+                          >
+                            <span>{op.texto}</span>
+                            {showQuizResults && op.correcta && (
+                              <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
+                            )}
+                            {showQuizResults && isSelected && !op.correcta && (
+                              <XCircle size={16} className="text-rose-400 flex-shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {showQuizResults && (
+                      <div className="mt-3 p-3 rounded-xl bg-black/40 border border-white/10 text-[11px] text-slate-300">
+                        <span className="font-bold text-primary-container">Explicación jurídica: </span>
+                        {q.explicacion}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {!showQuizResults && (
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => setShowQuizResults(true)}
+                  disabled={Object.keys(userAnswers).length === 0}
+                  className="px-6 py-2.5 rounded-xl bg-primary-container hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold text-xs transition-all cursor-pointer shadow-lg"
+                >
+                  Calificar Evaluación
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
