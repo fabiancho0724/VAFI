@@ -1636,7 +1636,7 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
       )}
 
       {/* ========================================================================= */}
-      {/* PESTAÑA 5: INFORME TÉCNICO, PLAN DE CAJA & QUIZ INTERACTIVO */}
+      {/* PESTAÑA 5: INFORME TÉCNICO OFICIAL, PROYECCIÓN 2027 & REFORMA */}
       {/* ========================================================================= */}
       {activeTab === 'informe' && (
         <div className="space-y-6">
@@ -1650,10 +1650,10 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
                 <span className="text-xs text-slate-400 font-mono">Radicado UPTC-VAFI-HC-2026-015</span>
               </div>
               <h3 className="text-lg md:text-xl font-black text-white">
-                Informe Técnico y Financiero Oficial en Formato PDF
+                Informe Técnico: Considerandos, Evolución, Proyección 2027 y Reforma al Modelo
               </h3>
               <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                Genera el documento formal completo en formato PDF tamaño Carta para radicación ante el Consejo Superior Universitario, incluyendo sustento de la Sentencia C-006-96, matriz presupuestal 2026, comparativa de divisores y firmas reglamentarias.
+                Documento ejecutivo estructurado para sustentar ante el Consejo Superior Universitario la actualización del método de pago de horas cátedra, amparado en la Sentencia C-006-96 y el Acuerdo 015 de 2009.
               </p>
             </div>
 
@@ -1677,226 +1677,260 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
             </div>
           </div>
 
-          {/* Estructura Formal del Informe Técnico */}
-          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
-            <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <FileText className="text-primary-container" size={20} />
-                Estructura Definitiva del Informe Técnico Institucional
-              </h3>
-              <p className="text-xs text-on-surface-variant">
-                Componentes obligatorios para la sustentación y aprobación ante el Consejo Superior Universitario y la
-                Vicerrectoría Administrativa y Financiera.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center gap-2 text-primary-container font-bold text-xs uppercase tracking-wider">
-                  <span>1. Introducción & Justificación</span>
-                </div>
-                <h4 className="text-sm font-bold text-white">Mitigación de Riesgos Laborales</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Exposición de contingencias por demandas laborales multimillonarias derivadas de pagos por honorarios y
-                  necesidad de modernización fiscal.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
-                  <span>2. Marco Normativo</span>
-                </div>
-                <h4 className="text-sm font-bold text-white">Sentencia C-006-96 & Ley 30</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Sustento de la relación laboral subordinada, derecho irrenunciable a prestaciones proporcionales y
-                  autonomía del Decreto 1279 de 2002.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                  <span>3. Propuesta Económica</span>
-                </div>
-                <h4 className="text-sm font-bold text-white">Análisis de Divisores & Puntos</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Contraste financiero entre el divisor de 171.2h (blindaje jurídico), 240h (menor tarifa) y el sistema de
-                  puntos del Acuerdo 015 de la UPTC.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-wider">
-                  <span>4. Control de Asistencia</span>
-                </div>
-                <h4 className="text-sm font-bold text-white">Flujo de Validación Semanal</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Parametrización de hora reloj vs. hora académica, 10 minutos de tolerancia y expedición de Concepto
-                  Favorable por la Dirección de Programa.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-                  <span>5. Plan de Mitigación de Caja</span>
-                </div>
-                <h4 className="text-sm font-bold text-white">Retrasos en Giros de Gratuidad</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Mecanismos de liquidez para compensar demoras en transferencias de la Política de Gratuidad (Recurso 10.5)
-                  sin suspender el pago de la nómina docente.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider">
-                  <span>6. Conclusiones y Acuerdos</span>
-                </div>
-                <h4 className="text-sm font-bold text-white">Proyecto de Acto Administrativo</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Redacción de articulado modificatorio para aprobación del Consejo Superior Universitario de la UPTC.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Plan de Mitigación de Riesgos Financieros de Caja (Gratuidad R10.5) */}
+          {/* I. CONSIDERANDOS A NIVEL NORMATIVO */}
           <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Coins className="text-primary-container" size={18} />
-              Plan de Mitigación de Riesgos de Flujo de Caja (Política de Gratuidad R10.5)
-            </h3>
-            <p className="text-xs text-on-surface-variant">
-              En 2026, la UPTC tiene apropiados <strong>$ 142,1 M</strong> en el Recurso 10.5 (Gratuidad). Los retrasos en los
-              giros del Gobierno Nacional requieren medidas de contingencia de tesorería:
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-xs space-y-2">
-                <span className="font-bold text-amber-400">1. Unidad de Caja Temporal:</span>
-                <p className="text-slate-300 text-[11px] leading-relaxed">
-                  Uso temporal de excedentes de liquidez de Recursos Propios (R20 / R31) para apalancar la nómina de cátedra
-                  mientras se efectúan los desembolsos de la Nación.
-                </p>
+            <div className="border-b border-white/10 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Scale className="text-primary-container" size={20} />
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">
+                  I. Considerandos a Nivel Normativo (Sustento Jurídico Vinculante)
+                </h3>
               </div>
+              <span className="text-xs text-primary-container font-mono font-bold">Orden Constitucional y Legal</span>
+            </div>
 
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-xs space-y-2">
-                <span className="font-bold text-emerald-400">2. Reintegro Automático:</span>
-                <p className="text-slate-300 text-[11px] leading-relaxed">
-                  Restitución automática de los fondos a las cuentas de origen en el mismo instante en que el Ministerio de
-                  Educación radique los recursos de gratuidad.
+            <div className="p-4 rounded-2xl bg-black/30 border border-white/10 space-y-3 text-xs text-slate-300 leading-relaxed font-sans">
+              <p className="font-bold text-white text-sm">CONSIDERANDO QUE:</p>
+              <div className="space-y-2.5 pl-2 border-l-2 border-primary-container">
+                <p>
+                  <strong>1. Primacía de la Realidad (Art. 53 C.P.):</strong> La Constitución Política de Colombia consagra como principio fundamental la primacía de la realidad sobre las formas pactadas por los sujetos laborales y la irrenunciabilidad a los derechos laborales mínimos.
                 </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-xs space-y-2">
-                <span className="font-bold text-blue-400">3. Blindaje de Nómina:</span>
-                <p className="text-slate-300 text-[11px] leading-relaxed">
-                  Priorización irrestricta de las cuentas de nómina docente sobre gastos generales o inversiones no
-                  urgentes para evitar cesación de actividades académicas.
+                <p>
+                  <strong>2. Jurisprudencia Constitucional Vinculante (Sentencia C-006 de 1996):</strong> La Honorable Corte Constitucional declaró que los docentes de cátedra que laboran bajo subordinación, directrices y horario continuo son servidores públicos o trabajadores subordinados. Por ende, determinó la inconstitucionalidad de contratarlos bajo órdenes de prestación de servicios (honorarios) y ordenó el reconocimiento y pago proporcional de todas las prestaciones sociales (vacaciones, prima de vacaciones, cesantías e intereses, y prima de Navidad).
+                </p>
+                <p>
+                  <strong>3. Régimen de Incompatibilidades y Tesoro Público (Art. 128 C.P.):</strong> Nadie podrá recibir más de una asignación del tesoro público. En consecuencia, la cátedra interna de docentes de planta y ocasionales debe ejercerse obligatoriamente fuera del horario ordinario de trabajo y sin descarga académica.
+                </p>
+                <p>
+                  <strong>4. Autonomía Universitaria y Piso Salarial (Ley 30 de 1992):</strong> Los artículos 69, 70 y 71 reconocen la facultad de las universidades para fijar su estatuto docente, señalando que la remuneración de la hora cátedra no podrá ser inferior al resultado de dividir ocho (8) SMMLV entre las horas laborables mensuales.
+                </p>
+                <p>
+                  <strong>5. Régimen Salarial Público (Decreto 1279 de 2002 y Decreto 318 de 2026):</strong> El Gobierno Nacional actualiza anualmente el valor del punto salarial, fijado para 2026 en <strong>$ 23.924 COP</strong>.
+                </p>
+                <p>
+                  <strong>6. Estatuto de Remuneración UPTC (Acuerdo No. 015 de 2009):</strong> El Consejo Superior Universitario fijó la escala de puntos por hora (Auxiliar 2.50, Asistente 2.75, Asociado 3.00 y Titular 3.50) y reguló la cátedra interna con tope legal estricto de máximo 1 asignatura y hasta 4 horas semanales.
+                </p>
+                <p>
+                  <strong>7. Obligación de Blindaje Patrimonial:</strong> Es imperativo para la institución adecuar su modelo de contratación y liquidación a fin de blindar a la universidad de demandas laborales millonarias por desnaturalización de contratos.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Cuestionario Interactivo de Evaluación */}
+          {/* II. EVOLUCIÓN HISTÓRICA DE LOS PAGOS (2024 - 2026) */}
           <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10 pb-4">
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <CheckSquare className="text-primary-container" size={20} />
-                  Evaluación Interactiva: Liquidación y Normativa de Hora Cátedra
+            <div className="border-b border-white/10 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="text-primary-container" size={20} />
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">
+                  II. Evolución Histórica de los Pagos y Nómina de Cátedra (2024 - 2026)
                 </h3>
-                <p className="text-xs text-on-surface-variant">
-                  Pon a prueba tus conocimientos sobre la Sentencia C-006-96, divisores mensuales y el Acuerdo 015 de la UPTC.
-                </p>
               </div>
+              <span className="text-xs text-emerald-400 font-mono font-bold">Datos Oficiales UPTC</span>
+            </div>
 
-              <div className="flex items-center gap-3">
-                {showQuizResults && (
-                  <span className="px-3 py-1 rounded-xl bg-primary-container text-slate-950 font-bold text-xs">
-                    Puntaje: {quizScore} de {QUIZ_QUESTIONS.length} ({((quizScore / QUIZ_QUESTIONS.length) * 100).toFixed(0)}%)
-                  </span>
-                )}
-                <button
-                  onClick={() => {
-                    setUserAnswers({});
-                    setShowQuizResults(false);
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                >
-                  <RefreshCw size={13} />
-                  <span>Reiniciar Quiz</span>
-                </button>
+            {/* Evolución del Punto y Tarifas */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-white">1. Evolución del Valor del Punto y Tarifas Horarias por Categoría</h4>
+              <div className="overflow-x-auto rounded-2xl border border-white/10">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-white/5 text-slate-300 font-semibold border-b border-white/10 uppercase text-[11px]">
+                    <tr>
+                      <th className="p-3">Categoría Docente</th>
+                      <th className="p-3 text-center">Puntos / Hora</th>
+                      <th className="p-3 text-right">Tarifa 2024 (Pto $20.895)</th>
+                      <th className="p-3 text-right">Tarifa 2025 (Pto $22.358)</th>
+                      <th className="p-3 text-right text-primary-container">Tarifa 2026 (Pto $23.924)</th>
+                      <th className="p-3 text-center">Variación Acumulada</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-slate-200">
+                    {ESCALA_PUNTOS.map((e) => (
+                      <tr key={e.categoria} className="hover:bg-white/5">
+                        <td className="p-3 font-bold text-white">{e.categoria}</td>
+                        <td className="p-3 text-center font-mono font-bold text-primary-container">{e.puntos.toFixed(2)} pts</td>
+                        <td className="p-3 text-right font-mono text-slate-400">{formatCOP(e.tarifa2024)}</td>
+                        <td className="p-3 text-right font-mono text-slate-300">{formatCOP(e.tarifa2025)}</td>
+                        <td className="p-3 text-right font-mono font-bold text-emerald-400">{formatCOP(e.tarifa2026)}</td>
+                        <td className="p-3 text-center font-mono text-emerald-300">+14.50%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <div className="space-y-6">
-              {QUIZ_QUESTIONS.map((q, qIndex) => {
-                const selectedOption = userAnswers[q.id];
-                return (
-                  <div key={q.id} className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3 text-xs">
-                    <span className="font-bold text-white text-sm block">
-                      {qIndex + 1}. {q.pregunta}
-                    </span>
+            {/* Desembolsos Reales 2026 */}
+            <div className="space-y-3 pt-2">
+              <h4 className="text-sm font-bold text-white">2. Ejecución Presupuestal y Desembolsos Reales en la Vigencia 2026</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                <div className="p-3.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-slate-400 block text-[11px]">Apropiado Total 2026</span>
+                  <span className="text-lg font-black text-white font-mono">{formatCurrency(totalCompromiso)}</span>
+                  <span className="text-[10px] text-slate-400 block mt-0.5">Pregrado: $8.561,5M | Posg: $8.892,5M</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-slate-400 block text-[11px]">Pagado (Ene - Ago 2026)</span>
+                  <span className="text-lg font-black text-emerald-400 font-mono">{formatCurrency(totalPagado)}</span>
+                  <span className="text-[10px] text-emerald-400 block mt-0.5">67.4% de avance ejecutado</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-slate-400 block text-[11px]">Saldo por Ejecutar (Sep - Dic)</span>
+                  <span className="text-lg font-black text-blue-400 font-mono">{formatCurrency(saldoPorEjecutar)}</span>
+                  <span className="text-[10px] text-blue-400 block mt-0.5">32.6% de saldo disponible</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-slate-400 block text-[11px]">Pico de Desembolso (Mayo)</span>
+                  <span className="text-lg font-black text-amber-300 font-mono">$ 2.734,9 M</span>
+                  <span className="text-[10px] text-amber-400 block mt-0.5">Cierre del Semestre 2026-I</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                    <div className="space-y-2">
-                      {q.opciones.map((op, opIndex) => {
-                        const isSelected = selectedOption === opIndex;
-                        let optionStyle = 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10';
+          {/* III. PROYECCIÓN DE LOS VALORES EN EL 2027 */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
+            <div className="border-b border-white/10 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="text-primary-container" size={20} />
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">
+                  III. Proyección de Valores y Costos Institucionales (Vigencia 2027)
+                </h3>
+              </div>
+              <span className="text-xs text-amber-300 font-mono font-bold">IPC Proyectado +4.0%</span>
+            </div>
 
-                        if (showQuizResults) {
-                          if (op.correcta) {
-                            optionStyle = 'bg-emerald-500/20 border-emerald-500/50 text-emerald-200 font-bold';
-                          } else if (isSelected && !op.correcta) {
-                            optionStyle = 'bg-rose-500/20 border-rose-500/50 text-rose-200';
-                          }
-                        } else if (isSelected) {
-                          optionStyle = 'bg-primary-container/20 border-primary-container text-white font-bold';
-                        }
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-white">1. Escala Tarifaria Proyectada 2027 (Punto D1279: $ 24.881 COP)</h4>
+                <div className="overflow-x-auto rounded-xl border border-white/10">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-white/5 text-slate-300 font-semibold border-b border-white/10 text-[11px]">
+                      <tr>
+                        <th className="p-2.5">Categoría</th>
+                        <th className="p-2.5 text-center">Puntos</th>
+                        <th className="p-2.5 text-right">Tarifa 2026</th>
+                        <th className="p-2.5 text-right text-primary-container">Tarifa Proyectada 2027</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-slate-200">
+                      <tr>
+                        <td className="p-2.5 font-semibold text-white">Profesor Auxiliar</td>
+                        <td className="p-2.5 text-center font-mono">2.50</td>
+                        <td className="p-2.5 text-right font-mono text-slate-400">$ 59.810</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-emerald-400">$ 62.203 / h</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-semibold text-white">Profesor Asistente</td>
+                        <td className="p-2.5 text-center font-mono">2.75</td>
+                        <td className="p-2.5 text-right font-mono text-slate-400">$ 65.791</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-emerald-400">$ 68.423 / h</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-semibold text-white">Profesor Asociado</td>
+                        <td className="p-2.5 text-center font-mono">3.00</td>
+                        <td className="p-2.5 text-right font-mono text-slate-400">$ 71.772</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-emerald-400">$ 74.643 / h</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-semibold text-white">Profesor Titular</td>
+                        <td className="p-2.5 text-center font-mono">3.50</td>
+                        <td className="p-2.5 text-right font-mono text-slate-400">$ 83.734</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-emerald-400">$ 87.084 / h</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-                        return (
-                          <button
-                            key={opIndex}
-                            type="button"
-                            onClick={() => {
-                              if (!showQuizResults) {
-                                setUserAnswers((prev) => ({ ...prev, [q.id]: opIndex }));
-                              }
-                            }}
-                            className={`w-full p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${optionStyle}`}
-                          >
-                            <span>{op.texto}</span>
-                            {showQuizResults && op.correcta && (
-                              <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
-                            )}
-                            {showQuizResults && isSelected && !op.correcta && (
-                              <XCircle size={16} className="text-rose-400 flex-shrink-0" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {showQuizResults && (
-                      <div className="mt-3 p-3 rounded-xl bg-black/40 border border-white/10 text-[11px] text-slate-300">
-                        <span className="font-bold text-primary-container">Explicación jurídica: </span>
-                        {q.explicacion}
-                      </div>
-                    )}
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-white">2. Presupuesto Institucional Requerido para Cátedra en 2027</h4>
+                <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-2.5 text-xs">
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400">Presupuesto Comprometido Cátedra 2026:</span>
+                    <span className="font-mono text-white font-bold">{formatCurrency(totalCompromiso)}</span>
                   </div>
-                );
-              })}
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400">Pregrado Proyectado 2027 (+4.0%):</span>
+                    <span className="font-mono text-emerald-400 font-bold">$ 8.903,9 M</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span className="text-slate-400">Posgrados Proyectado 2027 (+4.0%):</span>
+                    <span className="font-mono text-primary-container font-bold">$ 9.248,2 M</span>
+                  </div>
+                  <div className="flex justify-between pt-2 text-sm font-bold text-white">
+                    <span>Total Presupuesto Proyectado Cátedra 2027:</span>
+                    <span className="font-mono text-emerald-400">$ 18.152,2 M</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 italic pt-1">
+                    Esfuerzo fiscal adicional requerido para sostener la misma asignación de horas lectivas: <strong>+$ 698,2 M</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* IV. SUSTENTO TÉCNICO PARA UNA MODIFICACIÓN DEL MODELO */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
+            <div className="border-b border-white/10 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sliders className="text-primary-container" size={20} />
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">
+                  IV. Sustento Técnico para una Modificación del Modelo de Horas Cátedra
+                </h3>
+              </div>
+              <span className="text-xs text-rose-300 font-mono font-bold">Propuesta de Acuerdo</span>
             </div>
 
-            {!showQuizResults && (
-              <div className="text-center pt-2">
-                <button
-                  onClick={() => setShowQuizResults(true)}
-                  disabled={Object.keys(userAnswers).length === 0}
-                  className="px-6 py-2.5 rounded-xl bg-primary-container hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold text-xs transition-all cursor-pointer shadow-lg"
-                >
-                  Calificar Evaluación
-                </button>
+            <div className="space-y-4 text-xs leading-relaxed text-slate-300">
+              <p className="text-justify">
+                El análisis financiero y jurídico evidencia que el modelo vigente adoptado en el <strong>Acuerdo No. 015 de 2009</strong> requiere una actualización urgente fundamentada en los siguientes pilares técnicos:
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+                  <span className="font-bold text-rose-300 text-sm block">1. Transparencia y Provisión Prestacional (C-006-96):</span>
+                  <p className="text-[11px] text-slate-300 text-justify">
+                    Para blindar a la universidad contra demandas laborales por el principio de primacía de la realidad, los contratos de cátedra deben desglosar explícitamente el salario básico en puntos y la alícuota proporcional correspondiente a cesantías (8.33%), prima de servicios (8.33%), prima de navidad y vacaciones (5.17%), totalizando un <strong>factor prestacional del 21.83%</strong>.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+                  <span className="font-bold text-emerald-300 text-sm block">2. Armonización de Divisores (Ley 30 vs. Acuerdo 015):</span>
+                  <p className="text-[11px] text-slate-300 text-justify">
+                    El divisor de la jornada docente de 171.2 horas (40h/sem × 4.28) fija un piso constitucional de $81.820/h con 8 SMMLV, frente al divisor de 240 horas ($58.364/h). La universidad debe nivelar el piso mínimo del Profesor Auxiliar para garantizar que ninguna categoría quede desprotegida ante reclamos de nivelación salarial.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+                  <span className="font-bold text-blue-300 text-sm block">3. Definición Operativa: Hora Reloj vs. Hora Académica:</span>
+                  <p className="text-[11px] text-slate-300 text-justify">
+                    Se debe reglamentar formalmente que la hora cátedra equivale a <strong>cincuenta (50) minutos lectivos presenciales de aula</strong>, fijando un margen de tolerancia estricto de <strong>diez (10) minutos</strong> de gracia antes de aplicar descuentos, condicionado a la expedición del <strong>Concepto Favorable mensual del Director de Escuela</strong>.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+                  <span className="font-bold text-amber-300 text-sm block">4. Blindaje de Topes Semanales y Unidad de Caja:</span>
+                  <p className="text-[11px] text-slate-300 text-justify">
+                    Fijar un tope máximo de <strong>19 horas semanales</strong> para cátedra externa (evitando desnaturalización de la jornada), ratificar el tope legal de <strong>4 horas semanales</strong> para cátedra interna (Art. 2) y autorizar la <strong>Unidad de Caja Temporal</strong> para solventar retrasos en los giros de la Gratuidad (R10.5).
+                  </p>
+                </div>
               </div>
-            )}
+
+              {/* Proyecto de Articulado Modificatorio */}
+              <div className="p-5 rounded-2xl bg-black/40 border border-primary-container/30 space-y-2 mt-2">
+                <span className="text-primary-container font-bold text-sm block uppercase tracking-wide">
+                  Síntesis del Proyecto de Acuerdo Modificatorio para el Consejo Superior:
+                </span>
+                <ul className="space-y-1.5 text-[11px] text-slate-300 list-disc pl-4">
+                  <li><strong>Artículo 1° (Fórmula Integral):</strong> Modificar el Art. 1 del Acuerdo 015/2009 para incorporar expresamente la provisión proporcional de prestaciones sociales de ley (21.83%).</li>
+                  <li><strong>Artículo 2° (Equivalencia Horaria):</strong> Fijar que 1 hora cátedra corresponde a 50 minutos lectivos presenciales, con 10 minutos de tolerancia.</li>
+                  <li><strong>Artículo 3° (Límites de Vinculación):</strong> Establecer un tope máximo de 19 horas semanales para cátedra externa y ratificar el tope de 4 horas para cátedra interna.</li>
+                  <li><strong>Artículo 4° (Certificación Obligatoria):</strong> Condicionar el desembolso mensual de nómina al Concepto Favorable del Director de Programa o Escuela.</li>
+                  <li><strong>Artículo 5° (Unidad de Caja):</strong> Habilitar la unidad de caja temporal para apalancar el Recurso 10.5 (Gratuidad) ante retrasos de transferencias nacionales.</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1937,232 +1971,173 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
           </div>
         </div>
 
-        {/* SECCIÓN 1: RESUMEN EJECUTIVO Y EJECUCIÓN PRESUPUESTAL 2026 */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
-            1. Resumen Ejecutivo y Ejecución Presupuestal 2026 (Cifras Reales en Millones)
+        {/* 1. CONSIDERANDOS A NIVEL NORMATIVO */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+            1. Considerandos a Nivel Normativo (Sustento Jurídico Vinculante)
           </h3>
-          <p className="text-[11px] text-slate-700 leading-relaxed">
-            Consolidado financiero del gasto de horas cátedra en programas de pregrado y posgrados de la UPTC
-            extraído de los registros oficiales de ejecución del aplicativo VAFI a 31 de agosto de 2026:
-          </p>
-
-          <div className="grid grid-cols-4 gap-3 text-center">
-            <div className="p-2.5 rounded-lg border border-slate-300 bg-slate-50">
-              <span className="text-[10px] text-slate-500 uppercase font-bold block">Total Comprometido 2026</span>
-              <span className="text-base font-black text-slate-900 font-mono">{formatCurrency(totalCompromiso)}</span>
-              <span className="text-[9px] text-slate-500 block">Pregrado: $8.561,5 M | Posg: $8.892,5 M</span>
-            </div>
-            <div className="p-2.5 rounded-lg border border-slate-300 bg-slate-50">
-              <span className="text-[10px] text-slate-500 uppercase font-bold block">Pagado a 31 de Agosto</span>
-              <span className="text-base font-black text-emerald-700 font-mono">{formatCurrency(totalPagado)}</span>
-              <span className="text-[9px] text-emerald-600 font-bold block">{porcentajeEjecutadoGlobal.toFixed(1)}% ejecutado</span>
-            </div>
-            <div className="p-2.5 rounded-lg border border-slate-300 bg-slate-50">
-              <span className="text-[10px] text-slate-500 uppercase font-bold block">Saldo por Ejecutar (Sep-Dic)</span>
-              <span className="text-base font-black text-blue-700 font-mono">{formatCurrency(saldoPorEjecutar)}</span>
-              <span className="text-[9px] text-blue-600 font-bold block">{(100 - porcentajeEjecutadoGlobal).toFixed(1)}% disponible</span>
-            </div>
-            <div className="p-2.5 rounded-lg border border-slate-300 bg-slate-50">
-              <span className="text-[10px] text-slate-500 uppercase font-bold block">Valor Punto Decreto 1279</span>
-              <span className="text-base font-black text-amber-700 font-mono">$ 23.924 COP</span>
-              <span className="text-[9px] text-slate-600 block">+7.0% fijado Dcto. 318/2026</span>
-            </div>
+          <div className="text-[11px] text-slate-800 space-y-1.5 leading-relaxed text-justify">
+            <p className="font-bold">CONSIDERANDO QUE:</p>
+            <p><strong>1. Primacía de la Realidad (Art. 53 C.P.):</strong> La Constitución Política de Colombia consagra el principio fundamental de la primacía de la realidad sobre las formas contractuales y la irrenunciabilidad a los beneficios laborales mínimos.</p>
+            <p><strong>2. Jurisprudencia Constitucional Vinculante (Sentencia C-006 de 1996):</strong> La Corte Constitucional determinó que los profesores de hora cátedra subordinados son servidores públicos o trabajadores con relación laboral auténtica, declarando inconstitucional su vinculación por honorarios (prestación de servicios) y ordenando el reconocimiento proporcional de todas las prestaciones sociales (vacaciones, cesantías, intereses, prima de navidad y prima de servicios).</p>
+            <p><strong>3. Prohibición de Doble Asignación (Art. 128 C.P.):</strong> Nadie podrá recibir más de una asignación del tesoro público. La cátedra interna de docentes de planta y ocasionales debe ejercerse obligatoriamente fuera del horario ordinario de trabajo y sin descarga académica.</p>
+            <p><strong>4. Autonomía Universitaria y Piso Salarial (Ley 30 de 1992):</strong> Los artículos 69 a 71 reconocen la autonomía universitaria y establecen que la hora cátedra no podrá ser inferior a la proporción de 8 SMMLV divididos entre las horas laborables mensuales.</p>
+            <p><strong>5. Régimen Salarial Público (Decretos 1279/2002 y 318/2026):</strong> El valor del punto salarial oficial para la vigencia 2026 fue establecido en $ 23.924 COP.</p>
+            <p><strong>6. Estatuto UPTC (Acuerdo No. 015 de 2009):</strong> Fijó los puntos por hora de pregrado (2.50 a 3.50 pts) y limitó la cátedra interna a un máximo de una (1) asignatura y hasta cuatro (4) horas semanales.</p>
           </div>
-
-          {/* Tabla de Fuentes de Financiación */}
-          <table className="w-full text-left text-[11px] border border-slate-300 mt-2">
-            <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300 text-[10px] uppercase">
-              <tr>
-                <th className="p-2">Fuente de Financiación</th>
-                <th className="p-2">Nivel Académico</th>
-                <th className="p-2">Clasificación Base</th>
-                <th className="p-2 text-right">Compromiso ($ M)</th>
-                <th className="p-2 text-right">Pagado a Ago ($ M)</th>
-                <th className="p-2 text-right">Saldo Sep-Dic ($ M)</th>
-                <th className="p-2 text-center">% Ejec.</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {RECURSOS_DATA.map((r) => (
-                <tr key={r.codigo}>
-                  <td className="p-2 font-semibold text-slate-900">{r.nombre}</td>
-                  <td className="p-2 text-slate-700">{r.nivel}</td>
-                  <td className="p-2 text-slate-600">{r.tipoBase}</td>
-                  <td className="p-2 text-right font-mono font-bold text-slate-900">{formatCurrency(r.compromiso)}</td>
-                  <td className="p-2 text-right font-mono font-bold text-emerald-700">{formatCurrency(r.pagado)}</td>
-                  <td className="p-2 text-right font-mono text-slate-700">{formatCurrency(r.compromiso - r.pagado)}</td>
-                  <td className="p-2 text-center font-mono font-bold">{r.porcentaje.toFixed(1)}%</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot className="bg-slate-100 border-t-2 border-slate-400 font-bold text-[11px]">
-              <tr>
-                <td colSpan={3} className="p-2 uppercase text-slate-900">Total Nómina Cátedra UPTC</td>
-                <td className="p-2 text-right font-mono text-slate-900">{formatCurrency(totalCompromiso)}</td>
-                <td className="p-2 text-right font-mono text-emerald-800">{formatCurrency(totalPagado)}</td>
-                <td className="p-2 text-right font-mono text-blue-800">{formatCurrency(saldoPorEjecutar)}</td>
-                <td className="p-2 text-center font-mono">{porcentajeEjecutadoGlobal.toFixed(1)}%</td>
-              </tr>
-            </tfoot>
-          </table>
         </div>
 
-        {/* SECCIÓN 2: SUSTENTO JURISPRUDENCIAL VINCULANTE (SENTENCIA C-006-96) */}
+        {/* 2. EVOLUCIÓN HISTÓRICA DE LOS PAGOS */}
         <div className="space-y-2 pt-2 border-t border-slate-200">
-          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
-            2. Sustento Jurisprudencial Vinculante (Sentencia C-006-96 de la Corte Constitucional)
-          </h3>
-          <p className="text-[11px] text-slate-700 leading-relaxed text-justify">
-            La <strong>Corte Constitucional de Colombia (Sentencia C-006 de 1996)</strong> declaró expresamente que los
-            docentes de hora cátedra subordinados son <strong>servidores públicos o trabajadores con relación laboral
-            auténtica</strong>. En consecuencia, la contratación de profesores por prestación de servicios (honorarios) es
-            <strong> contraria a la Constitución Política</strong> y expone a la universidad a demandas millonarias por
-            el principio de primacía de la realidad sobre las formalidades (Art. 53 C.P.).
-          </p>
-          <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg text-[11px] text-amber-900 space-y-1">
-            <strong>Obligación Prestacional Proporcional Irrenunciable:</strong>
-            <p>
-              Toda liquidación debe reconocer proporcionalmente al tiempo efectivamente laborado: <em>vacaciones,
-              prima de vacaciones, cesantías, intereses sobre cesantías y prima de Navidad</em>. Esta carga prestacional
-              representa aproximadamente un <strong>21.83% adicional</strong> sobre el valor básico por hora pactado.
-            </p>
-          </div>
-        </div>
-
-        {/* SECCIÓN 3: COMPARATIVA DE MODELOS FINANCIEROS Y TARIFAS 2026 */}
-        <div className="space-y-3 pt-2 border-t border-slate-200">
-          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
-            3. Análisis Comparativo de Modelos Financieros para Liquidación de la Tarifa
-          </h3>
-          <p className="text-[11px] text-slate-700 leading-relaxed">
-            Contraste de las fórmulas financieras aplicables bajo la Ley 30 de 1992 y el régimen estatutario del
-            Acuerdo 015 de 2009 de la UPTC para la vigencia fiscal 2026:
-          </p>
-
-          <table className="w-full text-left text-[11px] border border-slate-300">
-            <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300 text-[10px] uppercase">
-              <tr>
-                <th className="p-2">Modelo / Fórmula</th>
-                <th className="p-2">Fundamento Legal</th>
-                <th className="p-2 text-right">Tarifa Horaria 2026</th>
-                <th className="p-2 text-center">Nivel de Riesgo Jurídico</th>
-                <th className="p-2">Dictamen de Aplicabilidad Institucional</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              <tr>
-                <td className="p-2 font-bold text-slate-900">Divisor 171.2 Horas</td>
-                <td className="p-2 text-slate-600">8 SMMLV ÷ 171.2 h (40 h/sem)</td>
-                <td className="p-2 text-right font-mono font-bold text-slate-900">$ 81.820 COP</td>
-                <td className="p-2 text-center text-emerald-700 font-bold">Bajo Riesgo</td>
-                <td className="p-2 text-slate-700">Recomendado para blindaje laboral pleno según jurisprudencia.</td>
-              </tr>
-              <tr>
-                <td className="p-2 font-bold text-slate-900">Divisor 240 Horas</td>
-                <td className="p-2 text-slate-600">8 SMMLV ÷ 240 h (30 días × 8 h)</td>
-                <td className="p-2 text-right font-mono font-bold text-slate-900">$ 58.364 COP</td>
-                <td className="p-2 text-center text-rose-700 font-bold">Alto Riesgo</td>
-                <td className="p-2 text-slate-700">Menor costo unitario inicial, pero vulnerable a demandas de nivelación.</td>
-              </tr>
-              <tr className="bg-amber-50/50">
-                <td className="p-2 font-bold text-amber-900">Puntos UPTC (Acuerdo 015)</td>
-                <td className="p-2 text-slate-600">Puntos Escalafón × Valor Punto D1279</td>
-                <td className="p-2 text-right font-mono font-bold text-amber-900">$ 59.810 a $ 83.734 COP</td>
-                <td className="p-2 text-center text-blue-700 font-bold">Estatutario</td>
-                <td className="p-2 text-slate-700">Modelo oficial UPTC amparado en autonomía universitaria (Decreto 1279).</td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Escala de Puntos UPTC */}
-          <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg space-y-1.5 text-[11px]">
-            <span className="font-bold text-slate-900">Escala de Puntos Oficial Acuerdo 015 de 2009 (UPTC):</span>
-            <div className="grid grid-cols-4 gap-2 pt-1">
-              <div><strong>Auxiliar:</strong> 2.50 pts ($ 59.810 / h)</div>
-              <div><strong>Asistente:</strong> 2.75 pts ($ 65.791 / h)</div>
-              <div><strong>Asociado:</strong> 3.00 pts ($ 71.772 / h)</div>
-              <div><strong>Titular:</strong> 3.50 pts ($ 83.734 / h)</div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECCIÓN 4: PROTOCOLO DE CONTROL OPERATIVO & TOPES SEMANALES */}
-        <div className="space-y-2 pt-2 border-t border-slate-200">
-          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
-            4. Protocolo de Control Operativo de Asistencia y Topes Semanales
-          </h3>
-          <div className="grid grid-cols-2 gap-3 text-[11px]">
-            <div className="p-3 rounded border border-slate-300 bg-slate-50 space-y-1">
-              <span className="font-bold text-slate-900 block">Medición de Tiempo y Tolerancia:</span>
-              <p>• <strong>Hora Cátedra Académica:</strong> Parametrizada en 50 minutos de docencia directa de aula.</p>
-              <p>• <strong>Margen de Tolerancia:</strong> Hasta 10 minutos de gracia antes de aplicar descuento automático.</p>
-              <p>• <strong>Certificación:</strong> Expedición de Concepto Favorable por la Dirección de Escuela/Programa.</p>
-            </div>
-            <div className="p-3 rounded border border-slate-300 bg-slate-50 space-y-1">
-              <span className="font-bold text-slate-900 block">Límites y Prohibiciones Normativas:</span>
-              <p>• <strong>Cátedra Externa:</strong> Límite de hasta 19 horas semanales para evitar desnaturalización de dedicación.</p>
-              <p>• <strong>Cátedra Interna (Art. 2):</strong> Máximo 1 asignatura y tope estricto de hasta 4 horas semanales.</p>
-              <p>• <strong>Art. 3 Prohibiciones:</strong> Estrictamente fuera de jornada de trabajo y sin descarga académica.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* SECCIÓN 5: LIQUIDACIÓN TIPO Y SIMULACIÓN CONTRACTUAL */}
-        <div className="space-y-2 pt-2 border-t border-slate-200">
-          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
-            5. Liquidación Tipo y Simulación Contractual Vigente
+          <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+            2. Evolución Histórica de los Pagos y Nómina de Cátedra (2024 - 2026)
           </h3>
           <p className="text-[11px] text-slate-700">
-            Parámetros configurados para un contrato docente representativo durante el período académico:
+            Evolución del punto salarial del Decreto 1279 y tarifas horarias resultantes bajo el Acuerdo 015 de la UPTC:
           </p>
 
           <table className="w-full text-left text-[11px] border border-slate-300">
+            <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300 text-[10px] uppercase">
+              <tr>
+                <th className="p-1.5">Categoría en Escalafón</th>
+                <th className="p-1.5 text-center">Puntos</th>
+                <th className="p-1.5 text-right">Tarifa 2024</th>
+                <th className="p-1.5 text-right">Tarifa 2025</th>
+                <th className="p-1.5 text-right">Tarifa 2026</th>
+                <th className="p-1.5 text-center">Variación Acum.</th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-slate-200">
               <tr>
-                <td className="p-2 font-semibold text-slate-700">Modalidad de Vinculación:</td>
-                <td className="p-2 font-bold text-slate-900">{modalidad === 'externa' ? 'Cátedra Externa (Contratista Semestral)' : 'Cátedra Interna (Docente UPTC en Adición)'}</td>
-                <td className="p-2 font-semibold text-slate-700">Categoría en Escalafón:</td>
-                <td className="p-2 font-bold text-slate-900">{categoriaSeleccionada.categoria} ({categoriaSeleccionada.puntos.toFixed(2)} pts)</td>
+                <td className="p-1.5 font-bold text-slate-900">Profesor Auxiliar</td>
+                <td className="p-1.5 text-center font-mono">2.50 pts</td>
+                <td className="p-1.5 text-right font-mono text-slate-600">$ 52.238</td>
+                <td className="p-1.5 text-right font-mono text-slate-700">$ 55.895</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 59.810 / h</td>
+                <td className="p-1.5 text-center font-mono text-emerald-700">+14.5%</td>
               </tr>
               <tr>
-                <td className="p-2 font-semibold text-slate-700">Intensidad Semanal:</td>
-                <td className="p-2 font-mono font-bold text-slate-900">{horasSemanales} horas / semana</td>
-                <td className="p-2 font-semibold text-slate-700">Duración del Período:</td>
-                <td className="p-2 font-mono font-bold text-slate-900">{semanasSemestre} Semanas ({totalHorasSemestre} horas totales)</td>
+                <td className="p-1.5 font-bold text-slate-900">Profesor Asistente</td>
+                <td className="p-1.5 text-center font-mono">2.75 pts</td>
+                <td className="p-1.5 text-right font-mono text-slate-600">$ 57.461</td>
+                <td className="p-1.5 text-right font-mono text-slate-700">$ 61.485</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 65.791 / h</td>
+                <td className="p-1.5 text-center font-mono text-emerald-700">+14.5%</td>
               </tr>
               <tr>
-                <td className="p-2 font-semibold text-slate-700">Tarifa por Hora Base:</td>
-                <td className="p-2 font-mono font-bold text-slate-900">{formatCOP(valorHoraActiva)} / hora</td>
-                <td className="p-2 font-semibold text-slate-700">Salario Base Semestral:</td>
-                <td className="p-2 font-mono font-bold text-slate-900">{formatCOP(valorTotalBaseContrato)}</td>
+                <td className="p-1.5 font-bold text-slate-900">Profesor Asociado</td>
+                <td className="p-1.5 text-center font-mono">3.00 pts</td>
+                <td className="p-1.5 text-right font-mono text-slate-600">$ 62.685</td>
+                <td className="p-1.5 text-right font-mono text-slate-700">$ 67.074</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 71.772 / h</td>
+                <td className="p-1.5 text-center font-mono text-emerald-700">+14.5%</td>
               </tr>
-              <tr className="bg-emerald-50">
-                <td className="p-2 font-semibold text-emerald-900">Prestaciones Proporcionales (C-006-96):</td>
-                <td className="p-2 font-mono font-bold text-emerald-800">+{formatCOP(valorPrestacionesProporcionales)} (Alícuota 21.83%)</td>
-                <td className="p-2 font-bold text-slate-900 uppercase">Costo Total del Contrato:</td>
-                <td className="p-2 font-mono font-black text-slate-900 text-sm">{formatCOP(valorGranTotalContrato)}</td>
+              <tr>
+                <td className="p-1.5 font-bold text-slate-900">Profesor Titular</td>
+                <td className="p-1.5 text-center font-mono">3.50 pts</td>
+                <td className="p-1.5 text-right font-mono text-slate-600">$ 73.133</td>
+                <td className="p-1.5 text-right font-mono text-slate-700">$ 78.253</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 83.734 / h</td>
+                <td className="p-1.5 text-center font-mono text-emerald-700">+14.5%</td>
               </tr>
             </tbody>
           </table>
+
+          <div className="grid grid-cols-3 gap-2 pt-1 text-[10px]">
+            <div className="p-2 border border-slate-300 rounded bg-slate-50">
+              <span className="text-slate-500 block">Compromiso Total 2026:</span>
+              <strong className="font-mono text-slate-900">{formatCurrency(totalCompromiso)}</strong>
+            </div>
+            <div className="p-2 border border-slate-300 rounded bg-slate-50">
+              <span className="text-slate-500 block">Pagos a 31 de Agosto:</span>
+              <strong className="font-mono text-emerald-800">{formatCurrency(totalPagado)} (67.4%)</strong>
+            </div>
+            <div className="p-2 border border-slate-300 rounded bg-slate-50">
+              <span className="text-slate-500 block">Saldo por Ejecutar:</span>
+              <strong className="font-mono text-blue-800">{formatCurrency(saldoPorEjecutar)}</strong>
+            </div>
+          </div>
         </div>
 
-        {/* SECCIÓN 6: MITIGACIÓN DE FLUJO DE CAJA (POLÍTICA DE GRATUIDAD R10.5) */}
-        <div className="space-y-1.5 pt-2 border-t border-slate-200 text-[11px] text-slate-700">
-          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
-            6. Plan de Contingencia y Mitigación de Flujo de Caja (Recurso 10.5)
+        {/* 3. PROYECCIÓN DE LOS VALORES EN EL 2027 */}
+        <div className="space-y-2 pt-2 border-t border-slate-200">
+          <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+            3. Proyección de Valores y Costos Institucionales para la Vigencia 2027
           </h3>
-          <p className="text-justify">
-            Para blindar el giro oportuno de la nómina docente ante posibles retrasos en las transferencias del Gobierno
-            Nacional correspondientes a la <strong>Política de Gratuidad (Recurso 10.5 con $ 142,1 M apropiados)</strong>,
-            se autoriza la aplicación del mecanismo de <strong>Unidad de Caja Temporal</strong> con cargo a los fondos
-            disponibles de Recursos Propios (R20 / R31), con reintegro automático una vez radicado el giro nacional.
+          <p className="text-[11px] text-slate-700">
+            Considerando un incremento del IPC proyectado del 4.0%, el valor del punto D1279 se estima en <strong>$ 24.881 COP</strong>:
           </p>
+
+          <table className="w-full text-left text-[11px] border border-slate-300">
+            <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300 text-[10px] uppercase">
+              <tr>
+                <th className="p-1.5">Categoría</th>
+                <th className="p-1.5 text-center">Puntos</th>
+                <th className="p-1.5 text-right">Tarifa Proyectada 2027</th>
+                <th className="p-1.5 text-right">Costo Contrato 64h (Base)</th>
+                <th className="p-1.5 text-right">Prestaciones C-006-96 (+21.83%)</th>
+                <th className="p-1.5 text-right">Total Contrato 2027</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              <tr>
+                <td className="p-1.5 font-bold text-slate-900">Profesor Auxiliar</td>
+                <td className="p-1.5 text-center font-mono">2.50 pts</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 62.203 / h</td>
+                <td className="p-1.5 text-right font-mono text-slate-700">$ 3.980.992</td>
+                <td className="p-1.5 text-right font-mono text-emerald-700">+$ 869.051</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 4.850.043</td>
+              </tr>
+              <tr>
+                <td className="p-1.5 font-bold text-slate-900">Profesor Asistente</td>
+                <td className="p-1.5 text-center font-mono">2.75 pts</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 68.423 / h</td>
+                <td className="p-1.5 text-right font-mono text-slate-700">$ 4.379.072</td>
+                <td className="p-1.5 text-right font-mono text-emerald-700">+$ 955.951</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 5.335.023</td>
+              </tr>
+              <tr>
+                <td className="p-1.5 font-bold text-slate-900">Profesor Asociado</td>
+                <td className="p-1.5 text-center font-mono">3.00 pts</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 74.643 / h</td>
+                <td className="p-1.5 text-right font-mono text-slate-700">$ 4.777.152</td>
+                <td className="p-1.5 text-right font-mono text-emerald-700">+$ 1.042.852</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 5.820.004</td>
+              </tr>
+              <tr>
+                <td className="p-1.5 font-bold text-slate-900">Profesor Titular</td>
+                <td className="p-1.5 text-center font-mono">3.50 pts</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 87.084 / h</td>
+                <td className="p-1.5 text-right font-mono text-slate-700">$ 5.573.376</td>
+                <td className="p-1.5 text-right font-mono text-emerald-700">+$ 1.216.668</td>
+                <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 6.790.044</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="p-2 border border-slate-300 rounded bg-slate-50 text-[10px] space-y-1">
+            <strong>Presupuesto Global Proyectado Cátedra 2027:</strong>
+            <p>Total Requerido: <strong>$ 18.152,2 M COP</strong> (Pregrado: $ 8.903,9 M | Posgrados: $ 9.248,2 M). Incremento institucional: <strong>+$ 698,2 M</strong>.</p>
+          </div>
         </div>
 
-        {/* SECCIÓN 7: FIRMAS DE RESPONSABILIDAD INSTITUCIONAL */}
+        {/* 4. SUSTENTO TÉCNICO PARA UNA MODIFICACIÓN DEL MODELO */}
+        <div className="space-y-2 pt-2 border-t border-slate-200">
+          <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+            4. Sustento Técnico para una Modificación del Modelo de Horas Cátedra
+          </h3>
+          <div className="text-[11px] text-slate-800 space-y-1.5 leading-relaxed text-justify">
+            <p><strong>a) Cumplimiento Estricto de la Sentencia C-006-96:</strong> La universidad debe incorporar formalmente en sus contratos la liquidación de prestaciones sociales proporcionales (factor 21.83%), suprimiendo de raíz cualquier riesgo de demandas laborales millonarias por primacía de la realidad.</p>
+            <p><strong>b) Armonización de Divisores (171.2 vs. 240 Horas):</strong> El divisor de 171.2 horas (40h/sem) fija un piso constitucional de $81.820/h bajo Ley 30. Se sustenta técnicamente la conveniencia de elevar el factor base en puntos para evitar brechas litigiosas en las categorías de Auxiliar y Asistente.</p>
+            <p><strong>c) Estandarización de 50 Minutos Lectivos y 10 Minutos de Tolerancia:</strong> Se reglamenta que la hora académica corresponde a 50 minutos de docencia directa de aula, con 10 minutos de tolerancia y pago condicionado al Concepto Favorable del Director de Escuela.</p>
+            <p><strong>d) Blindaje de Topes Semanales:</strong> Fijar un tope infranqueable de 19 horas semanales para cátedra externa y ratificar el tope de 4 horas semanales para cátedra interna (Art. 2 Acuerdo 015).</p>
+            <p><strong>e) Unidad de Caja Temporal (Recurso 10.5 Gratuidad):</strong> Habilitar a Tesorería para apalancar temporalmente la nómina con Recursos Propios ante retrasos en transferencias nacionales de gratuidad, con reintegro automático.</p>
+          </div>
+        </div>
+
+        {/* 5. FIRMAS DE RESPONSABILIDAD INSTITUCIONAL */}
         <div className="pt-8 border-t-2 border-slate-800 grid grid-cols-3 gap-6 text-center text-[10px]">
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div className="border-b border-slate-800 pb-1"></div>
             <div>
               <p className="font-bold text-slate-900">DR. VICERRECTOR ADMINISTRATIVO Y FINANCIERO</p>
@@ -2171,7 +2146,7 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
             </div>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div className="border-b border-slate-800 pb-1"></div>
             <div>
               <p className="font-bold text-slate-900">DRA. DIRECTORA FINANCIERA Y DE PRESUPUESTO</p>
@@ -2180,7 +2155,7 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
             </div>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div className="border-b border-slate-800 pb-1"></div>
             <div>
               <p className="font-bold text-slate-900">DIRECTOR DE PROGRAMA / ESCUELA ACADÉMICA</p>
@@ -2206,7 +2181,7 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
                     Vista Previa del Informe Técnico Oficial (PDF)
                   </h3>
                   <p className="text-[11px] text-slate-400">
-                    Formato oficial tamaño Carta listo para firma y radicación ante Consejo Superior
+                    Estructura: Considerandos Normativos • Evolución Pagos • Proyección 2027 • Sustento de Reforma
                   </p>
                 </div>
               </div>
@@ -2269,77 +2244,143 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
                   </div>
                 </div>
 
-                {/* Resumen de Ejecución */}
+                {/* 1. Considerandos */}
                 <div className="space-y-2">
                   <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
-                    1. Estado de Ejecución Presupuestal Vigencia 2026 (Cifras Reales en Millones)
+                    1. Considerandos a Nivel Normativo (Sustento Jurídico Vinculante)
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center pt-1">
-                    <div className="p-2 rounded border border-slate-300 bg-slate-50">
-                      <span className="text-[10px] text-slate-500 uppercase block">Total Comprometido</span>
-                      <span className="text-sm font-black text-slate-900 font-mono">{formatCurrency(totalCompromiso)}</span>
-                    </div>
-                    <div className="p-2 rounded border border-slate-300 bg-slate-50">
-                      <span className="text-[10px] text-slate-500 uppercase block">Pagado a Agosto</span>
-                      <span className="text-sm font-black text-emerald-700 font-mono">{formatCurrency(totalPagado)}</span>
-                    </div>
-                    <div className="p-2 rounded border border-slate-300 bg-slate-50">
-                      <span className="text-[10px] text-slate-500 uppercase block">Saldo por Ejecutar</span>
-                      <span className="text-sm font-black text-blue-700 font-mono">{formatCurrency(saldoPorEjecutar)}</span>
-                    </div>
-                    <div className="p-2 rounded border border-slate-300 bg-slate-50">
-                      <span className="text-[10px] text-slate-500 uppercase block">Avance de Ejecución</span>
-                      <span className="text-sm font-black text-amber-700 font-mono">{porcentajeEjecutadoGlobal.toFixed(1)}%</span>
-                    </div>
+                  <div className="text-[11px] text-slate-800 space-y-1.5 leading-relaxed text-justify">
+                    <p className="font-bold">CONSIDERANDO QUE:</p>
+                    <p>• <strong>Art. 53 C.P.:</strong> Principio de primacía de la realidad sobre las formas e irrenunciabilidad de beneficios mínimos laborales.</p>
+                    <p>• <strong>Sentencia C-006-96:</strong> Califica a los docentes de cátedra como servidores/trabajadores subordinados con derecho irrenunciable al pago proporcional de todas las prestaciones sociales (vacaciones, primas y cesantías). El pago por honorarios es inconstitucional.</p>
+                    <p>• <strong>Art. 128 C.P.:</strong> Prohibición de doble asignación del tesoro público (cátedra interna solo fuera de jornada y sin descarga académica).</p>
+                    <p>• <strong>Ley 30 de 1992:</strong> Autonomía universitaria y garantía de no pagar por debajo de la proporción de 8 SMMLV / horas mes.</p>
+                    <p>• <strong>Decreto 1279/2002:</strong> Régimen salarial por puntos del Gobierno Nacional ($ 23.924 COP en 2026 según Dcto 318/2026).</p>
+                    <p>• <strong>Acuerdo 015 de 2009 UPTC:</strong> Escala de 2.50 a 3.50 puntos/hora y tope de 4 horas semanales para cátedra interna.</p>
                   </div>
                 </div>
 
-                {/* Sentencia C-006-96 */}
+                {/* 2. Evolución de los Pagos */}
                 <div className="space-y-2 pt-2 border-t border-slate-200">
                   <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
-                    2. Marco Jurídico: Sentencia C-006-96 de la Corte Constitucional
+                    2. Evolución Histórica de los Pagos (2024 - 2026)
                   </h3>
-                  <p className="text-[11px] text-slate-700 leading-relaxed text-justify">
-                    La Corte Constitucional determinó que los profesores de cátedra subordinados son servidores públicos con
-                    derecho irrenunciable al pago de <strong>prestaciones sociales de forma proporcional</strong> al tiempo laborado
-                    (cesantías, primas y vacaciones). El pago por honorarios en labores subordinadas es inconstitucional.
+                  <p className="text-[11px] text-slate-700">
+                    Evolución del punto salarial: 2024 ($20.895) → 2025 ($22.358) → 2026 ($23.924).
                   </p>
-                </div>
-
-                {/* Comparativa de Modelos */}
-                <div className="space-y-2 pt-2 border-t border-slate-200">
-                  <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
-                    3. Comparativa de Modelos de Cálculo (Tarifas 2026)
-                  </h3>
-                  <div className="grid grid-cols-3 gap-2 text-[11px]">
-                    <div className="p-2.5 rounded border border-slate-300 bg-slate-50">
-                      <span className="font-bold block text-slate-900">Divisor 171.2 Horas (Ley 30):</span>
-                      <span className="font-mono font-black text-emerald-700 text-sm block">$ 81.820 COP / h</span>
-                      <span className="text-[10px] text-slate-500">Bajo riesgo jurídico. Jornada 40h/sem.</span>
+                  <table className="w-full text-left text-[11px] border border-slate-300">
+                    <thead className="bg-slate-100 font-bold border-b border-slate-300 text-[10px]">
+                      <tr>
+                        <th className="p-1.5">Categoría</th>
+                        <th className="p-1.5 text-center">Puntos</th>
+                        <th className="p-1.5 text-right">Tarifa 2024</th>
+                        <th className="p-1.5 text-right">Tarifa 2025</th>
+                        <th className="p-1.5 text-right">Tarifa 2026</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      <tr>
+                        <td className="p-1.5 font-bold">Auxiliar</td>
+                        <td className="p-1.5 text-center font-mono">2.50 pts</td>
+                        <td className="p-1.5 text-right font-mono">$ 52.238</td>
+                        <td className="p-1.5 text-right font-mono">$ 55.895</td>
+                        <td className="p-1.5 text-right font-mono font-bold">$ 59.810 / h</td>
+                      </tr>
+                      <tr>
+                        <td className="p-1.5 font-bold">Asistente</td>
+                        <td className="p-1.5 text-center font-mono">2.75 pts</td>
+                        <td className="p-1.5 text-right font-mono">$ 57.461</td>
+                        <td className="p-1.5 text-right font-mono">$ 61.485</td>
+                        <td className="p-1.5 text-right font-mono font-bold">$ 65.791 / h</td>
+                      </tr>
+                      <tr>
+                        <td className="p-1.5 font-bold">Asociado</td>
+                        <td className="p-1.5 text-center font-mono">3.00 pts</td>
+                        <td className="p-1.5 text-right font-mono">$ 62.685</td>
+                        <td className="p-1.5 text-right font-mono">$ 67.074</td>
+                        <td className="p-1.5 text-right font-mono font-bold">$ 71.772 / h</td>
+                      </tr>
+                      <tr>
+                        <td className="p-1.5 font-bold">Titular</td>
+                        <td className="p-1.5 text-center font-mono">3.50 pts</td>
+                        <td className="p-1.5 text-right font-mono">$ 73.133</td>
+                        <td className="p-1.5 text-right font-mono">$ 78.253</td>
+                        <td className="p-1.5 text-right font-mono font-bold">$ 83.734 / h</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div className="grid grid-cols-3 gap-2 pt-1 text-[10px]">
+                    <div className="p-2 border border-slate-300 rounded bg-slate-50">
+                      <span className="text-slate-500 block">Compromiso 2026:</span>
+                      <strong>{formatCurrency(totalCompromiso)}</strong>
                     </div>
-                    <div className="p-2.5 rounded border border-slate-300 bg-slate-50">
-                      <span className="font-bold block text-slate-900">Divisor 240 Horas (MinTrabajo):</span>
-                      <span className="font-mono font-black text-rose-700 text-sm block">$ 58.364 COP / h</span>
-                      <span className="text-[10px] text-slate-500">Alto riesgo de litigio por nivelación.</span>
+                    <div className="p-2 border border-slate-300 rounded bg-slate-50">
+                      <span className="text-slate-500 block">Pagos a Agosto 2026:</span>
+                      <strong className="text-emerald-700">{formatCurrency(totalPagado)} (67.4%)</strong>
                     </div>
-                    <div className="p-2.5 rounded border border-slate-300 bg-amber-50/60">
-                      <span className="font-bold block text-amber-900">Puntos UPTC (Acuerdo 015):</span>
-                      <span className="font-mono font-black text-amber-800 text-sm block">$ 59.810 - $ 83.734 COP</span>
-                      <span className="text-[10px] text-slate-600">Estatuto oficial de la Universidad.</span>
+                    <div className="p-2 border border-slate-300 rounded bg-slate-50">
+                      <span className="text-slate-500 block">Saldo por Ejecutar:</span>
+                      <strong className="text-blue-700">{formatCurrency(saldoPorEjecutar)}</strong>
                     </div>
                   </div>
                 </div>
 
-                {/* Liquidación Simulada */}
+                {/* 3. Proyección 2027 */}
                 <div className="space-y-2 pt-2 border-t border-slate-200">
                   <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
-                    4. Simulación de Liquidación Contractual
+                    3. Proyección de Valores para el 2027 (+4.0% IPC Proyectado)
                   </h3>
-                  <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                    <div><span className="text-slate-500 block">Modalidad:</span><strong>{modalidad === 'externa' ? 'Cátedra Externa' : 'Cátedra Interna (Art. 2)'}</strong></div>
-                    <div><span className="text-slate-500 block">Categoría:</span><strong>{categoriaSeleccionada.categoria}</strong></div>
-                    <div><span className="text-slate-500 block">Horas/Semana:</span><strong className="font-mono">{horasSemanales} h ({totalHorasSemestre} h sem)</strong></div>
-                    <div><span className="text-slate-500 block">Costo Total Semestre:</span><strong className="font-mono text-amber-800 text-sm">{formatCOP(valorGranTotalContrato)}</strong></div>
+                  <p className="text-[11px] text-slate-700">
+                    Valor estimado del punto salarial: <strong>$ 24.881 COP</strong>. Presupuesto institucional proyectado: <strong>$ 18.152,2 M</strong>.
+                  </p>
+                  <table className="w-full text-left text-[11px] border border-slate-300">
+                    <thead className="bg-slate-100 font-bold border-b border-slate-300 text-[10px]">
+                      <tr>
+                        <th className="p-1.5">Categoría</th>
+                        <th className="p-1.5 text-center">Puntos</th>
+                        <th className="p-1.5 text-right">Tarifa Proyectada 2027</th>
+                        <th className="p-1.5 text-right">Contrato 64h con Prestaciones C-006-96 (+21.83%)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      <tr>
+                        <td className="p-1.5">Auxiliar</td>
+                        <td className="p-1.5 text-center font-mono">2.50 pts</td>
+                        <td className="p-1.5 text-right font-mono font-bold">$ 62.203 / h</td>
+                        <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 4.850.043</td>
+                      </tr>
+                      <tr>
+                        <td className="p-1.5">Asistente</td>
+                        <td className="p-1.5 text-center font-mono">2.75 pts</td>
+                        <td className="p-1.5 text-right font-mono font-bold">$ 68.423 / h</td>
+                        <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 5.335.023</td>
+                      </tr>
+                      <tr>
+                        <td className="p-1.5">Asociado</td>
+                        <td className="p-1.5 text-center font-mono">3.00 pts</td>
+                        <td className="p-1.5 text-right font-mono font-bold">$ 74.643 / h</td>
+                        <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 5.820.004</td>
+                      </tr>
+                      <tr>
+                        <td className="p-1.5">Titular</td>
+                        <td className="p-1.5 text-center font-mono">3.50 pts</td>
+                        <td className="p-1.5 text-right font-mono font-bold">$ 87.084 / h</td>
+                        <td className="p-1.5 text-right font-mono font-bold text-slate-900">$ 6.790.044</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 4. Sustento Técnico de Modificación */}
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+                    4. Sustento Técnico para una Modificación del Modelo
+                  </h3>
+                  <div className="text-[11px] text-slate-800 space-y-1 leading-relaxed text-justify">
+                    <p>• <strong>Provisión Prestacional Explícita:</strong> Incorporar en el valor contratado la proporción de cesantías, primas y vacaciones (alícuota del 21.83%) para cerrar definitivamente la exposición a demandas laborales multimillonarias.</p>
+                    <p>• <strong>Armonización de Divisores:</strong> Ajustar los puntos en categorías de Auxiliar y Asistente para asegurar que no queden por debajo del piso de 171.2 horas (jornada 40h/sem de $81.820/h con 8 SMMLV).</p>
+                    <p>• <strong>Hora Académica de 50 Minutos:</strong> Reglamentar la duración de 50 minutos de docencia directa de aula y 10 minutos de tolerancia, condicionado a Concepto Favorable del Director de Escuela.</p>
+                    <p>• <strong>Límites y Unidad de Caja:</strong> Tope de 19h para cátedra externa, tope de 4h para cátedra interna, y unidad de caja temporal para proteger la nómina frente a desfases en transferencias de Gratuidad (R10.5).</p>
                   </div>
                 </div>
 
@@ -2366,7 +2407,6 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
           </div>
         </div>
       )}
-
     </div>
   );
 }
