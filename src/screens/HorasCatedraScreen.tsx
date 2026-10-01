@@ -29,7 +29,12 @@ import {
   Building2,
   UserCheck,
   Coins,
-  ShieldAlert
+  ShieldAlert,
+  Printer,
+  Eye,
+  X,
+  Loader2,
+  FileDown
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -276,6 +281,90 @@ const QUIZ_QUESTIONS = [
 export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [activeTab, setActiveTab] = useState<'ejecucion' | 'normativa' | 'simulador' | 'control' | 'informe'>('ejecucion');
 
+  // Estados de PDF y Previsualización
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
+  const [showPdfPreviewModal, setShowPdfPreviewModal] = useState<boolean>(false);
+
+  // Impresión directa del documento
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Descarga directa del Informe Oficial en PDF con html2pdf
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPdf(true);
+    const prevTitle = document.title;
+    const reportTitle = `UPTC_Informe_Tecnico_Horas_Catedra_2026_${new Date().toISOString().slice(0, 10)}`;
+    document.title = reportTitle;
+
+    try {
+      if (!(window as any).html2pdf) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('No se pudo cargar la librería html2pdf'));
+          document.head.appendChild(script);
+          setTimeout(() => reject(new Error('Tiempo de espera agotado')), 5000);
+        });
+      }
+
+      const element = document.getElementById('printable-horas-catedra-report');
+      if (!element || !(window as any).html2pdf) {
+        window.print();
+        setIsGeneratingPdf(false);
+        return;
+      }
+
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.id = 'printable-horas-catedra-report-clone';
+      clone.style.position = 'fixed';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = '1000px';
+      clone.style.display = 'block';
+      clone.style.visibility = 'visible';
+      clone.style.opacity = '1';
+      clone.style.background = '#ffffff';
+      clone.style.color = '#0f172a';
+
+      clone.querySelectorAll('*').forEach((el: any) => {
+        el.style.visibility = 'visible';
+        el.style.opacity = '1';
+      });
+
+      document.body.appendChild(clone);
+
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: `${reportTitle}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      await (window as any).html2pdf().set(opt).from(clone).save();
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone);
+      }
+    } catch (err) {
+      console.warn('Utilizando exportación mediante diálogo de impresión del navegador:', err);
+      window.print();
+    } finally {
+      setIsGeneratingPdf(false);
+      setTimeout(() => {
+        document.title = prevTitle;
+      }, 2500);
+    }
+  };
+
   // Filtros Tablero
   const [filtroNivel, setFiltroNivel] = useState<'todos' | 'pregrado' | 'posgrado'>('todos');
 
@@ -439,23 +528,44 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <a
               href="http://pagos.uptc.edu.co/DocCompNormativa/015DE2009.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-container-high/80 hover:bg-white/10 text-white text-xs font-medium border border-white/10 transition-all hover:scale-[1.02] shadow-lg cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-surface-container-high/80 hover:bg-white/10 text-white text-xs font-medium border border-white/10 transition-all hover:scale-[1.02] shadow-lg cursor-pointer"
+              title="Descargar PDF original del Acuerdo No. 015 de 2009"
             >
               <ExternalLink size={14} className="text-primary-container" />
-              <span>Ver Acuerdo 015/2009 PDF</span>
+              <span>Acuerdo 015 (PDF)</span>
             </a>
 
             <button
+              onClick={() => setShowPdfPreviewModal(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold border border-white/15 transition-all hover:scale-[1.02] shadow-md cursor-pointer"
+              title="Previsualizar el informe técnico formal en pantalla antes de descargar"
+            >
+              <Eye size={14} className="text-primary-container" />
+              <span>Vista Previa PDF</span>
+            </button>
+
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPdf}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-container hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(255,204,41,0.25)] cursor-pointer"
+              title="Generar y descargar el informe técnico completo en formato PDF institucional"
+            >
+              {isGeneratingPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+              <span>{isGeneratingPdf ? 'Generando PDF...' : 'Descargar Informe PDF'}</span>
+            </button>
+
+            <button
               onClick={handleExportCSV}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-container hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(255,204,41,0.25)] cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-surface-container-high/80 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-medium border border-white/10 transition-all cursor-pointer"
+              title="Descargar matriz presupuestal en formato CSV"
             >
               <Download size={14} />
-              <span>Exportar Reporte</span>
+              <span>Exportar CSV</span>
             </button>
           </div>
         </div>
@@ -1530,6 +1640,43 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
       {/* ========================================================================= */}
       {activeTab === 'informe' && (
         <div className="space-y-6">
+          {/* Banner de Descarga Oficial del Informe Técnico en PDF */}
+          <div className="rounded-3xl bg-gradient-to-r from-amber-500/20 via-primary-container/10 to-transparent border border-primary-container/30 p-6 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-container text-slate-950 uppercase tracking-wider">
+                  Documento Institucional Oficial
+                </span>
+                <span className="text-xs text-slate-400 font-mono">Radicado UPTC-VAFI-HC-2026-015</span>
+              </div>
+              <h3 className="text-lg md:text-xl font-black text-white">
+                Informe Técnico y Financiero Oficial en Formato PDF
+              </h3>
+              <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                Genera el documento formal completo en formato PDF tamaño Carta para radicación ante el Consejo Superior Universitario, incluyendo sustento de la Sentencia C-006-96, matriz presupuestal 2026, comparativa de divisores y firmas reglamentarias.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
+              <button
+                onClick={() => setShowPdfPreviewModal(true)}
+                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold border border-white/15 flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
+              >
+                <Eye size={15} className="text-primary-container" />
+                <span>Vista Previa PDF</span>
+              </button>
+
+              <button
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPdf}
+                className="px-5 py-2.5 rounded-xl bg-primary-container hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(255,204,41,0.25)] transition-all hover:scale-[1.02] cursor-pointer"
+              >
+                {isGeneratingPdf ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />}
+                <span>{isGeneratingPdf ? 'Generando PDF...' : 'Descargar Informe PDF'}</span>
+              </button>
+            </div>
+          </div>
+
           {/* Estructura Formal del Informe Técnico */}
           <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
             <div>
@@ -1753,6 +1900,473 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* DOCUMENTO OFICIAL IMPRIMIBLE / GENERADOR DE PDF INSTITUCIONAL              */}
+      {/* ========================================================================= */}
+      <div
+        id="printable-horas-catedra-report"
+        style={{ display: 'none' }}
+        className="p-8 md:p-12 bg-white text-slate-900 font-sans text-xs space-y-6"
+      >
+        {/* Encabezado Institucional con Membrete Oficial */}
+        <div className="border-b-2 border-slate-900 pb-4 flex justify-between items-start">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block"></span>
+              <span className="text-[11px] font-black tracking-widest uppercase text-slate-800">
+                UNIVERSIDAD PEDAGÓGICA Y TECNOLÓGICA DE COLOMBIA
+              </span>
+            </div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">
+              VICERRECTORÍA ADMINISTRATIVA Y FINANCIERA — DIRECCIÓN FINANCIERA
+            </h1>
+            <h2 className="text-sm font-bold text-amber-600 uppercase tracking-wide">
+              INFORME TÉCNICO OFICIAL: NÓMINA TEMPORAL DOCENTE Y LIQUIDACIÓN DE HORAS CÁTEDRA
+            </h2>
+            <p className="text-[11px] text-slate-600">
+              Sustento Constitucional Sentencia C-006-96 • Acuerdo No. 015 de 2009 • Decretos 1279/2002 y 318/2026
+            </p>
+          </div>
+
+          <div className="text-right text-[11px] text-slate-700 bg-slate-50 border border-slate-300 rounded-xl p-3 min-w-[220px] space-y-1">
+            <div><strong>Radicado:</strong> UPTC-VAFI-HC-2026-015</div>
+            <div><strong>Vigencia Fiscal:</strong> 2026</div>
+            <div><strong>Fecha Emisión:</strong> {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            <div><strong>Valor Punto D1279:</strong> $ 23.924 COP</div>
+          </div>
+        </div>
+
+        {/* SECCIÓN 1: RESUMEN EJECUTIVO Y EJECUCIÓN PRESUPUESTAL 2026 */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
+            1. Resumen Ejecutivo y Ejecución Presupuestal 2026 (Cifras Reales en Millones)
+          </h3>
+          <p className="text-[11px] text-slate-700 leading-relaxed">
+            Consolidado financiero del gasto de horas cátedra en programas de pregrado y posgrados de la UPTC
+            extraído de los registros oficiales de ejecución del aplicativo VAFI a 31 de agosto de 2026:
+          </p>
+
+          <div className="grid grid-cols-4 gap-3 text-center">
+            <div className="p-2.5 rounded-lg border border-slate-300 bg-slate-50">
+              <span className="text-[10px] text-slate-500 uppercase font-bold block">Total Comprometido 2026</span>
+              <span className="text-base font-black text-slate-900 font-mono">{formatCurrency(totalCompromiso)}</span>
+              <span className="text-[9px] text-slate-500 block">Pregrado: $8.561,5 M | Posg: $8.892,5 M</span>
+            </div>
+            <div className="p-2.5 rounded-lg border border-slate-300 bg-slate-50">
+              <span className="text-[10px] text-slate-500 uppercase font-bold block">Pagado a 31 de Agosto</span>
+              <span className="text-base font-black text-emerald-700 font-mono">{formatCurrency(totalPagado)}</span>
+              <span className="text-[9px] text-emerald-600 font-bold block">{porcentajeEjecutadoGlobal.toFixed(1)}% ejecutado</span>
+            </div>
+            <div className="p-2.5 rounded-lg border border-slate-300 bg-slate-50">
+              <span className="text-[10px] text-slate-500 uppercase font-bold block">Saldo por Ejecutar (Sep-Dic)</span>
+              <span className="text-base font-black text-blue-700 font-mono">{formatCurrency(saldoPorEjecutar)}</span>
+              <span className="text-[9px] text-blue-600 font-bold block">{(100 - porcentajeEjecutadoGlobal).toFixed(1)}% disponible</span>
+            </div>
+            <div className="p-2.5 rounded-lg border border-slate-300 bg-slate-50">
+              <span className="text-[10px] text-slate-500 uppercase font-bold block">Valor Punto Decreto 1279</span>
+              <span className="text-base font-black text-amber-700 font-mono">$ 23.924 COP</span>
+              <span className="text-[9px] text-slate-600 block">+7.0% fijado Dcto. 318/2026</span>
+            </div>
+          </div>
+
+          {/* Tabla de Fuentes de Financiación */}
+          <table className="w-full text-left text-[11px] border border-slate-300 mt-2">
+            <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300 text-[10px] uppercase">
+              <tr>
+                <th className="p-2">Fuente de Financiación</th>
+                <th className="p-2">Nivel Académico</th>
+                <th className="p-2">Clasificación Base</th>
+                <th className="p-2 text-right">Compromiso ($ M)</th>
+                <th className="p-2 text-right">Pagado a Ago ($ M)</th>
+                <th className="p-2 text-right">Saldo Sep-Dic ($ M)</th>
+                <th className="p-2 text-center">% Ejec.</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {RECURSOS_DATA.map((r) => (
+                <tr key={r.codigo}>
+                  <td className="p-2 font-semibold text-slate-900">{r.nombre}</td>
+                  <td className="p-2 text-slate-700">{r.nivel}</td>
+                  <td className="p-2 text-slate-600">{r.tipoBase}</td>
+                  <td className="p-2 text-right font-mono font-bold text-slate-900">{formatCurrency(r.compromiso)}</td>
+                  <td className="p-2 text-right font-mono font-bold text-emerald-700">{formatCurrency(r.pagado)}</td>
+                  <td className="p-2 text-right font-mono text-slate-700">{formatCurrency(r.compromiso - r.pagado)}</td>
+                  <td className="p-2 text-center font-mono font-bold">{r.porcentaje.toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="bg-slate-100 border-t-2 border-slate-400 font-bold text-[11px]">
+              <tr>
+                <td colSpan={3} className="p-2 uppercase text-slate-900">Total Nómina Cátedra UPTC</td>
+                <td className="p-2 text-right font-mono text-slate-900">{formatCurrency(totalCompromiso)}</td>
+                <td className="p-2 text-right font-mono text-emerald-800">{formatCurrency(totalPagado)}</td>
+                <td className="p-2 text-right font-mono text-blue-800">{formatCurrency(saldoPorEjecutar)}</td>
+                <td className="p-2 text-center font-mono">{porcentajeEjecutadoGlobal.toFixed(1)}%</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* SECCIÓN 2: SUSTENTO JURISPRUDENCIAL VINCULANTE (SENTENCIA C-006-96) */}
+        <div className="space-y-2 pt-2 border-t border-slate-200">
+          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
+            2. Sustento Jurisprudencial Vinculante (Sentencia C-006-96 de la Corte Constitucional)
+          </h3>
+          <p className="text-[11px] text-slate-700 leading-relaxed text-justify">
+            La <strong>Corte Constitucional de Colombia (Sentencia C-006 de 1996)</strong> declaró expresamente que los
+            docentes de hora cátedra subordinados son <strong>servidores públicos o trabajadores con relación laboral
+            auténtica</strong>. En consecuencia, la contratación de profesores por prestación de servicios (honorarios) es
+            <strong> contraria a la Constitución Política</strong> y expone a la universidad a demandas millonarias por
+            el principio de primacía de la realidad sobre las formalidades (Art. 53 C.P.).
+          </p>
+          <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg text-[11px] text-amber-900 space-y-1">
+            <strong>Obligación Prestacional Proporcional Irrenunciable:</strong>
+            <p>
+              Toda liquidación debe reconocer proporcionalmente al tiempo efectivamente laborado: <em>vacaciones,
+              prima de vacaciones, cesantías, intereses sobre cesantías y prima de Navidad</em>. Esta carga prestacional
+              representa aproximadamente un <strong>21.83% adicional</strong> sobre el valor básico por hora pactado.
+            </p>
+          </div>
+        </div>
+
+        {/* SECCIÓN 3: COMPARATIVA DE MODELOS FINANCIEROS Y TARIFAS 2026 */}
+        <div className="space-y-3 pt-2 border-t border-slate-200">
+          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
+            3. Análisis Comparativo de Modelos Financieros para Liquidación de la Tarifa
+          </h3>
+          <p className="text-[11px] text-slate-700 leading-relaxed">
+            Contraste de las fórmulas financieras aplicables bajo la Ley 30 de 1992 y el régimen estatutario del
+            Acuerdo 015 de 2009 de la UPTC para la vigencia fiscal 2026:
+          </p>
+
+          <table className="w-full text-left text-[11px] border border-slate-300">
+            <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300 text-[10px] uppercase">
+              <tr>
+                <th className="p-2">Modelo / Fórmula</th>
+                <th className="p-2">Fundamento Legal</th>
+                <th className="p-2 text-right">Tarifa Horaria 2026</th>
+                <th className="p-2 text-center">Nivel de Riesgo Jurídico</th>
+                <th className="p-2">Dictamen de Aplicabilidad Institucional</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              <tr>
+                <td className="p-2 font-bold text-slate-900">Divisor 171.2 Horas</td>
+                <td className="p-2 text-slate-600">8 SMMLV ÷ 171.2 h (40 h/sem)</td>
+                <td className="p-2 text-right font-mono font-bold text-slate-900">$ 81.820 COP</td>
+                <td className="p-2 text-center text-emerald-700 font-bold">Bajo Riesgo</td>
+                <td className="p-2 text-slate-700">Recomendado para blindaje laboral pleno según jurisprudencia.</td>
+              </tr>
+              <tr>
+                <td className="p-2 font-bold text-slate-900">Divisor 240 Horas</td>
+                <td className="p-2 text-slate-600">8 SMMLV ÷ 240 h (30 días × 8 h)</td>
+                <td className="p-2 text-right font-mono font-bold text-slate-900">$ 58.364 COP</td>
+                <td className="p-2 text-center text-rose-700 font-bold">Alto Riesgo</td>
+                <td className="p-2 text-slate-700">Menor costo unitario inicial, pero vulnerable a demandas de nivelación.</td>
+              </tr>
+              <tr className="bg-amber-50/50">
+                <td className="p-2 font-bold text-amber-900">Puntos UPTC (Acuerdo 015)</td>
+                <td className="p-2 text-slate-600">Puntos Escalafón × Valor Punto D1279</td>
+                <td className="p-2 text-right font-mono font-bold text-amber-900">$ 59.810 a $ 83.734 COP</td>
+                <td className="p-2 text-center text-blue-700 font-bold">Estatutario</td>
+                <td className="p-2 text-slate-700">Modelo oficial UPTC amparado en autonomía universitaria (Decreto 1279).</td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Escala de Puntos UPTC */}
+          <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg space-y-1.5 text-[11px]">
+            <span className="font-bold text-slate-900">Escala de Puntos Oficial Acuerdo 015 de 2009 (UPTC):</span>
+            <div className="grid grid-cols-4 gap-2 pt-1">
+              <div><strong>Auxiliar:</strong> 2.50 pts ($ 59.810 / h)</div>
+              <div><strong>Asistente:</strong> 2.75 pts ($ 65.791 / h)</div>
+              <div><strong>Asociado:</strong> 3.00 pts ($ 71.772 / h)</div>
+              <div><strong>Titular:</strong> 3.50 pts ($ 83.734 / h)</div>
+            </div>
+          </div>
+        </div>
+
+        {/* SECCIÓN 4: PROTOCOLO DE CONTROL OPERATIVO & TOPES SEMANALES */}
+        <div className="space-y-2 pt-2 border-t border-slate-200">
+          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
+            4. Protocolo de Control Operativo de Asistencia y Topes Semanales
+          </h3>
+          <div className="grid grid-cols-2 gap-3 text-[11px]">
+            <div className="p-3 rounded border border-slate-300 bg-slate-50 space-y-1">
+              <span className="font-bold text-slate-900 block">Medición de Tiempo y Tolerancia:</span>
+              <p>• <strong>Hora Cátedra Académica:</strong> Parametrizada en 50 minutos de docencia directa de aula.</p>
+              <p>• <strong>Margen de Tolerancia:</strong> Hasta 10 minutos de gracia antes de aplicar descuento automático.</p>
+              <p>• <strong>Certificación:</strong> Expedición de Concepto Favorable por la Dirección de Escuela/Programa.</p>
+            </div>
+            <div className="p-3 rounded border border-slate-300 bg-slate-50 space-y-1">
+              <span className="font-bold text-slate-900 block">Límites y Prohibiciones Normativas:</span>
+              <p>• <strong>Cátedra Externa:</strong> Límite de hasta 19 horas semanales para evitar desnaturalización de dedicación.</p>
+              <p>• <strong>Cátedra Interna (Art. 2):</strong> Máximo 1 asignatura y tope estricto de hasta 4 horas semanales.</p>
+              <p>• <strong>Art. 3 Prohibiciones:</strong> Estrictamente fuera de jornada de trabajo y sin descarga académica.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* SECCIÓN 5: LIQUIDACIÓN TIPO Y SIMULACIÓN CONTRACTUAL */}
+        <div className="space-y-2 pt-2 border-t border-slate-200">
+          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-1">
+            5. Liquidación Tipo y Simulación Contractual Vigente
+          </h3>
+          <p className="text-[11px] text-slate-700">
+            Parámetros configurados para un contrato docente representativo durante el período académico:
+          </p>
+
+          <table className="w-full text-left text-[11px] border border-slate-300">
+            <tbody className="divide-y divide-slate-200">
+              <tr>
+                <td className="p-2 font-semibold text-slate-700">Modalidad de Vinculación:</td>
+                <td className="p-2 font-bold text-slate-900">{modalidad === 'externa' ? 'Cátedra Externa (Contratista Semestral)' : 'Cátedra Interna (Docente UPTC en Adición)'}</td>
+                <td className="p-2 font-semibold text-slate-700">Categoría en Escalafón:</td>
+                <td className="p-2 font-bold text-slate-900">{categoriaSeleccionada.categoria} ({categoriaSeleccionada.puntos.toFixed(2)} pts)</td>
+              </tr>
+              <tr>
+                <td className="p-2 font-semibold text-slate-700">Intensidad Semanal:</td>
+                <td className="p-2 font-mono font-bold text-slate-900">{horasSemanales} horas / semana</td>
+                <td className="p-2 font-semibold text-slate-700">Duración del Período:</td>
+                <td className="p-2 font-mono font-bold text-slate-900">{semanasSemestre} Semanas ({totalHorasSemestre} horas totales)</td>
+              </tr>
+              <tr>
+                <td className="p-2 font-semibold text-slate-700">Tarifa por Hora Base:</td>
+                <td className="p-2 font-mono font-bold text-slate-900">{formatCOP(valorHoraActiva)} / hora</td>
+                <td className="p-2 font-semibold text-slate-700">Salario Base Semestral:</td>
+                <td className="p-2 font-mono font-bold text-slate-900">{formatCOP(valorTotalBaseContrato)}</td>
+              </tr>
+              <tr className="bg-emerald-50">
+                <td className="p-2 font-semibold text-emerald-900">Prestaciones Proporcionales (C-006-96):</td>
+                <td className="p-2 font-mono font-bold text-emerald-800">+{formatCOP(valorPrestacionesProporcionales)} (Alícuota 21.83%)</td>
+                <td className="p-2 font-bold text-slate-900 uppercase">Costo Total del Contrato:</td>
+                <td className="p-2 font-mono font-black text-slate-900 text-sm">{formatCOP(valorGranTotalContrato)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* SECCIÓN 6: MITIGACIÓN DE FLUJO DE CAJA (POLÍTICA DE GRATUIDAD R10.5) */}
+        <div className="space-y-1.5 pt-2 border-t border-slate-200 text-[11px] text-slate-700">
+          <h3 className="text-sm font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+            6. Plan de Contingencia y Mitigación de Flujo de Caja (Recurso 10.5)
+          </h3>
+          <p className="text-justify">
+            Para blindar el giro oportuno de la nómina docente ante posibles retrasos en las transferencias del Gobierno
+            Nacional correspondientes a la <strong>Política de Gratuidad (Recurso 10.5 con $ 142,1 M apropiados)</strong>,
+            se autoriza la aplicación del mecanismo de <strong>Unidad de Caja Temporal</strong> con cargo a los fondos
+            disponibles de Recursos Propios (R20 / R31), con reintegro automático una vez radicado el giro nacional.
+          </p>
+        </div>
+
+        {/* SECCIÓN 7: FIRMAS DE RESPONSABILIDAD INSTITUCIONAL */}
+        <div className="pt-8 border-t-2 border-slate-800 grid grid-cols-3 gap-6 text-center text-[10px]">
+          <div className="space-y-8">
+            <div className="border-b border-slate-800 pb-1"></div>
+            <div>
+              <p className="font-bold text-slate-900">DR. VICERRECTOR ADMINISTRATIVO Y FINANCIERO</p>
+              <p className="text-slate-600">Vicerrectoría Administrativa y Financiera</p>
+              <p className="text-slate-500">UPTC Sede Central Tunja</p>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <div className="border-b border-slate-800 pb-1"></div>
+            <div>
+              <p className="font-bold text-slate-900">DRA. DIRECTORA FINANCIERA Y DE PRESUPUESTO</p>
+              <p className="text-slate-600">Dirección Financiera / Jefe de Presupuesto</p>
+              <p className="text-slate-500">División Administrativa UPTC</p>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <div className="border-b border-slate-800 pb-1"></div>
+            <div>
+              <p className="font-bold text-slate-900">DIRECTOR DE PROGRAMA / ESCUELA ACADÉMICA</p>
+              <p className="text-slate-600">Comité de Currículo / Consejo de Facultad</p>
+              <p className="text-slate-500">Certificación de Horas Efectivas Dictadas</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* MODAL DE PREVISUALIZACIÓN DEL INFORME TÉCNICO PDF                          */}
+      {/* ========================================================================= */}
+      {showPdfPreviewModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 md:p-6 overflow-y-auto">
+          <div className="relative w-full max-w-5xl bg-surface-container border border-white/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Barra Superior del Modal */}
+            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-black/40">
+              <div className="flex items-center gap-2.5">
+                <FileText className="text-primary-container" size={20} />
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Vista Previa del Informe Técnico Oficial (PDF)
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Formato oficial tamaño Carta listo para firma y radicación ante Consejo Superior
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrint}
+                  className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Printer size={14} />
+                  <span>Imprimir</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPdf}
+                  className="px-4 py-1.5 rounded-xl bg-primary-container hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-lg transition-all cursor-pointer"
+                >
+                  {isGeneratingPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+                  <span>{isGeneratingPdf ? 'Generando...' : 'Descargar PDF'}</span>
+                </button>
+
+                <button
+                  onClick={() => setShowPdfPreviewModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors ml-2 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Contenido en Hoja Virtual de Papel Blanco */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-900/60">
+              <div className="bg-white text-slate-900 rounded-2xl p-8 md:p-12 shadow-2xl max-w-4xl mx-auto border border-slate-300 space-y-6 text-xs font-sans">
+                {/* Encabezado */}
+                <div className="border-b-2 border-slate-900 pb-4 flex justify-between items-start">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block"></span>
+                      <span className="text-[11px] font-black tracking-widest uppercase text-slate-800">
+                        UNIVERSIDAD PEDAGÓGICA Y TECNOLÓGICA DE COLOMBIA
+                      </span>
+                    </div>
+                    <h1 className="text-lg md:text-xl font-black text-slate-900 tracking-tight uppercase">
+                      VICERRECTORÍA ADMINISTRATIVA Y FINANCIERA — DIRECCIÓN FINANCIERA
+                    </h1>
+                    <h2 className="text-xs md:text-sm font-bold text-amber-600 uppercase tracking-wide">
+                      INFORME TÉCNICO OFICIAL: NÓMINA TEMPORAL DOCENTE Y LIQUIDACIÓN DE HORAS CÁTEDRA
+                    </h2>
+                    <p className="text-[11px] text-slate-600">
+                      Sustento Constitucional Sentencia C-006-96 • Acuerdo No. 015 de 2009 • Decretos 1279/2002 y 318/2026
+                    </p>
+                  </div>
+
+                  <div className="text-right text-[11px] text-slate-700 bg-slate-50 border border-slate-300 rounded-xl p-3 min-w-[200px] space-y-1">
+                    <div><strong>Radicado:</strong> UPTC-VAFI-HC-2026-015</div>
+                    <div><strong>Vigencia Fiscal:</strong> 2026</div>
+                    <div><strong>Fecha:</strong> {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                    <div><strong>Punto D1279:</strong> $ 23.924 COP</div>
+                  </div>
+                </div>
+
+                {/* Resumen de Ejecución */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+                    1. Estado de Ejecución Presupuestal Vigencia 2026 (Cifras Reales en Millones)
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center pt-1">
+                    <div className="p-2 rounded border border-slate-300 bg-slate-50">
+                      <span className="text-[10px] text-slate-500 uppercase block">Total Comprometido</span>
+                      <span className="text-sm font-black text-slate-900 font-mono">{formatCurrency(totalCompromiso)}</span>
+                    </div>
+                    <div className="p-2 rounded border border-slate-300 bg-slate-50">
+                      <span className="text-[10px] text-slate-500 uppercase block">Pagado a Agosto</span>
+                      <span className="text-sm font-black text-emerald-700 font-mono">{formatCurrency(totalPagado)}</span>
+                    </div>
+                    <div className="p-2 rounded border border-slate-300 bg-slate-50">
+                      <span className="text-[10px] text-slate-500 uppercase block">Saldo por Ejecutar</span>
+                      <span className="text-sm font-black text-blue-700 font-mono">{formatCurrency(saldoPorEjecutar)}</span>
+                    </div>
+                    <div className="p-2 rounded border border-slate-300 bg-slate-50">
+                      <span className="text-[10px] text-slate-500 uppercase block">Avance de Ejecución</span>
+                      <span className="text-sm font-black text-amber-700 font-mono">{porcentajeEjecutadoGlobal.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sentencia C-006-96 */}
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+                    2. Marco Jurídico: Sentencia C-006-96 de la Corte Constitucional
+                  </h3>
+                  <p className="text-[11px] text-slate-700 leading-relaxed text-justify">
+                    La Corte Constitucional determinó que los profesores de cátedra subordinados son servidores públicos con
+                    derecho irrenunciable al pago de <strong>prestaciones sociales de forma proporcional</strong> al tiempo laborado
+                    (cesantías, primas y vacaciones). El pago por honorarios en labores subordinadas es inconstitucional.
+                  </p>
+                </div>
+
+                {/* Comparativa de Modelos */}
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+                    3. Comparativa de Modelos de Cálculo (Tarifas 2026)
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2 text-[11px]">
+                    <div className="p-2.5 rounded border border-slate-300 bg-slate-50">
+                      <span className="font-bold block text-slate-900">Divisor 171.2 Horas (Ley 30):</span>
+                      <span className="font-mono font-black text-emerald-700 text-sm block">$ 81.820 COP / h</span>
+                      <span className="text-[10px] text-slate-500">Bajo riesgo jurídico. Jornada 40h/sem.</span>
+                    </div>
+                    <div className="p-2.5 rounded border border-slate-300 bg-slate-50">
+                      <span className="font-bold block text-slate-900">Divisor 240 Horas (MinTrabajo):</span>
+                      <span className="font-mono font-black text-rose-700 text-sm block">$ 58.364 COP / h</span>
+                      <span className="text-[10px] text-slate-500">Alto riesgo de litigio por nivelación.</span>
+                    </div>
+                    <div className="p-2.5 rounded border border-slate-300 bg-amber-50/60">
+                      <span className="font-bold block text-amber-900">Puntos UPTC (Acuerdo 015):</span>
+                      <span className="font-mono font-black text-amber-800 text-sm block">$ 59.810 - $ 83.734 COP</span>
+                      <span className="text-[10px] text-slate-600">Estatuto oficial de la Universidad.</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Liquidación Simulada */}
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider border-b border-slate-300 pb-1">
+                    4. Simulación de Liquidación Contractual
+                  </h3>
+                  <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                    <div><span className="text-slate-500 block">Modalidad:</span><strong>{modalidad === 'externa' ? 'Cátedra Externa' : 'Cátedra Interna (Art. 2)'}</strong></div>
+                    <div><span className="text-slate-500 block">Categoría:</span><strong>{categoriaSeleccionada.categoria}</strong></div>
+                    <div><span className="text-slate-500 block">Horas/Semana:</span><strong className="font-mono">{horasSemanales} h ({totalHorasSemestre} h sem)</strong></div>
+                    <div><span className="text-slate-500 block">Costo Total Semestre:</span><strong className="font-mono text-amber-800 text-sm">{formatCOP(valorGranTotalContrato)}</strong></div>
+                  </div>
+                </div>
+
+                {/* Firmas */}
+                <div className="pt-6 border-t-2 border-slate-800 grid grid-cols-3 gap-4 text-center text-[9px]">
+                  <div>
+                    <div className="border-b border-slate-800 pb-1 mb-1"></div>
+                    <p className="font-bold text-slate-900">VICERRECTOR ADMINISTRATIVO</p>
+                    <p className="text-slate-600">UPTC Tunja</p>
+                  </div>
+                  <div>
+                    <div className="border-b border-slate-800 pb-1 mb-1"></div>
+                    <p className="font-bold text-slate-900">DIRECTORA FINANCIERA</p>
+                    <p className="text-slate-600">Dirección de Presupuesto</p>
+                  </div>
+                  <div>
+                    <div className="border-b border-slate-800 pb-1 mb-1"></div>
+                    <p className="font-bold text-slate-900">DIRECTOR DE ESCUELA</p>
+                    <p className="text-slate-600">Concepto Favorable Asistencia</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
