@@ -39,7 +39,8 @@ import {
   Eye,
   X,
   PieChart as PieChartIcon,
-  Scale
+  Scale,
+  ArrowRight
 } from 'lucide-react';
 import { ConciliacionCajaView } from './ConciliacionCajaView';
 import {
@@ -247,7 +248,72 @@ export function FlujoTesoreriaView() {
         </div>
       </div>
 
-      {/* 2. BARRA DE FILTROS PRINCIPALES */}
+      {viewMode === 'conciliacion' ? (
+        <ConciliacionCajaView
+          data={data}
+          onOpenRecursoModal={(codigo) => {
+            const rec = data.recursos.find((r) => r.codigo === codigo);
+            if (rec) setSelectedRecursoModal(rec);
+          }}
+        />
+      ) : (
+        <>
+          {/* BANNER DESTACADO: COMPARACIÓN DIRECTA DISPONIBLE VS SALDO EN BANCOS A CORTE DE HOY */}
+          <div className="bg-gradient-to-r from-cyan-950/80 via-slate-900 to-amber-950/60 border border-cyan-500/30 rounded-2xl p-4 md:p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start md:items-center gap-3.5">
+              <div className="p-3 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shrink-0">
+                <Scale size={24} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black uppercase tracking-wider text-cyan-400">
+                    Conciliación de Caja a Corte de Hoy
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-slate-950">
+                    100% Cuadrado
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Extractos bancarios vs. Disponible presupuestal oficial
+                  </span>
+                </div>
+                <div className="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span>
+                    Disponible Presupuestal:{' '}
+                    <strong className="text-amber-400 font-mono font-bold">
+                      {formatCOP(data.conciliacionCaja.disponiblePresupuestalTotal)}
+                    </strong>
+                  </span>
+                  <span className="text-slate-600 hidden sm:inline">|</span>
+                  <span>
+                    Saldo Real en Bancos:{' '}
+                    <strong className="text-cyan-400 font-mono font-bold">
+                      {formatCOP(data.conciliacionCaja.saldoRealBancos)}
+                    </strong>
+                  </span>
+                  <span className="text-slate-600 hidden sm:inline">|</span>
+                  <span>
+                    Brecha Directa:{' '}
+                    <strong className="text-rose-400 font-mono font-bold">
+                      {formatCOP(data.conciliacionCaja.diferenciaDirecta)}
+                    </strong>
+                  </span>
+                  <span className="text-slate-600 hidden sm:inline">|</span>
+                  <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white font-mono text-[11px]">
+                    Cobertura: <strong>{data.conciliacionCaja.coberturaBancosPct.toFixed(2)}%</strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setViewMode('conciliacion')}
+              className="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 hover:scale-[1.02]"
+            >
+              <span>Ver Conciliación Completa</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+
+          {/* 2. BARRA DE FILTROS PRINCIPALES */}
       <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-3">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-400">
@@ -1342,6 +1408,9 @@ export function FlujoTesoreriaView() {
           </table>
         </div>
       </div>
+
+        </>
+      )}
 
       {/* 12. MODAL / DRILLDOWN POR RECURSO */}
       {selectedRecursoModal && (

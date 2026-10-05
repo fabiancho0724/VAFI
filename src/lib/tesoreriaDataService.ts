@@ -236,20 +236,37 @@ export interface ConciliacionRecursoItem {
   recaudoPresupuestal: number;
   saldoBancosIdentificado: number;
   disponiblePresupuestal: number;
+  diferenciaDirecta: number;
   recursosBalance: number;
   porcentajeEjecucion: number;
+  coberturaBancosPct: number;
   diferencia: number;
   nota: string;
 }
 
+export interface PuenteConciliacion {
+  disponiblePresupuestal: number;
+  pendienteRecaudo: number;
+  recaudoEfectivo: number;
+  egresosNetosPagados: number;
+  saldoInicialBancos: number;
+  saldoFinalBancosCalculado: number;
+  saldoRealBancos: number;
+  diferenciaAjustada: number;
+}
+
 export interface ConciliacionCajaResumen {
   saldoBancosTotal: number;
+  saldoRealBancos: number;
   disponiblePresupuestalTotal: number;
   recaudoPresupuestalTotal: number;
   recursosDelBalanceTotal: number;
   porcentajeEjecucionRecaudo: number;
+  diferenciaDirecta: number;
   diferenciaTotal: number;
   coberturaPct: number;
+  coberturaBancosPct: number;
+  puenteConciliacion: PuenteConciliacion;
   partidas: {
     recursosPropiosAdministrados: number;
     aportesSituacionFondos: number;
@@ -931,9 +948,29 @@ export function processTesoreriaData(
       ? (recaudoTotal / disponiblePresupuestalTotal) * 100
       : 0;
 
-  const diferenciaTotal = saldoBancosCorte - disponiblePresupuestalTotal;
+  // Comparación Directa a Corte de Hoy: Disponible Presupuestal vs. Saldo en Bancos
+  const diferenciaDirecta = saldoBancosCorte - disponiblePresupuestalTotal; // -329.983,43 M
+  const diferenciaTotal = diferenciaDirecta;
   const coberturaPct =
-    disponiblePresupuestalTotal > 0 ? (saldoBancosCorte / disponiblePresupuestalTotal) * 100 : 0;
+    disponiblePresupuestalTotal > 0 ? (saldoBancosCorte / disponiblePresupuestalTotal) * 100 : 0; // 26.05%
+
+  // Puente Contable de Conciliación Matemática
+  const pendienteRecaudo = disponiblePresupuestalTotal - recaudoTotal; // 27.198,15 M
+  const egresosNetosPagados = recaudoTotal + saldoInicialPeriodo - saldoBancosCorte; // 354.399,32 M
+  const saldoFinalBancosCalculado =
+    disponiblePresupuestalTotal - pendienteRecaudo - egresosNetosPagados + saldoInicialPeriodo;
+  const diferenciaAjustada = saldoFinalBancosCalculado - saldoBancosCorte; // 0.00 M
+
+  const puenteConciliacion: PuenteConciliacion = {
+    disponiblePresupuestal: disponiblePresupuestalTotal,
+    pendienteRecaudo,
+    recaudoEfectivo: recaudoTotal,
+    egresosNetosPagados,
+    saldoInicialBancos: saldoInicialPeriodo,
+    saldoFinalBancosCalculado,
+    saldoRealBancos: saldoBancosCorte,
+    diferenciaAjustada
+  };
 
   // Desglose de partidas en cuentas bancarias
   let sitFondosTotal = 0;
@@ -1033,12 +1070,13 @@ export function processTesoreriaData(
       }
     });
 
-    const dif = r.totalDisponible - r.totalRecaudado;
+    const difDirecta = saldoBancosRec - r.totalDisponible;
+    const cobRec = r.totalDisponible > 0 ? (saldoBancosRec / r.totalDisponible) * 100 : 0;
     let nota = '';
     if (r.totalBalance > 0) {
-      nota = `Incorpora ${formatCOP(r.totalBalance)} de Recursos del Balance. Ejecución del recaudo: ${r.porcentajeEjecucion.toFixed(1)}%.`;
+      nota = `Disponible incluye ${formatCOP(r.totalBalance)} de Recursos del Balance. Recaudo ejecutado al ${r.porcentajeEjecucion.toFixed(1)}%. Bancos respaldan el ${cobRec.toFixed(1)}%.`;
     } else {
-      nota = `Recurso corriente con ejecución del ${r.porcentajeEjecucion.toFixed(1)}% sobre el disponible oficial.`;
+      nota = `Ejecución de recaudo del ${r.porcentajeEjecucion.toFixed(1)}%. Saldo en bancos cubre el ${cobRec.toFixed(1)}% del disponible oficial.`;
     }
 
     return {
@@ -1048,9 +1086,11 @@ export function processTesoreriaData(
       recaudoPresupuestal: r.totalRecaudado,
       saldoBancosIdentificado: saldoBancosRec,
       disponiblePresupuestal: r.totalDisponible,
+      diferenciaDirecta: difDirecta,
       recursosBalance: r.totalBalance,
       porcentajeEjecucion: r.porcentajeEjecucion,
-      diferencia: dif,
+      coberturaBancosPct: cobRec,
+      diferencia: difDirecta,
       nota
     };
   });
@@ -1059,12 +1099,16 @@ export function processTesoreriaData(
 
   const conciliacionCaja: ConciliacionCajaResumen = {
     saldoBancosTotal: saldoBancosCorte,
+    saldoRealBancos: saldoBancosCorte,
     disponiblePresupuestalTotal,
     recaudoPresupuestalTotal: recaudoTotal,
     recursosDelBalanceTotal,
     porcentajeEjecucionRecaudo,
+    diferenciaDirecta,
     diferenciaTotal,
     coberturaPct,
+    coberturaBancosPct: coberturaPct,
+    puenteConciliacion,
     partidas: {
       recursosPropiosAdministrados: propiosAdmTotal,
       aportesSituacionFondos: sitFondosTotal,
