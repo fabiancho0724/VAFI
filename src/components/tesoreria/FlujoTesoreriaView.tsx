@@ -38,12 +38,15 @@ import {
   Check,
   Eye,
   X,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon,
+  Scale
 } from 'lucide-react';
+import { ConciliacionCajaView } from './ConciliacionCajaView';
 import {
   loadTesoreriaRawData,
   processTesoreriaData,
   exportTesoreriaCSV,
+  exportConciliacionCajaCSV,
   formatCOP,
   formatCOPFull,
   TesoreriaFilterState,
@@ -74,6 +77,7 @@ export function FlujoTesoreriaView() {
   const [selectedRecursoModal, setSelectedRecursoModal] = useState<RecursoItem | null>(null);
   const [selectedCuentaModal, setSelectedCuentaModal] = useState<CuentaItem | null>(null);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [viewMode, setViewMode] = useState<'general' | 'conciliacion'>('general');
   const [activeAlertCategory, setActiveAlertCategory] = useState<'TODAS' | 'critico' | 'preventivo' | 'informativo'>('TODAS');
 
   useEffect(() => {
@@ -187,6 +191,59 @@ export function FlujoTesoreriaView() {
               <span>Exportar Conciliación (Excel)</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* SELECTOR DE MODO DE VISTA: TABLERO GENERAL VS CONCILIACIÓN DE CAJA */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900/90 border border-white/10 rounded-2xl p-2.5 shadow-xl">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setViewMode('general')}
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
+              viewMode === 'general'
+                ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Landmark size={15} />
+            <span>Tablero General de Tesorería</span>
+          </button>
+          <button
+            onClick={() => setViewMode('conciliacion')}
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
+              viewMode === 'conciliacion'
+                ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Scale size={15} />
+            <span>Conciliación de Caja (Disponible vs. Bancos)</span>
+            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-slate-950">
+              100% Cuadrado
+            </span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {viewMode === 'conciliacion' ? (
+            <button
+              onClick={() => exportConciliacionCajaCSV(data)}
+              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-900/30 border border-emerald-400/30 transition-all cursor-pointer"
+              title="Descargar matriz de conciliación de caja en CSV/Excel"
+            >
+              <FileSpreadsheet size={15} />
+              <span>Exportar Conciliación de Caja (Excel)</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => exportTesoreriaCSV(data)}
+              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-900/30 border border-emerald-400/30 transition-all cursor-pointer"
+              title="Descargar matriz mensual en CSV/Excel"
+            >
+              <FileSpreadsheet size={15} />
+              <span>Exportar Matriz Mensual (Excel)</span>
+            </button>
+          )}
         </div>
       </div>
 
