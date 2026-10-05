@@ -79,6 +79,19 @@ export function parseCurrency(val: any): number {
   return isNaN(num) ? 0 : num;
 }
 
+export function safeStr(val: any): string {
+  if (val === undefined || val === null) return '';
+  return String(val).trim();
+}
+
+export function normalizeRecurso(val: any): string {
+  if (val === undefined || val === null) return '';
+  let s = String(val).trim();
+  if (s === '10.0' || s === '10') return '10';
+  if (s === '16.0' || s === '16') return '16';
+  return s;
+}
+
 export function formatCOP(val: number, decimals: number = 1): string {
   if (val === undefined || val === null || isNaN(val)) return '$ 0,0 M';
   const inM = val / 1e6;
@@ -279,13 +292,15 @@ export function processTesoreriaData(
   const tiposCuentaSet = new Set<string>();
 
   bancosRaw.forEach((r) => {
-    if (r.Banco) bancosSet.add(r.Banco.trim());
-    if (r['No. cuenta']) {
-      const acc = r['No. cuenta'].trim();
-      const name = r['Nombre de cuenta'] ? r['Nombre de cuenta'].trim() : '';
+    const banco = safeStr(r.Banco);
+    if (banco) bancosSet.add(banco);
+    const acc = safeStr(r['No. cuenta']);
+    if (acc) {
+      const name = safeStr(r['Nombre de cuenta']);
       cuentasMap.set(acc, `${acc} - ${name.slice(0, 30)}`);
     }
-    if (r.Clase) tiposCuentaSet.add(r.Clase.trim());
+    const clase = safeStr(r.Clase);
+    if (clase) tiposCuentaSet.add(clase);
   });
 
   const bancosList = Array.from(bancosSet).sort();
@@ -297,12 +312,15 @@ export function processTesoreriaData(
   // 2. Pre-process bank accounts per account across all 9 months to obtain clean monthly deltas
   const accHistoryMap = new Map<string, Map<string, RawBancoRow>>();
   bancosRaw.forEach((r) => {
-    const acc = r['No. cuenta']?.trim();
+    const acc = safeStr(r['No. cuenta']);
     if (!acc) return;
     if (!accHistoryMap.has(acc)) {
       accHistoryMap.set(acc, new Map());
     }
-    accHistoryMap.get(acc)!.set(r.Mes?.trim(), r);
+    const mes = safeStr(r.Mes);
+    if (mes) {
+      accHistoryMap.get(acc)!.set(mes, r);
+    }
   });
 
   interface AccountMonthlyDelta {
@@ -382,9 +400,11 @@ export function processTesoreriaData(
   }[] = [];
 
   accountDeltas.forEach((data, acc) => {
-    if (filters.banco !== 'TODOS' && data.info.Banco?.trim() !== filters.banco) return;
+    const b = safeStr(data.info.Banco);
+    const c = safeStr(data.info.Clase);
+    if (filters.banco !== 'TODOS' && b !== filters.banco) return;
     if (filters.cuenta !== 'TODOS' && acc !== filters.cuenta) return;
-    if (filters.tipoCuenta !== 'TODOS' && data.info.Clase?.trim() !== filters.tipoCuenta) return;
+    if (filters.tipoCuenta !== 'TODOS' && c !== filters.tipoCuenta) return;
     filteredAccounts.push({ acc, info: data.info, deltas: data.deltas });
   });
 
@@ -432,20 +452,21 @@ export function processTesoreriaData(
 
   // Filter budget rows
   const filteredIngresos = ingresosRaw.filter((r) => {
-    const rawRec = String(r.Recurso || '').trim();
+    const rawRec = normalizeRecurso(r.Recurso);
     if (filters.recurso !== 'TODOS') {
-      if (rawRec !== filters.recurso && rawRec.replace(/\.0$/, '') !== filters.recurso) {
+      const filterRec = normalizeRecurso(filters.recurso);
+      if (rawRec !== filterRec) {
         return false;
       }
     }
     if (filters.categoriaRecurso === 'BASE') {
       const isBase = RECURSOS_BASE_PRESUPUESTAL.some(
-        (b) => rawRec === b || rawRec.startsWith(b + '.')
+        (b) => rawRec === normalizeRecurso(b) || rawRec.startsWith(b + '.')
       );
       if (!isBase) return false;
     } else if (filters.categoriaRecurso === 'PROPIOS') {
       const isBase = RECURSOS_BASE_PRESUPUESTAL.some(
-        (b) => rawRec === b || rawRec.startsWith(b + '.')
+        (b) => rawRec === normalizeRecurso(b) || rawRec.startsWith(b + '.')
       );
       if (isBase) return false;
     }
@@ -570,12 +591,12 @@ export function processTesoreriaData(
 
       return {
         noCuenta: a.acc,
-        banco: a.info.Banco?.trim() || 'Sin Banco',
-        nombreCuenta: a.info['Nombre de cuenta']?.trim() || a.acc,
-        clase: a.info.Clase?.trim() || 'Cuenta',
-        destino: a.info.Destino?.trim() || 'General',
-        fuente: a.info.Fuente?.trim() || 'N/A',
-        recurso: a.info.Recurso?.trim() || 'N/A',
+        banco: safeStr(a.info.Banco) || 'Sin Banco',
+        nombreCuenta: safeStr(a.info['Nombre de cuenta']) || a.acc,
+        clase: safeStr(a.info.Clase) || 'Cuenta',
+        destino: safeStr(a.info.Destino) || 'General',
+        fuente: safeStr(a.info.Fuente) || 'N/A',
+        recurso: safeStr(a.info.Recurso) || 'N/A',
         saldoInicial: sInicial,
         entradasTotales: inTotal,
         salidasTotales: outTotal,
@@ -607,11 +628,11 @@ export function processTesoreriaData(
   >();
 
   filteredIngresos.forEach((r) => {
-    let recCode = String(r.Recurso || '').trim();
+    let recCode = normalizeRecurso(r.Recurso);
     if (!recCode) return;
     const cleanKey = recCode;
     const isBase = RECURSOS_BASE_PRESUPUESTAL.some(
-      (b) => recCode === b || recCode.startsWith(b + '.')
+      (b) => recCode === normalizeRecurso(b) || recCode.startsWith(b + '.')
     );
     const recName = NOMBRES_RECURSOS[recCode] || `Recurso ${recCode}`;
 
