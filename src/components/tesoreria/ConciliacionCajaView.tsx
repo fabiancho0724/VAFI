@@ -65,8 +65,8 @@ export function ConciliacionCajaView({ data }: ConciliacionCajaViewProps) {
               Conciliación Técnica de Caja y Disponibilidad
             </h2>
             <p className="text-cyan-300/90 font-semibold text-sm max-w-3xl">
-              Auditoría y conciliación conceptual entre el saldo real disponible en extractos bancarios ({formatCOP(c.saldoBancosTotal)})
-              y la reserva de disponibilidad presupuestal de caja ({formatCOP(c.disponiblePresupuestalTotal)}).
+              Auditoría y conciliación conceptual entre el disponible presupuestal oficial ({formatCOP(c.disponiblePresupuestalTotal)}),
+              el recaudo efectivo ({formatCOP(c.recaudoPresupuestalTotal)}) y el saldo físico en extractos bancarios ({formatCOP(c.saldoBancosTotal)}).
             </p>
             <p className="text-xs text-slate-400 max-w-4xl leading-relaxed">
               En la administración financiera pública, <strong className="text-slate-200">Saldo en Bancos ≠ Disponibilidad Presupuestal</strong>.
@@ -89,88 +89,111 @@ export function ConciliacionCajaView({ data }: ConciliacionCajaViewProps) {
       </div>
 
       {/* 2. KPIs ESTRATÉGICOS DE CONCILIACIÓN */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Saldo en Bancos */}
-        <div className="bg-slate-900/90 border-l-4 border-l-cyan-500 border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col justify-between group hover:border-cyan-500/50 transition-all">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* KPI 1: Disponible Presupuestal Oficial (CSV) */}
+        <div className="bg-slate-900/90 border-l-4 border-l-amber-500 border border-white/10 rounded-2xl p-4 shadow-lg flex flex-col justify-between group hover:border-amber-500/50 transition-all">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Saldo Real en Bancos
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Disponible Presupuestal
               </span>
-              <span className="p-1.5 bg-cyan-500/10 text-cyan-400 rounded-lg">
-                <Landmark size={16} />
+              <span className="p-1 bg-amber-500/10 text-amber-400 rounded-lg">
+                <Coins size={14} />
               </span>
             </div>
-            <div className="text-2xl lg:text-3xl font-black text-cyan-400 font-mono mt-2">
+            <div className="text-xl lg:text-2xl font-black text-amber-400 font-mono mt-1.5">
+              {formatCOP(c.disponiblePresupuestalTotal)}
+            </div>
+          </div>
+          <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Casilla CSV:</span>
+            <span className="font-mono font-bold text-amber-300">Corte de Hoy</span>
+          </div>
+        </div>
+
+        {/* KPI 2: Recaudo Presupuestal */}
+        <div className="bg-slate-900/90 border-l-4 border-l-emerald-500 border border-white/10 rounded-2xl p-4 shadow-lg flex flex-col justify-between group hover:border-emerald-500/50 transition-all">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Recaudo Presupuestal
+              </span>
+              <span className="p-1 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                <TrendingUp size={14} />
+              </span>
+            </div>
+            <div className="text-xl lg:text-2xl font-black text-emerald-400 font-mono mt-1.5">
+              {formatCOP(c.recaudoPresupuestalTotal)}
+            </div>
+          </div>
+          <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Ejecución Recaudo:</span>
+            <span className="font-mono font-bold text-emerald-300">
+              {c.porcentajeEjecucionRecaudo.toFixed(1)}%
+            </span>
+          </div>
+        </div>
+
+        {/* KPI 3: Recursos del Balance */}
+        <div className="bg-slate-900/90 border-l-4 border-l-purple-500 border border-white/10 rounded-2xl p-4 shadow-lg flex flex-col justify-between group hover:border-purple-500/50 transition-all">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Recursos del Balance
+              </span>
+              <span className="p-1 bg-purple-500/10 text-purple-400 rounded-lg">
+                <Layers size={14} />
+              </span>
+            </div>
+            <div className="text-xl lg:text-2xl font-black text-purple-400 font-mono mt-1.5">
+              {formatCOP(c.recursosDelBalanceTotal)}
+            </div>
+          </div>
+          <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Vigencias Anteriores:</span>
+            <span className="font-mono font-bold text-purple-300">Incorporados</span>
+          </div>
+        </div>
+
+        {/* KPI 4: Saldo en Bancos */}
+        <div className="bg-slate-900/90 border-l-4 border-l-cyan-500 border border-white/10 rounded-2xl p-4 shadow-lg flex flex-col justify-between group hover:border-cyan-500/50 transition-all">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Saldo Real en Bancos
+              </span>
+              <span className="p-1 bg-cyan-500/10 text-cyan-400 rounded-lg">
+                <Landmark size={14} />
+              </span>
+            </div>
+            <div className="text-xl lg:text-2xl font-black text-cyan-400 font-mono mt-1.5">
               {formatCOP(c.saldoBancosTotal)}
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs">
+          <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
             <span className="text-slate-400">Total en 84 cuentas:</span>
             <span className="font-mono font-bold text-white">Extractos Reales</span>
           </div>
         </div>
 
-        {/* KPI 2: Disponible Presupuestal */}
-        <div className="bg-slate-900/90 border-l-4 border-l-amber-500 border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col justify-between group hover:border-amber-500/50 transition-all">
+        {/* KPI 5: Cobertura de Caja */}
+        <div className="bg-slate-900/90 border-l-4 border-l-blue-500 border border-white/10 rounded-2xl p-4 shadow-lg flex flex-col justify-between group hover:border-blue-500/50 transition-all">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Disponible Presupuestal
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Cobertura Bancos
               </span>
-              <span className="p-1.5 bg-amber-500/10 text-amber-400 rounded-lg">
-                <Coins size={16} />
-              </span>
-            </div>
-            <div className="text-2xl lg:text-3xl font-black text-amber-400 font-mono mt-2">
-              {formatCOP(c.disponiblePresupuestalTotal)}
-            </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Reserva de Caja:</span>
-            <span className="font-mono font-bold text-white">Base Legal Presupuestal</span>
-          </div>
-        </div>
-
-        {/* KPI 3: Diferencia Bruta */}
-        <div className="bg-slate-900/90 border-l-4 border-l-purple-500 border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col justify-between group hover:border-purple-500/50 transition-all">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Diferencia de Conciliación
-              </span>
-              <span className="p-1.5 bg-purple-500/10 text-purple-400 rounded-lg">
-                <TrendingUp size={16} />
+              <span className="p-1 bg-blue-500/10 text-blue-400 rounded-lg">
+                <ShieldCheck size={14} />
               </span>
             </div>
-            <div className="text-2xl lg:text-3xl font-black text-purple-400 font-mono mt-2">
-              +{formatCOP(c.diferenciaTotal)}
-            </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Exceso Líquido:</span>
-            <span className="font-mono font-bold text-emerald-400">Bancos &gt; Disponible</span>
-          </div>
-        </div>
-
-        {/* KPI 4: Cobertura de Caja */}
-        <div className="bg-slate-900/90 border-l-4 border-l-emerald-500 border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col justify-between group hover:border-emerald-500/50 transition-all">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Respaldo de Bancos
-              </span>
-              <span className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg">
-                <ShieldCheck size={16} />
-              </span>
-            </div>
-            <div className="text-2xl lg:text-3xl font-black text-emerald-400 font-mono mt-2">
+            <div className="text-xl lg:text-2xl font-black text-blue-400 font-mono mt-1.5">
               {c.coberturaPct.toFixed(1)}%
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs">
+          <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
             <span className="text-slate-400">Solvencia de Caja:</span>
-            <span className="font-mono font-bold text-emerald-400">2.6x Disponibilidad</span>
+            <span className="font-mono font-bold text-emerald-400">2.6x Reserva</span>
           </div>
         </div>
       </div>
@@ -622,10 +645,11 @@ export function ConciliacionCajaView({ data }: ConciliacionCajaViewProps) {
                 <th className="py-3 px-3">Recurso</th>
                 <th className="py-3 px-3">Descripción Oficial</th>
                 <th className="py-3 px-3">Categoría</th>
-                <th className="py-3 px-3 text-right">Recaudo Presupuestal</th>
+                <th className="py-3 px-3 text-right">Disponible Presupuestal (CSV)</th>
+                <th className="py-3 px-3 text-right">Recaudo Efectivo</th>
+                <th className="py-3 px-3 text-right">% Ejecución</th>
+                <th className="py-3 px-3 text-right">Recursos Balance</th>
                 <th className="py-3 px-3 text-right">Saldo Bancos Identificado</th>
-                <th className="py-3 px-3 text-right">Disponible Presupuestal</th>
-                <th className="py-3 px-3 text-right">Diferencia</th>
                 <th className="py-3 px-3">Justificación Técnica / Destinación Legal</th>
               </tr>
             </thead>
@@ -649,17 +673,30 @@ export function ConciliacionCajaView({ data }: ConciliacionCajaViewProps) {
                       {r.categoria}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-right text-slate-300">
-                    {formatCOP(r.recaudoPresupuestal)}
-                  </td>
-                  <td className="py-3 px-3 text-right text-cyan-300 font-bold">
-                    {formatCOP(r.saldoBancosIdentificado)}
-                  </td>
-                  <td className="py-3 px-3 text-right text-amber-300 font-bold">
+                  <td className="py-3 px-3 text-right text-amber-300 font-black">
                     {formatCOP(r.disponiblePresupuestal)}
                   </td>
-                  <td className="py-3 px-3 text-right text-purple-400 font-black">
-                    +{formatCOP(r.diferencia)}
+                  <td className="py-3 px-3 text-right text-white font-bold">
+                    {formatCOP(r.recaudoPresupuestal)}
+                  </td>
+                  <td className="py-3 px-3 text-right">
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        r.porcentajeEjecucion >= 90
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : r.porcentajeEjecucion >= 70
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                      }`}
+                    >
+                      {r.porcentajeEjecucion.toFixed(1)}%
+                    </span>
+                  </td>
+                  <td className="py-3 px-3 text-right text-purple-300 font-mono">
+                    {r.recursosBalance > 0 ? formatCOP(r.recursosBalance) : '-'}
+                  </td>
+                  <td className="py-3 px-3 text-right text-cyan-300 font-bold">
+                    {r.saldoBancosIdentificado > 0 ? formatCOP(r.saldoBancosIdentificado) : '-'}
                   </td>
                   <td className="py-3 px-3 font-sans text-slate-300 text-[11px]">
                     {r.nota}

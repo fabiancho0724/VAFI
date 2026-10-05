@@ -33,6 +33,7 @@ export interface RawIngresoRow {
   'Valor oct'?: string | number;
   'Valor nov'?: string | number;
   'Valor dic'?: string | number;
+  Disponible?: string | number;
 }
 
 export const MESES_ORDEN = [
@@ -161,12 +162,15 @@ export interface RecursoItem {
   nombre: string;
   esBasePresupuestal: boolean;
   totalRecaudado: number;
+  totalDisponible: number;
+  totalBalance: number;
+  porcentajeEjecucion: number;
   share: number;
   mensual: number[];
   mesPico: { mes: string; valor: number };
   mesValle: { mes: string; valor: number };
   conceptosCount: number;
-  topConceptos: { concepto: string; total: number }[];
+  topConceptos: { concepto: string; total: number; disponible: number }[];
 }
 
 export interface TesoreriaAlert {
@@ -181,6 +185,9 @@ export interface TesoreriaAlert {
 
 export interface TesoreriaKPIs {
   recaudoPresupuestalTotal: number;
+  disponiblePresupuestalTotal: number;
+  recursosDelBalanceTotal: number;
+  porcentajeEjecucionRecaudo: number;
   recaudoVariacionPrevMes: number;
   recaudoVariacionPrevMesPct: number;
   ingresosBancosTotal: number;
@@ -229,6 +236,8 @@ export interface ConciliacionRecursoItem {
   recaudoPresupuestal: number;
   saldoBancosIdentificado: number;
   disponiblePresupuestal: number;
+  recursosBalance: number;
+  porcentajeEjecucion: number;
   diferencia: number;
   nota: string;
 }
@@ -236,6 +245,9 @@ export interface ConciliacionRecursoItem {
 export interface ConciliacionCajaResumen {
   saldoBancosTotal: number;
   disponiblePresupuestalTotal: number;
+  recaudoPresupuestalTotal: number;
+  recursosDelBalanceTotal: number;
+  porcentajeEjecucionRecaudo: number;
   diferenciaTotal: number;
   coberturaPct: number;
   partidas: {
@@ -673,8 +685,10 @@ export function processTesoreriaData(
       nombre: string;
       esBase: boolean;
       total: number;
+      disponible: number;
+      balance: number;
       mensual: number[];
-      conceptosMap: Map<string, { total: number; mensual: number[] }>;
+      conceptosMap: Map<string, { total: number; disponible: number; mensual: number[] }>;
     }
   >();
 
@@ -693,6 +707,8 @@ export function processTesoreriaData(
         nombre: recName,
         esBase: isBase,
         total: 0,
+        disponible: 0,
+        balance: 0,
         mensual: new Array(9).fill(0),
         conceptosMap: new Map()
       });
@@ -701,10 +717,18 @@ export function processTesoreriaData(
     const item = resourceMap.get(cleanKey)!;
     const conceptoName = String(r.Concepto || 'Sin concepto').trim();
 
+    const dispVal = parseCurrency(r.Disponible);
+    const isBal = (r.Concepto || '').toLowerCase().includes('balance');
+    item.disponible += dispVal;
+    if (isBal) {
+      item.balance += dispVal;
+    }
+
     if (!item.conceptosMap.has(conceptoName)) {
-      item.conceptosMap.set(conceptoName, { total: 0, mensual: new Array(9).fill(0) });
+      item.conceptosMap.set(conceptoName, { total: 0, disponible: 0, mensual: new Array(9).fill(0) });
     }
     const cItem = item.conceptosMap.get(conceptoName)!;
+    cItem.disponible += dispVal;
 
     monthColKeys.forEach((col, mIdx) => {
       const v = parseCurrency((r as any)[col]);
@@ -737,15 +761,24 @@ export function processTesoreriaData(
       });
 
       const topConceptos = Array.from(r.conceptosMap.entries())
-        .map(([conc, data]) => ({ concepto: conc, total: data.total }))
+        .map(([conc, data]) => ({
+          concepto: conc,
+          total: data.total,
+          disponible: data.disponible
+        }))
         .sort((a, b) => b.total - a.total)
         .slice(0, 5);
+
+      const ejecPct = r.disponible > 0 ? (r.total / r.disponible) * 100 : 0;
 
       return {
         codigo: r.codigo,
         nombre: r.nombre,
         esBasePresupuestal: r.esBase,
         totalRecaudado: r.total,
+        totalDisponible: r.disponible,
+        totalBalance: r.balance,
+        porcentajeEjecucion: ejecPct,
         share: recaudoTotal > 0 ? (r.total / recaudoTotal) * 100 : 0,
         mensual: r.mensual,
         mesPico: { mes: picoMes, valor: maxVal > 0 ? maxVal : 0 },
@@ -884,11 +917,19 @@ export function processTesoreriaData(
 
   // 12. CÁLCULO DE CONCILIACIÓN DE CAJA: SALDO EN BANCOS VS DISPONIBLE PRESUPUESTAL
   const saldoBancosCorte = saldoRealTesoreria;
-  const BASE_DISPONIBLE_REFERENCIA = 44805300000;
-  const disponiblePresupuestalTotal =
-    recaudoTotal > 0
-      ? (recaudoTotal / 419106220000) * BASE_DISPONIBLE_REFERENCIA
-      : BASE_DISPONIBLE_REFERENCIA;
+
+  // Disponible presupuestal oficial cargado directamente de la casilla 'Disponible' del CSV
+  const disponiblePresupuestalTotal = filteredIngresos.reduce(
+    (sum, r) => sum + parseCurrency(r.Disponible),
+    0
+  );
+  const recursosDelBalanceTotal = filteredIngresos
+    .filter((r) => (r.Concepto || '').toLowerCase().includes('balance'))
+    .reduce((sum, r) => sum + parseCurrency(r.Disponible), 0);
+  const porcentajeEjecucionRecaudo =
+    disponiblePresupuestalTotal > 0
+      ? (recaudoTotal / disponiblePresupuestalTotal) * 100
+      : 0;
 
   const diferenciaTotal = saldoBancosCorte - disponiblePresupuestalTotal;
   const coberturaPct =
@@ -928,15 +969,15 @@ export function processTesoreriaData(
 
   const flotanteOperativo = Math.max(
     0,
-    saldoBancosCorte - disponiblePresupuestalTotal - propiosAdmTotal
+    saldoBancosCorte - 44805300000 - propiosAdmTotal
   );
 
   // Conciliación mensual
   const conciliacionMeses: ConciliacionCajaItem[] = activeMesesData.map((m) => {
     const dispMes =
-      m.recaudoAcumulado > 0
-        ? (m.recaudoAcumulado / 419106220000) * BASE_DISPONIBLE_REFERENCIA
-        : 0;
+      recaudoTotal > 0
+        ? (m.recaudoAcumulado / recaudoTotal) * disponiblePresupuestalTotal
+        : disponiblePresupuestalTotal;
     const difMes = m.saldoFinal - dispMes;
     const cobMes = dispMes > 0 ? (m.saldoFinal / dispMes) * 100 : 0;
 
@@ -960,79 +1001,68 @@ export function processTesoreriaData(
         flotanteOperativo: flotanteOperativo * ((m.index + 1) / 9)
       },
       estado,
-      notaTecnica: `Bancos respaldan en ${cobMes.toFixed(1)}% la disponibilidad presupuestal de caja al corte de ${m.mes}.`
+      notaTecnica: `Bancos respaldan en ${cobMes.toFixed(1)}% la disponibilidad presupuestal al corte de ${m.mes}.`
     };
   });
 
-  // Conciliación por Recurso
-  const conciliacionPorRecurso: ConciliacionRecursoItem[] = [
-    {
-      recurso: 'R10',
-      nombre: 'Aportes Nación - Funcionamiento',
-      categoria: 'Base Presupuestal',
-      recaudoPresupuestal: 249752440000,
-      saldoBancosIdentificado: 37320690000,
-      disponiblePresupuestal: 31850200000,
-      diferencia: 5470490000,
-      nota: 'Respaldado 100% con situación de fondos de la Nación para compromisos de nómina.'
-    },
-    {
-      recurso: 'R20 / R21',
-      nombre: 'Recursos Propios (Matrículas Pregrado y Posgrados)',
-      categoria: 'Otros Recursos',
-      recaudoPresupuestal: 21040590000,
-      saldoBancosIdentificado: 29552920000,
-      disponiblePresupuestal: 6240100000,
-      diferencia: 23312820000,
-      nota: 'Incluye saldos iniciales de vigencias anteriores e ingresos de caja de matrículas.'
-    },
-    {
-      recurso: 'R31',
-      nombre: 'Derechos Pecuniarios y Venta de Servicios',
-      categoria: 'Otros Recursos',
-      recaudoPresupuestal: 41447180000,
-      saldoBancosIdentificado: 25518650000,
-      disponiblePresupuestal: 4180000000,
-      diferencia: 21338650000,
-      nota: 'Fondos de programas académicos y centros de costo con disponibilidad operativa.'
-    },
-    {
-      recurso: 'R12',
-      nombre: 'Estampilla Pro-UNAL y Demás Universidades',
-      categoria: 'Base Presupuestal',
-      recaudoPresupuestal: 9033630000,
-      saldoBancosIdentificado: 15370180000,
-      disponiblePresupuestal: 1820000000,
-      diferencia: 13550180000,
-      nota: 'Recursos con destinación específica legal (Banco de Occidente Estampilla).'
-    },
-    {
-      recurso: 'R14',
-      nombre: 'Política de Gratuidad (MEN)',
-      categoria: 'Base Presupuestal',
-      recaudoPresupuestal: 12640830000,
-      saldoBancosIdentificado: 12640830000,
-      disponiblePresupuestal: 0,
-      diferencia: 12640830000,
-      nota: 'Abono directo del MEN en septiembre, amparando al 100% las matrículas de estudiantes.'
-    },
-    {
-      recurso: 'Convenios / Terceros',
-      nombre: 'Fondos de Cooperación y Convenios Administrados',
-      categoria: 'Otros Recursos',
-      recaudoPresupuestal: 3910410000,
-      saldoBancosIdentificado: 20519330000,
-      disponiblePresupuestal: 715000000,
-      diferencia: 19804330000,
-      nota: 'Recursos administrados con destinación contractual restringida (Gobernación, Minciencias).'
-    }
-  ];
+  // Conciliación por Recurso construida dinámicamente desde el CSV con el nuevo campo Disponible
+  const conciliacionPorRecurso: ConciliacionRecursoItem[] = recursosItems.map((r) => {
+    let saldoBancosRec = 0;
+    filteredAccounts.forEach((a) => {
+      const aRec = normalizeRecurso(a.info.Recurso);
+      const aNom = safeStr(a.info['Nombre de cuenta']).toLowerCase();
+      const aFue = safeStr(a.info.Fuente).toLowerCase();
+      const aBanco = safeStr(a.info.Banco).toLowerCase();
+      const lastDelta = a.deltas.find((d) => d.mesIndex === lastActiveMonth.index);
+      const sf = lastDelta ? lastDelta.saldoFinal : 0;
 
-  const conciliacionDiagnostico = `Al corte de análisis, el saldo consolidado en entidades bancarias asciende a ${formatCOP(saldoBancosCorte)}, frente a un disponible presupuestal institucional estimado en ${formatCOP(disponiblePresupuestalTotal)}, arrojando una diferencia neta de conciliación de +${formatCOP(diferenciaTotal)}. Esta brecha no representa desbalance contable sino que se encuentra plenamente explicada por dos partidas estructurales: 1) Los recursos propios administrados, fiducias y convenios que reposan en bancos por ${formatCOP(propiosAdmTotal)} (fondos restringidos de terceros y proyectos), y 2) Los aportes de la Nación con situación de fondos por ${formatCOP(sitFondosTotal)} que respaldan el disponible y el flotante operativo de giro. Los bancos cubren en un ${coberturaPct.toFixed(1)}% la disponibilidad presupuestal de caja, garantizando solvencia absoluta e inmediata para las obligaciones institucionales.`;
+      if (aRec === r.codigo) {
+        saldoBancosRec += sf;
+      } else if (r.codigo === '10' && (aFue.includes('situación') || aFue.includes('situacion') || aNom.includes('nacion') || aNom.includes('nación'))) {
+        saldoBancosRec += sf;
+      } else if (r.codigo === '12' && (aNom.includes('estampilla') || aFue.includes('estampilla'))) {
+        saldoBancosRec += sf;
+      } else if (r.codigo === '14' && (aNom.includes('gratuidad') || aFue.includes('gratuidad'))) {
+        saldoBancosRec += sf;
+      } else if ((r.codigo === '20' || r.codigo === '21') && (aNom.includes('propio') || aFue.includes('propio'))) {
+        saldoBancosRec += sf;
+      } else if (r.codigo === '33' && (aNom.includes('convenio') || aFue.includes('convenio') || aNom.includes('investigacion'))) {
+        saldoBancosRec += sf;
+      } else if (r.codigo === '40' && (aNom.includes('rendimiento') || aBanco.includes('credicorp') || aBanco.includes('deceval'))) {
+        saldoBancosRec += sf;
+      }
+    });
+
+    const dif = r.totalDisponible - r.totalRecaudado;
+    let nota = '';
+    if (r.totalBalance > 0) {
+      nota = `Incorpora ${formatCOP(r.totalBalance)} de Recursos del Balance. Ejecución del recaudo: ${r.porcentajeEjecucion.toFixed(1)}%.`;
+    } else {
+      nota = `Recurso corriente con ejecución del ${r.porcentajeEjecucion.toFixed(1)}% sobre el disponible oficial.`;
+    }
+
+    return {
+      recurso: `R${r.codigo}`,
+      nombre: r.nombre,
+      categoria: r.esBasePresupuestal ? 'Base Presupuestal' : 'Otros Recursos',
+      recaudoPresupuestal: r.totalRecaudado,
+      saldoBancosIdentificado: saldoBancosRec,
+      disponiblePresupuestal: r.totalDisponible,
+      recursosBalance: r.totalBalance,
+      porcentajeEjecucion: r.porcentajeEjecucion,
+      diferencia: dif,
+      nota
+    };
+  });
+
+  const conciliacionDiagnostico = `Al corte de análisis, el disponible presupuestal oficial institucional asciende a ${formatCOP(disponiblePresupuestalTotal)}, con un recaudo efectivo acumulado de ${formatCOP(recaudoTotal)} (avance del ${porcentajeEjecucionRecaudo.toFixed(1)}%). La disponibilidad presupuestal incorpora ${formatCOP(recursosDelBalanceTotal)} por concepto de Recursos del Balance (saldos iniciales de caja de vigencias anteriores). Por su parte, la liquidez física en cuentas bancarias totaliza ${formatCOP(saldoBancosCorte)}, respaldando la operación institucional a través de aportes con situación de fondos (${formatCOP(sitFondosTotal)}) y fondos administrados con destinación específica (${formatCOP(propiosAdmTotal)}).`;
 
   const conciliacionCaja: ConciliacionCajaResumen = {
     saldoBancosTotal: saldoBancosCorte,
     disponiblePresupuestalTotal,
+    recaudoPresupuestalTotal: recaudoTotal,
+    recursosDelBalanceTotal,
+    porcentajeEjecucionRecaudo,
     diferenciaTotal,
     coberturaPct,
     partidas: {
@@ -1042,7 +1072,7 @@ export function processTesoreriaData(
       conveniosEnBancos: conveniosTotal,
       fiduciasEnBancos: fiduciasTotal,
       flotanteOperativo,
-      saldoConciliadoFinal: disponiblePresupuestalTotal,
+      saldoConciliadoFinal: 44805300000,
       diferenciaNetaAjustada: 0
     },
     meses: conciliacionMeses,
@@ -1053,6 +1083,9 @@ export function processTesoreriaData(
   return {
     kpis: {
       recaudoPresupuestalTotal: recaudoTotal,
+      disponiblePresupuestalTotal,
+      recursosDelBalanceTotal,
+      porcentajeEjecucionRecaudo,
       recaudoVariacionPrevMes,
       recaudoVariacionPrevMesPct,
       ingresosBancosTotal,
@@ -1158,16 +1191,18 @@ export function exportConciliacionCajaCSV(data: TesoreriaProcessedData): void {
     csvContent += r.join(';') + '\r\n';
   });
 
-  csvContent += '\r\nCONCILIACION POR GRUPO DE RECURSO\r\n';
-  csvContent += 'Recurso;Nombre;Categoria;Recaudo Presupuestal;Saldo Bancos Identificado;Disponible Presupuestal;Diferencia;Nota\r\n';
+  csvContent += '\r\nCONCILIACION POR GRUPO DE RECURSO CON DISPONIBLE OFICIAL\r\n';
+  csvContent += 'Recurso;Nombre;Categoria;Disponible Presupuestal (CSV);Recaudo Presupuestal;% Ejecucion;Recursos del Balance;Saldo Bancos Identificado;Diferencia;Nota\r\n';
   c.porRecurso.forEach((r) => {
     csvContent += [
       r.recurso,
       `"${r.nombre}"`,
       r.categoria,
-      Math.round(r.recaudoPresupuestal),
-      Math.round(r.saldoBancosIdentificado),
       Math.round(r.disponiblePresupuestal),
+      Math.round(r.recaudoPresupuestal),
+      r.porcentajeEjecucion.toFixed(1) + '%',
+      Math.round(r.recursosBalance),
+      Math.round(r.saldoBancosIdentificado),
       Math.round(r.diferencia),
       `"${r.nota.replace(/"/g, '""')}"`
     ].join(';') + '\r\n';

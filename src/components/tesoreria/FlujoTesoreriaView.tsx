@@ -396,25 +396,25 @@ export function FlujoTesoreriaView() {
 
       {/* 3. PRIMER BLOQUE: KPIs ESTRATÉGICOS DE TESORERÍA (6 TARJETAS) */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {/* KPI 1: Recaudo Presupuestal */}
+        {/* KPI 1: Recaudo Presupuestal & Disponible */}
         <div className="bg-slate-900/90 border-l-4 border-l-amber-500 border border-white/10 rounded-2xl p-4 shadow-lg flex flex-col justify-between group hover:border-amber-500/50 transition-all">
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              Recaudo Presupuestal
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Recaudo Presupuestal
+              </span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded font-mono">
+                {data.kpis.porcentajeEjecucionRecaudo.toFixed(1)}% ejec.
+              </span>
+            </div>
             <div className="text-xl lg:text-2xl font-black text-amber-400 font-mono mt-1">
               {formatCOP(data.kpis.recaudoPresupuestalTotal)}
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
-            <span className="text-slate-400">Variación MoM:</span>
-            <span
-              className={`font-mono font-bold flex items-center gap-0.5 ${
-                data.kpis.recaudoVariacionPrevMes >= 0 ? 'text-emerald-400' : 'text-rose-400'
-              }`}
-            >
-              {data.kpis.recaudoVariacionPrevMes >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
-              {data.kpis.recaudoVariacionPrevMesPct.toFixed(1)}%
+            <span className="text-slate-400">Disponible CSV:</span>
+            <span className="font-mono font-bold text-white">
+              {formatCOP(data.kpis.disponiblePresupuestalTotal)}
             </span>
           </div>
         </div>
@@ -1362,23 +1362,29 @@ export function FlujoTesoreriaView() {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-black/30 p-3 rounded-xl border border-white/5">
                 <span className="text-[10px] text-slate-400 block">Total Recaudado</span>
-                <span className="text-base font-black text-amber-400 font-mono">
+                <span className="text-base font-black text-emerald-400 font-mono">
                   {formatCOP(selectedRecursoModal.totalRecaudado)}
                 </span>
               </div>
               <div className="bg-black/30 p-3 rounded-xl border border-white/5">
-                <span className="text-[10px] text-slate-400 block">Participación Total</span>
-                <span className="text-base font-black text-white font-mono">
-                  {selectedRecursoModal.share.toFixed(1)}%
+                <span className="text-[10px] text-slate-400 block">Disponible (CSV)</span>
+                <span className="text-base font-black text-amber-400 font-mono">
+                  {formatCOP(selectedRecursoModal.totalDisponible)}
                 </span>
               </div>
               <div className="bg-black/30 p-3 rounded-xl border border-white/5">
-                <span className="text-[10px] text-slate-400 block">Mes Pico</span>
-                <span className="text-base font-black text-emerald-400 font-mono">
-                  {selectedRecursoModal.mesPico.mes} ({formatCOP(selectedRecursoModal.mesPico.valor)})
+                <span className="text-[10px] text-slate-400 block">% Ejecución</span>
+                <span className="text-base font-black text-cyan-400 font-mono">
+                  {selectedRecursoModal.porcentajeEjecucion.toFixed(1)}%
+                </span>
+              </div>
+              <div className="bg-black/30 p-3 rounded-xl border border-white/5">
+                <span className="text-[10px] text-slate-400 block">Recursos Balance</span>
+                <span className="text-base font-black text-purple-400 font-mono">
+                  {selectedRecursoModal.totalBalance > 0 ? formatCOP(selectedRecursoModal.totalBalance) : '$ 0'}
                 </span>
               </div>
             </div>
@@ -1388,14 +1394,24 @@ export function FlujoTesoreriaView() {
               <h4 className="text-xs font-bold text-white mb-2 uppercase tracking-wider">
                 Conceptos de Ingreso Asociados ({selectedRecursoModal.conceptosCount})
               </h4>
-              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+              <div className="space-y-2 max-h-48 overflow-y-auto">
                 {selectedRecursoModal.topConceptos.map((c, i) => (
                   <div
                     key={i}
-                    className="bg-black/20 p-2 rounded-lg border border-white/5 flex items-center justify-between text-xs"
+                    className="bg-black/20 p-2.5 rounded-xl border border-white/5 flex items-center justify-between text-xs"
                   >
-                    <span className="text-slate-300 truncate max-w-[380px]">{c.concepto}</span>
-                    <span className="font-mono text-amber-300 font-bold">{formatCOP(c.total)}</span>
+                    <div className="truncate max-w-[360px]">
+                      <span className="text-slate-200 font-medium block truncate">{c.concepto}</span>
+                      <span className="text-[10px] text-slate-400">
+                        Disponible CSV: <strong className="text-amber-400 font-mono">{formatCOP(c.disponible)}</strong>
+                      </span>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <span className="font-mono text-emerald-400 font-bold block">{formatCOP(c.total)}</span>
+                      <span className="text-[10px] text-slate-400">
+                        {c.disponible > 0 ? `${((c.total / c.disponible) * 100).toFixed(1)}% rec.` : '100%'}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
