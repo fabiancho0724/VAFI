@@ -80,7 +80,12 @@ export default function App() {
       <Layout currentScreen={currentScreen} onNavigate={handleNavigate}>
         {currentScreen === 'dashboard' && <DashboardScreen onNavigate={handleNavigate} />}
         {currentScreen === 'predictive' && <PredictiveScreen onNavigate={handleNavigate} />}
-        {currentScreen === 'cashflow' && <CashFlowScreen onNavigate={handleNavigate} />}
+        {(currentScreen === 'cashflow' || currentScreen === 'tesoreria') && (
+          <CashFlowScreen
+            initialTab={currentScreen === 'tesoreria' ? 'tesoreria' : undefined}
+            onNavigate={handleNavigate}
+          />
+        )}
         {currentScreen === 'informe-gerencial' && <ExecutiveReportScreen onNavigate={handleNavigate} />}
         {currentScreen === 'poa' && <PoaScreen onNavigate={handleNavigate} />}
         {currentScreen === 'presupuesto' && <BudgetScreen onNavigate={handleNavigate} />}

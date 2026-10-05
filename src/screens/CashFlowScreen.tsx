@@ -8,13 +8,14 @@ import {
   AlertCircle, AlertTriangle, CheckCircle, Calendar, Filter, 
   ChevronDown, ChevronRight, Download, Maximize2, Coins, Activity, Target,
   Brain, FileText, PieChart as PieChartIcon, Settings, X, Save, Lock, Award,
-  Layers, Building2, Presentation
+  Layers, Building2, Presentation, Landmark
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
 import { ResourceAllocationSection } from '../components/ResourceAllocationSection';
 import { CashFlowIncomeFixedVsProjected } from '../components/CashFlowIncomeFixedVsProjected';
 import { BoardPresentationModal } from '../components/BoardPresentationModal';
+import { FlujoTesoreriaView } from '../components/tesoreria/FlujoTesoreriaView';
 import { RESOURCES_LIST } from '../lib/resourceMapper';
 import { RECURSOS_FINANCIEROS } from '../lib/constants';
 
@@ -42,7 +43,14 @@ const RUBROS = ['Sueldos Básicos', 'Primas y Bonificaciones', 'Servicios Públi
 
 const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18'];
 
-export function CashFlowScreen({ onNavigate }: { onNavigate?: (s: string) => void } = {}) {
+export function CashFlowScreen({ 
+  onNavigate,
+  initialTab = 'tesoreria'
+}: { 
+  onNavigate?: (s: string) => void;
+  initialTab?: 'proyecciones' | 'tesoreria';
+} = {}) {
+  const [activeTab, setActiveTab] = useState<'proyecciones' | 'tesoreria'>(initialTab);
   const [dataStage, setDataStage] = useState<'loading' | 'ready' | 'error'>('loading');
   const [csvData, setCsvData] = useState<any>({});
   const [errorMessage, setErrorMessage] = useState('');
@@ -394,7 +402,41 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
   return (
     <div className="min-h-screen bg-surface text-on-surface p-4 md:p-8 font-sans pb-24 relative">
       
-      {/* HEADER & FILTROS */}
+      {/* SELECTOR DE SUB-ESPACIOS DEL MÓDULO DE FLUJO DE CAJA */}
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-900/90 border border-white/10 rounded-2xl w-fit mb-6 shadow-xl backdrop-blur-xl">
+        <button
+          onClick={() => setActiveTab('tesoreria')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'tesoreria'
+              ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 font-black'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Landmark size={16} />
+          <span>Flujo Tesorería</span>
+          <span className="px-2 py-0.5 rounded-full text-[9px] bg-emerald-500 text-slate-950 font-black uppercase">
+            Bancos + Ppto
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('proyecciones')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'proyecciones'
+              ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 font-black'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Coins size={16} />
+          <span>Flujo de Caja y Proyecciones</span>
+        </button>
+      </div>
+
+      {activeTab === 'tesoreria' ? (
+        <FlujoTesoreriaView />
+      ) : (
+        <>
+          {/* HEADER & FILTROS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 sticky top-0 z-30 bg-[#0f172a]/90 backdrop-blur-xl py-4 border-b border-white/5">
         <div>
           <h1 className="text-3xl font-display text-white flex items-center gap-3">
@@ -1673,6 +1715,8 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
         balanceData={csvData.balanceData}
         totals={results.totals}
       />
+        </>
+      )}
 
     </div>
   );
