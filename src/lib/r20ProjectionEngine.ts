@@ -1015,6 +1015,228 @@ export const R10_BASE_COMPONENTS_2026: R10BaseComponent2026[] = [
 
 export const R10_BASE_TOTAL_2026 = 351357927407; // 351.357.927.407 COP
 
+export const R10_PROJECTION_6PCT_DATA = {
+  vigencia: 2027,
+  recurso: '10.0-Aportes Nacion - Funcionamiento',
+  denominacion: 'Recurso 10.0 — Aportes de la Nación para Funcionamiento (+6.0% Oficial)',
+  basePresupuestal2026: 351357927407,
+  tasaAumentoPct: 6.0,
+  factorAumento: 1.06,
+  proyeccion2027: 372439403051, // 351.357.927.407 * 1.06
+  incrementoNominal: 21081475644, // +21.081.475.644 COP
+  variacionPct: 6.00,
+  desgloseComponentes: [
+    { subRecurso: 'R10', denominacion: 'Aporte Ordinario Nación - Funcionamiento', base2026: 327070167369, proyeccion2027: 346694377411, incremento: 19624210042, pct: 6.0 },
+    { subRecurso: 'R10.5', denominacion: 'Aportes Fomento / Base Presupuestal', base2026: 11208316954, proyeccion2027: 11880815971, incremento: 672499017, pct: 6.0 },
+    { subRecurso: 'R10.1', denominacion: 'Aportes Nación - PIC Convencional', base2026: 7789060740, proyeccion2027: 8256404384, incremento: 467343644, pct: 6.0 },
+    { subRecurso: 'R10.2', denominacion: 'Aportes Nación - PIC Territorial', base2026: 3060211833, proyeccion2027: 3243824543, incremento: 183612710, pct: 6.0 },
+    { subRecurso: 'R10.3', denominacion: 'Aportes Adicionales a la Base', base2026: 2229170511, proyeccion2027: 2362920742, incremento: 133750231, pct: 6.0 },
+  ],
+  pgn2027Referencia: 395704592082,
+  diferenciaVsPGN: 372439403051 - 395704592082 // -23.265.189.031 COP
+};
+
+export interface RecursoNacionProyeccionRow {
+  codigo: string;
+  subRecurso: string;
+  nombre: string;
+  destinacion: string;
+  marcoLegal: string;
+  entidad: string;
+  categoria: 'Base Presupuestal' | 'Fomento y Calidad' | 'Gratuidad' | 'Transferencia Especial';
+  historico2024: number;
+  historico2025: number;
+  base2026: number;
+  recaudoEfectivo2026: number;
+  ingresoFaltante2026: number;
+  tasaAumentoPct: number;
+  proyeccion2027: number;
+  incrementoNominal: number;
+  participacion2027Pct: number;
+}
+
+export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccionRow[] = [
+  {
+    codigo: '10',
+    subRecurso: 'R10',
+    nombre: 'Aportes Ordinarios Nación - Funcionamiento',
+    destinacion: 'Nómina docente, administrativa y gastos de operación central',
+    marcoLegal: 'Ley 30/1992 Art. 86 / Res. MEN Anual',
+    entidad: 'Ministerio de Educación Nacional (MEN)',
+    categoria: 'Base Presupuestal',
+    historico2024: 252310024180,
+    historico2025: 274240602293,
+    base2026: 327070167369,
+    recaudoEfectivo2026: 238714266246,
+    ingresoFaltante2026: 88355901123,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 346694377411,
+    incrementoNominal: 19624210042,
+    participacion2027Pct: (346694377411 / 433575328813) * 100
+  },
+  {
+    codigo: '10.1',
+    subRecurso: 'R10.1',
+    nombre: 'Aportes Nación - PIC Convencional',
+    destinacion: 'Cumplimiento de acuerdos colectivos sindicales y bienestar laboral',
+    marcoLegal: 'Resolución MEN - Plan de Fomento a la Calidad',
+    entidad: 'MEN - Subdirección de Apoyo a IES',
+    categoria: 'Fomento y Calidad',
+    historico2024: 0,
+    historico2025: 10080716557,
+    base2026: 7789060740,
+    recaudoEfectivo2026: 5623807220,
+    ingresoFaltante2026: 2165253520,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 8256404384,
+    incrementoNominal: 467343644,
+    participacion2027Pct: (8256404384 / 433575328813) * 100
+  },
+  {
+    codigo: '10.2',
+    subRecurso: 'R10.2',
+    nombre: 'Aportes Nación - PIC Territorial',
+    destinacion: 'Operación y fomento académico en sedes regionales (Duitama, Sogamoso, Chiquinquirá, Aguazul)',
+    marcoLegal: 'Resolución MEN - Fomento Regional',
+    entidad: 'Ministerio de Educación Nacional',
+    categoria: 'Fomento y Calidad',
+    historico2024: 0,
+    historico2025: 2835297958,
+    base2026: 3060211833,
+    recaudoEfectivo2026: 3060211833,
+    ingresoFaltante2026: 0,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 3243824543,
+    incrementoNominal: 183612710,
+    participacion2027Pct: (3243824543 / 433575328813) * 100
+  },
+  {
+    codigo: '10.3',
+    subRecurso: 'R10.3',
+    nombre: 'Aportes Adicionales a la Base / Gestión',
+    destinacion: 'Modernización tecnológica y fortalecimiento a la gestión administrativa',
+    marcoLegal: 'Resolución MEN - Fortalecimiento Institucional',
+    entidad: 'Ministerio de Educación Nacional',
+    categoria: 'Fomento y Calidad',
+    historico2024: 0,
+    historico2025: 0,
+    base2026: 2229170511,
+    recaudoEfectivo2026: 0,
+    ingresoFaltante2026: 2229170511,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 2362920742,
+    incrementoNominal: 133750231,
+    participacion2027Pct: (2362920742 / 433575328813) * 100
+  },
+  {
+    codigo: '10.5',
+    subRecurso: 'R10.5',
+    nombre: 'Aportes Nación - Política de Gratuidad (Base)',
+    destinacion: 'Costo operativo de matrícula pregrado Ley de Gratuidad incorporado a la base',
+    marcoLegal: 'Ley 2307/2023 / Decreto Reglamentario MEN',
+    entidad: 'MEN / Fondo de Gratuidad',
+    categoria: 'Gratuidad',
+    historico2024: 0,
+    historico2025: 0,
+    base2026: 11208316954,
+    recaudoEfectivo2026: 11208316954,
+    ingresoFaltante2026: 0,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 11880815971,
+    incrementoNominal: 672499017,
+    participacion2027Pct: (11880815971 / 433575328813) * 100
+  },
+  {
+    codigo: '13',
+    subRecurso: 'R13',
+    nombre: 'Excedentes Financieros Cooperativas',
+    destinacion: 'Financiación de cupos, permanencia y apoyos de funcionamiento estudiantil',
+    marcoLegal: 'Artículo 142 Ley 1819 de 2016 / DIAN',
+    entidad: 'Sector Cooperativo / DIAN',
+    categoria: 'Transferencia Especial',
+    historico2024: 2078952994,
+    historico2025: 2080840690,
+    base2026: 1530000000,
+    recaudoEfectivo2026: 1530000000,
+    ingresoFaltante2026: 0,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 1621800000,
+    incrementoNominal: 91800000,
+    participacion2027Pct: (1621800000 / 433575328813) * 100
+  },
+  {
+    codigo: '14',
+    subRecurso: 'R14',
+    nombre: 'Matrículas FSE / Gratuidad "Puedo Estudiar"',
+    destinacion: 'Financiamiento operativo de exención de matrícula pregrado',
+    marcoLegal: 'Ley 2307 de 2023 / Fondo Solidario para la Educación (FSE)',
+    entidad: 'Ministerio de Educación Nacional (FSE)',
+    categoria: 'Gratuidad',
+    historico2024: 37090700264,
+    historico2025: 36210311946,
+    base2026: 49844177233,
+    recaudoEfectivo2026: 49844177233,
+    ingresoFaltante2026: 0,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 52834827867,
+    incrementoNominal: 2990650634,
+    participacion2027Pct: (52834827867 / 433575328813) * 100
+  },
+  {
+    codigo: '17',
+    subRecurso: 'R17',
+    nombre: 'Devolución Descuento Electoral (Votación)',
+    destinacion: 'Compensación a la Universidad por el 10% descuento por sufragio electoral',
+    marcoLegal: 'Ley 403 de 1997 Arts. 1 y 2 / MinHacienda',
+    entidad: 'Ministerio de Hacienda y Crédito Público',
+    categoria: 'Transferencia Especial',
+    historico2024: 4531561319,
+    historico2025: 5183761916,
+    base2026: 4728146085,
+    recaudoEfectivo2026: 4728146085,
+    ingresoFaltante2026: 0,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 5011834850,
+    incrementoNominal: 283688765,
+    participacion2027Pct: (5011834850 / 433575328813) * 100
+  },
+  {
+    codigo: '18',
+    subRecurso: 'R18',
+    nombre: 'Artículo 87 Ley 30/1992 (CESU)',
+    destinacion: 'Fondo de Desarrollo Universitario / Acreditación Institucional',
+    marcoLegal: 'Artículo 87 Ley 30 de 1992 / Consejo Nacional CESU',
+    entidad: 'CESU / Ministerio de Educación Nacional',
+    categoria: 'Transferencia Especial',
+    historico2024: 1067037785,
+    historico2025: 457065634,
+    base2026: 1573078344,
+    recaudoEfectivo2026: 1573078344,
+    ingresoFaltante2026: 0,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 1667463045,
+    incrementoNominal: 94384701,
+    participacion2027Pct: (1667463045 / 433575328813) * 100
+  }
+];
+
+export const TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES = {
+  historico2024: 297078276542,
+  historico2025: 331088597004,
+  base2026: 409033329069,
+  tasaAumentoPct: 6.0,
+  proyeccion2027: 433575328813,
+  incrementoNominal: 24541999744,
+  subtotalR10: {
+    historico2024: 252310024180,
+    historico2025: 287156616808,
+    base2026: 351357927407,
+    tasaAumentoPct: 6.0,
+    proyeccion2027: 372439403051,
+    incrementoNominal: 21081475644
+  }
+};
+
 export const PGN_2027_DATA = {
   vigencia: 2027,
   institucion: 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)',
@@ -1037,7 +1259,7 @@ export interface R10HistoricalRecord {
   totalRecaudo: number;
   variacionAnualCOP: number;
   variacionAnualPct: number;
-  tipo: 'historico' | 'base2026' | 'pgn2027';
+  tipo: 'historico' | 'base2026' | 'pgn2027' | 'proyeccion';
   notaNormativa: string;
 }
 
@@ -1166,19 +1388,53 @@ export const R10_HISTORICAL_SERIES: R10HistoricalRecord[] = [
   {
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'A. PRESUPUESTO DE FUNCIONAMIENTO (PGN 2027)',
+    concepto: 'Aportes Nación Funcionamiento (Proyección Oficial +6.0%)',
     recurso: '10.0-Aportes Nación Funcionamiento',
-    totalRecaudo: 395704592082,
-    variacionAnualCOP: 44346664675,
-    variacionAnualPct: 12.62,
-    tipo: 'pgn2027',
-    notaNormativa: 'Asignación FIJA por Ley — Presupuesto General de la Nación 2027'
+    totalRecaudo: 372439403051,
+    variacionAnualCOP: 21081475644,
+    variacionAnualPct: 6.00,
+    tipo: 'proyeccion',
+    notaNormativa: 'Proyección Oficial UPTC (+6.0% sobre Base Unificada 2026 de $351.358M)'
   }
 ];
 
+export function exportRecursosNacionProyeccionCSV(): void {
+  let csvContent = 'data:text/csv;charset=utf-8,';
+  csvContent += `PROYECCIONES DE RECURSOS DE LA NACION PARA EL FUNCIONAMIENTO (POLITICA +6.0%)\n`;
+  csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Vigencia Proyectada:;2027\n`;
+  csvContent += `Politica de Incremento:;+6.0% anual sobre Base 2026\n`;
+  csvContent += `Base Presupuestal 2026 Total (COP):;${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026}\n`;
+  csvContent += `Proyeccion Total 2027 (+6%) (COP):;${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027}\n`;
+  csvContent += `Incremento Nominal Total (COP):;+${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal}\n\n`;
+
+  csvContent += `DESGLOSE POR RECURSO DE FUNCIONAMIENTO\n`;
+  csvContent += `Codigo;Sub-Recurso;Nombre;Destinacion;Marco Legal;Entidad;Historico 2024 (COP);Historico 2025 (COP);Base 2026 (COP);Incremento +6% (COP);Proyeccion 2027 (+6%) (COP);Participacion (%)\n`;
+  for (const r of RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES) {
+    csvContent += `"${r.codigo}";"${r.subRecurso}";"${r.nombre}";"${r.destinacion}";"${r.marcoLegal}";"${r.entidad}";"${r.historico2024}";"${r.historico2025}";"${r.base2026}";"+${r.incrementoNominal}";"${r.proyeccion2027}";"${r.participacion2027Pct.toFixed(2)}%"\n`;
+  }
+  csvContent += `"SUBTOTAL R10";"R10 CONSOLIDADO";"Base Unificada R10";"Nomina y Operacion Central";"Ley 30/1992 Art. 86";"MEN";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2024}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2025}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026}";"+${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.incrementoNominal}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027}";"${((TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 / TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027) * 100).toFixed(2)}%"\n`;
+  csvContent += `"TOTAL NACION";"—";"TOTAL RECURSOS NACION FUNCIONAMIENTO";"Funcionamiento Global";"—";"—";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2024}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2025}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026}";"+${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027}";"100.00%"\n`;
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Proyecciones_Recursos_Nacion_Funcionamiento_6pct_2027.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 export function exportR10CSV(): void {
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += `RECURSO 10.0 - APORTES NACION (FUNCIONAMIENTO) - PRESUPUESTO GENERAL DE LA NACION 2027\n`;
+  csvContent += `RECURSO 10.0 - APORTES NACION (FUNCIONAMIENTO) - PROYECCION OFICIAL 2027 (+6.0%)\n`;
+  csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Base Presupuestal Unificada 2026 (COP):;${R10_PROJECTION_6PCT_DATA.basePresupuestal2026}\n`;
+  csvContent += `Tasa de Incremento Oficial Gubernamental:;+${R10_PROJECTION_6PCT_DATA.tasaAumentoPct.toFixed(2)}%\n`;
+  csvContent += `Incremento Nominal Calculado (+6%) (COP):;+${R10_PROJECTION_6PCT_DATA.incrementoNominal}\n`;
+  csvContent += `Valor Proyectado R10.0 Vigencia 2027 (COP):;${R10_PROJECTION_6PCT_DATA.proyeccion2027}\n`;
+  csvContent += `Referencia Techo Proyecto PGN 2027 (COP):;${R10_PROJECTION_6PCT_DATA.pgn2027Referencia}\n`;
+  csvContent += `Diferencia vs Proyecto PGN 2027 (COP):;${R10_PROJECTION_6PCT_DATA.diferenciaVsPGN}\n\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
   csvContent += `Asignacion Fija PGN 2027 Funcionamiento (COP):;${PGN_2027_DATA.funcionamientoR10}\n`;
   csvContent += `Asignacion PGN 2027 Inversion (COP):;${PGN_2027_DATA.inversion}\n`;
@@ -2022,10 +2278,10 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     recaudo2024: 252310024180,
     recaudo2025: 287156616808,
     base2026: 351357927407,
-    defaultModelId: 'pgn',
+    defaultModelId: 'macro6',
     models: [
-      { id: 'pgn', name: 'Fijado Ley PGN 2027 (Oficial Aprobado)', value: 395704592082, variationPct: 12.62 },
-      { id: 'macro6', name: 'Indexación Macro (+6,0%)', value: 372439403051, variationPct: 6.00 },
+      { id: 'macro6', name: 'Aumento Gubernamental +6,0% (Oficial Solicitado)', value: 372439403051, variationPct: 6.00 },
+      { id: 'pgn', name: 'Proyecto PGN 2027 (Techo Referencial +12,62%)', value: 395704592082, variationPct: 12.62 },
       { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 351357927407, variationPct: 0.00 }
     ]
   },

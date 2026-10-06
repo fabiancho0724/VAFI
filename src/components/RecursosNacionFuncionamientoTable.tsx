@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import Papa from 'papaparse';
 import {
   Landmark,
   ShieldCheck,
@@ -158,12 +159,61 @@ export function RecursosNacionFuncionamientoTable({
   const [selectedCategoria, setSelectedCategoria] = useState<string>('TODAS');
   const [downloadNotice, setDownloadNotice] = useState(false);
 
+  // Estados locales con fallback a CSV si no se pasan por props
+  const [internalBalanceData, setInternalBalanceData] = useState<any[]>(balanceData);
+  const [internalGastosData, setInternalGastosData] = useState<any[]>(gastos2026Data);
+
+  useEffect(() => {
+    if (balanceData && balanceData.length > 0) {
+      setInternalBalanceData(balanceData);
+    } else {
+      fetch('/data/balance.csv')
+        .then(res => res.text())
+        .then(text => {
+          Papa.parse<any>(text, {
+            header: true,
+            delimiter: ';',
+            skipEmptyLines: true,
+            complete: (results) => {
+              if (results.data && results.data.length > 0) {
+                setInternalBalanceData(results.data);
+              }
+            }
+          });
+        })
+        .catch(() => {});
+    }
+  }, [balanceData]);
+
+  useEffect(() => {
+    if (gastos2026Data && gastos2026Data.length > 0) {
+      setInternalGastosData(gastos2026Data);
+    } else {
+      fetch('/data/gastos_2026.csv')
+        .then(res => res.text())
+        .then(text => {
+          Papa.parse<any>(text, {
+            header: true,
+            delimiter: ';',
+            skipEmptyLines: true,
+            complete: (results) => {
+              if (results.data && results.data.length > 0) {
+                setInternalGastosData(results.data);
+              }
+            }
+          });
+        })
+        .catch(() => {});
+    }
+  }, [gastos2026Data]);
+
   // Mapeo auxiliar de aforos y balance
   const balanceMap = useMemo(() => {
     const map: Record<string, { aforo: number; siif: number; recaudo31Ago: number; totalRecaudo: number; nombreRaw: string }> = {};
-    if (!balanceData) return map;
+    const dataset = internalBalanceData && internalBalanceData.length > 0 ? internalBalanceData : balanceData;
+    if (!dataset || dataset.length === 0) return map;
 
-    balanceData.forEach(row => {
+    dataset.forEach(row => {
       const raw = String(row['Recurso'] || row['recurso'] || '').trim();
       const code = raw.split('-')[0].trim();
       if (!code) return;
@@ -185,12 +235,13 @@ export function RecursosNacionFuncionamientoTable({
     });
 
     return map;
-  }, [balanceData]);
+  }, [internalBalanceData, balanceData]);
 
   // Mapeo de compromisos y pagos desde gastos2026Data
   const gastosMap = useMemo(() => {
     const map: Record<string, { compromiso: number; pago: number }> = {};
-    if (!gastos2026Data || gastos2026Data.length === 0) return map;
+    const dataset = internalGastosData && internalGastosData.length > 0 ? internalGastosData : gastos2026Data;
+    if (!dataset || dataset.length === 0) return map;
 
     function cleanNum(val: any) {
       if (!val) return 0;
@@ -203,7 +254,7 @@ export function RecursosNacionFuncionamientoTable({
       return k ? row[k] : '';
     }
 
-    gastos2026Data.forEach(r => {
+    dataset.forEach(r => {
       let rec = String(getCol(r, 'recurso') || getCol(r, 'código recurso') || '').trim();
       if (rec.startsWith('10.0') || rec === '10') rec = '10';
       if (!rec) return;
@@ -219,7 +270,7 @@ export function RecursosNacionFuncionamientoTable({
     });
 
     return map;
-  }, [gastos2026Data]);
+  }, [internalGastosData, gastos2026Data]);
 
   // Construcción unificada de las 9 filas de Recursos Nación para Funcionamiento
   const nacionRows = useMemo(() => {

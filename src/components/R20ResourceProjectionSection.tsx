@@ -19,6 +19,8 @@ import {
   formatCurrencyCOP, formatCurrencyShortCOP, exportProjectionCSV,
   R21_HISTORICAL_RECORDS, fetchAndParseR21, exportR21CSV,
   R10BaseComponent2026, R10_BASE_COMPONENTS_2026, R10_BASE_TOTAL_2026,
+  R10_PROJECTION_6PCT_DATA, RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES,
+  TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES, exportRecursosNacionProyeccionCSV,
   PGN_2027_DATA, R10HistoricalRecord, R10_HISTORICAL_SERIES, exportR10CSV,
   R18HistoricalRecord, R18_HISTORICAL_SERIES, R18_PROJECTION_DATA, exportR18CSV,
   R14_BASE_2026, R14_HISTORICAL_SERIES, R14_FORECAST_MODELS,
@@ -31,10 +33,13 @@ import {
   Official17ConceptComputedRow, Official17ConsolidatedSummary,
   computeOfficial17Consolidated, exportConsolidated17ConceptsCSV
 } from '../lib/r20ProjectionEngine';
+import { RecursosNacionFuncionamientoTable } from './RecursosNacionFuncionamientoTable';
 
 export function R20ResourceProjectionSection() {
-  // Selector de Recurso Principal: R10.0 (Aportes Nación) | R13 (Cooperativas) | R14 (Gratuidad) | R17 (Votación) | R18 (Art. 87 CESU) | R20 (Propios) | R21 (Devolución IVA) | Consolidado
-  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'r10' | 'r13' | 'r14' | 'r17' | 'r18' | 'r20' | 'r21' | 'consolidado'>('r10');
+  // Selector de Recurso Principal: Recursos Nación Funcionamiento | R10.0 | R13 | R14 | R17 | R18 | R20 | R21 | Consolidado
+  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'nacion-funcionamiento' | 'r10' | 'r13' | 'r14' | 'r17' | 'r18' | 'r20' | 'r21' | 'consolidado'>('nacion-funcionamiento');
+  const [nacionSearchTerm, setNacionSearchTerm] = useState('');
+  const [nacionCategoryFilter, setNacionCategoryFilter] = useState<string>('TODAS');
 
   // Modelo activo para R13 (Excedentes de Cooperativas)
   const [r13SelectedModel, setR13SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media'>('macro');
@@ -148,6 +153,58 @@ export function R20ResourceProjectionSection() {
   const bottomUpData = useMemo(() => {
     return computeBottomUpConceptForecast(filteredRecords, selectedWindow);
   }, [filteredRecords, selectedWindow]);
+
+  // Filtrado y búsqueda para la tabla de Recursos Nación Funcionamiento (+6.0%)
+  const filteredNacionProyRows = useMemo(() => {
+    return RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES.filter(r => {
+      const matchCat = nacionCategoryFilter === 'TODAS' || r.categoria === nacionCategoryFilter;
+      if (!matchCat) return false;
+      if (!nacionSearchTerm.trim()) return true;
+      const q = nacionSearchTerm.toLowerCase();
+      return (
+        r.codigo.toLowerCase().includes(q) ||
+        r.subRecurso.toLowerCase().includes(q) ||
+        r.nombre.toLowerCase().includes(q) ||
+        r.destinacion.toLowerCase().includes(q) ||
+        r.marcoLegal.toLowerCase().includes(q) ||
+        r.entidad.toLowerCase().includes(q)
+      );
+    });
+  }, [nacionCategoryFilter, nacionSearchTerm]);
+
+  // Datos para gráfico de evolución de Recursos Nación para el Funcionamiento
+  const nacionChartData = useMemo(() => {
+    return [
+      {
+        year: '2024',
+        r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2024 / 1e6,
+        r14: 37090.70,
+        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2024 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2024 - 37090700264) / 1e6,
+        total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2024 / 1e6
+      },
+      {
+        year: '2025',
+        r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2025 / 1e6,
+        r14: 36210.31,
+        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2025 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2025 - 36210311946) / 1e6,
+        total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2025 / 1e6
+      },
+      {
+        year: '2026 Base',
+        r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026 / 1e6,
+        r14: 49844.18,
+        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026 - 49844177233) / 1e6,
+        total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026 / 1e6
+      },
+      {
+        year: '2027 Proy (+6%)',
+        r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 / 1e6,
+        r14: 52834.83,
+        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 - 52834827867) / 1e6,
+        total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027 / 1e6
+      }
+    ];
+  }, []);
 
   // =========================================================================
   // MODELACIÓN MATEMÁTICA Y SERIES PARA RECURSO 21 (DEVOLUCIÓN IVA)
@@ -364,8 +421,8 @@ export function R20ResourceProjectionSection() {
 
     const r10_2024 = 252310024180;
     const r10_2025 = 287156616808;
-    const r10_2026 = PGN_2027_DATA.basePresupuestal2026; // 351.357.927.407
-    const r10_2027 = PGN_2027_DATA.funcionamientoR10;    // 395.704.592.082
+    const r10_2026 = R10_PROJECTION_6PCT_DATA.basePresupuestal2026; // 351.357.927.407
+    const r10_2027 = R10_PROJECTION_6PCT_DATA.proyeccion2027;      // 372.439.403.051 (+6.0% Oficial)
 
     const r13_2024 = 2078952994;
     const r13_2025 = 2080840690;
@@ -406,7 +463,7 @@ export function R20ResourceProjectionSection() {
     const varGrandTotal = grand_total_2026 > 0 ? ((grand_total_2027 - grand_total_2026) / grand_total_2026) * 100 : 0;
 
     return {
-      r10: { y24: r10_2024, y25: r10_2025, y26: r10_2026, y27: r10_2027, part: (r10_2027 / grand_total_2027) * 100, varPct: PGN_2027_DATA.variacionPct },
+      r10: { y24: r10_2024, y25: r10_2025, y26: r10_2026, y27: r10_2027, part: (r10_2027 / grand_total_2027) * 100, varPct: R10_PROJECTION_6PCT_DATA.variacionPct },
       r13: { y24: r13_2024, y25: r13_2025, y26: r13_2026, y27: r13_2027, part: (r13_2027 / grand_total_2027) * 100, varPct: r13ActiveModel.variacionPct },
       r14: { y24: r14_2024, y25: r14_2025, y26: r14_2026, y27: r14_2027, part: (r14_2027 / grand_total_2027) * 100, varPct: r14ActiveModel.variacionPct },
       r17: { y24: r17_2024, y25: r17_2025, y26: r17_2026, y27: r17_2027, part: (r17_2027 / grand_total_2027) * 100, varPct: r17ActiveModel.variacionPct },
@@ -747,6 +804,21 @@ export function R20ResourceProjectionSection() {
           </span>
 
           <button
+            onClick={() => setSelectedRecursoTab('nacion-funcionamiento')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs transition-all ${
+              selectedRecursoTab === 'nacion-funcionamiento'
+                ? 'bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white shadow-lg shadow-cyan-500/20 scale-[1.02]'
+                : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <ShieldCheck size={15} className="text-cyan-300" />
+            <span>Recursos Nación para el Funcionamiento</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/30 text-cyan-200 font-bold border border-cyan-400/30">
+              $433.575M (+6% Gob)
+            </span>
+          </button>
+
+          <button
             onClick={() => setSelectedRecursoTab('r10')}
             className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs transition-all ${
               selectedRecursoTab === 'r10'
@@ -757,7 +829,7 @@ export function R20ResourceProjectionSection() {
             <Building2 size={15} />
             <span>Recurso 10.0 (Aportes Nación)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
-              $395.705M PGN Fijo
+              $372.439M (+6%)
             </span>
           </button>
 
@@ -875,6 +947,419 @@ export function R20ResourceProjectionSection() {
       </div>
 
       {/* ========================================================================= */}
+      {/* SECCIÓN ESPECIAL: RECURSOS NACIÓN PARA EL FUNCIONAMIENTO (POLÍTICA +6.0%)  */}
+      {/* ========================================================================= */}
+      {selectedRecursoTab === 'nacion-funcionamiento' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* HEADER HERO NACIÓN FUNCIONAMIENTO */}
+          <div className="bg-gradient-to-br from-surface-container-high/90 to-background border border-cyan-500/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+            <div className="relative z-10">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/30 to-blue-600/30 flex items-center justify-center text-cyan-300 shrink-0 border border-cyan-400/40 shadow-xl">
+                    <ShieldCheck size={30} />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-xs font-mono uppercase tracking-wider font-bold text-cyan-300 bg-cyan-500/20 px-3 py-1 rounded-full border border-cyan-500/30 flex items-center gap-1.5">
+                        <TrendingUp size={13} /> Directriz de Política: Crecimiento Fijo +6.0%
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                        <CheckCircle2 size={13} /> 9 Recursos Nacionales de Funcionamiento
+                      </span>
+                      <span className="text-xs font-mono font-bold text-sky-300 bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/30">
+                        Vigencia Fiscal 2027
+                      </span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
+                      Recursos Nación para el Funcionamiento — Proyecciones Oficiales (+6.0%)
+                    </h3>
+                    <p className="text-xs md:text-sm text-on-surface-variant max-w-4xl mt-1 leading-relaxed">
+                      Consolidación integral de todas las fuentes y transferencias provenientes del Presupuesto General de la Nación para el funcionamiento de la <strong className="text-white">Universidad Pedagógica y Tecnológica de Colombia (UPTC)</strong>: 
+                      <strong className="text-cyan-300"> R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17 y R18</strong>. 
+                      Bajo la directriz fiscal de transferencias, los recursos gubernamentales se proyectan con un incremento uniforme del <strong className="text-emerald-300">+6,0%</strong> sobre la base de referencia certificada 2026 (<strong className="text-white">$ 409.033,3 M</strong>), alcanzando un valor total para 2027 de <strong className="text-cyan-300">$ 433.575,3 M COP</strong> (+<strong className="text-emerald-400">$ 24.542,0 M COP</strong>).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 shrink-0">
+                  <button
+                    onClick={exportRecursosNacionProyeccionCSV}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.02] cursor-pointer"
+                  >
+                    <Download size={15} />
+                    <span>Descargar Proyecciones Nación (+6% CSV)</span>
+                  </button>
+                  <div className="flex items-center gap-2 text-right">
+                    <span className="text-[11px] font-mono text-on-surface-variant">
+                      Base Presupuestal 2026: <strong className="text-sky-300">{formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026)}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TARJETAS KPI DE IMPACTO */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                {/* KPI 1: Proyección Total Nación 2027 */}
+                <div className="p-5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex flex-col justify-between shadow-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider">
+                      Proyección Nación 2027 (+6%)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-500/30">
+                      Total 9 Recursos
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-cyan-300 block">
+                      {formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027)}
+                    </span>
+                    <span className="text-[11px] font-mono text-white/90 block mt-0.5">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-cyan-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>9 Fuentes de Funcionamiento</span>
+                    <strong className="text-cyan-200">+6,00% Fijado</strong>
+                  </div>
+                </div>
+
+                {/* KPI 2: Base Consolidada 2026 */}
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between shadow-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                      Base Consolidada 2026
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded border border-sky-500/30">
+                      R10 + R13 a R18
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-bold text-white block">
+                      {formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026)}
+                    </span>
+                    <span className="text-[11px] font-mono text-on-surface-variant block mt-0.5">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Referencia Certificada</span>
+                    <strong className="text-sky-300">Base Histórica 2026</strong>
+                  </div>
+                </div>
+
+                {/* KPI 3: Incremento Nominal Total (+6%) */}
+                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between shadow-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
+                      Incremento Total (+6.0%)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
+                      +{TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.tasaAumentoPct.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-emerald-400 block">
+                      +{formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal)}
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
+                      +{formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Crecimiento Gubernamental</span>
+                    <strong className="text-emerald-300">+6,00% General</strong>
+                  </div>
+                </div>
+
+                {/* KPI 4: Proyección R10.0 a la Base */}
+                <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex flex-col justify-between shadow-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-purple-300 uppercase tracking-wider">
+                      Proyección R10.0 (2027)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-200 px-2 py-0.5 rounded border border-purple-500/30">
+                      85,9% de la Nación
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-purple-300 block">
+                      {formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027)}
+                    </span>
+                    <span className="text-[11px] font-mono text-purple-200/90 block mt-0.5">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-purple-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Base 2026: $351.358M</span>
+                    <strong className="text-purple-300">+${formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.incrementoNominal)}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* GRÁFICO RECHARTS: TRAYECTORIA Y COMPOSICIÓN DE RECURSOS NACIÓN */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-cyan-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
+                  <BarChart3 size={20} className="text-cyan-400" />
+                  Evolución Histórica y Proyección de los Recursos de la Nación (2024–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Comportamiento comparativo de transferencias de funcionamiento ($ M) aplicando la regla de incremento del +6.0% para 2027.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-cyan-400"></span>
+                  R10 Consolidado (Base)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-teal-400"></span>
+                  R14 Gratuidad FSE
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-amber-400"></span>
+                  Otros Recursos (R13, R17, R18)
+                </span>
+              </div>
+            </div>
+
+            <div className="h-64 sm:h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={nacionChartData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  <XAxis dataKey="year" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <YAxis 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11 }}
+                    tickFormatter={(v) => `$${(v / 1e3).toFixed(0)}k M`}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px' }}
+                    formatter={(val: any, name: any) => [
+                      `$ ${Number(val).toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M`,
+                      name === 'r10' ? 'R10 Consolidado' : name === 'r14' ? 'R14 Gratuidad' : name === 'otros' ? 'Otros (R13, R17, R18)' : 'Total'
+                    ]}
+                  />
+                  <Bar dataKey="r10" name="r10" fill="#06b6d4" stackId="a" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="r14" name="r14" fill="#14b8a6" stackId="a" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="otros" name="otros" fill="#f59e0b" stackId="a" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* TABLA 1: DESGLOSE COMPLETO HISTÓRICO Y PROYECCIÓN 2027 (+6.0%) */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-cyan-500/20 shadow-xl">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
+                  <Table size={20} className="text-cyan-400" />
+                  Tabla Oficial: Históricos y Proyecciones 2027 (+6.0%) de Recursos Nación para el Funcionamiento
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Desglose oficial de las 9 fuentes nacionales con sus históricos certificados (2024–2025), la Base Presupuestal 2026 y el cálculo proyectado con el aumento del <strong>+6,0%</strong> para 2027.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                  <input
+                    type="text"
+                    placeholder="Buscar recurso..."
+                    value={nacionSearchTerm}
+                    onChange={(e) => setNacionSearchTerm(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 w-44"
+                  />
+                </div>
+
+                <button
+                  onClick={exportRecursosNacionProyeccionCSV}
+                  className="flex items-center gap-1.5 text-xs text-cyan-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                >
+                  <Download size={14} />
+                  <span>Exportar CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* FILTRO DE CATEGORÍAS */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {['TODAS', 'Base Presupuestal', 'Fomento y Calidad', 'Gratuidad', 'Transferencia Especial'].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setNacionCategoryFilter(cat)}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
+                    nacionCategoryFilter === cat
+                      ? 'bg-cyan-500 text-black shadow-md'
+                      : 'bg-white/5 text-on-surface-variant hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* TABLA PRINCIPAL DE PROYECCIÓN NACIÓN */}
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Recurso</th>
+                    <th className="p-4 font-semibold text-white">Denominación Presupuestal</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Marco Legal / Entidad</th>
+                    <th className="p-4 font-semibold text-right text-slate-300">Histórico 2024</th>
+                    <th className="p-4 font-semibold text-right text-slate-300">Histórico 2025</th>
+                    <th className="p-4 font-semibold text-right text-sky-300">Base 2026</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Aumento</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Incremento (+6%)</th>
+                    <th className="p-4 font-semibold text-right text-cyan-300 font-bold">Proyección 2027 (+6%)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-center text-purple-300">Part. (%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {filteredNacionProyRows.map((r) => (
+                    <tr key={r.codigo} className="hover:bg-white/5 transition-colors">
+                      <td className="p-4 font-bold font-mono text-sky-300 whitespace-nowrap">
+                        <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs">
+                          {r.subRecurso}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <strong className="text-white block">{r.nombre}</strong>
+                        <span className="text-[11px] text-on-surface-variant block mt-0.5">{r.destinacion}</span>
+                      </td>
+                      <td className="p-4 text-[11px] text-on-surface-variant">
+                        <span className="text-white block font-medium">{r.marcoLegal}</span>
+                        <span className="text-cyan-400/80 block mt-0.5">{r.entidad}</span>
+                      </td>
+                      <td className="p-4 text-right font-mono text-slate-300 whitespace-nowrap">
+                        {r.historico2024 > 0 ? formatCurrencyCOP(r.historico2024) : '—'}
+                      </td>
+                      <td className="p-4 text-right font-mono text-slate-300 whitespace-nowrap">
+                        {r.historico2025 > 0 ? formatCurrencyCOP(r.historico2025) : '—'}
+                      </td>
+                      <td className="p-4 text-right font-mono font-semibold text-sky-300 whitespace-nowrap">
+                        {formatCurrencyCOP(r.base2026)}
+                      </td>
+                      <td className="p-4 text-center font-mono font-bold text-amber-300 whitespace-nowrap">
+                        +6,00%
+                      </td>
+                      <td className="p-4 text-right font-mono font-medium text-emerald-300 whitespace-nowrap">
+                        +{formatCurrencyCOP(r.incrementoNominal)}
+                      </td>
+                      <td className="p-4 text-right font-mono font-extrabold text-cyan-300 whitespace-nowrap">
+                        {formatCurrencyCOP(r.proyeccion2027)}
+                      </td>
+                      <td className="p-4 text-right font-mono font-bold text-white whitespace-nowrap">
+                        {formatCurrencyShortCOP(r.proyeccion2027)}
+                      </td>
+                      <td className="p-4 text-center font-mono font-bold text-purple-300 whitespace-nowrap">
+                        {r.participacion2027Pct.toFixed(2)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="border-t-2 border-cyan-500/40 bg-black/40 font-bold text-white text-xs">
+                  {/* SUBTOTAL R10 CONSOLIDADO */}
+                  <tr className="bg-sky-500/10 border-b border-white/10">
+                    <td className="p-4 font-extrabold text-sky-300 uppercase tracking-wider font-mono" colSpan={3}>
+                      SUBTOTAL R10 UNIFICADO (R10 + R10.1 + R10.2 + R10.3 + R10.5)
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-slate-300 whitespace-nowrap">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2024)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-slate-300 whitespace-nowrap">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2025)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-sky-300 whitespace-nowrap">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026)}
+                    </td>
+                    <td className="p-4 text-center font-mono font-extrabold text-amber-300">
+                      +6,00%
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-emerald-300 whitespace-nowrap">
+                      +{formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.incrementoNominal)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-cyan-300 whitespace-nowrap">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-white whitespace-nowrap">
+                      {formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027)}
+                    </td>
+                    <td className="p-4 text-center font-mono font-extrabold text-purple-300">
+                      {((TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 / TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027) * 100).toFixed(2)}%
+                    </td>
+                  </tr>
+
+                  {/* TOTAL GENERAL RECURSOS NACIÓN PARA FUNCIONAMIENTO */}
+                  <tr className="bg-black/60 shadow-xl">
+                    <td className="p-4 font-extrabold text-cyan-300 uppercase tracking-wider text-sm" colSpan={3}>
+                      TOTAL RECURSOS NACIÓN PARA EL FUNCIONAMIENTO (9 RECURSOS)
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-slate-200 whitespace-nowrap">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2024)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-slate-200 whitespace-nowrap">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2025)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-sky-300 whitespace-nowrap">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026)}
+                    </td>
+                    <td className="p-4 text-center font-mono font-extrabold text-amber-300 text-sm">
+                      +6,00%
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-emerald-300 whitespace-nowrap">
+                      +{formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-cyan-300 bg-cyan-500/20 text-sm whitespace-nowrap">
+                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-white text-sm whitespace-nowrap">
+                      {formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027)}
+                    </td>
+                    <td className="p-4 text-center font-mono font-extrabold text-purple-300">
+                      100.00%
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div className="mt-4 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-on-surface-variant leading-relaxed">
+              <strong className="text-white">Conclusión Técnica del Escenario +6.0%:</strong> Al proyectar los 9 recursos de la Nación con la tasa gubernamental fija del <strong>+6,0%</strong>, la Universidad garantiza un crecimiento de <strong>+$ 24.541.999.744 COP</strong> en transferencias de funcionamiento. El <strong>R10 unificado</strong> aporta el 85,90% de este ingreso ($ 372.439,4 M), mientras que la <strong>Política de Gratuidad (R14)</strong> aporta el 12,19% ($ 52.834,8 M). Los demás aportes (Cooperativas, Descuento Votación y Art. 87 CESU) suman el 1,91% restante ($ 8.301,1 M).
+            </div>
+          </div>
+
+          {/* TABLA 2: TABLA DE CONTROL PRESUPUESTAL Y FLUJO DE CAJA (LA MISMA DE FLUJO DE CAJA) */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Coins size={18} className="text-emerald-400" />
+                  Tabla Operativa: Ejecución Presupuestal, SIIF y Disponibilidad de Caja (9 Recursos Nación)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Visualización detallada de aforos, recaudo efectivo, saldo faltante en SIIF (Sep-Dic) y disponibilidad en bancos.
+                </p>
+              </div>
+            </div>
+
+            <RecursosNacionFuncionamientoTable />
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* SECCIÓN 0: RECURSO 10.0 (APORTES DE LA NACIÓN - FUNCIONAMIENTO)           */}
       {/* ========================================================================= */}
       {selectedRecursoTab === 'r10' && (
@@ -927,27 +1412,27 @@ export function R20ResourceProjectionSection() {
 
               {/* TARJETAS KPI DE IMPACTO */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                {/* KPI 1: PGN 2027 Funcionamiento */}
+                {/* KPI 1: Proyección R10.0 (+6.0%) */}
                 <div className="p-5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider">
-                      Asignación PGN 2027 (R10.0)
+                      Proyección Oficial R10.0 (+6%)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-500/30">
-                      Fijo por Ley
+                      +6.0% Oficial
                     </span>
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-extrabold text-cyan-300 block">
-                      {formatCurrencyShortCOP(PGN_2027_DATA.funcionamientoR10)}
+                      {formatCurrencyShortCOP(R10_PROJECTION_6PCT_DATA.proyeccion2027)}
                     </span>
                     <span className="text-[11px] font-mono text-white/90 block mt-0.5">
-                      {formatCurrencyCOP(PGN_2027_DATA.funcionamientoR10)}
+                      {formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.proyeccion2027)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-cyan-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>A. Funcionamiento PGN</span>
-                    <strong className="text-cyan-200">100% Garantizado</strong>
+                    <span>Aportes Nación Funcionamiento</span>
+                    <strong className="text-cyan-200">+6,0% sobre Base 2026</strong>
                   </div>
                 </div>
 
@@ -963,10 +1448,10 @@ export function R20ResourceProjectionSection() {
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-bold text-white block">
-                      {formatCurrencyShortCOP(PGN_2027_DATA.basePresupuestal2026)}
+                      {formatCurrencyShortCOP(R10_PROJECTION_6PCT_DATA.basePresupuestal2026)}
                     </span>
                     <span className="text-[11px] font-mono text-on-surface-variant block mt-0.5">
-                      {formatCurrencyCOP(PGN_2027_DATA.basePresupuestal2026)}
+                      {formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.basePresupuestal2026)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-on-surface-variant flex items-center justify-between">
@@ -975,51 +1460,51 @@ export function R20ResourceProjectionSection() {
                   </div>
                 </div>
 
-                {/* KPI 3: Variación Nominal y % */}
+                {/* KPI 3: Variación Nominal y % (+6%) */}
                 <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
-                      Crecimiento vs. Base 2026
+                      Incremento Nominal (+6.0%)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
-                      +{PGN_2027_DATA.variacionPct.toFixed(2)}%
+                      +{R10_PROJECTION_6PCT_DATA.variacionPct.toFixed(2)}%
                     </span>
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-extrabold text-emerald-400 block">
-                      +{formatCurrencyShortCOP(PGN_2027_DATA.variacionNominal)}
+                      +{formatCurrencyShortCOP(R10_PROJECTION_6PCT_DATA.incrementoNominal)}
                     </span>
                     <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
-                      +{formatCurrencyCOP(PGN_2027_DATA.variacionNominal)}
+                      +{formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.incrementoNominal)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>vs. R10 Ordinario 2026</span>
-                    <strong className="text-emerald-300">+{PGN_2027_DATA.variacionVsR10OrdinarioPct.toFixed(2)}% (+{formatCurrencyShortCOP(PGN_2027_DATA.variacionVsR10Ordinario)})</strong>
+                    <span>Aumento Neto R10</span>
+                    <strong className="text-emerald-300">+6,00% Autorizado</strong>
                   </div>
                 </div>
 
-                {/* KPI 4: Total PGN Unidad Ejecutora (Incluye Inversión) */}
+                {/* KPI 4: Techo Referencial Proyecto PGN 2027 */}
                 <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-purple-300 uppercase tracking-wider">
-                      Total Presupuesto PGN 2027
+                      Techo Proyecto PGN 2027
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-200 px-2 py-0.5 rounded border border-purple-500/30">
-                      Unidad UPTC
+                      Escenario PGN
                     </span>
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-extrabold text-purple-300 block">
-                      {formatCurrencyShortCOP(PGN_2027_DATA.totalPresupuestoEjecutora)}
+                      {formatCurrencyShortCOP(PGN_2027_DATA.funcionamientoR10)}
                     </span>
                     <span className="text-[11px] font-mono text-purple-200/90 block mt-0.5">
-                      {formatCurrencyCOP(PGN_2027_DATA.totalPresupuestoEjecutora)}
+                      {formatCurrencyCOP(PGN_2027_DATA.funcionamientoR10)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-purple-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Inversión Calidad (2202)</span>
-                    <strong className="text-purple-300">{formatCurrencyShortCOP(PGN_2027_DATA.inversion)}</strong>
+                    <span>Diferencia vs +6%:</span>
+                    <strong className="text-amber-300">-$23.265M COP</strong>
                   </div>
                 </div>
               </div>
@@ -1266,7 +1751,159 @@ export function R20ResourceProjectionSection() {
             </div>
 
             <div className="mt-4 p-4 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-xs text-on-surface-variant leading-relaxed">
-              <strong className="text-white">Importancia de la Base Unificada:</strong> El R10 ordinario (\$327.070M) concentra el 93.09% del recaudo nacional de funcionamiento. Al integrar los sub-recursos R10.1 (PIC Convencional \$7.789M), R10.2 (PIC Territorial \$3.060M), R10.3 (\$2.229M) y R10.5 (\$11.208M), se obtiene la base integral real de <strong>\$ 351.357.927.407 COP</strong>, que sirve de referencia oficial para cuantificar el incremento del <strong>+12.62%</strong> otorgado en el PGN 2027.
+              <strong className="text-white">Importancia de la Base Unificada:</strong> El R10 ordinario ($327.070M) concentra el 93.09% del recaudo nacional de funcionamiento. Al integrar los sub-recursos R10.1 (PIC Convencional $7.789M), R10.2 (PIC Territorial $3.060M), R10.3 ($2.229M) y R10.5 ($11.208M), se obtiene la base integral real de <strong>$ 351.357.927.407 COP</strong>, sobre la cual se aplica el tope de incremento del <strong>+6.0%</strong> fijado por el Gobierno Nacional para 2027.
+            </div>
+          </div>
+
+          {/* CÁLCULO OFICIAL DEL VALOR PROYECTADO R10.0 VIGENCIA 2027 (+6.0% GOBIERNO) */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 via-surface-container/60 to-surface-container-low shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <Calculator size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      Directriz Gubernamental 2027
+                    </span>
+                    <span className="text-[10px] font-mono text-on-surface-variant">
+                      Tope de Crecimiento: +6.0%
+                    </span>
+                  </div>
+                  <h4 className="text-lg md:text-xl font-display text-white font-extrabold mt-1">
+                    Cálculo del Valor Proyectado R10.0 Vigencia 2027 (+6.0% sobre Base 2026)
+                  </h4>
+                  <p className="text-xs text-on-surface-variant">
+                    Determinación matemática del Aporte de la Nación para Funcionamiento aplicando el tope del +6,0% sobre la base unificada de $ 351.357.927.407 COP.
+                  </p>
+                </div>
+              </div>
+              <div className="text-right bg-black/40 px-4 py-2.5 rounded-2xl border border-emerald-500/20">
+                <span className="text-[10px] uppercase text-emerald-300/80 font-bold block">Valor Proyectado R10.0</span>
+                <span className="text-xl md:text-2xl font-mono font-extrabold text-emerald-300">
+                  {formatCurrencyShortCOP(R10_PROJECTION_6PCT_DATA.proyeccion2027)}
+                </span>
+              </div>
+            </div>
+
+            {/* FORMULA Y RESULTADOS PRINCIPALES */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 relative z-10">
+              <div className="p-4 rounded-2xl bg-black/30 border border-white/10">
+                <span className="text-[11px] font-medium text-on-surface-variant block mb-1">
+                  Base Presupuestal 2026 (R10.0 - Tabla 1)
+                </span>
+                <span className="text-xl font-mono font-bold text-white block">
+                  {formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.basePresupuestal2026)}
+                </span>
+                <span className="text-[10px] text-sky-400 mt-1 block">
+                  5 Sub-recursos Unificados (Efectivo + Faltante)
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-black/30 border border-emerald-500/20">
+                <span className="text-[11px] font-medium text-emerald-300 block mb-1">
+                  Incremento Nominal Autorizado (+6.0%)
+                </span>
+                <span className="text-xl font-mono font-extrabold text-emerald-400 block">
+                  +{formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.incrementoNominal)}
+                </span>
+                <span className="text-[10px] text-emerald-200/80 mt-1 block">
+                  Factor Multiplicador: × 1.060000000
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40">
+                <span className="text-[11px] font-semibold text-emerald-200 block mb-1 uppercase tracking-wider">
+                  Valor Proyectado R10.0 Vigencia 2027
+                </span>
+                <span className="text-xl md:text-2xl font-mono font-extrabold text-emerald-300 block">
+                  {formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.proyeccion2027)}
+                </span>
+                <span className="text-[10px] text-white/90 font-medium mt-1 block">
+                  Aporte Nación Funcionamiento Proyectado 2027
+                </span>
+              </div>
+            </div>
+
+            {/* DESGLOSE MATEMÁTICO POR COMPONENTE DE R10 */}
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/30 mb-4 relative z-10">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-white/5 text-on-surface-variant uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th className="p-3 font-semibold text-white">Sub-Recurso</th>
+                    <th className="p-3 font-semibold text-white">Denominación / Componente Base</th>
+                    <th className="p-3 text-right font-semibold text-sky-300">Base 2026 (COP)</th>
+                    <th className="p-3 text-center font-semibold text-emerald-300">Aumento</th>
+                    <th className="p-3 text-right font-semibold text-emerald-300">Incremento (+ COP)</th>
+                    <th className="p-3 text-right font-semibold text-emerald-400">Proyección 2027 (+6%)</th>
+                    <th className="p-3 text-right font-semibold text-white">Cifra ($M)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R10_PROJECTION_6PCT_DATA.desgloseComponentes.map((sub) => (
+                    <tr key={sub.subRecurso} className="hover:bg-white/5 transition-colors">
+                      <td className="p-3 font-bold text-sky-300 font-mono">
+                        {sub.subRecurso}
+                      </td>
+                      <td className="p-3 font-medium text-white/90">
+                        {sub.denominacion}
+                      </td>
+                      <td className="p-3 text-right font-mono text-sky-200">
+                        {formatCurrencyCOP(sub.base2026)}
+                      </td>
+                      <td className="p-3 text-center font-mono font-bold text-emerald-300">
+                        +{sub.pct.toFixed(1)}%
+                      </td>
+                      <td className="p-3 text-right font-mono text-emerald-300">
+                        +{formatCurrencyCOP(sub.incremento)}
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold text-emerald-400">
+                        {formatCurrencyCOP(sub.proyeccion2027)}
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold text-white">
+                        {formatCurrencyShortCOP(sub.proyeccion2027)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="border-t-2 border-emerald-500/40 bg-emerald-950/40 font-bold text-white text-xs">
+                  <tr>
+                    <td className="p-3 font-extrabold text-emerald-300 uppercase tracking-wider" colSpan={2}>
+                      TOTAL R10.0 PROYECTADO 2027 (+6.0%)
+                    </td>
+                    <td className="p-3 text-right font-mono font-extrabold text-sky-300">
+                      {formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.basePresupuestal2026)}
+                    </td>
+                    <td className="p-3 text-center font-mono font-extrabold text-emerald-300">
+                      +6.00%
+                    </td>
+                    <td className="p-3 text-right font-mono font-extrabold text-emerald-300">
+                      +{formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.incrementoNominal)}
+                    </td>
+                    <td className="p-3 text-right font-mono font-extrabold text-emerald-300 text-sm bg-emerald-500/20">
+                      {formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.proyeccion2027)}
+                    </td>
+                    <td className="p-3 text-right font-mono font-extrabold text-white text-sm">
+                      {formatCurrencyShortCOP(R10_PROJECTION_6PCT_DATA.proyeccion2027)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-white/5 border border-white/10 text-xs">
+              <div className="flex items-center gap-2 text-on-surface-variant">
+                <Info size={16} className="text-emerald-400 shrink-0" />
+                <span>
+                  <strong>Fórmula Aplicada:</strong> <code className="text-emerald-300 font-mono bg-black/40 px-1.5 py-0.5 rounded">R10_2027 = $ 351.357.927.407 × 1.06 = $ 372.439.403.051 COP</code>
+                </span>
+              </div>
+              <div className="text-[11px] text-purple-300 font-medium">
+                Comparación vs Techo PGN 2027: <span className="line-through text-white/50">{formatCurrencyShortCOP(PGN_2027_DATA.funcionamientoR10)}</span> ({formatCurrencyCOP(PGN_2027_DATA.funcionamientoR10)})
+              </div>
             </div>
           </div>
 
