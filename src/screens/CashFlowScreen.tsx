@@ -14,6 +14,7 @@ import { fetchAndParseCSV } from '../lib/csvParser';
 import { calculateStrictProjections, StrictConfig, StrictProjectionResult } from '../lib/strictProjections';
 import { ResourceAllocationSection } from '../components/ResourceAllocationSection';
 import { CashFlowIncomeFixedVsProjected } from '../components/CashFlowIncomeFixedVsProjected';
+import { RecursosNacionFuncionamientoTable } from '../components/RecursosNacionFuncionamientoTable';
 import { BoardPresentationModal } from '../components/BoardPresentationModal';
 import { FlujoTesoreriaView } from '../components/tesoreria/FlujoTesoreriaView';
 import { RESOURCES_LIST } from '../lib/resourceMapper';
@@ -471,6 +472,21 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
           <button onClick={() => setIsConfigModalOpen(true)} className="glass-card px-4 py-2 rounded-xl text-white hover:bg-emerald-500/20 transition-colors flex items-center gap-2 border border-emerald-500/30 bg-emerald-500/10">
             <Settings size={16} className="text-emerald-400" />
             <span className="text-sm font-medium">Configuración de Escenario</span>
+          </button>
+
+          <button
+            onClick={() => {
+              const el = document.getElementById('seccion-recursos-nacion-funcionamiento');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="glass-card px-4 py-2 rounded-xl text-white hover:bg-blue-500/20 transition-colors flex items-center gap-2 border border-blue-500/30 bg-blue-500/10 cursor-pointer"
+            title="Ir a la tabla de Recursos Nación para el Funcionamiento (9 Recursos: R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17, R18)"
+          >
+            <Landmark size={16} className="text-blue-400" />
+            <span className="text-sm font-medium">Nación Funcionamiento</span>
+            <span className="text-[10px] bg-blue-500/30 text-blue-200 px-1.5 py-0.2 rounded-full font-mono font-bold">
+              9 Rec.
+            </span>
           </button>
 
           <button 
@@ -978,6 +994,16 @@ const maxIncomeMonth = [...monthlyData].sort((a, b) => b.income - a.income)[0];
 
       {/* BLOQUE ASIGNACIÓN: DISTRIBUCIÓN OPTIMIZADA DE RECURSOS PARA EL CIERRE */}
       <ResourceAllocationSection balanceData={csvData.balanceData} gastos2026Data={csvData.gastos2026} />
+
+      {/* NUEVO BLOQUE: TABLA DE RECURSOS NACIÓN PARA EL FUNCIONAMIENTO (R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17, R18) */}
+      <div id="seccion-recursos-nacion-funcionamiento" className="mb-8">
+        <RecursosNacionFuncionamientoTable 
+          resources={results.resources} 
+          balanceData={csvData.balanceData} 
+          gastos2026Data={csvData.gastos2026}
+          totals={results.totals} 
+        />
+      </div>
 
       {/* BLOQUE 6: ESTRUCTURA DUAL DEL FLUJO DE INGRESOS (FIJOS NACIÓN VS PROYECTADOS PROPIOS) */}
       <CashFlowIncomeFixedVsProjected 

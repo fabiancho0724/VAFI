@@ -9,6 +9,7 @@ export function getRecursoEquivalence(recursoStr: string): string {
   if (clean.startsWith('10.0-') || clean === '10.0' || clean === '10') return '10';
   if (clean.startsWith('10.1-') || clean === '10.1') return '10.1';
   if (clean.startsWith('10.2-') || clean === '10.2') return '10.2';
+  if (clean.startsWith('10.3-') || clean === '10.3') return '10.3';
   if (clean.startsWith('10.5-') || clean === '10.5') return '10.5';
   if (clean.startsWith('12-') || clean === '12') return '12';
   if (clean.startsWith('13-') || clean === '13') return '13';

@@ -9,6 +9,7 @@ import {
 import { StrictResourceProjection, StrictTotals, GIROS_SIIF_PROYECTADOS } from '../lib/strictProjections';
 import { RECURSOS_FIJOS_RESOLUCION } from '../lib/constants';
 import { BoardPresentationModal } from './BoardPresentationModal';
+import { RecursosNacionFuncionamientoTable } from './RecursosNacionFuncionamientoTable';
 
 const formatCurrency = (value: number) => {
   if (value === undefined || value === null || isNaN(value) || value === 0) return '$ 0 M';
@@ -38,7 +39,7 @@ export interface CashFlowIncomeFixedVsProjectedProps {
 }
 
 export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals }: CashFlowIncomeFixedVsProjectedProps) {
-  const [activeTab, setActiveTab] = useState<'comparativa' | 'fijos' | 'proyectados' | 'consolidado'>('comparativa');
+  const [activeTab, setActiveTab] = useState<'comparativa' | 'fijos' | 'proyectados' | 'consolidado' | 'nacion-funcionamiento'>('comparativa');
   const [searchTerm, setSearchTerm] = useState('');
   const [showMonthlyBreakdown, setShowMonthlyBreakdown] = useState(false);
   const [isPresentationOpen, setIsPresentationOpen] = useState(false);
@@ -567,6 +568,22 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
           </button>
 
           <button
+            onClick={() => setActiveTab('nacion-funcionamiento')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'nacion-funcionamiento'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 font-black'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+            title="Mostrar únicamente los 9 recursos de Nación destinados a Funcionamiento (R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17, R18)"
+          >
+            <Landmark size={14} className="text-cyan-400" />
+            <span>Recursos Nación Funcionamiento</span>
+            <span className="text-[10px] bg-cyan-500/30 text-cyan-200 px-1.5 py-0.2 rounded-full font-mono font-bold">
+              9 Rec.
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('proyectados')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'proyectados'
@@ -613,6 +630,15 @@ export function CashFlowIncomeFixedVsProjected({ resources, balanceData, totals 
       </div>
 
       {/* CONTENIDO SEGÚN LA PESTAÑA SELECCIONADA */}
+
+      {/* SECCIÓN ESPECIAL: RECURSOS NACIÓN PARA EL FUNCIONAMIENTO (9 RECURSOS) */}
+      {activeTab === 'nacion-funcionamiento' && (
+        <RecursosNacionFuncionamientoTable
+          resources={resources}
+          balanceData={balanceData}
+          totals={totals}
+        />
+      )}
 
       {/* SECCIÓN 1: TABLA DE INGRESOS FIJOS (GIROS DE LA NACIÓN) */}
       {(activeTab === 'comparativa' || activeTab === 'fijos') && (
