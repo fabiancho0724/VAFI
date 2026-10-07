@@ -1723,6 +1723,331 @@ export function exportR14CSV(selectedModelId: 'macro' | 'linear' | 'holt' | 'opt
 }
 
 // =========================================================================
+// RECURSO 12 - ESTAMPILLA PRO-UNIVERSIDAD NACIONAL Y DEMÁS UNIVERSIDADES ESTATALES (LEY 1697/2013)
+// =========================================================================
+
+export interface R12HistoricalRecord {
+  vigencia: number;
+  unidad: string;
+  concepto: string;
+  recurso: string;
+  totalRecaudo: number;
+  variacionAnualCOP: number;
+  variacionAnualPct: number;
+  tipo: 'historico' | 'base2026' | 'proyeccion';
+  notaNormativa: string;
+}
+
+export interface R12ForecastModel {
+  id: 'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear';
+  name: string;
+  shortName: string;
+  tag: 'Prudente Oficial' | 'Piso Conservador' | 'Ponderado WMA-3' | 'Media Trienal' | 'Media Cuatrienal' | 'Regresión OLS';
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  color: string;
+  interpretation: string;
+  alertaRiesgo: string;
+  riskLevel: 'bajo' | 'medio' | 'alto';
+  isOfficial?: boolean;
+}
+
+export const R12_BASE_2026 = 9015915211;
+
+export const R12_HISTORICAL_SERIES: R12HistoricalRecord[] = [
+  {
+    vigencia: 2015,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 1114259124,
+    variacionAnualCOP: 0,
+    variacionAnualPct: 0,
+    tipo: 'historico',
+    notaNormativa: 'Primeras recaudaciones tras reglamentación del Decreto 1050 de 2014 (Ley 1697 de 2013)'
+  },
+  {
+    vigencia: 2016,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 637876220,
+    variacionAnualCOP: -476382904,
+    variacionAnualPct: -42.75,
+    tipo: 'historico',
+    notaNormativa: 'Mínimo histórico por demoras en giros centrales del Tesoro Nacional'
+  },
+  {
+    vigencia: 2017,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 1187832041,
+    variacionAnualCOP: 549955821,
+    variacionAnualPct: 86.22,
+    tipo: 'historico',
+    notaNormativa: 'Recuperación de giros y consolidación de contratos de obra pública nacional'
+  },
+  {
+    vigencia: 2018,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 1239505218,
+    variacionAnualCOP: 51673177,
+    variacionAnualPct: 4.35,
+    tipo: 'historico',
+    notaNormativa: 'Estabilidad de transferencias MEN según fórmula de distribución'
+  },
+  {
+    vigencia: 2019,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 2482644000,
+    variacionAnualCOP: 1243138782,
+    variacionAnualPct: 100.29,
+    tipo: 'historico',
+    notaNormativa: 'Duplicación del recaudo por expansión en proyectos de infraestructura estatal'
+  },
+  {
+    vigencia: 2020,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 5191760490,
+    variacionAnualCOP: 2709116490,
+    variacionAnualPct: 109.12,
+    tipo: 'historico',
+    notaNormativa: 'Incremento sostenido en la bolsa nacional de recaudo tributario'
+  },
+  {
+    vigencia: 2021,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 5511333435,
+    variacionAnualCOP: 319572945,
+    variacionAnualPct: 6.16,
+    tipo: 'historico',
+    notaNormativa: 'Consolidación de indicadores de investigación y cobertura UPTC'
+  },
+  {
+    vigencia: 2022,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 4289903167,
+    variacionAnualCOP: -1221430268,
+    variacionAnualPct: -22.16,
+    tipo: 'historico',
+    notaNormativa: 'Ajuste cíclico por menor liquidación de contratos en cierre de gobierno'
+  },
+  {
+    vigencia: 2023,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 13869174796,
+    variacionAnualCOP: 9579271629,
+    variacionAnualPct: 223.30,
+    tipo: 'historico',
+    notaNormativa: 'Pico atípico por liquidación y giro acumulado de megaobras nacionales'
+  },
+  {
+    vigencia: 2024,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 6431335851,
+    variacionAnualCOP: -7437838945,
+    variacionAnualPct: -53.63,
+    tipo: 'historico',
+    notaNormativa: 'Corrección post-pico del ciclo de ejecución contractual'
+  },
+  {
+    vigencia: 2025,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 14785650242,
+    variacionAnualCOP: 8354314391,
+    variacionAnualPct: 129.90,
+    tipo: 'historico',
+    notaNormativa: 'Máximo histórico por recaudo extraordinario de contratos de infraestructura 4G/5G'
+  },
+  {
+    vigencia: 2026,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia (Base Referencia)',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 9015915211,
+    variacionAnualCOP: -5769735031,
+    variacionAnualPct: -39.02,
+    tipo: 'base2026',
+    notaNormativa: 'Base real certificada 2026 ($9.015.915.211 COP)'
+  },
+  {
+    vigencia: 2027,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia (Proyectado)',
+    recurso: '12-Estampillas Otras Universidades',
+    totalRecaudo: 9556870124,
+    variacionAnualCOP: 540954913,
+    variacionAnualPct: 6.00,
+    tipo: 'proyeccion',
+    notaNormativa: 'Proyección prudente con parámetro macroeconómico oficial (+6,0%) sobre la base real de 2026 ($9.015.915.211 COP)'
+  }
+];
+
+export const R12_FORECAST_MODELS: R12ForecastModel[] = [
+  {
+    id: 'macro',
+    name: 'Base Prudente Macroeconómica (+6,0%)',
+    shortName: 'Macro +6,0% (Base Real)',
+    tag: 'Prudente Oficial',
+    formula: 'Recaudo 2026 × 1,060',
+    projected2027: 9556870124,
+    incrementoNominal: 540954913,
+    variacionPct: 6.00,
+    color: '#06b6d4',
+    interpretation: 'Aplica el parámetro macroeconómico oficial (+6,0%) sobre la base real de 2026 ($9.015.915.211 COP). Proporciona un piso de recaudo seguro para el anteproyecto presupuestal sin sobreestimar la contratación nacional.',
+    alertaRiesgo: 'Bajo Riesgo. La opción más prudente y técnicamente recomendada para el anteproyecto presupuestal.',
+    riskLevel: 'bajo',
+    isOfficial: true
+  },
+  {
+    id: 'inercial',
+    name: 'Piso Inercial Estricto (0,0% / Base 2026)',
+    shortName: 'Piso Inercial ($9.016M)',
+    tag: 'Piso Conservador',
+    formula: 'Recaudo 2026 (Crecimiento Cero)',
+    projected2027: 9015915211,
+    incrementoNominal: 0,
+    variacionPct: 0.00,
+    color: '#64748b',
+    interpretation: 'Mantiene plano el valor de 2026 ($9.015.915.211 COP) como suelo defensivo ante posibles retrasos en la liquidación de contratos por parte de entidades estatales.',
+    alertaRiesgo: 'Riesgo Nulo de Déficit. Presupuesto ultra-defensivo.',
+    riskLevel: 'bajo',
+    isOfficial: false
+  },
+  {
+    id: 'wma',
+    name: 'Promedio Ponderado Trienal (WMA-3 Ponderación 3:2:1)',
+    shortName: 'WMA-3 Ponderado',
+    tag: 'Ponderado WMA-3',
+    formula: '(9.016M·3 + 14.786M·2 + 6.431M·1) / 6',
+    projected2027: 10508396995,
+    incrementoNominal: 1492481784,
+    variacionPct: 16.55,
+    color: '#eab308',
+    interpretation: 'Pondera con 50% la base 2026 ($9.016M), 33,3% el pico de 2025 ($14.786M) y 16,7% el año 2024 ($6.431M), equilibrando la volatilidad reciente.',
+    alertaRiesgo: 'Riesgo Moderado. Depende de que el recaudo nacional de obra pública mantenga dinamismo superior a $10.000M.',
+    riskLevel: 'medio',
+    isOfficial: false
+  },
+  {
+    id: 'media3',
+    name: 'Media de Estabilidad Trienal (2024–2026)',
+    shortName: 'Media Trienal',
+    tag: 'Media Trienal',
+    formula: '(6.431M + 14.786M + 9.016M) / 3',
+    projected2027: 10077633768,
+    incrementoNominal: 1061718557,
+    variacionPct: 11.78,
+    color: '#3b82f6',
+    interpretation: 'Promedio simple de los tres últimos años fiscales ($10.077,6M), suavizando las fluctuaciones abruptas observadas entre 2024 y 2025.',
+    alertaRiesgo: 'Riesgo Moderado. Recomendable si se esperan niveles normales de contratación estatal.',
+    riskLevel: 'medio',
+    isOfficial: false
+  },
+  {
+    id: 'media4',
+    name: 'Media Cuatrienal (2023–2026)',
+    shortName: 'Media Cuatrienal',
+    tag: 'Media Cuatrienal',
+    formula: '(13.869M + 6.431M + 14.786M + 9.016M) / 4',
+    projected2027: 11025519025,
+    incrementoNominal: 2009603814,
+    variacionPct: 22.29,
+    color: '#a855f7',
+    interpretation: 'Media aritmética que absorbe el bienio expansivo 2023 y 2025 junto con los años moderados 2024 y 2026.',
+    alertaRiesgo: 'Riesgo Medio-Alto. Podría generar desbalance si el recaudo nacional se sitúa por debajo de $11.000M.',
+    riskLevel: 'medio',
+    isOfficial: false
+  },
+  {
+    id: 'linear',
+    name: 'Regresión Lineal de Tendencia OLS (2015–2026)',
+    shortName: 'Regresión OLS (R²=68,8%)',
+    tag: 'Regresión OLS',
+    formula: 'Pendiente +$1.118M/año (OLS 12 vigencias)',
+    projected2027: 12748911456,
+    incrementoNominal: 3732996245,
+    variacionPct: 41.40,
+    color: '#ec4899',
+    interpretation: 'Modela la tendencia alcista de largo plazo de la estampilla (+41,40% vs 2026). Requiere ejecución de megaproyectos viales e hidroeléctricos del orden nacional.',
+    alertaRiesgo: 'Alto Riesgo de Déficit. Proyección altamente optimista no aconsejable para gastos recurrentes.',
+    riskLevel: 'alto',
+    isOfficial: false
+  }
+];
+
+export const R12_DESCRIPTIVE_STATS = {
+  n: 12,
+  media: 5479765816,
+  mediana: 4740831828,
+  desvEstandar: 4859629718,
+  coeficienteVariacionPct: 88.68,
+  minimo: 637876220,
+  minimoAnio: 2016,
+  maximo: 14785650242,
+  maximoAnio: 2025,
+  cagrPct: 20.93,
+  tendenciaAnualCOP: 1118330098,
+  r2Pct: 68.8
+};
+
+export function exportR12CSV(selectedModelId: string): void {
+  const model = R12_FORECAST_MODELS.find(m => m.id === selectedModelId) || R12_FORECAST_MODELS[0];
+  let csv = '\uFEFF';
+  csv += 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n';
+  csv += 'VICERRECTORIA ADMINISTRATIVA Y FINANCIERA (VAFI)\n';
+  csv += 'CERTIFICADO DE PROYECCION PRESUPUESTAL RECURSO 12 - VIGENCIA 2027\n';
+  csv += 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia (Ley 1697 de 2013)\n';
+  csv += `Fecha de Generación:;${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}\n`;
+  csv += `Modelo Seleccionado:;${model.name}\n`;
+  csv += `Base Real 2026:;$ ${R12_BASE_2026.toLocaleString('es-CO')}\n`;
+  csv += `Proyección 2027:;$ ${model.projected2027.toLocaleString('es-CO')}\n`;
+  csv += `Incremento Nominal:;$ ${model.incrementoNominal.toLocaleString('es-CO')};Variación:;+${model.variacionPct.toFixed(2)}%\n\n`;
+  csv += 'Vigencia;Unidad;Concepto Presupuestal;Recurso;Total Recaudo (COP);Cifra en Millones ($M);Variación Anual (COP);Variación Anual (%);Tipo de Registro;Nota Normativa\n';
+
+  for (const r of R12_HISTORICAL_SERIES) {
+    const isProy = r.tipo === 'proyeccion';
+    const recaudo = isProy ? model.projected2027 : r.totalRecaudo;
+    const varCop = isProy ? model.incrementoNominal : r.variacionAnualCOP;
+    const varPct = isProy ? model.variacionPct : r.variacionAnualPct;
+    const millones = (recaudo / 1e6).toFixed(2);
+
+    csv += `${r.vigencia};"${r.unidad}";"${r.concepto}";"${r.recurso}";` +
+      `$ ${recaudo.toLocaleString('es-CO')};$ ${millones}M;` +
+      `$ ${varCop.toLocaleString('es-CO')};${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%;` +
+      `"${r.tipo.toUpperCase()}";"${r.notaNormativa}"\n`;
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `Certificado_Proyeccion_R12_Estampilla_UNAL_2027_${model.id}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// =========================================================================
 // RECURSO 13 - EXCEDENTES FINANCIEROS DE COOPERATIVAS (ART. 142 LEY 1819/2016)
 // =========================================================================
 
@@ -2257,12 +2582,16 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     grupo: 'nacion',
     recaudo2024: 6431335851,
     recaudo2025: 14785650242,
-    base2026: 7265094590,
+    base2026: 9015915211,
     defaultModelId: 'macro6',
     models: [
-      { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 7701000265, variationPct: 6.00 },
-      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 7773651211, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 7265094590, variationPct: 0.00 }
+      { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 9556870124, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 9647029276, variationPct: 7.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 10508396995, variationPct: 16.55 },
+      { id: 'media3', name: 'Media Trienal (2024–2026)', value: 10077633768, variationPct: 11.78 },
+      { id: 'media4', name: 'Media Cuatrienal (2023–2026)', value: 11025519025, variationPct: 22.29 },
+      { id: 'linear', name: 'Regresión Lineal OLS', value: 12748911456, variationPct: 41.40 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 9015915211, variationPct: 0.00 }
     ]
   },
   {
