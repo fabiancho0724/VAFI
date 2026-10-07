@@ -4179,7 +4179,7 @@ export function exportBalanceGeneralCSV(summary: OfficialConsolidatedSummary): v
   csv += `Total Consolidado 2027:;$ ${summary.totalConsolidado.y27.toLocaleString('es-CO')};Variación Global:;+${summary.totalConsolidado.variationPct.toFixed(2)}%\n\n`;
 
   // Encabezado oficial exclusivo para valores de la vigencia 2027
-  csv += 'Unidad;Código concepto;Concepto;Recurso;Proyección 2027 (COP);Proyección 2027 ($M);Variación vs 2026 (%);Participación Presupuestal (%);Método o Criterio Seleccionado\n';
+  csv += 'Unidad;Código concepto;Concepto;Recurso;Proyección 2027 (COP);Método o Criterio Seleccionado\n';
 
   // Filas individuales con valores del 2027
   for (const r of summary.rows) {
@@ -4188,28 +4188,25 @@ export function exportBalanceGeneralCSV(summary: OfficialConsolidatedSummary): v
     const cName = `"${r.concepto.replace(/"/g, '""')}"`;
     const cRec = `"${r.recurso}"`;
     const y27 = `$ ${Math.round(r.projected2027).toLocaleString('es-CO')}`;
-    const y27M = `$ ${r.projected2027Millions.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M`;
-    const varPct = `${r.variationPct >= 0 ? '+' : ''}${r.variationPct.toFixed(2)}%`;
-    const partPct = `${r.participationPct.toFixed(2)}%`;
     const model = `"${r.selectedModelName.replace(/"/g, '""')}"`;
 
-    csv += `${cUnidad};${cCode};${cName};${cRec};${y27};${y27M};${varPct};${partPct};${model}\n`;
+    csv += `${cUnidad};${cCode};${cName};${cRec};${y27};${model}\n`;
   }
 
   // Subtotal Nacion 2027
-  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL GIROS Y FONDOS DE LA NACION (7 CONCEPTOS)";"NACION";"$ ${Math.round(summary.subtotalNacion.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalNacion.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalNacion.variationPct.toFixed(2)}%";"${summary.subtotalNacion.participationPct.toFixed(2)}%";"Transferencias y Fondos Nacionales"\n`;
+  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL GIROS Y FONDOS DE LA NACION (7 CONCEPTOS)";"NACION";"$ ${Math.round(summary.subtotalNacion.y27).toLocaleString('es-CO')}";"Transferencias y Fondos Nacionales"\n`;
 
   // Subtotal Propios 2027
-  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL RECURSOS PROPIOS - R20 (10 CONCEPTOS)";"20-PROPIOS";"$ ${Math.round(summary.subtotalPropios.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalPropios.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalPropios.variationPct.toFixed(2)}%";"${summary.subtotalPropios.participationPct.toFixed(2)}%";"Autogestión Académica y Administrativa"\n`;
+  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL RECURSOS PROPIOS - R20 (10 CONCEPTOS)";"20-PROPIOS";"$ ${Math.round(summary.subtotalPropios.y27).toLocaleString('es-CO')}";"Autogestión Académica y Administrativa"\n`;
 
   // Subtotal IVA 2027
-  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.02.06.006.02";"SUBTOTAL DEVOLUCION IVA - R21 (1 CONCEPTO)";"21-DEVOLUCION IVA";"$ ${Math.round(summary.subtotalIVA.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalIVA.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalIVA.variationPct.toFixed(2)}%";"${summary.subtotalIVA.participationPct.toFixed(2)}%";"Beneficio Tributario Art. 92 Ley 30"\n`;
+  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.02.06.006.02";"SUBTOTAL DEVOLUCION IVA - R21 (1 CONCEPTO)";"21-DEVOLUCION IVA";"$ ${Math.round(summary.subtotalIVA.y27).toLocaleString('es-CO')}";"Beneficio Tributario Art. 92 Ley 30"\n`;
 
   // Subtotal Estampilla UPTC 2027
-  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.01.02.300.32";"SUBTOTAL ESTAMPILLA UPTC - R40 (1 CONCEPTO)";"40-ESTAMPILLA UPTC";"$ ${Math.round(summary.subtotalEstampillas.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalEstampillas.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalEstampillas.variationPct.toFixed(2)}%";"${summary.subtotalEstampillas.participationPct.toFixed(2)}%";"Estampilla Pro-UPTC Departamental"\n`;
+  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.01.02.300.32";"SUBTOTAL ESTAMPILLA UPTC - R40 (1 CONCEPTO)";"40-ESTAMPILLA UPTC";"$ ${Math.round(summary.subtotalEstampillas.y27).toLocaleString('es-CO')}";"Estampilla Pro-UPTC Departamental"\n`;
 
   // Total Consolidado 2027
-  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"TOTAL CONSOLIDADO UPTC 2027 (19 CONCEPTOS)";"UPTC CONSOLIDADO";"$ ${Math.round(summary.totalConsolidado.y27).toLocaleString('es-CO')}";"$ ${(summary.totalConsolidado.y27 / 1e6).toFixed(2)}M";"+${summary.totalConsolidado.variationPct.toFixed(2)}%";"100.00%";"Consolidado Total Institucional"\n`;
+  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"TOTAL CONSOLIDADO UPTC 2027 (19 CONCEPTOS)";"UPTC CONSOLIDADO";"$ ${Math.round(summary.totalConsolidado.y27).toLocaleString('es-CO')}";"Consolidado Total Institucional"\n`;
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

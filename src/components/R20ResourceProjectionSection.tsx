@@ -6722,83 +6722,8 @@ export function R20ResourceProjectionSection() {
                       ))}
                     </select>
                   </div>
-
-                  <button
-                    onClick={() => setShowParamControls(!showParamControls)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
-                      showParamControls
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                        : 'bg-black/30 text-on-surface-variant border-white/10 hover:text-white'
-                    }`}
-                  >
-                    <SlidersHorizontal size={14} />
-                    <span>Supuestos</span>
-                    {showParamControls ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                  </button>
                 </div>
               </div>
-
-              {/* PANEL DE SUPUESTOS */}
-              {showParamControls && (
-                <div className="mt-5 p-4 rounded-2xl bg-black/40 border border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in">
-                  <div>
-                    <label className="text-[11px] font-semibold text-amber-300 block mb-1">
-                      IPC Proyectado 2027: <span className="font-mono font-bold text-white">{ipcTarget.toFixed(1)}%</span>
-                    </label>
-                    <input
-                      type="range"
-                      min={3.0}
-                      max={12.0}
-                      step={0.1}
-                      value={ipcTarget}
-                      onChange={(e) => setIpcTarget(parseFloat(e.target.value))}
-                      className="w-full accent-amber-500 cursor-pointer"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-emerald-300 block mb-1">
-                      Esfuerzo Recaudo Propio: <span className="font-mono font-bold text-white">{effortRate.toFixed(1)}%</span>
-                    </label>
-                    <input
-                      type="range"
-                      min={0.0}
-                      max={5.0}
-                      step={0.5}
-                      value={effortRate}
-                      onChange={(e) => setEffortRate(parseFloat(e.target.value))}
-                      className="w-full accent-emerald-500 cursor-pointer"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-sky-300 block mb-1">
-                      Holt Nivel (α): <span className="font-mono font-bold text-white">{alpha.toFixed(2)}</span>
-                    </label>
-                    <input
-                      type="range"
-                      min={0.1}
-                      max={0.9}
-                      step={0.05}
-                      value={alpha}
-                      onChange={(e) => setAlpha(parseFloat(e.target.value))}
-                      className="w-full accent-sky-500 cursor-pointer"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-purple-300 block mb-1">
-                      Holt Tendencia (β): <span className="font-mono font-bold text-white">{beta.toFixed(2)}</span>
-                    </label>
-                    <input
-                      type="range"
-                      min={0.1}
-                      max={0.9}
-                      step={0.05}
-                      value={beta}
-                      onChange={(e) => setBeta(parseFloat(e.target.value))}
-                      className="w-full accent-purple-500 cursor-pointer"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -7430,6 +7355,44 @@ export function R20ResourceProjectionSection() {
                       </button>
                     );
                   })}
+                </div>
+
+                {/* CALIBRACIÓN HOLT-WINTERS (α, β) EXCLUSIVA PARA R21 */}
+                <div className="mt-4 pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-black/30 p-3 rounded-xl border border-white/5">
+                  <div className="flex items-center gap-2 text-emerald-300">
+                    <SlidersHorizontal size={14} className="shrink-0" />
+                    <span className="font-semibold">Calibración Modelo Holt Suavizado (R21):</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-6">
+                    <div className="flex items-center gap-2.5">
+                      <label className="text-[11px] font-semibold text-sky-300 whitespace-nowrap">
+                        Holt Nivel (α): <span className="font-mono font-bold text-white">{alpha.toFixed(2)}</span>
+                      </label>
+                      <input
+                        type="range"
+                        min={0.1}
+                        max={0.9}
+                        step={0.05}
+                        value={alpha}
+                        onChange={(e) => setAlpha(parseFloat(e.target.value))}
+                        className="w-28 sm:w-32 accent-sky-500 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <label className="text-[11px] font-semibold text-purple-300 whitespace-nowrap">
+                        Holt Tendencia (β): <span className="font-mono font-bold text-white">{beta.toFixed(2)}</span>
+                      </label>
+                      <input
+                        type="range"
+                        min={0.1}
+                        max={0.9}
+                        step={0.05}
+                        value={beta}
+                        onChange={(e) => setBeta(parseFloat(e.target.value))}
+                        className="w-28 sm:w-32 accent-purple-500 cursor-pointer"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -8608,179 +8571,6 @@ export function R20ResourceProjectionSection() {
             </div>
           </div>
 
-          {/* ========================================================================= */}
-          {/* PANEL DE ELECCIÓN DE MODELOS Y VALORES: RECURSOS R20 Y R21               */}
-          {/* ========================================================================= */}
-          <div className="glass-card p-5 md:p-6 rounded-[24px] border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-surface-container-high/90 to-background shadow-lg space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-500/30 inline-flex items-center gap-1.5 mb-1.5">
-                  <SlidersHorizontal size={12} />
-                  Elección de Modelos y Proyecciones
-                </span>
-                <h4 className="text-lg md:text-xl font-display font-bold text-white flex items-center gap-2">
-                  Elección de Valores para Recursos Propios (R20) y Devolución IVA (R21)
-                </h4>
-                <p className="text-xs text-on-surface-variant">
-                  Seleccione el criterio o modelo de proyección a nivel global para R20 o R21 con un solo clic, o personalice valores individuales directamente en cada fila de la matriz presupuestal.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Opción para Recursos Propios R20 */}
-              <div className="p-4 rounded-2xl bg-black/40 border border-amber-500/20 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Building2 size={16} className="text-amber-400" />
-                    <span className="text-xs font-bold text-amber-300 uppercase tracking-wide">
-                      Recursos Propios (20-Propios)
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                    10 Conceptos
-                  </span>
-                </div>
-                <p className="text-xs text-on-surface-variant">
-                  Elegir modelo de proyección para todos los conceptos de Recursos Propios (Filas 8 a 17):
-                </p>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => handleR20GlobalModelChange('macro6')}
-                    className={`px-3 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
-                      currentR20GlobalState === 'macro6'
-                        ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 ring-2 ring-amber-300'
-                        : 'bg-surface-container-highest hover:bg-white/10 text-on-surface border border-white/10'
-                    }`}
-                  >
-                    <span>Macro +6,0%</span>
-                    <span className="text-[10px] opacity-80 font-mono">Oficial Aprobado</span>
-                  </button>
-                  <button
-                    onClick={() => handleR20GlobalModelChange('ipc7')}
-                    className={`px-3 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
-                      currentR20GlobalState === 'ipc7'
-                        ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 ring-2 ring-amber-300'
-                        : 'bg-surface-container-highest hover:bg-white/10 text-on-surface border border-white/10'
-                    }`}
-                  >
-                    <span>IPC +7,0%</span>
-                    <span className="text-[10px] opacity-80 font-mono">Indexación Inflación</span>
-                  </button>
-                  <button
-                    onClick={() => handleR20GlobalModelChange('inercial')}
-                    className={`px-3 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
-                      currentR20GlobalState === 'inercial'
-                        ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 ring-2 ring-amber-300'
-                        : 'bg-surface-container-highest hover:bg-white/10 text-on-surface border border-white/10'
-                    }`}
-                  >
-                    <span>Base Inercial</span>
-                    <span className="text-[10px] opacity-80 font-mono">0,0% vs 2026</span>
-                  </button>
-                </div>
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-on-surface-variant">
-                    <span>Estado:</span>
-                    <span className="font-mono text-white">
-                      {currentR20GlobalState === 'macro6' ? 'Macro +6,0% (Todos)' :
-                       currentR20GlobalState === 'ipc7' ? 'IPC +7,0% (Todos)' :
-                       currentR20GlobalState === 'inercial' ? 'Inercial (Todos)' : 'Selección Mixta / Personalizada'}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-mono font-bold text-amber-300">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y27)}
-                    </span>
-                    <span className="text-[10px] font-mono text-emerald-400 ml-1.5">
-                      (+{official17Consolidated.subtotalPropios.variationPct.toFixed(2)}%)
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Opción para Devolución IVA R21 */}
-              <div className="p-4 rounded-2xl bg-black/40 border border-emerald-500/20 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp size={16} className="text-emerald-400" />
-                    <span className="text-xs font-bold text-emerald-300 uppercase tracking-wide">
-                      Devolución IVA (21-Devolucion IVA)
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                    Concepto 18
-                  </span>
-                </div>
-                <p className="text-xs text-on-surface-variant">
-                  Elegir modelo o proyección para la Devolución de IVA institucional:
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    onClick={() => handleR21ModelChange('macro6')}
-                    className={`px-2 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                      currentR21State === 'macro6'
-                        ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-300'
-                        : 'bg-surface-container-highest hover:bg-white/10 text-on-surface border border-white/10'
-                    }`}
-                  >
-                    <span>Macro +6,0%</span>
-                    <span className="text-[10px] opacity-80 font-mono">$4.953M</span>
-                  </button>
-                  <button
-                    onClick={() => handleR21ModelChange('meta7')}
-                    className={`px-2 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                      currentR21State === 'meta7'
-                        ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-300'
-                        : 'bg-surface-container-highest hover:bg-white/10 text-on-surface border border-white/10'
-                    }`}
-                  >
-                    <span>Ref. +7,0%</span>
-                    <span className="text-[10px] opacity-80 font-mono">$4.999M</span>
-                  </button>
-                  <button
-                    onClick={() => handleR21ModelChange('holt')}
-                    className={`px-2 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                      currentR21State === 'holt'
-                        ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-300'
-                        : 'bg-surface-container-highest hover:bg-white/10 text-on-surface border border-white/10'
-                    }`}
-                  >
-                    <span>Holt +4,66%</span>
-                    <span className="text-[10px] opacity-80 font-mono">$4.890M</span>
-                  </button>
-                  <button
-                    onClick={() => handleR21ModelChange('inercial')}
-                    className={`px-2 py-2 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                      currentR21State === 'inercial'
-                        ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-300'
-                        : 'bg-surface-container-highest hover:bg-white/10 text-on-surface border border-white/10'
-                    }`}
-                  >
-                    <span>Inercial</span>
-                    <span className="text-[10px] opacity-80 font-mono">$4.672M</span>
-                  </button>
-                </div>
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-on-surface-variant">
-                    <span>Proyección R21:</span>
-                    <span className="font-mono text-emerald-300 font-semibold">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y27)}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-mono font-bold text-emerald-400">
-                      +{official17Consolidated.subtotalIva.variationPct.toFixed(2)}%
-                    </span>
-                    <span className="text-[10px] text-on-surface-variant ml-1">
-                      ({official17Consolidated.subtotalIva.participationPct.toFixed(2)}% del total)
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Barra de Selección Rápida de Escenarios */}
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-surface-container-high/80 border border-white/10">
             <div className="flex items-center gap-2">
@@ -8835,7 +8625,7 @@ export function R20ResourceProjectionSection() {
                 </p>
               </div>
               <div className="text-xs text-on-surface-variant font-mono">
-                Valores en <strong className="text-white">COP ($)</strong> y en <strong className="text-emerald-400">Millones ($M)</strong>
+                Valores en <strong className="text-white">Pesos Colombianos ($ COP)</strong>
               </div>
             </div>
 
@@ -8849,9 +8639,6 @@ export function R20ResourceProjectionSection() {
                     <th className="p-3.5 font-semibold text-white min-w-[240px]">Concepto</th>
                     <th className="p-3.5 font-semibold text-sky-300 min-w-[170px]">Recurso</th>
                     <th className="p-3.5 font-semibold text-right text-emerald-300 whitespace-nowrap">Proyección 2027 ($ COP)</th>
-                    <th className="p-3.5 font-semibold text-right text-white whitespace-nowrap">Proyección 2027 ($ M)</th>
-                    <th className="p-3.5 font-semibold text-center text-amber-300 whitespace-nowrap">Var % vs 2026</th>
-                    <th className="p-3.5 font-semibold text-center text-purple-300 whitespace-nowrap">Part %</th>
                     <th className="p-3.5 font-semibold text-left text-white min-w-[230px]">Modelo / Criterio Seleccionado</th>
                   </tr>
                 </thead>
@@ -8860,7 +8647,7 @@ export function R20ResourceProjectionSection() {
                   {/* GRUPO 1: GIROS DE LA NACIÓN (Filas 1 a 7)                  */}
                   {/* ========================================================= */}
                   <tr className="bg-cyan-500/10 border-t-2 border-cyan-500/30">
-                    <td colSpan={10} className="px-4 py-2 font-bold text-cyan-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                    <td colSpan={7} className="px-4 py-2 font-bold text-cyan-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
                       <Landmark size={14} className="text-cyan-400" />
                       <span>1. Giros y Transferencias de la Nación (Leyes 30/1992, 1819/2016, 2307/2023, 403/1997 y CESU)</span>
                     </td>
@@ -8896,19 +8683,6 @@ export function R20ResourceProjectionSection() {
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
-                        </td>
-                        <td className="p-3 text-right font-mono font-bold text-white">
-                          {formatCurrencyShortCOP(row.projected2027)}
-                        </td>
-                        <td className="p-3 text-center font-mono font-bold">
-                          <span className={`px-1.5 py-0.5 rounded text-[11px] ${
-                            row.variationPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
-                          }`}>
-                            {row.variationPct >= 0 ? '+' : ''}{row.variationPct.toFixed(2)}%
-                          </span>
-                        </td>
-                        <td className="p-3 text-center font-mono font-bold text-purple-300">
-                          {row.participationPct.toFixed(2)}%
                         </td>
                         <td className="p-3">
                           {isEditing ? (
@@ -8982,15 +8756,6 @@ export function R20ResourceProjectionSection() {
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
                       {formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}
                     </td>
-                    <td className="p-3.5 text-right font-mono text-white font-bold">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y27)}
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      +{official17Consolidated.subtotalNacion.variationPct.toFixed(2)}%
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-cyan-200 font-bold">
-                      {official17Consolidated.subtotalNacion.participationPct.toFixed(2)}%
-                    </td>
                     <td className="p-3.5 text-xs text-cyan-300/80 italic">
                       7 Conceptos Presupuestales
                     </td>
@@ -9000,7 +8765,7 @@ export function R20ResourceProjectionSection() {
                   {/* GRUPO 2: RECURSOS PROPIOS (Filas 8 a 17)                   */}
                   {/* ========================================================= */}
                   <tr className="bg-amber-500/10 border-t-2 border-amber-500/30">
-                    <td colSpan={10} className="px-4 py-2 font-bold text-amber-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                    <td colSpan={7} className="px-4 py-2 font-bold text-amber-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
                       <Building2 size={14} className="text-amber-400" />
                       <span>2. Recursos Propios UPTC (20-Propios — Derechos Pecuniarios, Matrículas y Servicios de Autogestión)</span>
                     </td>
@@ -9036,19 +8801,6 @@ export function R20ResourceProjectionSection() {
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
-                        </td>
-                        <td className="p-3 text-right font-mono font-bold text-white">
-                          {formatCurrencyShortCOP(row.projected2027)}
-                        </td>
-                        <td className="p-3 text-center font-mono font-bold">
-                          <span className={`px-1.5 py-0.5 rounded text-[11px] ${
-                            row.variationPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
-                          }`}>
-                            {row.variationPct >= 0 ? '+' : ''}{row.variationPct.toFixed(2)}%
-                          </span>
-                        </td>
-                        <td className="p-3 text-center font-mono font-bold text-purple-300">
-                          {row.participationPct.toFixed(2)}%
                         </td>
                         <td className="p-3">
                           {isEditing ? (
@@ -9122,15 +8874,6 @@ export function R20ResourceProjectionSection() {
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
                       {formatCurrencyCOP(official17Consolidated.subtotalPropios.y27)}
                     </td>
-                    <td className="p-3.5 text-right font-mono text-white font-bold">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y27)}
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      +{official17Consolidated.subtotalPropios.variationPct.toFixed(2)}%
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-amber-300 font-bold">
-                      {official17Consolidated.subtotalPropios.participationPct.toFixed(2)}%
-                    </td>
                     <td className="p-3.5 text-xs text-amber-300/80 italic">
                       10 Conceptos Presupuestales
                     </td>
@@ -9140,7 +8883,7 @@ export function R20ResourceProjectionSection() {
                   {/* GRUPO 3: DEVOLUCIÓN IVA (Fila 18)                         */}
                   {/* ========================================================= */}
                   <tr className="bg-emerald-500/10 border-t-2 border-emerald-500/30">
-                    <td colSpan={10} className="px-4 py-2 font-bold text-emerald-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                    <td colSpan={7} className="px-4 py-2 font-bold text-emerald-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
                       <TrendingUp size={14} className="text-emerald-400" />
                       <span>3. Devolución IVA (21-Devolucion IVA — Beneficio Tributario IES Art. 92 Ley 30 / Art. 481 E.T.)</span>
                     </td>
@@ -9176,19 +8919,6 @@ export function R20ResourceProjectionSection() {
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
-                        </td>
-                        <td className="p-3 text-right font-mono font-bold text-white">
-                          {formatCurrencyShortCOP(row.projected2027)}
-                        </td>
-                        <td className="p-3 text-center font-mono font-bold">
-                          <span className={`px-1.5 py-0.5 rounded text-[11px] ${
-                            row.variationPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
-                          }`}>
-                            {row.variationPct >= 0 ? '+' : ''}{row.variationPct.toFixed(2)}%
-                          </span>
-                        </td>
-                        <td className="p-3 text-center font-mono font-bold text-purple-300">
-                          {row.participationPct.toFixed(2)}%
                         </td>
                         <td className="p-3">
                           {isEditing ? (
@@ -9262,15 +8992,6 @@ export function R20ResourceProjectionSection() {
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
                       {formatCurrencyCOP(official17Consolidated.subtotalIva.y27)}
                     </td>
-                    <td className="p-3.5 text-right font-mono text-white font-bold">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y27)}
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      +{official17Consolidated.subtotalIva.variationPct.toFixed(2)}%
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      {official17Consolidated.subtotalIva.participationPct.toFixed(2)}%
-                    </td>
                     <td className="p-3.5 text-xs text-emerald-300/80 italic">
                       1 Concepto Presupuestal
                     </td>
@@ -9280,7 +9001,7 @@ export function R20ResourceProjectionSection() {
                   {/* GRUPO 4: ESTAMPILLA PRO-UPTC (Fila 19)                    */}
                   {/* ========================================================= */}
                   <tr className="bg-purple-500/10 border-t-2 border-purple-500/30">
-                    <td colSpan={10} className="px-4 py-2 font-bold text-purple-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                    <td colSpan={7} className="px-4 py-2 font-bold text-purple-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
                       <Award size={14} className="text-purple-400" />
                       <span>4. Estampilla UPTC (40-Estampilla UPTC — Ley 1283 de 2009 / Ordenanza Departamental)</span>
                     </td>
@@ -9316,19 +9037,6 @@ export function R20ResourceProjectionSection() {
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
-                        </td>
-                        <td className="p-3 text-right font-mono font-bold text-white">
-                          {formatCurrencyShortCOP(row.projected2027)}
-                        </td>
-                        <td className="p-3 text-center font-mono font-bold">
-                          <span className={`px-1.5 py-0.5 rounded text-[11px] ${
-                            row.variationPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
-                          }`}>
-                            {row.variationPct >= 0 ? '+' : ''}{row.variationPct.toFixed(2)}%
-                          </span>
-                        </td>
-                        <td className="p-3 text-center font-mono font-bold text-purple-300">
-                          {row.participationPct.toFixed(2)}%
                         </td>
                         <td className="p-3">
                           {isEditing ? (
@@ -9402,15 +9110,6 @@ export function R20ResourceProjectionSection() {
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
                       {formatCurrencyCOP(official17Consolidated.subtotalEstampillas.y27)}
                     </td>
-                    <td className="p-3.5 text-right font-mono text-white font-bold">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalEstampillas.y27)}
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      +{official17Consolidated.subtotalEstampillas.variationPct.toFixed(2)}%
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-purple-300 font-bold">
-                      {official17Consolidated.subtotalEstampillas.participationPct.toFixed(2)}%
-                    </td>
                     <td className="p-3.5 text-xs text-purple-300/80 italic">
                       1 Concepto Presupuestal
                     </td>
@@ -9423,15 +9122,6 @@ export function R20ResourceProjectionSection() {
                     </td>
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-extrabold">
                       {formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-white font-extrabold">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y27)}
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-emerald-300 font-bold">
-                      +{official17Consolidated.subtotalAutogestion.variationPct.toFixed(2)}%
-                    </td>
-                    <td className="p-3.5 text-center font-mono text-white font-bold">
-                      {official17Consolidated.subtotalAutogestion.participationPct.toFixed(2)}%
                     </td>
                     <td className="p-3.5 text-xs text-on-surface-variant italic">
                       12 Conceptos de Autogestión
@@ -9448,15 +9138,6 @@ export function R20ResourceProjectionSection() {
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-emerald-300 bg-emerald-500/20 text-sm">
                       {formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-white text-sm">
-                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y27)}
-                    </td>
-                    <td className="p-4 text-center font-mono font-extrabold text-emerald-400 bg-emerald-500/20">
-                      +{official17Consolidated.totalConsolidado.variationPct.toFixed(2)}%
-                    </td>
-                    <td className="p-4 text-center font-mono font-extrabold text-indigo-300">
-                      100.00%
                     </td>
                     <td className="p-4 text-xs font-mono text-indigo-300 font-bold">
                       19 Conceptos Presupuestales
@@ -9532,16 +9213,13 @@ export function R20ResourceProjectionSection() {
                   <th className="border border-slate-400 p-1.5 min-w-[130px]">Concepto</th>
                   <th className="border border-slate-400 p-1.5 min-w-[90px]">Recurso</th>
                   <th className="border border-slate-400 p-1.5 text-right bg-slate-900">Proyección 2027 ($ COP)</th>
-                  <th className="border border-slate-400 p-1.5 text-right">Proyección 2027 ($ M)</th>
-                  <th className="border border-slate-400 p-1.5 text-center">Var % vs 2026</th>
-                  <th className="border border-slate-400 p-1.5 text-center">Part %</th>
                   <th className="border border-slate-400 p-1.5">Criterio / Modelo</th>
                 </tr>
               </thead>
               <tbody>
                 {/* Grupo 1: Nación */}
                 <tr className="bg-slate-200 font-bold text-slate-900">
-                  <td colSpan={10} className="border border-slate-300 p-1 pl-2">
+                  <td colSpan={7} className="border border-slate-300 p-1 pl-2">
                     1. GIROS Y TRANSFERENCIAS DE LA NACIÓN
                   </td>
                 </tr>
@@ -9553,9 +9231,6 @@ export function R20ResourceProjectionSection() {
                     <td className="border border-slate-300 p-1 font-medium">{row.concepto}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.variationPct.toFixed(2)}%</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">{row.participationPct.toFixed(2)}%</td>
                     <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
                   </tr>
                 ))}
@@ -9565,15 +9240,12 @@ export function R20ResourceProjectionSection() {
                     Subtotal Giros de la Nación (Conceptos 1 al 7)
                   </td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalNacion.variationPct.toFixed(2)}%</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalNacion.participationPct.toFixed(2)}%</td>
                   <td className="border border-slate-300 p-1.5 text-slate-500 italic">7 Conceptos</td>
                 </tr>
 
                 {/* Grupo 2: Propios */}
                 <tr className="bg-slate-200 font-bold text-slate-900">
-                  <td colSpan={10} className="border border-slate-300 p-1 pl-2">
+                  <td colSpan={7} className="border border-slate-300 p-1 pl-2">
                     2. RECURSOS PROPIOS (20-PROPIOS)
                   </td>
                 </tr>
@@ -9585,9 +9257,6 @@ export function R20ResourceProjectionSection() {
                     <td className="border border-slate-300 p-1 font-medium">{row.concepto}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.variationPct.toFixed(2)}%</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">{row.participationPct.toFixed(2)}%</td>
                     <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
                   </tr>
                 ))}
@@ -9597,15 +9266,12 @@ export function R20ResourceProjectionSection() {
                     Subtotal Recursos Propios (Conceptos 8 al 17)
                   </td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalPropios.variationPct.toFixed(2)}%</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalPropios.participationPct.toFixed(2)}%</td>
                   <td className="border border-slate-300 p-1.5 text-slate-500 italic">10 Conceptos</td>
                 </tr>
 
                 {/* Grupo 3: IVA */}
                 <tr className="bg-slate-200 font-bold text-slate-900">
-                  <td colSpan={10} className="border border-slate-300 p-1 pl-2">
+                  <td colSpan={7} className="border border-slate-300 p-1 pl-2">
                     3. DEVOLUCIÓN IVA (21-DEVOLUCION IVA)
                   </td>
                 </tr>
@@ -9617,9 +9283,6 @@ export function R20ResourceProjectionSection() {
                     <td className="border border-slate-300 p-1 font-medium">{row.concepto}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.variationPct.toFixed(2)}%</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">{row.participationPct.toFixed(2)}%</td>
                     <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
                   </tr>
                 ))}
@@ -9629,15 +9292,12 @@ export function R20ResourceProjectionSection() {
                     Subtotal Devolución IVA (Concepto 18)
                   </td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalIva.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalIva.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalIva.variationPct.toFixed(2)}%</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalIva.participationPct.toFixed(2)}%</td>
                   <td className="border border-slate-300 p-1.5 text-slate-500 italic">1 Concepto</td>
                 </tr>
 
                 {/* Grupo 4: Estampilla UPTC */}
                 <tr className="bg-slate-200 font-bold text-slate-900">
-                  <td colSpan={10} className="border border-slate-300 p-1 pl-2">
+                  <td colSpan={7} className="border border-slate-300 p-1 pl-2">
                     4. ESTAMPILLA PRO-UPTC (40-ESTAMPILLA UPTC)
                   </td>
                 </tr>
@@ -9649,9 +9309,6 @@ export function R20ResourceProjectionSection() {
                     <td className="border border-slate-300 p-1 font-medium">{row.concepto}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">+{row.variationPct.toFixed(2)}%</td>
-                    <td className="border border-slate-300 p-1 text-center font-mono">{row.participationPct.toFixed(2)}%</td>
                     <td className="border border-slate-300 p-1 text-slate-600">{row.selectedModelName}</td>
                   </tr>
                 ))}
@@ -9661,9 +9318,6 @@ export function R20ResourceProjectionSection() {
                     Subtotal Estampilla Pro-UPTC (Concepto 19)
                   </td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalEstampillas.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalEstampillas.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalEstampillas.variationPct.toFixed(2)}%</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalEstampillas.participationPct.toFixed(2)}%</td>
                   <td className="border border-slate-300 p-1.5 text-slate-500 italic">1 Concepto</td>
                 </tr>
 
@@ -9673,9 +9327,6 @@ export function R20ResourceProjectionSection() {
                     Subtotal Autogestión Institucional (Recursos Propios + Devolución IVA + Estampilla UPTC)
                   </td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-slate-900">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y27)}</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalAutogestion.variationPct.toFixed(2)}%</td>
-                  <td className="border border-slate-300 p-1.5 text-center font-mono">{official17Consolidated.subtotalAutogestion.participationPct.toFixed(2)}%</td>
                   <td className="border border-slate-300 p-1.5 text-slate-600 italic">12 Conceptos</td>
                 </tr>
               </tbody>
@@ -9687,9 +9338,6 @@ export function R20ResourceProjectionSection() {
                     TOTAL BALANCE GENERAL UPTC 2027 (19 CONCEPTOS)
                   </td>
                   <td className="border border-slate-600 p-2 text-right font-mono text-emerald-400 bg-slate-950 text-xs">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}</td>
-                  <td className="border border-slate-600 p-2 text-right font-mono text-white text-xs">{formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y27)}</td>
-                  <td className="border border-slate-600 p-2 text-center font-mono text-emerald-300">+{official17Consolidated.totalConsolidado.variationPct.toFixed(2)}%</td>
-                  <td className="border border-slate-600 p-2 text-center font-mono">100.00%</td>
                   <td className="border border-slate-600 p-2 font-mono text-slate-300">19 Conceptos</td>
                 </tr>
               </tfoot>
