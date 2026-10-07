@@ -54,28 +54,28 @@ export function R20ResourceProjectionSection() {
   const [nacionCategoryFilter, setNacionCategoryFilter] = useState<string>('TODAS');
 
   // Modelo activo para R10 (Aportes de la Nación - Funcionamiento)
-  const [r10SelectedModel, setR10SelectedModel] = useState<'calculado644' | 'pgn' | 'macro6' | 'inercial'>('calculado644');
+  const [r10SelectedModel, setR10SelectedModel] = useState<'calculado644' | 'pgn' | 'macro6' | 'inercial' | 'arima'>('calculado644');
 
   // Modelo activo para R12 (Estampilla Pro- Universidad Nacional y Demás)
-  const [r12SelectedModel, setR12SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear'>('macro');
+  const [r12SelectedModel, setR12SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear' | 'arima'>('macro');
 
   // Modelo activo para R13 (Excedentes de Cooperativas)
-  const [r13SelectedModel, setR13SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media'>('macro');
+  const [r13SelectedModel, setR13SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media' | 'arima'>('macro');
 
   // Modelo activo para R14 (Política de Gratuidad)
-  const [r14SelectedModel, setR14SelectedModel] = useState<'macro' | 'linear' | 'holt' | 'optimista'>('macro');
+  const [r14SelectedModel, setR14SelectedModel] = useState<'macro' | 'linear' | 'holt' | 'optimista' | 'arima'>('macro');
 
   // Modelo activo para R16 (Aportes para Inversión Nación - Fijo Ley PGN 2027)
-  const [r16SelectedModel, setR16SelectedModel] = useState<'pgn' | 'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear'>('pgn');
+  const [r16SelectedModel, setR16SelectedModel] = useState<'pgn' | 'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear' | 'arima'>('pgn');
 
   // Modelo activo para R17 (Devolución de Descuento por Votación)
-  const [r17SelectedModel, setR17SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media'>('macro');
+  const [r17SelectedModel, setR17SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media' | 'arima'>('macro');
 
   // Modelo activo para R18 (Aportes Artículo 87 CESU)
-  const [r18SelectedModel, setR18SelectedModel] = useState<'calculado644' | 'macro' | 'inercial'>('calculado644');
+  const [r18SelectedModel, setR18SelectedModel] = useState<'calculado644' | 'macro' | 'inercial' | 'arima'>('calculado644');
 
   // Modelo activo para R40 (Estampilla pro UPTC - Ley 64 de 1988)
-  const [r40SelectedModel, setR40SelectedModel] = useState<'macro' | 'inercial' | 'cagr' | 'wma' | 'media3' | 'media4' | 'linear'>('macro');
+  const [r40SelectedModel, setR40SelectedModel] = useState<'macro' | 'inercial' | 'cagr' | 'wma' | 'media3' | 'media4' | 'linear' | 'arima'>('macro');
 
   // Selección y personalización de valores para los 17 conceptos oficiales en el Consolidado
   const [official17Selections, setOfficial17Selections] = useState<Record<string, { modelId: string; customValue?: number }>>({});
@@ -745,26 +745,26 @@ export function R20ResourceProjectionSection() {
         ...prev,
         [conceptId]: { modelId: newModelId, customValue: undefined }
       }));
-      if (conceptId === 'c1_r10_funcionamiento' && ['calculado644', 'pgn', 'macro6', 'inercial'].includes(newModelId)) {
+      if (conceptId === 'c1_r10_funcionamiento' && ['calculado644', 'pgn', 'macro6', 'inercial', 'arima'].includes(newModelId)) {
         setR10SelectedModel(newModelId as any);
       } else if (conceptId === 'c2_r12_estampilla_unal') {
         if (newModelId === 'macro6') setR12SelectedModel('macro');
-        else if (['inercial', 'wma', 'media3', 'media4', 'linear'].includes(newModelId)) {
+        else if (['inercial', 'wma', 'media3', 'media4', 'linear', 'arima'].includes(newModelId)) {
           setR12SelectedModel(newModelId as any);
         }
-      } else if (conceptId === 'c3_r13_cooperativas' && ['macro', 'inercial', 'wma', 'media'].includes(newModelId)) {
+      } else if (conceptId === 'c3_r13_cooperativas' && ['macro', 'inercial', 'wma', 'media', 'arima'].includes(newModelId)) {
         setR13SelectedModel(newModelId as any);
-      } else if (conceptId === 'c4_r14_gratuidad' && ['macro', 'linear', 'holt', 'optimista'].includes(newModelId)) {
+      } else if (conceptId === 'c4_r14_gratuidad' && ['macro', 'linear', 'holt', 'optimista', 'arima'].includes(newModelId)) {
         setR14SelectedModel(newModelId as any);
-      } else if (conceptId === 'c5_r16_inversion' && ['pgn', 'macro', 'inercial', 'wma', 'media3', 'media4', 'linear'].includes(newModelId)) {
+      } else if (conceptId === 'c5_r16_inversion' && ['pgn', 'macro', 'inercial', 'wma', 'media3', 'media4', 'linear', 'arima'].includes(newModelId)) {
         setR16SelectedModel(newModelId as any);
-      } else if (conceptId === 'c6_r17_votacion' && ['macro', 'inercial', 'wma', 'media'].includes(newModelId)) {
+      } else if (conceptId === 'c6_r17_votacion' && ['macro', 'inercial', 'wma', 'media', 'arima'].includes(newModelId)) {
         setR17SelectedModel(newModelId as any);
-      } else if (conceptId === 'c7_r18_cesu' && ['calculado644', 'macro', 'inercial'].includes(newModelId)) {
+      } else if (conceptId === 'c7_r18_cesu' && ['calculado644', 'macro', 'inercial', 'arima'].includes(newModelId)) {
         setR18SelectedModel(newModelId as any);
       } else if (conceptId === 'c19_r40_estampilla_uptc') {
         if (newModelId === 'macro6') setR40SelectedModel('macro');
-        else if (['inercial', 'cagr', 'wma', 'media3', 'media4', 'linear'].includes(newModelId)) {
+        else if (['inercial', 'cagr', 'wma', 'media3', 'media4', 'linear', 'arima'].includes(newModelId)) {
           setR40SelectedModel(newModelId as any);
         }
       }
@@ -774,7 +774,7 @@ export function R20ResourceProjectionSection() {
     }
   };
 
-  const handleR20GlobalModelChange = (modelId: 'macro6' | 'ipc7' | 'inercial' | 'wma' | 'media3') => {
+  const handleR20GlobalModelChange = (modelId: 'macro6' | 'ipc7' | 'inercial' | 'wma' | 'media3' | 'arima') => {
     setOfficial17Selections(prev => {
       const next = { ...prev };
       for (const id of R20_CONCEPT_IDS) {
@@ -927,6 +927,24 @@ export function R20ResourceProjectionSection() {
     setR17SelectedModel('wma');
     setR18SelectedModel('macro');
     setR40SelectedModel('cagr');
+    setEditingConceptId(null);
+  };
+
+  const applyArimaScenario = () => {
+    const sel: Record<string, { modelId: string; customValue?: number }> = {};
+    for (const c of OFFICIAL_BALANCE_GENERAL_CATALOG) {
+      const arima = c.models.find(m => m.id === 'arima');
+      sel[c.id] = { modelId: arima ? 'arima' : c.defaultModelId };
+    }
+    setOfficial17Selections(sel);
+    setR10SelectedModel('arima');
+    setR12SelectedModel('arima');
+    setR13SelectedModel('arima');
+    setR14SelectedModel('arima');
+    setR16SelectedModel('arima');
+    setR17SelectedModel('arima');
+    setR18SelectedModel('arima');
+    setR40SelectedModel('arima');
     setEditingConceptId(null);
   };
 
@@ -1921,7 +1939,7 @@ export function R20ResourceProjectionSection() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   {R10_FORECAST_MODELS.map((m) => {
                     const isSelected = r10SelectedModel === m.id;
                     return (
@@ -2128,7 +2146,7 @@ export function R20ResourceProjectionSection() {
                     tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
                     tickLine={{ stroke: '#ffffff20' }}
                     tickFormatter={(val) => `$${(val / 1e6).toLocaleString('es-CO')}M`}
-                    domain={[0, 420000000000]}
+                    domain={[0, 460000000000]}
                   />
 
                   <RechartsTooltip
@@ -3510,7 +3528,7 @@ export function R20ResourceProjectionSection() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   {R13_FORECAST_MODELS.map((m) => {
                     const isSelected = r13SelectedModel === m.id;
                     return (
@@ -4159,7 +4177,7 @@ export function R20ResourceProjectionSection() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   {R14_FORECAST_MODELS.map((m) => {
                     const isSelected = r14SelectedModel === m.id;
                     return (
@@ -4756,7 +4774,7 @@ export function R20ResourceProjectionSection() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3">
                   {R16_FORECAST_MODELS.map((m) => {
                     const isSelected = r16SelectedModel === m.id;
                     return (
@@ -5569,7 +5587,7 @@ export function R20ResourceProjectionSection() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   {R17_FORECAST_MODELS.map((m) => {
                     const isSelected = r17SelectedModel === m.id;
                     return (
@@ -6166,7 +6184,7 @@ export function R20ResourceProjectionSection() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {R18_FORECAST_MODELS.map((m) => {
                     const isSelected = r18SelectedModel === m.id;
                     return (
@@ -7334,6 +7352,7 @@ export function R20ResourceProjectionSection() {
                           >
                             <option value="macro6" className="bg-slate-900 text-white">Macro +6,0%</option>
                             <option value="ipc7" className="bg-slate-900 text-white">Indexación IPC (+7,0%)</option>
+                            <option value="arima" className="bg-slate-900 text-purple-300 font-bold">ARIMA (0,1,1) (-17,39%)</option>
                             <option value="inercial" className="bg-slate-900 text-white">Base Inercial (0,0%)</option>
                             <option value="wma" className="bg-slate-900 text-white">Ponderado WMA-3 (+18,57%)</option>
                             <option value="media3" className="bg-slate-900 text-white">Media Móvil SMA-3 (+26,88%)</option>
@@ -7458,9 +7477,11 @@ export function R20ResourceProjectionSection() {
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
                               : m.id === 'inercial' || m.id === 'ipc7'
                               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                              : m.id === 'arima'
+                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                               : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                           }`}>
-                            {m.isOfficial ? 'Oficial Institucional' : m.id === 'ipc7' ? 'Índice de Precios' : m.id === 'inercial' ? 'Piso Técnico' : 'Riesgo de Déficit'}
+                            {m.isOfficial ? 'Oficial Institucional' : m.id === 'ipc7' ? 'Índice de Precios' : m.id === 'inercial' ? 'Piso Técnico' : m.id === 'arima' ? 'Serie Temporal ARIMA' : 'Riesgo de Déficit'}
                           </span>
                         </td>
                         <td className="p-4 text-center">
@@ -7546,7 +7567,7 @@ export function R20ResourceProjectionSection() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   {R21_FORECAST_MODELS.map((m) => {
                     const isSelected = currentR21State === m.id;
                     return (
@@ -7965,7 +7986,7 @@ export function R20ResourceProjectionSection() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3">
                   {R40_FORECAST_MODELS.map((m) => {
                     const isSelected = r40SelectedModel === m.id;
                     return (
@@ -8826,6 +8847,14 @@ export function R20ResourceProjectionSection() {
               >
                 <Activity size={13} className="text-teal-400" />
                 <span>Estadístico (WMA-3 / Regresión)</span>
+              </button>
+              <button
+                onClick={applyArimaScenario}
+                className="px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs font-medium border border-purple-500/30 transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Aplica modelos econométricos ARIMA (p,d,q) a todos los recursos y conceptos proyectados"
+              >
+                <TrendingUp size={13} className="text-purple-400" />
+                <span>ARIMA Econométrico (Todos los R)</span>
               </button>
               <button
                 onClick={applyInercialScenario}

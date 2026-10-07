@@ -1060,7 +1060,7 @@ export const R10_PROJECTION_6PCT_DATA = {
 };
 
 export interface R10ForecastModel {
-  id: 'calculado644' | 'pgn' | 'macro6' | 'inercial';
+  id: 'calculado644' | 'pgn' | 'macro6' | 'inercial' | 'arima';
   name: string;
   shortName: string;
   tag: string;
@@ -1111,6 +1111,19 @@ export const R10_FORECAST_MODELS: R10ForecastModel[] = [
     variacionPct: 6.00,
     color: '#10b981',
     interpretation: 'Criterio institucional conservador de indexación macroeconómica (+6,0%) sobre la base presupuestal 2026.',
+    isOfficial: false
+  },
+  {
+    id: 'arima',
+    name: 'Modelo ARIMA (1,1,0) Autorregresivo',
+    shortName: 'ARIMA (1,1,0)',
+    tag: 'ARIMA (1,1,0)',
+    formula: 'ΔY_t = 24.588,4M + 0,90·ΔY_{t-1}',
+    projected2027: 435635597234,
+    incrementoNominal: 71626296621,
+    variacionPct: 19.68,
+    color: '#8b5cf6',
+    interpretation: 'Modelo autorregresivo integrado sobre la serie de transferencias de funcionamiento Art. 86. Captura la inercia secular de acuerdos sindicales y regla de gasto.',
     isOfficial: false
   },
   {
@@ -1440,24 +1453,24 @@ export function exportRecursosNacionProyeccionCSV(): void {
   document.body.removeChild(link);
 }
 
-export function exportR10CSV(): void {
+export function exportR10CSV(selectedModelId: string = 'calculado644'): void {
+  const model = R10_FORECAST_MODELS.find(m => m.id === selectedModelId) || R10_FORECAST_MODELS[0];
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += `RECURSO 10.0 - APORTES NACION (FUNCIONAMIENTO) - PROYECCION OFICIAL 2027 (+6.44%)\n`;
+  csvContent += `RECURSO 10.0 - APORTES NACION (FUNCIONAMIENTO) - PROYECCION VIGENCIA 2027\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Modelo Seleccionado:;${model.name}\n`;
   csvContent += `Base Presupuestal 2026 (COP):;${R10_PROJECTION_6PCT_DATA.basePresupuestal2026}\n`;
-  csvContent += `Tasa de Incremento Calculada PGN:;+${R10_PROJECTION_6PCT_DATA.tasaAumentoPct.toFixed(2)}%\n`;
-  csvContent += `Incremento Nominal Calculado (+6.44%) (COP):;+${R10_PROJECTION_6PCT_DATA.incrementoNominal}\n`;
-  csvContent += `Valor Proyectado R10.0 Vigencia 2027 (COP):;${R10_PROJECTION_6PCT_DATA.proyeccion2027}\n`;
-  csvContent += `Referencia Techo Asignado PGN 2027 (COP):;${R10_PROJECTION_6PCT_DATA.pgn2027Referencia}\n`;
-  csvContent += `Diferencia vs Techo PGN 2027 (R17+R18) (COP):;${R10_PROJECTION_6PCT_DATA.diferenciaVsPGN}\n\n`;
-  csvContent += `NOTA ACLARATORIA OFICIAL:;"${R10_PROJECTION_6PCT_DATA.notaAclaratoriaPolitica}"\n\n`;
-  csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
-  csvContent += `Asignacion Fija PGN 2027 Funcionamiento (COP):;${PGN_2027_DATA.funcionamientoR10}\n`;
-  csvContent += `Asignacion PGN 2027 Inversion (COP):;${PGN_2027_DATA.inversion}\n`;
-  csvContent += `Total Presupuesto PGN Unidad Ejecutora (COP):;${PGN_2027_DATA.totalPresupuestoEjecutora}\n`;
-  csvContent += `Base Presupuestal 2026 (COP):;${PGN_2027_DATA.basePresupuestal2026}\n`;
-  csvContent += `Variacion Nominal vs Base 2026 (COP):;+${PGN_2027_DATA.variacionNominal}\n`;
-  csvContent += `Variacion Porcentual vs Base 2026:;+${PGN_2027_DATA.variacionPct.toFixed(2)}%\n\n`;
+  csvContent += `Tasa de Crecimiento Proyectada:;+${model.variacionPct.toFixed(2)}%\n`;
+  csvContent += `Valor Proyectado R10.0 Vigencia 2027 (COP):;${model.projected2027}\n`;
+  csvContent += `Incremento Nominal (COP):;+${model.incrementoNominal}\n`;
+  csvContent += `Referencia Techo Asignado PGN 2027 (COP):;${R10_PROJECTION_6PCT_DATA.pgn2027Referencia}\n\n`;
+
+  csvContent += `MODELOS DE PROYECCION EVALUADOS 2027\n`;
+  csvContent += `Modelo;Formula;Proyeccion 2027 (COP);Proyeccion ($M);Incremento (COP);Variacion (%);Criterio\n`;
+  for (const m of R10_FORECAST_MODELS) {
+    csvContent += `"${m.name}";"${m.formula}";"${m.projected2027}";"${(m.projected2027 / 1e6).toFixed(2)}";"+${m.incrementoNominal}";"+${m.variacionPct.toFixed(2)}%";"${m.interpretation}"\n`;
+  }
+  csvContent += `\n`;
 
   csvContent += `DESGLOSE BASE PRESUPUESTAL 2026 (COMPONENTES R10) Y PROYECCION 2027\n`;
   csvContent += `Sub-Recurso;Denominacion;Base 2026 (COP);Tasa Aumento;Incremento (COP);Proyeccion 2027 (COP);Estado / Nota\n`;
@@ -1470,13 +1483,17 @@ export function exportR10CSV(): void {
   csvContent += `SERIE HISTORICA DE APORTES DE LA NACION (2016-2027)\n`;
   csvContent += `Vigencia;Unidad;Concepto;Recurso;Total Recaudo (COP);Total Recaudo ($M);Variacion Anual (COP);Variacion Anual (%);Tipo;Marco Legal / Nota\n`;
   for (const h of R10_HISTORICAL_SERIES) {
-    csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${h.totalRecaudo}";"${(h.totalRecaudo / 1e6).toFixed(2)}";"${h.variacionAnualCOP >= 0 ? '+' : ''}${h.variacionAnualCOP}";"${h.variacionAnualPct >= 0 ? '+' : ''}${h.variacionAnualPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
+    const is2027 = h.vigencia === 2027;
+    const recaudo = is2027 ? model.projected2027 : h.totalRecaudo;
+    const varCOP = is2027 ? model.incrementoNominal : h.variacionAnualCOP;
+    const varPct = is2027 ? model.variacionPct : h.variacionAnualPct;
+    csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${recaudo}";"${(recaudo / 1e6).toFixed(2)}";"${varCOP >= 0 ? '+' : ''}${varCOP}";"${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
   }
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `Recurso_10_Aportes_Nacion_PGN_2027.csv`);
+  link.setAttribute('download', `Recurso_10_Aportes_Nacion_PGN_2027_${model.id}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -1562,7 +1579,7 @@ export const R18_PROJECTION_DATA = {
 };
 
 export interface R18ForecastModel {
-  id: 'calculado644' | 'macro' | 'inercial';
+  id: 'calculado644' | 'macro' | 'inercial' | 'arima';
   name: string;
   shortName: string;
   tag: string;
@@ -1603,6 +1620,19 @@ export const R18_FORECAST_MODELS: R18ForecastModel[] = [
     isOfficial: false
   },
   {
+    id: 'arima',
+    name: 'Modelo ARIMA (1,1,0) Autorregresivo',
+    shortName: 'ARIMA (1,1,0)',
+    tag: 'ARIMA (1,1,0)',
+    formula: 'ΔY_t = 521,6M - 0,90·ΔY_{t-1}',
+    projected2027: 1613437108,
+    incrementoNominal: -496789938,
+    variacionPct: -23.54,
+    color: '#8b5cf6',
+    interpretation: 'Modelo autorregresivo que refleja la alta dispersión y reducción en las asignaciones de fondos concursables de fomento a la calidad del CESU.',
+    isOfficial: false
+  },
+  {
     id: 'inercial',
     name: 'Base 2026 Inercial (0,0%)',
     shortName: 'Base Inercial ($2.110M)',
@@ -1617,25 +1647,38 @@ export const R18_FORECAST_MODELS: R18ForecastModel[] = [
   }
 ];
 
-export function exportR18CSV(): void {
+export function exportR18CSV(selectedModelId: string = 'calculado644'): void {
+  const model = R18_FORECAST_MODELS.find(m => m.id === selectedModelId) || R18_FORECAST_MODELS[0];
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += `PROYECCION RECURSO 18 - ARTICULO 87 CESU - VIGENCIA 2027 (+6.44%)\n`;
+  csvContent += `PROYECCION RECURSO 18 - ARTICULO 87 CESU - VIGENCIA 2027\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Modelo Seleccionado:;${model.name}\n`;
   csvContent += `Base Recaudo 2026 (COP):;${R18_PROJECTION_DATA.base2026}\n`;
-  csvContent += `Parametro Calculado PGN:;+${R18_PROJECTION_DATA.tasaAumentoPct.toFixed(2)}%\n`;
-  csvContent += `Proyeccion 2027 (COP):;${R18_PROJECTION_DATA.proyeccion2027}\n`;
-  csvContent += `Incremento Nominal (COP):;+${R18_PROJECTION_DATA.incrementoNominal}\n\n`;
+  csvContent += `Tasa de Crecimiento Proyectada:;+${model.variacionPct.toFixed(2)}%\n`;
+  csvContent += `Proyeccion 2027 (COP):;${model.projected2027}\n`;
+  csvContent += `Incremento Nominal (COP):;+${model.incrementoNominal}\n\n`;
+
+  csvContent += `MODELOS DE PROYECCION EVALUADOS 2027\n`;
+  csvContent += `Modelo;Formula;Proyeccion 2027 (COP);Proyeccion ($M);Incremento (COP);Variacion (%);Criterio\n`;
+  for (const m of R18_FORECAST_MODELS) {
+    csvContent += `"${m.name}";"${m.formula}";"${m.projected2027}";"${(m.projected2027 / 1e6).toFixed(2)}";"+${m.incrementoNominal}";"+${m.variacionPct.toFixed(2)}%";"${m.interpretation}"\n`;
+  }
+  csvContent += `\n`;
 
   csvContent += `HISTORICO Y PROYECCION (2024-2027)\n`;
   csvContent += `Vigencia;Unidad;Concepto;Recurso;Total Recaudo (COP);Total Recaudo ($M);Variacion Anual (COP);Variacion Anual (%);Tipo;Marco Legal / Criterio\n`;
   for (const h of R18_HISTORICAL_SERIES) {
-    csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${h.totalRecaudo}";"${(h.totalRecaudo / 1e6).toFixed(2)}";"${h.variacionAnualCOP >= 0 ? '+' : ''}${h.variacionAnualCOP}";"${h.variacionAnualPct >= 0 ? '+' : ''}${h.variacionAnualPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
+    const is2027 = h.vigencia === 2027;
+    const recaudo = is2027 ? model.projected2027 : h.totalRecaudo;
+    const varCOP = is2027 ? model.incrementoNominal : h.variacionAnualCOP;
+    const varPct = is2027 ? model.variacionPct : h.variacionAnualPct;
+    csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${recaudo}";"${(recaudo / 1e6).toFixed(2)}";"${varCOP >= 0 ? '+' : ''}${varCOP}";"${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
   }
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `Proyeccion_Recurso_18_Articulo_87_CESU_2027.csv`);
+  link.setAttribute('download', `Proyeccion_Recurso_18_Articulo_87_CESU_2027_${model.id}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -1658,10 +1701,10 @@ export interface R14HistoricalRecord {
 }
 
 export interface R14ForecastModel {
-  id: 'macro' | 'linear' | 'holt' | 'optimista';
+  id: 'macro' | 'linear' | 'holt' | 'optimista' | 'arima';
   name: string;
   shortName: string;
-  tag: 'Oficial Aprobado' | 'Tendencia Histórica' | 'Suavizado' | 'Expansión';
+  tag: string;
   formula: string;
   projected2027: number;
   incrementoNominal: number;
@@ -1791,8 +1834,21 @@ export const R14_FORECAST_MODELS: R14ForecastModel[] = [
     projected2027: 53801708707,
     incrementoNominal: 3957531474,
     variacionPct: 7.94,
-    color: '#8b5cf6',
+    color: '#3b82f6',
     interpretation: 'Pondera dinámicamente la tendencia histórica amortiguando la corrección de 2025 y dando fuerte peso a la recuperación consolidada de 2026.',
+    isOfficial: false
+  },
+  {
+    id: 'arima',
+    name: 'Modelo ARIMA (1,1,1) Mixto Balanceado',
+    shortName: 'ARIMA (1,1,1)',
+    tag: 'ARIMA (1,1,1)',
+    formula: 'ΔY_t = -0,80·ΔY_{t-1} - 0,60·ε_{t-1}',
+    projected2027: 52792185210,
+    incrementoNominal: 2948007977,
+    variacionPct: 5.91,
+    color: '#8b5cf6',
+    interpretation: 'Modelo estocástico mixto con estabilización autorregresiva y de medias móviles. Converge de manera consistente con el parámetro macro institucional (+6,0% = $52.834,8M).',
     isOfficial: false
   },
   {
@@ -1810,7 +1866,7 @@ export const R14_FORECAST_MODELS: R14ForecastModel[] = [
   }
 ];
 
-export function exportR14CSV(selectedModelId: 'macro' | 'linear' | 'holt' | 'optimista' = 'macro'): void {
+export function exportR14CSV(selectedModelId: 'macro' | 'linear' | 'holt' | 'optimista' | 'arima' = 'macro'): void {
   const model = R14_FORECAST_MODELS.find(m => m.id === selectedModelId) || R14_FORECAST_MODELS[0];
   let csvContent = 'data:text/csv;charset=utf-8,';
   csvContent += `PROYECCION RECURSO 14 - POLITICA DE GRATUIDAD (LEY 2307 DE 2023) - VIGENCIA 2027\n`;
@@ -1864,10 +1920,10 @@ export interface R12HistoricalRecord {
 }
 
 export interface R12ForecastModel {
-  id: 'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear';
+  id: 'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear' | 'arima';
   name: string;
   shortName: string;
-  tag: 'Prudente Oficial' | 'Piso Conservador' | 'Ponderado WMA-3' | 'Media Trienal' | 'Media Cuatrienal' | 'Regresión OLS';
+  tag: string;
   formula: string;
   projected2027: number;
   incrementoNominal: number;
@@ -2117,6 +2173,21 @@ export const R12_FORECAST_MODELS: R12ForecastModel[] = [
     alertaRiesgo: 'Alto Riesgo de Déficit. Proyección altamente optimista no aconsejable para gastos recurrentes.',
     riskLevel: 'alto',
     isOfficial: false
+  },
+  {
+    id: 'arima',
+    name: 'Modelo ARIMA (0,1,1) Media Móvil Integrada',
+    shortName: 'ARIMA (0,1,1)',
+    tag: 'ARIMA (0,1,1)',
+    formula: 'ΔY_t = 718,3M - 0,80·ε_{t-1}',
+    projected2027: 10926410375,
+    incrementoNominal: 1910495164,
+    variacionPct: 21.19,
+    color: '#8b5cf6',
+    interpretation: 'Modelo de media móvil sobre primera diferencia. Amortigua los shocks y picos de 2023 y 2025 proyectando un nivel sostenible de recaudo.',
+    alertaRiesgo: 'Riesgo Moderado. Requiere continuidad en la contratación estatal nacional.',
+    riskLevel: 'medio',
+    isOfficial: false
   }
 ];
 
@@ -2189,10 +2260,10 @@ export interface R13HistoricalRecord {
 }
 
 export interface R13ForecastModel {
-  id: 'macro' | 'inercial' | 'wma' | 'media';
+  id: 'macro' | 'inercial' | 'wma' | 'media' | 'arima';
   name: string;
   shortName: string;
-  tag: 'Prudente Oficial' | 'Piso Conservador' | 'Ponderado WMA-3' | 'Media Cuatrienal';
+  tag: string;
   formula: string;
   projected2027: number;
   incrementoNominal: number;
@@ -2368,10 +2439,25 @@ export const R13_FORECAST_MODELS: R13ForecastModel[] = [
     alertaRiesgo: 'Riesgo Alto. Puede revivir la brecha presupuestal si el sector no repunta.',
     riskLevel: 'alto',
     isOfficial: false
+  },
+  {
+    id: 'arima',
+    name: 'Modelo ARIMA (1,1,0) Autorregresivo',
+    shortName: 'ARIMA (1,1,0)',
+    tag: 'ARIMA (1,1,0)',
+    formula: 'ΔY_t = 103,0M - 0,65·ΔY_{t-1}',
+    projected2027: 2090124619,
+    incrementoNominal: 468324619,
+    variacionPct: 28.88,
+    color: '#8b5cf6',
+    interpretation: 'Modela la reversión a la media histórica tras la contracción atípica observada en la base certificada de 2026.',
+    alertaRiesgo: 'Riesgo Moderado-Alto. Supone reactivación de excedentes cooperativos del sector solidario.',
+    riskLevel: 'medio',
+    isOfficial: false
   }
 ];
 
-export function exportR13CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'media' = 'macro'): void {
+export function exportR13CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'media' | 'arima' = 'macro'): void {
   const model = R13_FORECAST_MODELS.find(m => m.id === selectedModelId) || R13_FORECAST_MODELS[0];
   let csvContent = 'data:text/csv;charset=utf-8,';
   csvContent += `PROYECCION RECURSO 13 - EXCEDENTES COOPERATIVAS ART.142, LEY 1819 DEL 2016 - VIGENCIA 2027\n`;
@@ -2426,10 +2512,10 @@ export interface R17HistoricalRecord {
 }
 
 export interface R17ForecastModel {
-  id: 'macro' | 'inercial' | 'wma' | 'media';
+  id: 'macro' | 'inercial' | 'wma' | 'media' | 'arima';
   name: string;
   shortName: string;
-  tag: 'Oficial Aprobado' | 'Piso Inercial' | 'Ponderado WMA-3' | 'Media Trienal';
+  tag: string;
   formula: string;
   projected2027: number;
   incrementoNominal: number;
@@ -2550,10 +2636,25 @@ export const R17_FORECAST_MODELS: R17ForecastModel[] = [
     alertaRiesgo: 'Bajo Riesgo. Proyección conservadora.',
     riskLevel: 'bajo',
     isOfficial: false
+  },
+  {
+    id: 'arima',
+    name: 'Modelo ARIMA (1,1,0) Autorregresivo',
+    shortName: 'ARIMA (1,1,0)',
+    tag: 'ARIMA (1,1,0)',
+    formula: 'ΔY_t = 556,0M - 0,90·ΔY_{t-1}',
+    projected2027: 6286105820,
+    incrementoNominal: 642581917,
+    variacionPct: 11.39,
+    color: '#8b5cf6',
+    interpretation: 'Modelo autorregresivo integrado de primer orden. Captura la dinámica inercial de certificados electorales y liquidaciones del Ministerio de Hacienda.',
+    alertaRiesgo: 'Bajo Riesgo. Proyección estadística consistente con la afluencia electoral.',
+    riskLevel: 'bajo',
+    isOfficial: false
   }
 ];
 
-export function exportR17CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'media' = 'macro'): void {
+export function exportR17CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'media' | 'arima' = 'macro'): void {
   const model = R17_FORECAST_MODELS.find(m => m.id === selectedModelId) || R17_FORECAST_MODELS[0];
   let csvContent = 'data:text/csv;charset=utf-8,';
   csvContent += `PROYECCION RECURSO 17 - DEVOLUCION DESCUENTO POR VOTACION (LEY 403/1997 Y 815/2003) - VIGENCIA 2027\n`;
@@ -2608,7 +2709,7 @@ export interface R40HistoricalRecord {
 }
 
 export interface R40ForecastModel {
-  id: 'macro' | 'inercial' | 'cagr' | 'wma' | 'media3' | 'media4' | 'linear';
+  id: 'macro' | 'inercial' | 'cagr' | 'wma' | 'media3' | 'media4' | 'linear' | 'arima';
   name: string;
   shortName: string;
   tag: string;
@@ -2942,6 +3043,21 @@ export const R40_FORECAST_MODELS: R40ForecastModel[] = [
     alertaRiesgo: 'Riesgo Moderado. Modera el crecimiento acelerado de los dos últimos años.',
     riskLevel: 'medio',
     isOfficial: false
+  },
+  {
+    id: 'arima',
+    name: 'Modelo ARIMA (1,1,0) Autorregresivo',
+    shortName: 'ARIMA (1,1,0) ($5.997M)',
+    tag: 'ARIMA (1,1,0)',
+    formula: 'ΔY_t = 260,1M + 0,00·ΔY_{t-1}',
+    projected2027: 5997321508,
+    incrementoNominal: 260058313,
+    variacionPct: 4.53,
+    color: '#8b5cf6',
+    interpretation: 'Ajuste econométrico con deriva positiva. Proyecta un crecimiento moderado del +4,53% consistente con la recaudación territorial de Boyacá.',
+    alertaRiesgo: 'Bajo Riesgo. Crecimiento prudente por debajo de la tasa macro (+6,0%).',
+    riskLevel: 'bajo',
+    isOfficial: false
   }
 ];
 
@@ -3016,7 +3132,7 @@ export interface R16HistoricalRecord {
 }
 
 export interface R16ForecastModel {
-  id: 'pgn' | 'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear';
+  id: 'pgn' | 'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear' | 'arima';
   name: string;
   shortName: string;
   tag: string;
@@ -3393,6 +3509,26 @@ export const R16_FORECAST_MODELS: R16ForecastModel[] = [
     confidence: 'Inviable (Déficit)',
     riskLevel: 'alto',
     isOfficial: false
+  },
+  {
+    id: 'arima',
+    name: 'Modelo ARIMA (0,1,1) Media Móvil Integrada',
+    shortName: 'ARIMA (0,1,1) ($12.385M)',
+    tag: 'ARIMA (0,1,1)',
+    formula: 'ΔY_t = 253,3M - 0,75·ε_{t-1}',
+    projected2027: 12384725098,
+    value: 12384725098,
+    incrementoNominal: 4644443827,
+    diffCop: 4644443827,
+    variacionPct: 60.00,
+    variationPct: 60.00,
+    color: '#8b5cf6',
+    interpretation: 'Modelo econométrico de series temporales que ilustra a los directivos el riesgo de usar proyecciones estadísticas frente al techo fijo legal decretado en el PGN ($8.311,0M).',
+    description: 'Modelo econométrico de series temporales frente al techo legal fijado en el PGN.',
+    alertaRiesgo: 'Alto Riesgo de Déficit. Supera el valor fijo legal decretado en el PGN en $4.073,8M.',
+    confidence: 'Riesgo de Déficit Legal',
+    riskLevel: 'alto',
+    isOfficial: false
   }
 ];
 
@@ -3688,7 +3824,7 @@ export const R20_HISTORICAL_SERIES: R20HistoricalRecord[] = [
 ];
 
 export interface R20GlobalForecastModel {
-  id: 'macro6' | 'ipc7' | 'inercial' | 'wma' | 'media3';
+  id: 'macro6' | 'ipc7' | 'inercial' | 'wma' | 'media3' | 'arima';
   name: string;
   shortName: string;
   tag: string;
@@ -3784,6 +3920,22 @@ export const R20_GLOBAL_FORECAST_MODELS: R20GlobalForecastModel[] = [
     color: '#8b5cf6',
     interpretation: 'Media simple del último trienio. Genera distorsión presupuestal (+26,88%) al no reconocer la contracción estructural derivada de la gratuidad universal.',
     isOfficial: false
+  },
+  {
+    id: 'arima',
+    name: 'Modelo ARIMA (0,1,1) Media Móvil Integrada',
+    shortName: 'ARIMA (0,1,1) ($10.894,0M)',
+    tag: 'ARIMA (0,1,1)',
+    formula: 'ΔY_t = -2.959,1M - 0,45·ε_{t-1}',
+    projected2027: 10894042810,
+    value: 10894042810,
+    incrementoNominal: -2293751947,
+    diffCop: -2293751947,
+    variacionPct: -17.39,
+    variationPct: -17.39,
+    color: '#8b5cf6',
+    interpretation: 'Modela la inercia contractiva histórica en derechos pecuniarios derivada de la entrada en vigor de la Gratuidad Universal (Ley 2307/2023). Refuerza la conveniencia de la indexación institucional.',
+    isOfficial: false
   }
 ];
 
@@ -3869,7 +4021,7 @@ export function exportR20CSV(selectedModelId: string): void {
 }
 
 export interface R21ForecastModel {
-  id: 'macro6' | 'meta7' | 'holt' | 'inercial';
+  id: 'macro6' | 'meta7' | 'holt' | 'inercial' | 'arima';
   name: string;
   shortName: string;
   tag: string;
@@ -3934,6 +4086,19 @@ export const R21_FORECAST_MODELS: R21ForecastModel[] = [
     color: '#64748b',
     interpretation: 'Suelo prudente manteniendo la base recaudada en 2026.',
     isOfficial: false
+  },
+  {
+    id: 'arima',
+    name: 'Modelo ARIMA (0,1,1) Media Móvil Integrada',
+    shortName: 'ARIMA (0,1,1) ($5.221,7M)',
+    tag: 'ARIMA (0,1,1)',
+    formula: 'ΔY_t = 28,2M - 0,75·ε_{t-1}',
+    projected2027: 5221689104,
+    incrementoNominal: 549471835,
+    variacionPct: 11.76,
+    color: '#8b5cf6',
+    interpretation: 'Modela la atenuación de rezagos administrativos de tramitación tributaria ante la DIAN, proyectando una normalización del recaudo.',
+    isOfficial: false
   }
 ];
 
@@ -3954,6 +4119,7 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'calculado644', name: 'Aumento Calculado PGN (+6,44%)', value: 387451499572, variationPct: 6.44 },
       { id: 'pgn', name: 'Techo Global PGN 2027 (R10+R17+R18)', value: 395704592082, variationPct: 8.71 },
       { id: 'macro6', name: 'Macro +6,0% Estándar', value: 385849858650, variationPct: 6.00 },
+      { id: 'arima', name: 'ARIMA (1,1,0) Autorregresivo (+19,68%)', value: 435635597234, variationPct: 19.68 },
       { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 364009300613, variationPct: 0.00 }
     ]
   },
@@ -3976,6 +4142,7 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'media3', name: 'Media Trienal (2024–2026)', value: 10077633768, variationPct: 11.78 },
       { id: 'media4', name: 'Media Cuatrienal (2023–2026)', value: 11025519025, variationPct: 22.29 },
       { id: 'linear', name: 'Regresión Lineal OLS', value: 12748911456, variationPct: 41.40 },
+      { id: 'arima', name: 'ARIMA (0,1,1) Media Móvil (+21,19%)', value: 10926410375, variationPct: 21.19 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 9015915211, variationPct: 0.00 }
     ]
   },
@@ -3995,7 +4162,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'macro', name: 'Macro +6,0% (Base Real Aprobada)', value: 1719108000, variationPct: 6.00 },
       { id: 'inercial', name: 'Piso Inercial 2026 ($1.622M)', value: 1621800000, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 1851005729, variationPct: 14.13 },
-      { id: 'media', name: 'Media Cuatrienal ($1.912M)', value: 1912354948, variationPct: 17.92 }
+      { id: 'media', name: 'Media Cuatrienal ($1.912M)', value: 1912354948, variationPct: 17.92 },
+      { id: 'arima', name: 'ARIMA (1,1,0) Autorregresivo (+28,88%)', value: 2090124619, variationPct: 28.88 }
     ]
   },
   {
@@ -4015,6 +4183,7 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'linear', name: 'Regresión Lineal OLS (R²=94,7%)', value: 54459255459, variationPct: 9.26 },
       { id: 'holt', name: 'Suavizamiento Holt', value: 53801597430, variationPct: 7.94 },
       { id: 'optimista', name: 'Escenario Expansión (+13%)', value: 56323920274, variationPct: 13.00 },
+      { id: 'arima', name: 'ARIMA (1,1,1) Mixto (+5,91%)', value: 52792185210, variationPct: 5.91 },
       { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 49844177233, variationPct: 0.00 }
     ]
   },
@@ -4037,7 +4206,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'wma', name: 'Ponderado Trienal WMA-3 (+33,77%)', value: 10354248285, variationPct: 33.77 },
       { id: 'media3', name: 'Media Trienal 2024–2026 (+32,79%)', value: 10278378058, variationPct: 32.79 },
       { id: 'media4', name: 'Media Cuatrienal 2023–2026 (+44,17%)', value: 11159304058, variationPct: 44.17 },
-      { id: 'linear', name: 'Regresión Lineal OLS (+81,46%)', value: 14045349312, variationPct: 81.46 }
+      { id: 'linear', name: 'Regresión Lineal OLS (+81,46%)', value: 14045349312, variationPct: 81.46 },
+      { id: 'arima', name: 'ARIMA (0,1,1) Media Móvil (+60,00%)', value: 12384725098, variationPct: 60.00 }
     ]
   },
   {
@@ -4055,6 +4225,7 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'calculado644', name: 'Aumento Calculado PGN (+6,44%)', value: 6006966842, variationPct: 6.44 },
       { id: 'macro', name: 'Macro +6,0% Estándar', value: 5982135337, variationPct: 6.00 },
+      { id: 'arima', name: 'ARIMA (1,1,0) Autorregresivo (+11,39%)', value: 6286105820, variationPct: 11.39 },
       { id: 'inercial', name: 'Piso Inercial 2026 ($5.644M)', value: 5643523903, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Móvil WMA-3', value: 5305436666, variationPct: -5.99 }
     ]
@@ -4074,6 +4245,7 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'calculado644', name: 'Aumento Calculado PGN (+6,44%)', value: 2246125668, variationPct: 6.44 },
       { id: 'macro', name: 'Macro +6,0% Estándar', value: 2236840669, variationPct: 6.00 },
+      { id: 'arima', name: 'ARIMA (1,1,0) Autorregresivo (-23,54%)', value: 1613437108, variationPct: -23.54 },
       { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 2110227046, variationPct: 0.00 }
     ]
   },
@@ -4094,7 +4266,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 47448027, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 44343950, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 52580553, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 56264488, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 56264488, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 36631211, variationPct: -17.39 }
     ]
   },
   {
@@ -4114,7 +4287,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 2742379108, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 2562971129, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 3039026518, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 3251948880, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 3251948880, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 2117193793, variationPct: -17.39 }
     ]
   },
   {
@@ -4134,7 +4308,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 89085448, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 83257428, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 98721959, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 105638685, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 105638685, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 68776471, variationPct: -17.39 }
     ]
   },
   {
@@ -4154,7 +4329,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 4037446596, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 3773314576, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 4474183470, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 4787656781, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 4787656781, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 3117022314, variationPct: -17.39 }
     ]
   },
   {
@@ -4174,7 +4350,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 787890156, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 736345940, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 873117458, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 934290413, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 934290413, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 608273357, variationPct: -17.39 }
     ]
   },
   {
@@ -4194,7 +4371,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 2168173849, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 2026330700, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 2402708584, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 2571048802, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 2571048802, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 1673891185, variationPct: -17.39 }
     ]
   },
   {
@@ -4214,7 +4392,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 4037045206, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 3772939445, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 4473738660, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 4787180809, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 4787180809, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 3116712429, variationPct: -17.39 }
     ]
   },
   {
@@ -4234,7 +4413,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 9959121, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 9307590, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 11036415, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 11809656, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 11809656, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 7688722, variationPct: -17.39 }
     ]
   },
   {
@@ -4254,7 +4434,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 24928700, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 23297850, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 27625276, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 29560777, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 29560777, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 19245657, variationPct: -17.39 }
     ]
   },
   {
@@ -4274,7 +4455,8 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 166584179, variationPct: 7.00 },
       { id: 'inercial', name: 'Base Inercial (0,0%)', value: 155686149, variationPct: 0.00 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 184603849, variationPct: 18.57 },
-      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 197537691, variationPct: 26.88 }
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 197537691, variationPct: 26.88 },
+      { id: 'arima', name: 'ARIMA (0,1,1) (-17,39%)', value: 128607671, variationPct: -17.39 }
     ]
   },
   {
@@ -4292,6 +4474,7 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 4952550305, variationPct: 6.00 },
       { id: 'meta7', name: 'Modelo Referencia (+7,0%)', value: 4999272477, variationPct: 7.00 },
+      { id: 'arima', name: 'ARIMA (0,1,1) Media Móvil (+11,76%)', value: 5221689104, variationPct: 11.76 },
       { id: 'holt', name: 'Suavizamiento Holt (+4,66%)', value: 4890000000, variationPct: 4.66 },
       { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 4672217269, variationPct: 0.00 }
     ]
@@ -4310,6 +4493,7 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     defaultModelId: 'macro6',
     models: [
       { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 6081498987, variationPct: 6.00 },
+      { id: 'arima', name: 'ARIMA (1,1,0) Autorregresivo (+4,53%)', value: 5997321508, variationPct: 4.53 },
       { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 5737263195, variationPct: 0.00 },
       { id: 'cagr', name: 'Tendencial Histórico CAGR (+9,05%)', value: 6256485514, variationPct: 9.05 },
       { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 5523087157, variationPct: -3.73 },
