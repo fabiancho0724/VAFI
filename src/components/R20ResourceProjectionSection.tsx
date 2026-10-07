@@ -1253,12 +1253,12 @@ export function R20ResourceProjectionSection() {
                       </td>
                       <td className="p-4 text-center font-mono whitespace-nowrap">
                         {r.indexado ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[10px]">
-                            0,0% Indexado
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[10px]" title="Política gubernamental transitoria: Proyección 2027 = $ 0 (Indexado a Base R10.0)">
+                            0,0% ($ 0 Proy.)
                           </span>
                         ) : r.subRecurso === 'R10' ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]" title="Absorbe el incremento del +6.0% de la base unificada de $351.357M">
-                            +{r.tasaAumentoPct.toFixed(2)}%*
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]" title="Concentra la totalidad del giro de funcionamiento Art. 86 (+6.0% sobre base indexada de $351.358M)">
+                            +6,00% (Giro Art. 86)
                           </span>
                         ) : (
                           <span className="font-bold text-amber-300">
@@ -1273,11 +1273,19 @@ export function R20ResourceProjectionSection() {
                           <span className="font-medium text-emerald-300">+{formatCurrencyCOP(r.incrementoNominal)}</span>
                         )}
                       </td>
-                      <td className="p-4 text-right font-mono font-extrabold text-cyan-300 whitespace-nowrap">
-                        {formatCurrencyCOP(r.proyeccion2027)}
+                      <td className="p-4 text-right font-mono font-extrabold whitespace-nowrap">
+                        {r.proyeccion2027 > 0 ? (
+                          <span className="text-cyan-300">{formatCurrencyCOP(r.proyeccion2027)}</span>
+                        ) : (
+                          <span className="text-slate-400 font-bold font-mono">$ 0</span>
+                        )}
                       </td>
-                      <td className="p-4 text-right font-mono font-bold text-white whitespace-nowrap">
-                        {formatCurrencyShortCOP(r.proyeccion2027)}
+                      <td className="p-4 text-right font-mono font-bold whitespace-nowrap">
+                        {r.proyeccion2027 > 0 ? (
+                          <span className="text-white">{formatCurrencyShortCOP(r.proyeccion2027)}</span>
+                        ) : (
+                          <span className="text-slate-400">$ 0 M</span>
+                        )}
                       </td>
                       <td className="p-4 text-center font-mono font-bold text-purple-300 whitespace-nowrap">
                         {r.participacion2027Pct.toFixed(2)}%
@@ -1363,7 +1371,7 @@ export function R20ResourceProjectionSection() {
                   Nota Aclaratoria Oficial sobre Políticas Gubernamentales e Indexación a la Base:
                 </strong>
                 <p>
-                  Los ingresos por <strong>Ampliación de Cobertura (R10.1)</strong> y <strong>Ampliación de Cobertura con enfoque territorial (R10.2)</strong> obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para la vigencia 2027 estos planes del anterior Gobierno Nacional continuarán en vigencia. Por tal motivo, sus valores individuales no se proyectan con incremento independiente (<strong>0,0% / +$ 0 COP</strong>). No obstante, los recursos entregados en la vigencia 2026 han sido <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 351.357.927.407 COP) y constituirán el giro unificado por el <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>).
+                  La proyección de la vigencia 2027 para los sub-recursos <strong>10.1 (Ampliación de Cobertura)</strong>, <strong>10.2 (Ampliación de Cobertura con Enfoque Territorial)</strong>, <strong>10.3 (Aportes Adicionales a la Base)</strong> y <strong>10.5 (Política de Gratuidad Base)</strong> es <strong>$ 0 en todos los casos</strong> debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del antiguo Gobierno Nacional continuarán en vigencia; por tal motivo sus valores no se proyectan de forma independiente (<strong>$ 0 COP</strong>). No obstante, los recursos que fueron entregados en el 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 351.357.927.407 COP) y constituirán el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual concentra el 100% del valor proyectado (<strong>$ 372.458.241.214 COP</strong>).
                 </p>
               </div>
             </div>
@@ -1892,12 +1900,12 @@ export function R20ResourceProjectionSection() {
                         </td>
                         <td className="p-3 text-center font-mono">
                           {isIndexado ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[10px]">
-                              0,0% Indexado
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[10px]" title="Política gubernamental transitoria: Proyección 2027 = $ 0 (Indexado a Base R10.0)">
+                              0,0% ($ 0 Proy.)
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]">
-                              +{sub.pct.toFixed(2)}% (Absorbe Base)
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]" title="Concentra la totalidad del giro de funcionamiento Art. 86 (+6.0% sobre base indexada de $351.358M)">
+                              +6,00% (Giro Art. 86)
                             </span>
                           )}
                         </td>
@@ -1908,11 +1916,19 @@ export function R20ResourceProjectionSection() {
                             <span className="text-emerald-300 font-bold">+{formatCurrencyCOP(sub.incremento)}</span>
                           )}
                         </td>
-                        <td className="p-3 text-right font-mono font-bold text-emerald-400">
-                          {formatCurrencyCOP(sub.proyeccion2027)}
+                        <td className="p-3 text-right font-mono font-bold">
+                          {sub.proyeccion2027 > 0 ? (
+                            <span className="text-emerald-400">{formatCurrencyCOP(sub.proyeccion2027)}</span>
+                          ) : (
+                            <span className="text-slate-400 font-mono font-bold">$ 0</span>
+                          )}
                         </td>
-                        <td className="p-3 text-right font-mono font-bold text-white">
-                          {formatCurrencyShortCOP(sub.proyeccion2027)}
+                        <td className="p-3 text-right font-mono font-bold">
+                          {sub.proyeccion2027 > 0 ? (
+                            <span className="text-white">{formatCurrencyShortCOP(sub.proyeccion2027)}</span>
+                          ) : (
+                            <span className="text-slate-400">$ 0 M</span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -1951,7 +1967,7 @@ export function R20ResourceProjectionSection() {
                   Nota Aclaratoria Oficial sobre Políticas Gubernamentales e Indexación a la Base:
                 </strong>
                 <p>
-                  Los ingresos percibidos por <strong>Ampliación de Cobertura (R10.1)</strong> y <strong>Ampliación de Cobertura con enfoque territorial (R10.2)</strong> obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para la vigencia 2027 estos planes del anterior Gobierno Nacional continuarán en vigencia. Por tal motivo, sus valores individuales no se proyectan con incremento independiente (<strong>0,0% / +$ 0 COP</strong>), manteniendo su valor nominal recibido en 2026. No obstante, los valores entregados en 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 351.357.927.407 COP) y constituirán el giro unificado por el <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>).
+                  La proyección de la vigencia 2027 para los sub-recursos <strong>10.1 (Ampliación de Cobertura)</strong>, <strong>10.2 (Ampliación de Cobertura con Enfoque Territorial)</strong>, <strong>10.3 (Aportes Adicionales a la Base)</strong> y <strong>10.5 (Política de Gratuidad Base)</strong> es <strong>$ 0 en todos los casos</strong> debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del antiguo Gobierno Nacional continuarán en vigencia; por tal motivo sus valores no se proyectan de forma independiente (<strong>$ 0 COP</strong>). No obstante, los recursos que fueron entregados en el 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 351.357.927.407 COP) y constituirán el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual concentra el 100% del valor proyectado (<strong>$ 372.458.241.214 COP</strong>).
                 </p>
               </div>
             </div>
