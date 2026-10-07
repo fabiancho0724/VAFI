@@ -35,7 +35,9 @@ import {
   R17_HISTORICAL_SERIES, R17_FORECAST_MODELS, exportR17CSV,
   R40HistoricalRecord, R40ForecastModel, R40_BASE_2026,
   R40_HISTORICAL_SERIES, R40_FORECAST_MODELS, R40_DESCRIPTIVE_STATS, exportR40CSV,
-  R20_GLOBAL_FORECAST_MODELS, R21_FORECAST_MODELS,
+  R20HistoricalRecord, R20GlobalForecastModel, R20_BASE_2026, R20_PROJECTION_MACRO_2027,
+  R20_HISTORICAL_SERIES, R20_GLOBAL_FORECAST_MODELS, R20_DESCRIPTIVE_STATS, exportR20CSV,
+  R21_FORECAST_MODELS,
   OFFICIAL_17_CONCEPTS_CATALOG, OFFICIAL_BALANCE_GENERAL_CATALOG,
   Official17ConceptDefinition, OfficialConceptDefinition,
   Official17ConceptComputedRow, OfficialConceptComputedRow,
@@ -106,8 +108,6 @@ export function R20ResourceProjectionSection() {
   const [alpha, setAlpha] = useState(0.5);
   const [beta, setBeta] = useState(0.3);
 
-  // Sub-vista en R20: Modelos & Curvas | Matriz de Conceptos y Total R20 | Unidades
-  const [activeSubTab, setActiveSubTab] = useState<'modelos' | 'matriz-conceptos' | 'unidades'>('matriz-conceptos');
 
   // Carga inicial de datos R20 y R21
   useEffect(() => {
@@ -611,10 +611,10 @@ export function R20ResourceProjectionSection() {
   // MODELACIÓN COMBINADA INSTITUCIONAL (R10 + R13 + R14 + R16 + R17 + R18 + R20 + R21 + R40)
   // =========================================================================
   const combinedSummary = useMemo(() => {
-    const r20_2024 = matrixSummary.totalesPorAno[2024] || 0;
-    const r20_2025 = matrixSummary.totalesPorAno[2025] || 0;
-    const r20_2026 = matrixSummary.total2026;
-    const r20_2027 = matrixSummary.totalProyeccion2027;
+    const r20_2024 = 19761360195;
+    const r20_2025 = 17249655994;
+    const r20_2026 = R20_BASE_2026;
+    const r20_2027 = R20_PROJECTION_MACRO_2027;
 
     const r21_2024 = r21Records.find(r => r.vigencia === 2024)?.totalRecaudo || 0;
     const r21_2025 = r21Records.find(r => r.vigencia === 2025)?.totalRecaudo || 0;
@@ -774,7 +774,7 @@ export function R20ResourceProjectionSection() {
     }
   };
 
-  const handleR20GlobalModelChange = (modelId: 'macro6' | 'ipc7' | 'inercial') => {
+  const handleR20GlobalModelChange = (modelId: 'macro6' | 'ipc7' | 'inercial' | 'wma' | 'media3') => {
     setOfficial17Selections(prev => {
       const next = { ...prev };
       for (const id of R20_CONCEPT_IDS) {
@@ -793,6 +793,54 @@ export function R20ResourceProjectionSection() {
     const allSame = models.every(m => m === models[0]);
     return allSame ? models[0] : 'mixto';
   }, [effective17Selections, R20_CONCEPT_IDS]);
+
+  const r20ActiveModel = useMemo(() => {
+    return R20_GLOBAL_FORECAST_MODELS.find(m => m.id === currentR20GlobalState) || R20_GLOBAL_FORECAST_MODELS[0];
+  }, [currentR20GlobalState]);
+
+  const r20ChartSeries = useMemo(() => {
+    return R20_HISTORICAL_SERIES.map((h) => {
+      const is2027 = h.vigencia === 2027;
+      const recaudo = is2027 ? r20ActiveModel.projected2027 : h.totalRecaudo;
+      const variacionCOP = is2027 ? r20ActiveModel.incrementoNominal : h.variacionAnualCOP;
+      const variacionPct = is2027 ? r20ActiveModel.variacionPct : h.variacionAnualPct;
+
+      return {
+        year: `${h.vigencia}`,
+        numericYear: h.vigencia,
+        vigencia: h.vigencia,
+        recaudo: recaudo,
+        recaudoMillones: Number((recaudo / 1e6).toFixed(2)),
+        variacionCOP: variacionCOP,
+        variacionPct: variacionPct,
+        tipo: h.tipo,
+        notaNormativa: is2027 ? `${r20ActiveModel.name} — ${r20ActiveModel.interpretation}` : h.notaNormativa,
+        is2027: is2027,
+        is2026: h.vigencia === 2026
+      };
+    });
+  }, [r20ActiveModel]);
+
+  const r20ModelsChartData = useMemo(() => {
+    return R20_GLOBAL_FORECAST_MODELS.map(m => {
+      const val = m.projected2027;
+      const vPct = m.variacionPct;
+      const diff = m.incrementoNominal;
+      return {
+        name: m.tag,
+        fullName: m.name,
+        value: val,
+        valueMillones: Number((val / 1e6).toFixed(2)),
+        variacionPct: vPct,
+        variationPct: vPct,
+        diffCop: diff,
+        id: m.id,
+        isSelected: currentR20GlobalState === m.id,
+        isOfficial: m.isOfficial,
+        color: m.color
+      };
+    });
+  }, [currentR20GlobalState]);
 
   const currentR21State = useMemo(() => {
     return effective17Selections[R21_CONCEPT_ID]?.modelId || 'macro6';
@@ -6563,45 +6611,55 @@ export function R20ResourceProjectionSection() {
       {/* ========================================================================= */}
       {selectedRecursoTab === 'r20' && (
         <div className="space-y-6 animate-in fade-in">
-          {/* HEADER R20 */}
+          {/* HEADER HERO R20 */}
           <div className="bg-gradient-to-br from-surface-container-high/90 to-background border border-amber-500/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-amber-500/10 blur-[100px] rounded-full pointer-events-none"></div>
 
             <div className="relative z-10">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
                 <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 border border-amber-500/30 shadow-lg">
-                    <Calculator size={28} />
+                  <div className="w-14 h-14 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-300 shrink-0 border border-amber-500/30 shadow-lg">
+                    <Coins size={28} />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                        Histórico 2016–2026 • Recurso 20 Propios
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-xs font-mono uppercase tracking-wider font-bold text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
+                        Autogestión Institucional • Art. 65 Ley 30 de 1992
                       </span>
-                      <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 font-bold">
-                        ✓ 124 Registros Consolidados
+                      <span className="text-xs font-mono font-bold text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/20">
+                        10 Conceptos Oficiales Consolidados
                       </span>
-                      <span className="text-[11px] font-mono text-indigo-300 bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">
-                        ARIMA(1,1,0) Activo
+                      <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30 flex items-center gap-1">
+                        <TrendingUp size={13} /> Base Real 2026: $13.187,8M • Proy 2027 (+6,0%): $13.979,1M
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                        <ShieldCheck size={13} /> Parámetro Macro Oficial: +6,0%
                       </span>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-display text-white font-bold tracking-tight mt-1.5">
-                      Proyección de Recursos Propios 2027 (R20)
-                    </h2>
-                    <p className="text-on-surface-variant font-sans text-xs md:text-sm mt-1 max-w-3xl leading-relaxed">
-                      Modelación predictiva multimodelo con tabla integral que detalla el histórico y la proyección concepto por concepto, consolidando el <strong>Total General de la Proyección de R20</strong> para 2027.
+                    <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
+                      Recurso 20: Recursos Propios (20-PROPIOS)
+                    </h3>
+                    <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
+                      En ejercicio de la autonomía universitaria consagrada en el artículo 65 de la Ley 30 de 1992, los Recursos Propios de la UPTC provienen de la autogestión académica y administrativa, integrando <strong>10 conceptos presupuestales oficiales</strong> (derechos pecuniarios, inscripciones, posgrados, certificaciones, derechos de grado y servicios conexos).
+                      <br />
+                      <strong className="text-amber-300">Base Real Certificada 2026:</strong> El recaudo de la vigencia cerró en <strong className="text-white">$ 13.187.794.757 COP</strong> ($13.187,8M). Con el parámetro macroeconómico oficial aprobado del <strong className="text-emerald-300">+6,0%</strong>, la proyección aforada para 2027 totaliza <strong className="text-emerald-300">$ 13.979.053.203 COP</strong> ($13.979,1M), generando un incremento nominal directo de <strong className="text-emerald-200">+$ 791.258.446 COP</strong> (+6,00%) que garantiza la sostenibilidad institucional sin riesgos de sobreestimación presupuestal.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 shrink-0">
                   <button
-                    onClick={handleExportR20}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold border border-white/10 transition-all shadow-md active:scale-95"
+                    onClick={() => exportR20CSV(r20ActiveModel.id)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-500 text-black font-bold text-xs shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] cursor-pointer"
                   >
-                    <Download size={16} className="text-amber-400" />
-                    <span>Exportar CSV R20</span>
+                    <Download size={15} />
+                    <span>Descargar Certificado R20 (CSV)</span>
                   </button>
+                  <div className="flex items-center gap-2 text-right">
+                    <span className="text-[11px] font-mono text-on-surface-variant">
+                      Base Real Recaudada 2026: <strong className="text-amber-300">{formatCurrencyShortCOP(R20_BASE_2026)}</strong>
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -6613,22 +6671,17 @@ export function R20ResourceProjectionSection() {
                     SELECCIONAR MODELO DE PROYECCIÓN R20 PARA 2027:
                   </span>
                   <span className="text-[11px] font-mono text-on-surface-variant">
-                    Modelo Activo: <strong className="text-white">{
-                      currentR20GlobalState === 'macro6' ? 'Macro +6,0% (10 Conceptos Propios)' :
-                      currentR20GlobalState === 'ipc7' ? 'Indexación IPC (+7,0%)' :
-                      currentR20GlobalState === 'inercial' ? 'Base Inercial 2026 (0,0%)' :
-                      'Personalizado / Mixto'
-                    }</strong>
+                    Modelo Activo: <strong className="text-white">{r20ActiveModel.name}</strong>
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                   {R20_GLOBAL_FORECAST_MODELS.map((m) => {
                     const isSelected = currentR20GlobalState === m.id;
                     return (
                       <button
                         key={m.id}
-                        onClick={() => handleR20GlobalModelChange(m.id)}
+                        onClick={() => handleR20GlobalModelChange(m.id as any)}
                         className={`p-3.5 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
                           isSelected
                             ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-500/40 shadow-lg scale-[1.02]'
@@ -6644,7 +6697,7 @@ export function R20ResourceProjectionSection() {
                             </span>
                             {m.isOfficial && (
                               <span className="text-[8px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1 py-0.5 rounded border border-emerald-500/30">
-                                Oficial (+6,0%)
+                                Oficial (+6%)
                               </span>
                             )}
                           </div>
@@ -6656,10 +6709,10 @@ export function R20ResourceProjectionSection() {
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
-                          <span className={`${m.variacionPct > 0 ? 'text-emerald-400' : 'text-on-surface-variant'} font-bold`}>
+                          <span className={`${m.variacionPct > 0 ? 'text-emerald-400' : m.variacionPct < 0 ? 'text-rose-400' : 'text-on-surface-variant'} font-bold`}>
                             {m.variacionPct > 0 ? '+' : ''}{m.variacionPct.toFixed(2)}%
                           </span>
-                          <span>{m.incrementoNominal > 0 ? `+${formatCurrencyShortCOP(m.incrementoNominal)}` : '$0'}</span>
+                          <span>{m.incrementoNominal > 0 ? `+${formatCurrencyShortCOP(m.incrementoNominal)}` : m.incrementoNominal < 0 ? formatCurrencyShortCOP(m.incrementoNominal) : '$0'}</span>
                         </div>
                       </button>
                     );
@@ -6667,590 +6720,770 @@ export function R20ResourceProjectionSection() {
                 </div>
               </div>
 
-              {/* BARRA DE FILTROS Y VENTANA TEMPORAL R20 */}
-              <div className="mt-6 flex flex-col md:flex-row flex-wrap items-start md:items-center justify-between gap-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                  <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-amber-400" /> Calibración:
-                  </span>
-                  <div className="inline-flex rounded-xl bg-black/40 p-1 border border-white/10">
-                    <button
-                      onClick={() => setSelectedWindow('post-gratuidad')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        selectedWindow === 'post-gratuidad'
-                          ? 'bg-amber-500 text-black font-bold shadow'
-                          : 'text-on-surface-variant hover:text-white'
-                      }`}
-                    >
-                      ⭐ Post-Gratuidad (2021–2026)
-                    </button>
-                    <button
-                      onClick={() => setSelectedWindow('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        selectedWindow === 'all'
-                          ? 'bg-amber-500 text-black font-bold shadow'
-                          : 'text-on-surface-variant hover:text-white'
-                      }`}
-                    >
-                      10 Años Completos (2016–2026)
-                    </button>
-                    <button
-                      onClick={() => setSelectedWindow('ultimos-5')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        selectedWindow === 'ultimos-5'
-                          ? 'bg-amber-500 text-black font-bold shadow'
-                          : 'text-on-surface-variant hover:text-white'
-                      }`}
-                    >
-                      Últimos 5 Años (2022–2026)
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                  <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
-                    <Filter size={14} className="text-amber-400 shrink-0" />
-                    <span className="text-on-surface-variant">Concepto:</span>
-                    <select
-                      value={selectedConcepto}
-                      onChange={(e) => setSelectedConcepto(e.target.value)}
-                      className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer max-w-[180px] truncate"
-                    >
-                      <option value="Todos" className="bg-slate-900 text-white">Todos los Conceptos ({allConceptos.length})</option>
-                      {allConceptos.map(c => (
-                        <option key={c} value={c} className="bg-slate-900 text-white">{c}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* TARJETAS KPI R20 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="glass-card p-5 rounded-2xl border border-amber-500/40 relative overflow-hidden bg-gradient-to-br from-amber-500/10 to-transparent">
-              <span className="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold block mb-1">
-                Total Proyección R20 (2027)
-              </span>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-display font-bold text-white tracking-tight">
-                  {formatCurrencyShortCOP(matrixSummary.totalProyeccion2027)}
-                </span>
-                <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md ${
-                  matrixSummary.variacionTotalPct >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-                }`}>
-                  +{matrixSummary.variacionTotalPct.toFixed(1)}%
-                </span>
-              </div>
-              <p className="text-[11px] font-mono text-on-surface-variant mt-2 truncate">
-                {formatCurrencyCOP(matrixSummary.totalProyeccion2027)}
-              </p>
-            </div>
-
-            <div className="glass-card p-5 rounded-2xl border border-white/10 relative overflow-hidden">
-              <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant block mb-1">
-                Modelo Óptimo R20
-              </span>
-              <div className="text-lg font-bold text-white mt-1 truncate flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: bestModel?.color || '#38bdf8' }}></span>
-                <span>{bestModel ? bestModel.shortName : 'Calculando...'}</span>
-              </div>
-              <div className="flex items-center gap-3 mt-2 font-mono text-xs">
-                <span className="text-emerald-400 font-semibold">R²: {bestModel ? `${bestModel.r2.toFixed(1)}%` : '0%'}</span>
-                <span>•</span>
-                <span className="text-sky-400 font-semibold">MAPE: {bestModel ? `${bestModel.mape.toFixed(1)}%` : '0%'}</span>
-              </div>
-            </div>
-
-            <div className="glass-card p-5 rounded-2xl border border-white/10 relative overflow-hidden">
-              <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant block mb-1">
-                Recaudo Base 2026 (Corte Vigencia)
-              </span>
-              <div className="text-2xl font-display font-bold text-white mt-1">
-                {formatCurrencyShortCOP(matrixSummary.total2026)}
-              </div>
-              <p className="text-[11px] text-on-surface-variant mt-2 font-mono">
-                Total: <strong className="text-white">{formatCurrencyCOP(matrixSummary.total2026)}</strong>
-              </p>
-            </div>
-
-            <div className="glass-card p-5 rounded-2xl border border-white/10 relative overflow-hidden">
-              <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant block mb-1">
-                Incremento Neto Proyectado (Δ)
-              </span>
-              <div className="text-2xl font-display font-bold text-emerald-400 mt-1">
-                +{formatCurrencyShortCOP(matrixSummary.totalProyeccion2027 - matrixSummary.total2026)}
-              </div>
-              <p className="text-[11px] text-on-surface-variant mt-2">
-                {matrixSummary.rows.length} Conceptos activos consolidados
-              </p>
-            </div>
-          </div>
-
-          {/* NAVEGACIÓN SECUNDARIA INTERNA R20 */}
-          <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-            <button
-              onClick={() => setActiveSubTab('matriz-conceptos')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeSubTab === 'matriz-conceptos'
-                  ? 'bg-amber-500 text-black shadow-lg scale-[1.02]'
-                  : 'text-on-surface-variant hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Table size={16} />
-              <span>📋 Matriz Detallada de Conceptos y Total R20</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded font-mono bg-black/20 font-bold">
-                {matrixSummary.rows.length} Conceptos
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveSubTab('modelos')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeSubTab === 'modelos'
-                  ? 'bg-amber-500 text-black shadow-lg scale-[1.02]'
-                  : 'text-on-surface-variant hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <BarChart3 size={16} />
-              <span>📊 Modelos Predictivos y Curvas (Incluye ARIMA)</span>
-            </button>
-
-            <button
-              onClick={() => setActiveSubTab('unidades')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeSubTab === 'unidades'
-                  ? 'bg-amber-500 text-black shadow-lg scale-[1.02]'
-                  : 'text-on-surface-variant hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Building2 size={16} />
-              <span>🏛️ Distribución por Facultad / Sede</span>
-            </button>
-          </div>
-
-          {/* SUB-VISTA A: MATRIZ DETALLADA CON TOTAL R20 */}
-          {activeSubTab === 'matriz-conceptos' && (
-            <div className="space-y-6 animate-in fade-in">
-              <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-surface-container-high/90 to-background shadow-xl">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                  <div>
-                    <span className="text-xs font-mono uppercase tracking-wider font-bold text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
-                      Consolidado Institucional de Recursos Propios
+              {/* TARJETAS KPI DE IMPACTO R20 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                {/* KPI 1: Proyección 2027 R20 */}
+                <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">
+                      Proyección 2027 (R20)
                     </span>
-                    <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
-                      Total de la Proyección de Recursos Propios (R20) — Vigencia 2027
-                    </h3>
-                    <p className="text-xs md:text-sm text-on-surface-variant max-w-2xl mt-1 leading-relaxed">
-                      Cálculo resultante de la suma agregada concepto a concepto para los <strong>{matrixSummary.rows.length} conceptos presupuestales</strong> de la universidad.
-                    </p>
+                    <span className="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded border border-amber-500/30">
+                      {r20ActiveModel.tag}
+                    </span>
                   </div>
-
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-black/40 p-5 rounded-2xl border border-white/15">
-                    <div className="text-left sm:text-right pr-0 sm:pr-4 border-b sm:border-b-0 sm:border-r border-white/10 pb-3 sm:pb-0">
-                      <span className="text-[11px] uppercase tracking-wider text-on-surface-variant block font-medium">Recaudo Base 2026</span>
-                      <span className="text-xl font-mono font-bold text-sky-300">{formatCurrencyShortCOP(matrixSummary.total2026)}</span>
-                    </div>
-
-                    <div className="text-left sm:text-right">
-                      <span className="text-[11px] uppercase tracking-wider text-amber-400 block font-bold">TOTAL PROYECTADO 2027 (R20)</span>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-mono font-extrabold text-emerald-400">
-                          {formatCurrencyShortCOP(matrixSummary.totalProyeccion2027)}
-                        </span>
-                        <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded">
-                          +{matrixSummary.variacionTotalPct.toFixed(2)}%
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-mono font-semibold text-white block">
-                        {formatCurrencyCOP(matrixSummary.totalProyeccion2027)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* TABLA PRINCIPAL UNO A UNO R20 */}
-              <div className="glass-card p-6 md:p-8 rounded-[28px] border border-white/10 space-y-5">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
-                      <Table size={18} className="text-amber-400" />
-                      Tabla Detallada de Conceptos de Ingreso R20
-                    </h4>
-                    <p className="text-xs text-on-surface-variant mt-0.5">
-                      Histórico anual y proyección individual 2027 para cada concepto con fila de Total General.
-                    </p>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-amber-300 block">
+                      {formatCurrencyShortCOP(r20ActiveModel.projected2027)}
+                    </span>
+                    <span className="text-[11px] font-mono text-white/90 block mt-0.5">
+                      {formatCurrencyCOP(r20ActiveModel.projected2027)}
+                    </span>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-                      <input
-                        type="text"
-                        placeholder="Buscar concepto..."
-                        value={conceptSearch}
-                        onChange={(e) => setConceptSearch(e.target.value)}
-                        className="bg-black/30 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-on-surface-variant focus:outline-none focus:border-amber-400 w-[180px]"
-                      />
-                    </div>
-
-                    <div className="inline-flex rounded-xl bg-black/40 p-1 border border-white/10 text-xs">
-                      <button
-                        onClick={() => setMatrixViewMode('recent')}
-                        className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                          matrixViewMode === 'recent' ? 'bg-amber-500 text-black font-bold' : 'text-on-surface-variant hover:text-white'
-                        }`}
-                      >
-                        2021–2027 (Post-Gratuidad)
-                      </button>
-                      <button
-                        onClick={() => setMatrixViewMode('all')}
-                        className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                          matrixViewMode === 'all' ? 'bg-amber-500 text-black font-bold' : 'text-on-surface-variant hover:text-white'
-                        }`}
-                      >
-                        10 Años (2016–2027)
-                      </button>
-                    </div>
+                  <div className="mt-3 pt-3 border-t border-amber-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Criterio:</span>
+                    <strong className="text-amber-200 font-mono">{r20ActiveModel.formula}</strong>
                   </div>
                 </div>
 
-                <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
-                      <tr>
-                        <th className="p-3.5 font-semibold text-white sticky left-0 bg-surface-container-low z-10">
-                          Concepto de Ingreso R20 ({filteredMatrixRows.length})
-                        </th>
-                        {displayYears.map(y => (
-                          <th 
-                            key={y} 
-                            className={`p-3.5 font-semibold text-right font-mono ${
-                              y === 2026 ? 'text-sky-300 bg-sky-500/10' : 'text-on-surface-variant'
-                            }`}
-                          >
-                            {y} {y === 2026 ? '(Real)' : ''}
-                          </th>
-                        ))}
-                        <th className="p-3.5 font-bold text-right text-emerald-300 bg-emerald-500/10 font-mono">
-                          Proyección 2027 ($ COP)
-                        </th>
-                        <th className="p-3.5 font-bold text-right text-white font-mono">
-                          Proy ($M)
-                        </th>
-                        <th className="p-3.5 font-semibold text-center text-amber-300">
-                          Var vs 2026
-                        </th>
-                        <th className="p-3.5 font-semibold text-center text-purple-300">
-                          Part. R20 (%)
-                        </th>
-                        <th className="p-3.5 font-semibold text-center text-on-surface-variant">
-                          Método
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 font-sans">
-                      {filteredMatrixRows.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-white/5 transition-colors">
-                          <td className="p-3.5 font-semibold text-white max-w-[280px] truncate sticky left-0 bg-slate-900/90 backdrop-blur z-10" title={row.concepto}>
-                            <div className="flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
-                              <span className="truncate">{row.concepto}</span>
-                            </div>
-                          </td>
+                {/* KPI 2: Recaudo Real 2026 */}
+                <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">
+                      Recaudo Real 2026 (Base)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-500/30">
+                      Base Real Certificada
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-bold text-white block">
+                      {formatCurrencyShortCOP(R20_BASE_2026)}
+                    </span>
+                    <span className="text-[11px] font-mono text-amber-300/90 block mt-0.5">
+                      {formatCurrencyCOP(R20_BASE_2026)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-amber-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Estructura:</span>
+                    <strong className="text-amber-300 font-mono">10 Conceptos Consolidados</strong>
+                  </div>
+                </div>
 
-                          {displayYears.map(y => {
-                            const val = row.valoresPorAno[y] || 0;
-                            return (
-                              <td 
-                                key={y} 
-                                className={`p-3.5 text-right font-mono ${
-                                  y === 2026 
-                                    ? 'text-sky-300 font-bold bg-sky-500/5' 
-                                    : val > 0 ? 'text-on-surface-variant' : 'text-white/20'
-                                }`}
-                              >
-                                {val > 0 ? formatCurrencyShortCOP(val) : '—'}
-                              </td>
-                            );
-                          })}
+                {/* KPI 3: Incremento Nominal Proyectado */}
+                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
+                      Incremento Nominal 2027
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
+                      {r20ActiveModel.variacionPct >= 0 ? '+' : ''}{r20ActiveModel.variacionPct.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className={`text-2xl md:text-3xl font-mono font-extrabold ${r20ActiveModel.incrementoNominal >= 0 ? 'text-emerald-400' : 'text-rose-400'} block`}>
+                      {r20ActiveModel.incrementoNominal >= 0 ? '+' : ''}{formatCurrencyShortCOP(r20ActiveModel.incrementoNominal)}
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
+                      {r20ActiveModel.incrementoNominal >= 0 ? '+' : ''}{formatCurrencyCOP(r20ActiveModel.incrementoNominal)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Cálculo sobre base 2026:</span>
+                    <strong className="text-emerald-300">{r20ActiveModel.variacionPct >= 0 ? '+' : ''}{r20ActiveModel.variacionPct.toFixed(1)}% indexación</strong>
+                  </div>
+                </div>
 
-                          <td className="p-3.5 text-right font-mono font-bold text-emerald-300 bg-emerald-500/5">
-                            {formatCurrencyCOP(row.proyeccion2027)}
-                          </td>
-                          <td className="p-3.5 text-right font-mono font-bold text-white">
-                            {formatCurrencyShortCOP(row.proyeccion2027)}
-                          </td>
-                          <td className="p-3.5 text-center font-mono font-bold">
-                            <span className={`px-2 py-0.5 rounded text-[11px] ${
-                              row.variacionPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
-                            }`}>
-                              {row.variacionPct >= 0 ? '+' : ''}{row.variacionPct.toFixed(1)}%
-                            </span>
-                          </td>
-                          <td className="p-3.5 text-center font-mono font-bold text-purple-300">
-                            {row.participacionPct.toFixed(1)}%
-                          </td>
-                          <td className="p-3.5 text-center font-mono text-[10px] text-on-surface-variant">
-                            {row.modeloUtilizado}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-
-                    {/* FILA DE TOTAL PROYECCIÓN R20 */}
-                    <tfoot className="border-t-2 border-amber-500/40 bg-black/40 font-bold text-white text-xs sticky bottom-0">
-                      <tr className="shadow-lg">
-                        <td className="p-4 font-extrabold text-amber-400 uppercase tracking-wider sticky left-0 bg-slate-900 z-10 flex items-center gap-2">
-                          <Landmark size={16} className="text-amber-400 shrink-0" />
-                          <span>TOTAL GENERAL RECURSOS PROPIOS (R20)</span>
-                        </td>
-
-                        {displayYears.map(y => {
-                          const colTotal = matrixSummary.totalesPorAno[y] || 0;
-                          return (
-                            <td 
-                              key={y} 
-                              className={`p-4 text-right font-mono font-extrabold ${
-                                y === 2026 ? 'text-sky-300 bg-sky-500/20' : 'text-white'
-                              }`}
-                            >
-                              {formatCurrencyShortCOP(colTotal)}
-                            </td>
-                          );
-                        })}
-
-                        <td className="p-4 text-right font-mono font-extrabold text-emerald-300 bg-emerald-500/20 text-sm">
-                          {formatCurrencyCOP(matrixSummary.totalProyeccion2027)}
-                        </td>
-
-                        <td className="p-4 text-right font-mono font-extrabold text-white text-sm">
-                          {formatCurrencyShortCOP(matrixSummary.totalProyeccion2027)}
-                        </td>
-
-                        <td className="p-4 text-center font-mono font-extrabold text-emerald-400 bg-emerald-500/10">
-                          +{matrixSummary.variacionTotalPct.toFixed(2)}%
-                        </td>
-
-                        <td className="p-4 text-center font-mono font-extrabold text-purple-300">
-                          100.0%
-                        </td>
-
-                        <td className="p-4 text-center font-mono text-[10px] text-amber-400 font-bold">
-                          Consolidado Total R20
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                {/* KPI 4: Desagregación a Nivel de Concepto */}
+                <div className="p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">
+                      Desagregación Presupuestal
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-200 px-2 py-0.5 rounded border border-indigo-500/30">
+                      10 Conceptos
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-indigo-300 block">
+                      10 Conceptos
+                    </span>
+                    <span className="text-[11px] font-mono text-indigo-200/90 block mt-0.5">
+                      Autogestión Académica y Administrativa UPTC
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-indigo-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Alcance:</span>
+                    <strong className="text-emerald-300">Desglose Oficial por Concepto</strong>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* SUB-VISTA B: MODELOS PREDICTIVOS Y GRÁFICA (INCLUYE ARIMA) */}
-          {activeSubTab === 'modelos' && (
-            <div className="space-y-6 animate-in fade-in">
-              <div className="glass-card p-6 md:p-8 rounded-[28px]">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-                  <div>
-                    <h3 className="text-xl font-display text-white font-bold flex items-center gap-2">
-                      <TrendingUp size={20} className="text-amber-400" />
-                      Curva Histórica y Modelos Predictivos a 2027 (Incluye ARIMA)
-                    </h3>
-                    <p className="text-xs text-on-surface-variant mt-1">
-                      Puntos reales {years[0]}–{years[years.length - 1]} vs proyección 2027 con ARIMA, Holt, OLS, Macro MFMP y polinomial.
-                    </p>
-                  </div>
+          {/* GRÁFICO HISTÓRICO Y PROYECCIÓN RECHARTS */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
+                  <BarChart3 size={20} className="text-amber-400" />
+                  Evolución y Proyección de Recursos Propios — R20 (2016–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Serie histórica oficial reflejando la transición por la Política Nacional de Gratuidad (Ley 2307 de 2023), la estabilización en la base 2026 ({formatCurrencyShortCOP(R20_BASE_2026)}) y la proyección 2027 ({formatCurrencyShortCOP(r20ActiveModel.projected2027)}).
+                </p>
+              </div>
 
-                  <div className="flex items-center gap-2 text-xs bg-black/30 px-3 py-1.5 rounded-xl border border-white/10">
-                    <span className="text-on-surface-variant font-semibold">Enfocar en Gráfica:</span>
-                    <select
-                      value={selectedModelFilter}
-                      onChange={(e) => setSelectedModelFilter(e.target.value)}
-                      className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
-                    >
-                      <option value="all" className="bg-slate-900 text-white">Todos los Modelos ({models.length})</option>
-                      {models.map(m => (
-                        <option key={m.modelId} value={m.modelId} className="bg-slate-900 text-white">
-                          {m.shortName} ({formatCurrencyShortCOP(m.projected2027)})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+                  Histórico Real (2016–2025)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-cyan-300 font-bold">
+                  <span className="w-3 h-3 rounded-full bg-cyan-400 ring-2 ring-cyan-500/50"></span>
+                  Base 2026 Certificada ({formatCurrencyShortCOP(R20_BASE_2026)})
+                </span>
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
+                  <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
+                  Proyección 2027 ({formatCurrencyShortCOP(r20ActiveModel.projected2027)})
+                </span>
+              </div>
+            </div>
+
+            <div className="h-[360px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={r20ChartSeries} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <defs>
+                    <linearGradient id="r20BarGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#b45309" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="r20Bar2026" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#0891b2" stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="r20Bar2027" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#34d399" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="r20AreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 10, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                  />
+                  
+                  <YAxis 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                    tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`}
+                    domain={[0, 55000000000]}
+                  />
+
+                  <RechartsTooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload;
+                      return (
+                        <div className="bg-surface-container-high/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl min-w-[290px]">
+                          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+                            <span className="font-mono font-bold text-white text-sm">
+                              Vigencia {item.vigencia}
+                            </span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                              item.is2027 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                                : item.is2026
+                                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                                : 'bg-white/10 text-white border border-white/20'
+                            }`}>
+                              {item.is2027 ? `PROYECCIÓN (${r20ActiveModel.tag})` : item.is2026 ? 'BASE REAL CERTIFICADA' : 'HISTÓRICO REAL'}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-on-surface-variant">Recursos Propios:</span>
+                              <span className="font-mono font-bold text-amber-300 text-sm">
+                                {formatCurrencyShortCOP(item.recaudo)}
+                              </span>
+                            </div>
+                            <div className="text-right text-[11px] font-mono text-white/80">
+                              {formatCurrencyCOP(item.recaudo)}
+                            </div>
+
+                            {item.variacionCOP !== 0 && (
+                              <div className="flex justify-between items-baseline pt-2 border-t border-white/10">
+                                <span className="text-on-surface-variant">Variación vs. año ant:</span>
+                                <span className={`font-mono font-bold ${item.variacionCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {item.variacionCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(item.variacionCOP)} ({item.variacionPct >= 0 ? '+' : ''}{item.variacionPct.toFixed(2)}%)
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="pt-2 border-t border-white/10 text-[10px] text-on-surface-variant italic">
+                              {item.notaNormativa}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+
+                  <Area 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    fill="url(#r20AreaGrad)" 
+                    stroke="none" 
+                  />
+
+                  <Bar dataKey="recaudo" radius={[6, 6, 0, 0]}>
+                    {r20ChartSeries.map((entry, index) => (
+                      <Cell 
+                        key={`r20-cell-${index}`} 
+                        fill={entry.is2027 ? 'url(#r20Bar2027)' : entry.is2026 ? 'url(#r20Bar2026)' : 'url(#r20BarGradient)'}
+                        stroke={entry.is2027 ? '#10b981' : entry.is2026 ? '#06b6d4' : 'none'}
+                        strokeWidth={entry.is2027 || entry.is2026 ? 2 : 0}
+                      />
+                    ))}
+                  </Bar>
+
+                  <Line 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    stroke="#fbbf24" 
+                    strokeWidth={2.5}
+                    dot={{ fill: '#fbbf24', r: 3 }}
+                    activeDot={{ r: 6, fill: '#fbbf24', stroke: '#fff', strokeWidth: 2 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-4 p-3.5 rounded-2xl bg-black/30 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-amber-300">
+                <Info size={16} className="shrink-0" />
+                <span>
+                  <strong>Diagnóstico de Serie R20:</strong> Tras la absorción de los costos de matrícula de pregrado por la Política Nacional de Gratuidad (Ley 2307 de 2023 / Decreto 2271 de 2023, transferidos por la Nación en el Recurso 14), los Recursos Propios de la UPTC consolidaron un piso técnico y sostenible en su base real 2026 de <strong>{formatCurrencyShortCOP(R20_BASE_2026)}</strong>. El parámetro macroeconómico oficial del <strong>+6,0%</strong> indexa adecuadamente los derechos pecuniarios y servicios propios hasta <strong>{formatCurrencyCOP(r20ActiveModel.projected2027)}</strong> (+{r20ActiveModel.variacionPct.toFixed(2)}%), evitando los riesgos de sobreestimación presupuestal.
+                </span>
+              </div>
+              <span className="font-mono text-emerald-400 font-bold shrink-0">
+                Criterio Activo: {r20ActiveModel.name}
+              </span>
+            </div>
+          </div>
+
+          {/* COMPARATIVA GRÁFICA DE MODELOS Y RESUMEN ESTADÍSTICO */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* GRÁFICO COMPARATIVO DE LOS MODELOS */}
+            <div className="lg:col-span-2 glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/20 shadow-xl flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                    <BarChart3 size={18} className="text-amber-400" />
+                    Comparativa de Metodologías y Criterios 2027 (R20)
+                  </h4>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Valores en Millones de COP
+                  </span>
                 </div>
+                <p className="text-xs text-on-surface-variant mb-4">
+                  Contraste técnico entre el parámetro Macro Oficial (+6,0% = $13.979,1M), la indexación IPC (+7,0% = $14.110,9M), el piso inercial ($13.187,8M) y las estimaciones por medias móviles trienales ($15.637M a $16.733M).
+                </p>
 
-                <div className="h-[380px] w-full">
+                <div className="h-[280px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartSeries} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
-                      <defs>
-                        <linearGradient id="r20RealGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.35} />
-                          <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
-                        </linearGradient>
-                        <linearGradient id="r20BandGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
-                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.02} />
-                        </linearGradient>
-                      </defs>
-
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-                      <XAxis dataKey="year" stroke="currentColor" className="text-xs text-on-surface-variant" tickLine={false} axisLine={false} />
-                      <YAxis tickFormatter={(v) => formatCurrencyShortCOP(v)} stroke="currentColor" className="text-xs text-on-surface-variant font-mono" tickLine={false} axisLine={false} />
-                      <RechartsTooltip content={<CustomChartTooltip />} />
-
-                      <Area type="monotone" dataKey="bandaMax" fill="url(#r20BandGrad)" stroke="none" name="Banda de Incertidumbre" />
-                      <Area type="monotone" dataKey="real" name="Recaudo Real Histórico" fill="url(#r20RealGrad)" stroke="#38bdf8" strokeWidth={3.5} dot={{ r: 5, fill: '#38bdf8' }} />
-
-                      {(selectedModelFilter === 'all' || selectedModelFilter === 'arima') && (
-                        <Line type="monotone" dataKey="arima" name="ARIMA (1,1,0)" stroke="#818cf8" strokeWidth={3} strokeDasharray="4 4" dot={{ r: 6, fill: '#818cf8' }} />
-                      )}
-                      {(selectedModelFilter === 'all' || selectedModelFilter === 'macro') && (
-                        <Line type="monotone" dataKey="macro" name="Macro MFMP (7%)" stroke="#f59e0b" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 6, fill: '#f59e0b' }} />
-                      )}
-                      {(selectedModelFilter === 'all' || selectedModelFilter === 'holt') && (
-                        <Line type="monotone" dataKey="holt" name="Holt Suavizado" stroke="#4ade80" strokeWidth={3} strokeDasharray="4 4" dot={{ r: 6, fill: '#4ade80' }} />
-                      )}
-                      {(selectedModelFilter === 'all' || selectedModelFilter === 'log') && (
-                        <Line type="monotone" dataKey="log" name="Logarítmica" stroke="#34d399" strokeWidth={2} strokeDasharray="3 3" dot={{ r: 5, fill: '#34d399' }} />
-                      )}
-                      {(selectedModelFilter === 'all' || selectedModelFilter === 'poly2') && (
-                        <Line type="monotone" dataKey="poly2" name="Cuadrática" stroke="#c084fc" strokeWidth={2} strokeDasharray="3 3" dot={{ r: 5, fill: '#c084fc' }} />
-                      )}
-                      {(selectedModelFilter === 'all' || selectedModelFilter === 'wma') && (
-                        <Line type="monotone" dataKey="wma" name="WMA" stroke="#fbbf24" strokeWidth={2} strokeDasharray="3 3" dot={{ r: 5, fill: '#fbbf24' }} />
-                      )}
-                      {(selectedModelFilter === 'all' || selectedModelFilter === 'ols') && (
-                        <Line type="monotone" dataKey="ols" name="Lineal OLS" stroke="#60a5fa" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 5, fill: '#60a5fa' }} />
-                      )}
-                    </ComposedChart>
+                    <BarChart data={r20ModelsChartData} margin={{ top: 20, right: 20, left: 10, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="#94a3b8" 
+                        tick={{ fill: '#94a3b8', fontSize: 10, fontFamily: 'monospace' }}
+                      />
+                      <YAxis 
+                        stroke="#94a3b8" 
+                        tick={{ fill: '#94a3b8', fontSize: 10, fontFamily: 'monospace' }}
+                        tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`}
+                        domain={[10000000000, 18000000000]}
+                      />
+                      <RechartsTooltip 
+                        content={({ active, payload }) => {
+                          if (!active || !payload || !payload.length) return null;
+                          const d = payload[0].payload;
+                          return (
+                            <div className="bg-surface-container-high/95 p-3 rounded-xl border border-white/20 shadow-xl text-xs">
+                              <span className="font-bold text-white block">{d.fullName}</span>
+                              <span className="font-mono text-amber-300 font-bold block mt-1">
+                                {formatCurrencyShortCOP(d.value)} ({formatCurrencyCOP(d.value)})
+                              </span>
+                              <span className={`${d.variacionPct >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-mono text-[11px] block mt-0.5`}>
+                                Variación: {d.variacionPct >= 0 ? '+' : ''}{d.variacionPct.toFixed(2)}% ({d.diffCop >= 0 ? `+${formatCurrencyShortCOP(d.diffCop)}` : formatCurrencyShortCOP(d.diffCop)})
+                              </span>
+                              {d.isOfficial && (
+                                <span className="inline-block mt-1 text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+                                  Oficial Institucional Aprobado (+6,0%)
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }}
+                      />
+                      <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                        {r20ModelsChartData.map((entry, index) => (
+                          <Cell 
+                            key={`r20-model-bar-${index}`} 
+                            fill={entry.isSelected ? '#34d399' : entry.color} 
+                            stroke={entry.isSelected ? '#ffffff' : 'none'}
+                            strokeWidth={entry.isSelected ? 2 : 0}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              {/* TABLA COMPARATIVA DE MODELOS R20 */}
-              <div className="glass-card p-6 rounded-[28px]">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-display text-white font-bold flex items-center gap-2">
-                    <Table size={18} className="text-amber-400" />
-                    Evaluación de Modelos Matemáticos R20 (Incluye ARIMA)
-                  </h3>
+              <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/10 text-center">
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-[10px] text-on-surface-variant block">Base 2026 Real</span>
+                  <span className="text-xs font-mono font-bold text-white block mt-0.5">{formatCurrencyShortCOP(R20_BASE_2026)}</span>
+                  <span className="text-[9px] text-on-surface-variant">0,0% inercial</span>
                 </div>
-
-                <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
-                      <tr>
-                        <th className="p-4 font-semibold text-white">Modelo Matemático</th>
-                        <th className="p-4 font-semibold text-amber-300">Fórmula / Mecanismo</th>
-                        <th className="p-4 font-semibold text-right text-emerald-300">Proyección 2027 ($ COP)</th>
-                        <th className="p-4 font-semibold text-right text-white">Millones ($M)</th>
-                        <th className="p-4 font-semibold text-center text-sky-300">Var. vs 2026</th>
-                        <th className="p-4 font-semibold text-center text-purple-300">R² (Ajuste)</th>
-                        <th className="p-4 font-semibold text-center text-yellow-300">MAPE</th>
-                        <th className="p-4 font-semibold text-center text-white">Criterio Institucional</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 font-sans">
-                      {models.map((m) => (
-                        <tr 
-                          key={m.modelId} 
-                          onClick={() => setSelectedModelFilter(m.modelId)}
-                          className="hover:bg-white/5 transition-colors cursor-pointer"
-                        >
-                          <td className="p-4 font-bold text-white flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: m.color }}></span>
-                            <span>{m.modelName}</span>
-                          </td>
-                          <td className="p-4 font-mono text-[11px] text-amber-200/90 max-w-[240px] truncate" title={m.formula}>
-                            {m.formula}
-                          </td>
-                          <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                            {formatCurrencyCOP(m.projected2027)}
-                          </td>
-                          <td className="p-4 text-right font-mono font-bold text-white">
-                            {formatCurrencyShortCOP(m.projected2027)}
-                          </td>
-                          <td className="p-4 text-center font-mono font-bold">
-                            <span className={`px-2 py-0.5 rounded ${
-                              m.variationPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
-                            }`}>
-                              {m.variationPct >= 0 ? '+' : ''}{m.variationPct.toFixed(2)}%
-                            </span>
-                          </td>
-                          <td className="p-4 text-center font-mono font-bold text-purple-300">
-                            {m.r2.toFixed(1)}%
-                          </td>
-                          <td className="p-4 text-center font-mono font-bold text-yellow-300">
-                            {m.mape.toFixed(2)}%
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                              m.tag === 'Recomendado'
-                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                : 'bg-white/10 text-on-surface-variant'
-                            }`}>
-                              {m.tag}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                  <span className="text-[10px] text-emerald-300 block font-bold">Oficial +6,0%</span>
+                  <span className="text-xs font-mono font-bold text-emerald-300 block mt-0.5">$ 13.979,1M</span>
+                  <span className="text-[9px] text-emerald-400">+$ 791,3M (+6,00%)</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30">
+                  <span className="text-[10px] text-cyan-300 block font-bold">Indexación IPC</span>
+                  <span className="text-xs font-mono font-bold text-cyan-300 block mt-0.5">$ 14.110,9M</span>
+                  <span className="text-[9px] text-cyan-400">+7,00% (+923,1M)</span>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* SUB-VISTA C: UNIDADES */}
-          {activeSubTab === 'unidades' && (() => {
-            const unitBreakdown = [
-              { unidad: 'Sede Central Tunja', rec2026: matrixSummary.total2026 * 0.68, proj2027: matrixSummary.totalProyeccion2027 * 0.68, participacion: 68.0 },
-              { unidad: 'Facultad Seccional Duitama', rec2026: matrixSummary.total2026 * 0.14, proj2027: matrixSummary.totalProyeccion2027 * 0.14, participacion: 14.0 },
-              { unidad: 'Facultad Seccional Sogamoso', rec2026: matrixSummary.total2026 * 0.12, proj2027: matrixSummary.totalProyeccion2027 * 0.12, participacion: 12.0 },
-              { unidad: 'Facultad Seccional Chiquinquirá', rec2026: matrixSummary.total2026 * 0.06, proj2027: matrixSummary.totalProyeccion2027 * 0.06, participacion: 6.0 },
-            ];
-            return (
-            <div className="glass-card p-6 md:p-8 rounded-[28px] space-y-6 animate-in fade-in">
-              <h3 className="text-xl font-display text-white font-bold flex items-center gap-2">
-                <Building2 size={20} className="text-amber-400" />
-                Distribución Proyectada por Unidad y Seccional (2027)
-              </h3>
-              <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
-                    <tr>
-                      <th className="p-4 font-semibold text-white">Unidad Académica / Administrativa</th>
-                      <th className="p-4 font-semibold text-right text-sky-300">Recaudo 2026</th>
-                      <th className="p-4 font-semibold text-right text-emerald-300">Proyección 2027</th>
-                      <th className="p-4 font-semibold text-center text-amber-300">Participación (%)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5 font-sans">
-                    {unitBreakdown.map((u, idx) => (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="p-4 font-semibold text-white flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                          {u.unidad}
+            {/* PANEL DE ESTADÍSTICAS DESCRIPTIVAS */}
+            <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/20 shadow-xl flex flex-col justify-between">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2 mb-1">
+                  <Activity size={18} className="text-amber-400" />
+                  Métricas Estadísticas de la Serie
+                </h4>
+                <p className="text-xs text-on-surface-variant mb-4">
+                  Análisis cuantitativo de la serie histórica (2016–2026, n = 11 vigencias).
+                </p>
+
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Observaciones (n):</span>
+                    <strong className="font-mono text-xs text-white">{R20_DESCRIPTIVE_STATS.n} vigencias</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Media Histórica (11A):</span>
+                    <strong className="font-mono text-xs text-amber-300">{formatCurrencyShortCOP(R20_DESCRIPTIVE_STATS.media)}</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Mediana Histórica:</span>
+                    <strong className="font-mono text-xs text-white">{formatCurrencyShortCOP(R20_DESCRIPTIVE_STATS.mediana)}</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Desviación Estándar (σ):</span>
+                    <strong className="font-mono text-xs text-rose-300">{formatCurrencyShortCOP(R20_DESCRIPTIVE_STATS.desvEstandar)}</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <span className="text-xs text-amber-200">Coeficiente de Variación (CV):</span>
+                    <strong className="font-mono text-xs text-amber-300">{R20_DESCRIPTIVE_STATS.coeficienteVariacionPct.toFixed(2)}% (Transición Gratuidad)</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                    <span className="text-xs text-cyan-200">Media Post-Gratuidad (2021–2026):</span>
+                    <strong className="font-mono text-xs text-cyan-300">{formatCurrencyShortCOP(R20_DESCRIPTIVE_STATS.postGratuidadMedia)}</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                    <span className="text-xs text-cyan-200">CV Post-Gratuidad:</span>
+                    <strong className="font-mono text-xs text-cyan-300">{R20_DESCRIPTIVE_STATS.postGratuidadCV.toFixed(2)}% (Estabilizado)</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Mínimo Histórico:</span>
+                    <strong className="font-mono text-xs text-cyan-300">{formatCurrencyShortCOP(R20_DESCRIPTIVE_STATS.minimo)} ({R20_DESCRIPTIVE_STATS.minimoAnio})</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Máximo Histórico:</span>
+                    <strong className="font-mono text-xs text-white">{formatCurrencyShortCOP(R20_DESCRIPTIVE_STATS.maximo)} ({R20_DESCRIPTIVE_STATS.maximoAnio})</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200">
+                <strong>Conclusión Estadística:</strong> La contracción en la serie de ingresos propios de la UPTC entre 2019 y 2026 obedece al cambio estructural de financiamiento por la Gratuidad Universal (Ley 2307/2023). La proyección macroeconómica aprobada del <strong>+6,0%</strong> sobre la base real certificada 2026 ($13.187,8M) blinda el presupuesto institucional contra el riesgo de déficit.
+              </div>
+            </div>
+          </div>
+
+          {/* TABLA 1: SERIE HISTÓRICA COMPLETA Y PROYECCIÓN 2027 (2016–2027) */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Table size={18} className="text-amber-400" />
+                  Tabla: Histórico y Proyección Recurso 20 — Recursos Propios (2016–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Registro cronológico oficial de las 11 vigencias certificadas (n = 11), transición por gratuidad universal y proyección 2027.
+                </p>
+              </div>
+              <button
+                onClick={() => exportR20CSV(r20ActiveModel.id)}
+                className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
+              >
+                <Download size={14} />
+                <span>Exportar Serie Histórica (CSV)</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Vigencia</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Unidad</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Concepto Presupuestal</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Recurso</th>
+                    <th className="p-4 font-semibold text-right text-amber-300">Total Recaudo ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Variación Anual ($)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Variación (%)</th>
+                    <th className="p-4 font-semibold text-left text-on-surface-variant">Hito / Diagnóstico Normativo</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R20_HISTORICAL_SERIES.map((h) => {
+                    const is2027 = h.vigencia === 2027;
+                    const is2026 = h.vigencia === 2026;
+                    const recaudo = is2027 ? r20ActiveModel.projected2027 : h.totalRecaudo;
+                    const varCOP = is2027 ? r20ActiveModel.incrementoNominal : h.variacionAnualCOP;
+                    const varPct = is2027 ? r20ActiveModel.variacionPct : h.variacionAnualPct;
+
+                    return (
+                      <tr 
+                        key={h.vigencia} 
+                        className={`transition-colors ${
+                          is2027 
+                            ? 'bg-emerald-500/10 hover:bg-emerald-500/20 font-semibold' 
+                            : is2026 
+                            ? 'bg-cyan-500/15 hover:bg-cyan-500/25 font-medium' 
+                            : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold font-mono">
+                          <span className={`px-2.5 py-1 rounded-lg text-xs ${
+                            is2027 
+                              ? 'bg-emerald-500 text-black font-extrabold' 
+                              : is2026 
+                              ? 'bg-cyan-600 text-white font-extrabold' 
+                              : 'bg-white/10 text-white'
+                          }`}>
+                            {h.vigencia}
+                          </span>
                         </td>
-                        <td className="p-4 text-right font-mono font-bold text-sky-300">
-                          {formatCurrencyCOP(u.rec2026)}
+                        <td className="p-4 font-mono text-[11px] text-on-surface-variant">
+                          {h.unidad}
                         </td>
-                        <td className="p-4 text-right font-mono font-bold text-emerald-300">
-                          {formatCurrencyCOP(u.proj2027)}
+                        <td className={`p-4 ${is2027 ? 'text-emerald-200 font-bold' : is2026 ? 'text-cyan-200 font-bold' : 'text-white'}`}>
+                          {is2027 ? `Recursos Propios (${r20ActiveModel.tag})` : h.concepto}
+                        </td>
+                        <td className="p-4 font-mono text-on-surface-variant text-[11px]">
+                          {h.recurso}
+                        </td>
+                        <td className={`p-4 text-right font-mono font-bold ${
+                          is2027 ? 'text-emerald-300 text-sm' : is2026 ? 'text-cyan-300' : 'text-white'
+                        }`}>
+                          {formatCurrencyCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono">
+                          {varCOP !== 0 ? (
+                            <span className={varCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                              {varCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(varCOP)}
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold">
+                          {varPct !== 0 ? (
+                            <span className={`px-2 py-0.5 rounded text-[11px] ${
+                              is2027 
+                                ? 'bg-emerald-500/30 text-emerald-300 font-extrabold' 
+                                : varPct >= 0 ? 'text-emerald-400' : 'text-rose-400 font-bold'
+                            }`}>
+                              {varPct >= 0 ? '+' : ''}{varPct.toFixed(2)}%
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-on-surface-variant text-[11px] italic">
+                          {is2027 ? `${r20ActiveModel.name}: ${r20ActiveModel.interpretation}` : h.notaNormativa}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TABLA 2: DESAGREGACIÓN A NIVEL DE CONCEPTO Y TOTAL GENERAL R20 */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Layers size={18} className="text-amber-400" />
+                  Tabla Detallada por Concepto de Ingreso — Recurso 20 Propios (2024–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Desagregación oficial en los 10 conceptos presupuestales institucionales con sus recaudos 2024, 2025, base 2026, proyección 2027, variación porcentual y participación.
+                </p>
+              </div>
+              <button
+                onClick={() => exportR20CSV(r20ActiveModel.id)}
+                className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
+              >
+                <Download size={14} />
+                <span>Exportar Conceptos (CSV)</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">N°</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Código Concepto</th>
+                    <th className="p-4 font-semibold text-white">Concepto Presupuestal de Ingreso</th>
+                    <th className="p-4 font-semibold text-right text-on-surface-variant">Recaudo 2024 ($M)</th>
+                    <th className="p-4 font-semibold text-right text-on-surface-variant">Recaudo 2025 ($M)</th>
+                    <th className="p-4 font-semibold text-right text-cyan-300 bg-cyan-500/5">Base 2026 ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300 bg-emerald-500/5">Proyección 2027 ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Proy ($M)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Var % vs 2026</th>
+                    <th className="p-4 font-semibold text-center text-purple-300">Part. R20 (%)</th>
+                    <th className="p-4 font-semibold text-left text-on-surface-variant">Método o Criterio</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {official17Consolidated.rows.filter(r => r.grupo === 'propios').map((row, idx) => {
+                    const partOfR20 = official17Consolidated.subtotalPropios.y27 > 0
+                      ? (row.projected2027 / official17Consolidated.subtotalPropios.y27) * 100
+                      : 0;
+
+                    return (
+                      <tr 
+                        key={row.id} 
+                        className="hover:bg-white/5 transition-colors"
+                      >
+                        <td className="p-4 font-bold font-mono text-white/60">
+                          {idx + 1}
+                        </td>
+                        <td className="p-4 font-mono text-[11px] text-amber-300 font-semibold">
+                          {row.codigoConcepto}
+                        </td>
+                        <td className="p-4 font-semibold text-white max-w-[280px]">
+                          <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
+                            <span>{row.concepto}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-right font-mono text-on-surface-variant">
+                          {formatCurrencyShortCOP(row.recaudo2024)}
+                        </td>
+                        <td className="p-4 text-right font-mono text-on-surface-variant">
+                          {formatCurrencyShortCOP(row.recaudo2025)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-cyan-300 bg-cyan-500/5">
+                          {formatCurrencyShortCOP(row.base2026)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-emerald-300 bg-emerald-500/5">
+                          {formatCurrencyCOP(row.projected2027)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(row.projected2027)}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold">
+                          <span className={`px-2 py-0.5 rounded text-[11px] ${
+                            row.variationPct >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'
+                          }`}>
+                            {row.variationPct >= 0 ? '+' : ''}{row.variationPct.toFixed(2)}%
+                          </span>
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold text-purple-300">
+                          {partOfR20.toFixed(2)}%
+                        </td>
+                        <td className="p-4 text-left">
+                          <select
+                            value={row.selectedModelId}
+                            onChange={(e) => handleModelChange17(row.id, e.target.value)}
+                            className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-[11px] font-mono text-amber-300 focus:outline-none focus:border-amber-400 cursor-pointer"
+                          >
+                            <option value="macro6" className="bg-slate-900 text-white">Macro +6,0%</option>
+                            <option value="ipc7" className="bg-slate-900 text-white">Indexación IPC (+7,0%)</option>
+                            <option value="inercial" className="bg-slate-900 text-white">Base Inercial (0,0%)</option>
+                            <option value="wma" className="bg-slate-900 text-white">Ponderado WMA-3 (+18,57%)</option>
+                            <option value="media3" className="bg-slate-900 text-white">Media Móvil SMA-3 (+26,88%)</option>
+                          </select>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+
+                {/* FILA DE TOTAL PROYECCIÓN R20 */}
+                <tfoot className="border-t-2 border-amber-500/40 bg-black/40 font-bold text-white text-xs">
+                  <tr className="shadow-lg">
+                    <td className="p-4 text-center font-extrabold text-amber-400 font-mono">
+                      Σ
+                    </td>
+                    <td className="p-4 font-mono font-bold text-amber-300 text-[11px]">
+                      20-PROPIOS
+                    </td>
+                    <td className="p-4 font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                      <Landmark size={16} className="text-amber-400 shrink-0" />
+                      <span>TOTAL GENERAL RECURSOS PROPIOS (R20)</span>
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-white">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y24)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-white">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y25)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-cyan-300 bg-cyan-500/20 text-sm">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y26)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-emerald-300 bg-emerald-500/20 text-sm">
+                      {formatCurrencyCOP(official17Consolidated.subtotalPropios.y27)}
+                    </td>
+                    <td className="p-4 text-right font-mono font-extrabold text-white text-sm">
+                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y27)}
+                    </td>
+                    <td className="p-4 text-center font-mono font-extrabold text-emerald-400 bg-emerald-500/10">
+                      +{official17Consolidated.subtotalPropios.variationPct.toFixed(2)}%
+                    </td>
+                    <td className="p-4 text-center font-mono font-extrabold text-purple-300">
+                      100,00%
+                    </td>
+                    <td className="p-4 text-left font-mono text-[11px] text-amber-400 font-bold">
+                      Consolidado 10 Conceptos Propios
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {/* TABLA 3: MATRIZ COMPARATIVA DE MODELOS Y CRITERIOS 2027 (R20) */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-amber-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Calculator size={18} className="text-amber-400" />
+                  Matriz Comparativa de Modelos y Criterios 2027 (R20)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Evaluación técnica de los 5 escenarios presupuestales para Recursos Propios frente al parámetro macroeconómico institucional.
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Modelo / Metodología</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Descripción / Criterio</th>
+                    <th className="p-4 font-semibold text-right text-amber-300">Proyección 2027 ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Variación ($ COP)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">Variación %</th>
+                    <th className="p-4 font-semibold text-center text-white">Nivel de Certeza</th>
+                    <th className="p-4 font-semibold text-center text-white">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R20_GLOBAL_FORECAST_MODELS.map((m) => {
+                    const isSelected = currentR20GlobalState === m.id;
+                    return (
+                      <tr 
+                        key={m.id} 
+                        className={`transition-colors ${
+                          isSelected ? 'bg-amber-500/20 font-semibold' : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold text-white flex items-center gap-2">
+                          <span 
+                            className="w-3 h-3 rounded-full shrink-0" 
+                            style={{ backgroundColor: m.color }}
+                          />
+                          <div>
+                            <span>{m.name}</span>
+                            <span className="text-[10px] block text-on-surface-variant font-normal">{m.tag}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 font-mono text-[11px] text-on-surface-variant">
+                          {m.interpretation}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-amber-300 text-sm">
+                          {formatCurrencyCOP(m.projected2027)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(m.projected2027)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-semibold">
+                          <span className={m.incrementoNominal >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                            {m.incrementoNominal >= 0 ? `+${formatCurrencyShortCOP(m.incrementoNominal)}` : formatCurrencyShortCOP(m.incrementoNominal)}
+                          </span>
                         </td>
                         <td className="p-4 text-center font-mono font-bold text-amber-300">
-                          {u.participacion.toFixed(2)}%
+                          {m.variacionPct >= 0 ? `+${m.variacionPct.toFixed(2)}%` : `${m.variacionPct.toFixed(2)}%`}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                            m.isOfficial
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                              : m.id === 'inercial' || m.id === 'ipc7'
+                              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          }`}>
+                            {m.isOfficial ? 'Oficial Institucional' : m.id === 'ipc7' ? 'Índice de Precios' : m.id === 'inercial' ? 'Piso Técnico' : 'Riesgo de Déficit'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          {isSelected ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-black shadow-md">
+                              Activo
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleR20GlobalModelChange(m.id as any)}
+                              className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer border border-white/10"
+                            >
+                              Seleccionar
+                            </button>
+                          )}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-            );
-          })()}
+          </div>
         </div>
       )}
 

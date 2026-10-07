@@ -3537,15 +3537,168 @@ export type Official17ConceptComputedRow = OfficialConceptComputedRow;
 export type Official17SubtotalItem = OfficialSubtotalItem;
 export type Official17ConsolidatedSummary = OfficialConsolidatedSummary;
 
+export interface R20HistoricalRecord {
+  vigencia: number;
+  unidad: string;
+  concepto: string;
+  recurso: string;
+  totalRecaudo: number;
+  variacionAnualCOP: number;
+  variacionAnualPct: number;
+  tipo: 'historico' | 'base2026' | 'proyeccion';
+  notaNormativa: string;
+}
+
+export const R20_BASE_2026 = 13187794757;
+export const R20_PROJECTION_MACRO_2027 = 13979053203;
+
+export const R20_HISTORICAL_SERIES: R20HistoricalRecord[] = [
+  {
+    vigencia: 2016,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 42778941442,
+    variacionAnualCOP: 0,
+    variacionAnualPct: 0,
+    tipo: 'historico',
+    notaNormativa: 'Régimen previo a gratuidad universal (matrículas de pregrado ordinarias directas)'
+  },
+  {
+    vigencia: 2017,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 46485377832,
+    variacionAnualCOP: 3706436390,
+    variacionAnualPct: 8.66,
+    tipo: 'historico',
+    notaNormativa: 'Expansión de coberturas académicas y matrícula presencial (+8,66%)'
+  },
+  {
+    vigencia: 2018,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 46896466321,
+    variacionAnualCOP: 411088489,
+    variacionAnualPct: 0.88,
+    tipo: 'historico',
+    notaNormativa: 'Estabilidad de autogestión de matrícula y derechos pecuniarios (+0,88%)'
+  },
+  {
+    vigencia: 2019,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 48377396967,
+    variacionAnualCOP: 1480930646,
+    variacionAnualPct: 3.16,
+    tipo: 'historico',
+    notaNormativa: 'Pico histórico prepandemia de ingresos por matrícula de pregrado (+3,16%)'
+  },
+  {
+    vigencia: 2020,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 34278338292,
+    variacionAnualCOP: -14099058675,
+    variacionAnualPct: -29.14,
+    tipo: 'historico',
+    notaNormativa: 'Impacto de la emergencia sanitaria COVID-19 y alivios de matrícula (-29,14%)'
+  },
+  {
+    vigencia: 2021,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 28787008897,
+    variacionAnualCOP: -5491329395,
+    variacionAnualPct: -16.02,
+    tipo: 'historico',
+    notaNormativa: 'Inicio de la transición hacia la gratuidad en la educación superior pública (-16,02%)'
+  },
+  {
+    vigencia: 2022,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 24703712405,
+    variacionAnualCOP: -4083296492,
+    variacionAnualPct: -14.18,
+    tipo: 'historico',
+    notaNormativa: 'Consolidación gradual de subsidios estatales de matrícula cero (-14,18%)'
+  },
+  {
+    vigencia: 2023,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 27235857719,
+    variacionAnualCOP: 2532145314,
+    variacionAnualPct: 10.25,
+    tipo: 'historico',
+    notaNormativa: 'Repunte temporal en derechos pecuniarios y programas de posgrado (+10,25%)'
+  },
+  {
+    vigencia: 2024,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados (10 Conceptos)',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 19761360195,
+    variacionAnualCOP: -7474497524,
+    variacionAnualPct: -27.44,
+    tipo: 'historico',
+    notaNormativa: 'Entrada en vigor plena Ley 2307 de 2023 / Dec. 2271 de 2023 (Gratuidad Nacional, R14 absorbe pregrado)'
+  },
+  {
+    vigencia: 2025,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados (10 Conceptos)',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 17249655994,
+    variacionAnualCOP: -2511704201,
+    variacionAnualPct: -12.71,
+    tipo: 'historico',
+    notaNormativa: 'Ajuste estructural de ingresos propios concentrados en posgrados, inscripciones y conexos (-12,71%)'
+  },
+  {
+    vigencia: 2026,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados (Base Certificada)',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 13187794757,
+    variacionAnualCOP: -4061861237,
+    variacionAnualPct: -23.55,
+    tipo: 'base2026',
+    notaNormativa: 'Base real certificada 2026 consolidada en 10 conceptos presupuestales ($13.187.794.757 COP)'
+  },
+  {
+    vigencia: 2027,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Recursos Propios Consolidados (Proyección Oficial)',
+    recurso: '20-RECURSOS PROPIOS',
+    totalRecaudo: 13979053203,
+    variacionAnualCOP: 791258446,
+    variacionAnualPct: 6.00,
+    tipo: 'proyeccion',
+    notaNormativa: 'Proyección Oficial Aprobada (+6,0% Parámetro Macro): $13.979.053.203 COP (+$791,3M de incremento)'
+  }
+];
+
 export interface R20GlobalForecastModel {
-  id: 'macro6' | 'ipc7' | 'inercial';
+  id: 'macro6' | 'ipc7' | 'inercial' | 'wma' | 'media3';
   name: string;
   shortName: string;
   tag: string;
   formula: string;
   projected2027: number;
+  value?: number;
   incrementoNominal: number;
+  diffCop?: number;
   variacionPct: number;
+  variationPct?: number;
   color: string;
   interpretation: string;
   isOfficial?: boolean;
@@ -3554,44 +3707,166 @@ export interface R20GlobalForecastModel {
 export const R20_GLOBAL_FORECAST_MODELS: R20GlobalForecastModel[] = [
   {
     id: 'macro6',
-    name: 'Macro +6,0% (10 Conceptos Propios)',
-    shortName: 'Macro +6,0% Oficial',
+    name: 'Escenario Macroeconómico Oficial (+6,0%)',
+    shortName: 'Macro +6,0% Oficial ($13.979,1M)',
     tag: 'Oficial (+6,0%)',
     formula: 'Base 2026 × 1,060',
-    projected2027: 11942247152,
-    incrementoNominal: 675976254,
+    projected2027: 13979053203,
+    value: 13979053203,
+    incrementoNominal: 791258446,
+    diffCop: 791258446,
     variacionPct: 6.00,
+    variationPct: 6.00,
     color: '#f59e0b',
-    interpretation: 'Parámetro macroeconómico aprobado aplicado a los 10 conceptos de Recursos Propios.',
+    interpretation: 'Parámetro macroeconómico institucional oficial aprobado (+6,0%) aplicado a los 10 conceptos de Recursos Propios, garantizando equilibrio presupuestal y sostenibilidad operativa.',
     isOfficial: true
   },
   {
     id: 'ipc7',
-    name: 'Indexación Inflación IPC (+7,0%)',
-    shortName: 'Indexación IPC (+7,0%)',
+    name: 'Indexación Expectativa Inflación IPC (+7,0%)',
+    shortName: 'Indexación IPC (+7,0%) ($14.110,9M)',
     tag: 'IPC (+7,0%)',
     formula: 'Base 2026 × 1,070',
-    projected2027: 12054909861,
-    incrementoNominal: 788638963,
+    projected2027: 14110940390,
+    value: 14110940390,
+    incrementoNominal: 923145633,
+    diffCop: 923145633,
     variacionPct: 7.00,
+    variationPct: 7.00,
     color: '#06b6d4',
-    interpretation: 'Indexación calculada con la expectativa de inflación IPC para proteger el poder adquisitivo.',
+    interpretation: 'Indexación con base en la expectativa de inflación IPC proyectada para salvaguardar el valor real de los derechos pecuniarios institucionales.',
     isOfficial: false
   },
   {
     id: 'inercial',
-    name: 'Base Inercial 2026 (0,0%)',
-    shortName: 'Base Inercial ($11.266M)',
-    tag: 'Base Inercial',
-    formula: 'Base 2026 (0,0%)',
-    projected2027: 11266270898,
+    name: 'Piso Presupuestal Inercial 2026 (0,0%)',
+    shortName: 'Base Inercial ($13.187,8M)',
+    tag: 'Piso Inercial',
+    formula: 'Base Real 2026 (0,0%)',
+    projected2027: 13187794757,
+    value: 13187794757,
     incrementoNominal: 0,
+    diffCop: 0,
     variacionPct: 0.00,
+    variationPct: 0.00,
     color: '#64748b',
-    interpretation: 'Escenario inercial que preserva los valores recaudados en la vigencia 2026.',
+    interpretation: 'Escenario inercial ultraconservador que preserva exactamente los valores recaudados en la vigencia 2026 sin ajuste inflacionario.',
+    isOfficial: false
+  },
+  {
+    id: 'wma',
+    name: 'Promedio Ponderado Trienal WMA-3',
+    shortName: 'Ponderado WMA-3 ($15.637,3M)',
+    tag: 'Ponderado WMA-3',
+    formula: '(3×2026 + 2×2025 + 1×2024) / 6',
+    projected2027: 15637342742,
+    value: 15637342742,
+    incrementoNominal: 2449547985,
+    diffCop: 2449547985,
+    variacionPct: 18.57,
+    variationPct: 18.57,
+    color: '#fbbf24',
+    interpretation: 'Pondera mayores pesos en las vigencias recientes (3-2-1). Sobreestima el presupuesto en +$2.449,5M (+18,57%) por los recaudos superiores de 2024 y 2025.',
+    isOfficial: false
+  },
+  {
+    id: 'media3',
+    name: 'Media Trienal Simple (2024–2026)',
+    shortName: 'Media Trienal ($16.732,9M)',
+    tag: 'Media Trienal',
+    formula: '(2024 + 2025 + 2026) / 3',
+    projected2027: 16732936982,
+    value: 16732936982,
+    incrementoNominal: 3545142225,
+    diffCop: 3545142225,
+    variacionPct: 26.88,
+    variationPct: 26.88,
+    color: '#8b5cf6',
+    interpretation: 'Media simple del último trienio. Genera distorsión presupuestal (+26,88%) al no reconocer la contracción estructural derivada de la gratuidad universal.',
     isOfficial: false
   }
 ];
+
+export const R20_DESCRIPTIVE_STATS = {
+  n: 11,
+  media: 31794719166,
+  mediana: 28787008897,
+  desvEstandar: 12760780022,
+  coeficienteVariacionPct: 40.13,
+  minimo: 13187794757,
+  minimoAnio: 2026,
+  maximo: 48377396967,
+  maximoAnio: 2019,
+  rango: 35189602210,
+  cagrPct: -11.10,
+  crecimientoAcumuladoPct: -69.17,
+  postGratuidadMedia: 21820898328,
+  postGratuidadCV: 27.94,
+  tendenciaAnualCOP: -3619651305,
+  r2Pct: 88.51
+};
+
+export function exportR20CSV(selectedModelId: string): void {
+  const model = R20_GLOBAL_FORECAST_MODELS.find(m => m.id === selectedModelId) || R20_GLOBAL_FORECAST_MODELS[0];
+  const summary = computeOfficialBalanceGeneral();
+  const propiosRows = summary.rows.filter(r => r.grupo === 'propios');
+  const subtotal = summary.subtotalPropios;
+
+  let csv = '\uFEFF';
+  csv += 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n';
+  csv += 'VICERRECTORIA ADMINISTRATIVA Y FINANCIERA (VAFI)\n';
+  csv += 'CERTIFICADO DE PROYECCION PRESUPUESTAL RECURSO 20 - VIGENCIA 2027\n';
+  csv += 'Recursos Propios Institucionales (Art. 65 Ley 30 de 1992 - 10 Conceptos Oficiales)\n';
+  csv += `Fecha de Generación:;${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}\n`;
+  csv += `Modelo Seleccionado:;${model.name}\n`;
+  csv += `Base Real Certificada 2026:;$ ${R20_BASE_2026.toLocaleString('es-CO')}\n`;
+  csv += `Total Proyección 2027:;$ ${model.projected2027.toLocaleString('es-CO')}\n`;
+  csv += `Incremento Nominal:;$ ${model.incrementoNominal.toLocaleString('es-CO')};Variación:;+${model.variacionPct.toFixed(2)}%\n\n`;
+
+  csv += 'DESAGREGACION OFICIAL POR CONCEPTO DE INGRESO (R20)\n';
+  csv += 'N°;Codigo Concepto;Concepto Presupuestal;Recaudo 2024 (COP);Recaudo 2025 (COP);Base Real 2026 (COP);Proyección 2027 (COP);Proyección 2027 ($M);Variación vs 2026 (%);Participación R20 (%);Método o Criterio\n';
+
+  let idx = 1;
+  for (const r of propiosRows) {
+    const projCOP = Math.round(r.base2026 * (1 + model.variacionPct / 100));
+    const projM = (projCOP / 1e6).toFixed(2);
+    const varPct = model.variacionPct;
+    const partR20 = ((projCOP / model.projected2027) * 100).toFixed(2);
+
+    csv += `${idx};"${r.codigoConcepto}";"${r.concepto}";` +
+      `$ ${r.recaudo2024.toLocaleString('es-CO')};$ ${r.recaudo2025.toLocaleString('es-CO')};$ ${r.base2026.toLocaleString('es-CO')};` +
+      `$ ${projCOP.toLocaleString('es-CO')};$ ${projM}M;` +
+      `+${varPct.toFixed(2)}%;${partR20}%;"${model.shortName}"\n`;
+    idx++;
+  }
+
+  csv += `TOTAL GENERAL RECURSOS PROPIOS (R20);;;$ ${subtotal.y24.toLocaleString('es-CO')};$ ${subtotal.y25.toLocaleString('es-CO')};$ ${subtotal.y26.toLocaleString('es-CO')};$ ${model.projected2027.toLocaleString('es-CO')};$ ${(model.projected2027 / 1e6).toFixed(2)}M;+${model.variacionPct.toFixed(2)}%;100,00%;"Consolidado 10 Conceptos"\n\n`;
+
+  csv += 'SERIE HISTORICA CRONOLOGICA DE RECURSOS PROPIOS (2016-2027)\n';
+  csv += 'Vigencia;Unidad;Concepto Presupuestal;Recurso;Total Recaudo (COP);Cifra en Millones ($M);Variación Anual (COP);Variación Anual (%);Tipo de Registro;Nota Normativa\n';
+
+  for (const h of R20_HISTORICAL_SERIES) {
+    const isProy = h.tipo === 'proyeccion';
+    const recaudo = isProy ? model.projected2027 : h.totalRecaudo;
+    const varCop = isProy ? model.incrementoNominal : h.variacionAnualCOP;
+    const varPct = isProy ? model.variacionPct : h.variacionAnualPct;
+    const millones = (recaudo / 1e6).toFixed(2);
+
+    csv += `${h.vigencia};"${h.unidad}";"${h.concepto}";"${h.recurso}";` +
+      `$ ${recaudo.toLocaleString('es-CO')};$ ${millones}M;` +
+      `$ ${varCop.toLocaleString('es-CO')};${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%;` +
+      `"${h.tipo.toUpperCase()}";"${h.notaNormativa}"\n`;
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `Certificado_Proyeccion_R20_Recursos_Propios_2027_${model.id}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
 export interface R21ForecastModel {
   id: 'macro6' | 'meta7' | 'holt' | 'inercial';
@@ -3817,7 +4092,9 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0%', value: 47004587, variationPct: 6.00 },
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 47448027, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 44343950, variationPct: 0.00 }
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 44343950, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 52580553, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 56264488, variationPct: 26.88 }
     ]
   },
   {
@@ -3835,7 +4112,9 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0%', value: 2716749397, variationPct: 6.00 },
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 2742379108, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 2562971129, variationPct: 0.00 }
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 2562971129, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 3039026518, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 3251948880, variationPct: 26.88 }
     ]
   },
   {
@@ -3853,7 +4132,9 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0%', value: 88252874, variationPct: 6.00 },
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 89085448, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 83257428, variationPct: 0.00 }
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 83257428, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 98721959, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 105638685, variationPct: 26.88 }
     ]
   },
   {
@@ -3871,7 +4152,9 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0%', value: 3999713451, variationPct: 6.00 },
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 4037446596, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 3773314576, variationPct: 0.00 }
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 3773314576, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 4474183470, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 4787656781, variationPct: 26.88 }
     ]
   },
   {
@@ -3889,7 +4172,9 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0%', value: 780526696, variationPct: 6.00 },
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 787890156, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 736345940, variationPct: 0.00 }
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 736345940, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 873117458, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 934290413, variationPct: 26.88 }
     ]
   },
   {
@@ -3907,7 +4192,9 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0%', value: 2147910542, variationPct: 6.00 },
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 2168173849, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 2026330700, variationPct: 0.00 }
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 2026330700, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 2402708584, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 2571048802, variationPct: 26.88 }
     ]
   },
   {
@@ -3920,12 +4207,14 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     grupo: 'propios',
     recaudo2024: 8026314399,
     recaudo2025: 5540609886,
-    base2026: 3772946201,
+    base2026: 3772939445,
     defaultModelId: 'macro6',
     models: [
-      { id: 'macro6', name: 'Macro +6,0%', value: 3999322973, variationPct: 6.00 },
-      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 4037052435, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 3772946201, variationPct: 0.00 }
+      { id: 'macro6', name: 'Macro +6,0%', value: 3999306572, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 4037045206, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 3772939445, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 4473738660, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 4787180809, variationPct: 26.88 }
     ]
   },
   {
@@ -3943,7 +4232,9 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0%', value: 9866045, variationPct: 6.00 },
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 9959121, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 9307590, variationPct: 0.00 }
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 9307590, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 11036415, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 11809656, variationPct: 26.88 }
     ]
   },
   {
@@ -3961,7 +4252,9 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0%', value: 24695721, variationPct: 6.00 },
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 24928700, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 23297850, variationPct: 0.00 }
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 23297850, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 27625276, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 29560777, variationPct: 26.88 }
     ]
   },
   {
@@ -3979,7 +4272,9 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0%', value: 165027318, variationPct: 6.00 },
       { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 166584179, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 155686149, variationPct: 0.00 }
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 155686149, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 184603849, variationPct: 18.57 },
+      { id: 'media3', name: 'Media Móvil Trienal SMA-3', value: 197537691, variationPct: 26.88 }
     ]
   },
   {
