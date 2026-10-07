@@ -1059,6 +1059,75 @@ export const R10_PROJECTION_6PCT_DATA = {
   diferenciaVsPGN: 395704592082 - 387451499572 // 8.253.092.510 COP (R17 + R18)
 };
 
+export interface R10ForecastModel {
+  id: 'calculado644' | 'pgn' | 'macro6' | 'inercial';
+  name: string;
+  shortName: string;
+  tag: string;
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  color: string;
+  interpretation: string;
+  isOfficial?: boolean;
+}
+
+export const R10_FORECAST_MODELS: R10ForecastModel[] = [
+  {
+    id: 'calculado644',
+    name: 'Aumento Calculado PGN (+6,44%)',
+    shortName: 'Calculado PGN (+6,44%)',
+    tag: 'Oficial (+6,44%)',
+    formula: 'Base 2026 × 1,0644',
+    projected2027: 387451499572,
+    incrementoNominal: 23442198959,
+    variacionPct: 6.44,
+    color: '#06b6d4',
+    interpretation: 'Aumento real de la bolsa PGN 2027 de transferencias para funcionamiento de la UPTC decretada por el Gobierno Nacional.',
+    isOfficial: true
+  },
+  {
+    id: 'pgn',
+    name: 'Techo Global PGN 2027 (R10+R17+R18)',
+    shortName: 'Techo Global PGN 2027',
+    tag: 'Techo Global',
+    formula: 'Bolsa Total PGN Funcionamiento',
+    projected2027: 395704592082,
+    incrementoNominal: 31695291469,
+    variacionPct: 8.71,
+    color: '#3b82f6',
+    interpretation: 'Monto total decretado en el Presupuesto General de la Nación para funcionamiento de la UPTC incluyendo partidas globales complementarias.',
+    isOfficial: false
+  },
+  {
+    id: 'macro6',
+    name: 'Macro +6,0% Estándar',
+    shortName: 'Macro +6,0% Estándar',
+    tag: 'Macro (+6,0%)',
+    formula: 'Base 2026 × 1,060',
+    projected2027: 385849858650,
+    incrementoNominal: 21840558037,
+    variacionPct: 6.00,
+    color: '#10b981',
+    interpretation: 'Criterio institucional conservador de indexación macroeconómica (+6,0%) sobre la base presupuestal 2026.',
+    isOfficial: false
+  },
+  {
+    id: 'inercial',
+    name: 'Base 2026 Inercial (0,0%)',
+    shortName: 'Base Inercial ($364.009M)',
+    tag: 'Base Inercial',
+    formula: 'Base 2026 (0,0%)',
+    projected2027: 364009300613,
+    incrementoNominal: 0,
+    variacionPct: 0.00,
+    color: '#64748b',
+    interpretation: 'Escenario base inercial sin crecimiento nominal respecto a la vigencia 2026.',
+    isOfficial: false
+  }
+];
+
 export interface RecursoNacionProyeccionRow {
   codigo: string;
   subRecurso: string;
@@ -1491,6 +1560,62 @@ export const R18_PROJECTION_DATA = {
   recaudo2025: 457065634,
   justificacion: 'Aplica el porcentaje de aumento calculado (+6,44%) sobre la base certificada de 2026 ($2.110.227.046 COP), garantizando el cumplimiento riguroso del techo global del PGN 2027 ($395.704.592.082 COP).'
 };
+
+export interface R18ForecastModel {
+  id: 'calculado644' | 'macro' | 'inercial';
+  name: string;
+  shortName: string;
+  tag: string;
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  color: string;
+  interpretation: string;
+  isOfficial?: boolean;
+}
+
+export const R18_FORECAST_MODELS: R18ForecastModel[] = [
+  {
+    id: 'calculado644',
+    name: 'Aumento Calculado PGN (+6,44%)',
+    shortName: 'Calculado PGN (+6,44%)',
+    tag: 'Oficial (+6,44%)',
+    formula: 'Base 2026 × 1,0644',
+    projected2027: 2246125668,
+    incrementoNominal: 135898622,
+    variacionPct: 6.44,
+    color: '#a855f7',
+    interpretation: 'Aplica el porcentaje de aumento calculado (+6,44%) sobre la base certificada de 2026 ($2.110.227.046 COP).',
+    isOfficial: true
+  },
+  {
+    id: 'macro',
+    name: 'Macro +6,0% Estándar',
+    shortName: 'Macro +6,0% Estándar',
+    tag: 'Macro (+6,0%)',
+    formula: 'Base 2026 × 1,060',
+    projected2027: 2236840669,
+    incrementoNominal: 126613623,
+    variacionPct: 6.00,
+    color: '#06b6d4',
+    interpretation: 'Piso prudente de indexación macroeconómica (+6,0%) sobre la base 2026.',
+    isOfficial: false
+  },
+  {
+    id: 'inercial',
+    name: 'Base 2026 Inercial (0,0%)',
+    shortName: 'Base Inercial ($2.110M)',
+    tag: 'Base Inercial',
+    formula: 'Base 2026 (0,0%)',
+    projected2027: 2110227046,
+    incrementoNominal: 0,
+    variacionPct: 0.00,
+    color: '#64748b',
+    interpretation: 'Mantiene plano el valor certificado de 2026 sin variación nominal.',
+    isOfficial: false
+  }
+];
 
 export function exportR18CSV(): void {
   let csvContent = 'data:text/csv;charset=utf-8,';
@@ -3372,6 +3497,131 @@ export type Official17ConceptComputedRow = OfficialConceptComputedRow;
 export type Official17SubtotalItem = OfficialSubtotalItem;
 export type Official17ConsolidatedSummary = OfficialConsolidatedSummary;
 
+export interface R20GlobalForecastModel {
+  id: 'macro6' | 'ipc7' | 'inercial';
+  name: string;
+  shortName: string;
+  tag: string;
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  color: string;
+  interpretation: string;
+  isOfficial?: boolean;
+}
+
+export const R20_GLOBAL_FORECAST_MODELS: R20GlobalForecastModel[] = [
+  {
+    id: 'macro6',
+    name: 'Macro +6,0% (10 Conceptos Propios)',
+    shortName: 'Macro +6,0% Oficial',
+    tag: 'Oficial (+6,0%)',
+    formula: 'Base 2026 × 1,060',
+    projected2027: 11942247152,
+    incrementoNominal: 675976254,
+    variacionPct: 6.00,
+    color: '#f59e0b',
+    interpretation: 'Parámetro macroeconómico aprobado aplicado a los 10 conceptos de Recursos Propios.',
+    isOfficial: true
+  },
+  {
+    id: 'ipc7',
+    name: 'Indexación Inflación IPC (+7,0%)',
+    shortName: 'Indexación IPC (+7,0%)',
+    tag: 'IPC (+7,0%)',
+    formula: 'Base 2026 × 1,070',
+    projected2027: 12054909861,
+    incrementoNominal: 788638963,
+    variacionPct: 7.00,
+    color: '#06b6d4',
+    interpretation: 'Indexación calculada con la expectativa de inflación IPC para proteger el poder adquisitivo.',
+    isOfficial: false
+  },
+  {
+    id: 'inercial',
+    name: 'Base Inercial 2026 (0,0%)',
+    shortName: 'Base Inercial ($11.266M)',
+    tag: 'Base Inercial',
+    formula: 'Base 2026 (0,0%)',
+    projected2027: 11266270898,
+    incrementoNominal: 0,
+    variacionPct: 0.00,
+    color: '#64748b',
+    interpretation: 'Escenario inercial que preserva los valores recaudados en la vigencia 2026.',
+    isOfficial: false
+  }
+];
+
+export interface R21ForecastModel {
+  id: 'macro6' | 'meta7' | 'holt' | 'inercial';
+  name: string;
+  shortName: string;
+  tag: string;
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  color: string;
+  interpretation: string;
+  isOfficial?: boolean;
+}
+
+export const R21_FORECAST_MODELS: R21ForecastModel[] = [
+  {
+    id: 'macro6',
+    name: 'Macro +6,0% (Parámetro Aprobado)',
+    shortName: 'Macro +6,0% Oficial',
+    tag: 'Oficial (+6,0%)',
+    formula: 'Base 2026 × 1,060',
+    projected2027: 4952550305,
+    incrementoNominal: 280333036,
+    variacionPct: 6.00,
+    color: '#10b981',
+    interpretation: 'Indexación con el parámetro macroeconómico institucional oficial (+6,0%).',
+    isOfficial: true
+  },
+  {
+    id: 'meta7',
+    name: 'Modelo Referencia MFMP (+7,0%)',
+    shortName: 'Referencia MFMP (+7,0%)',
+    tag: 'Referencia (+7,0%)',
+    formula: 'Base 2026 × 1,070',
+    projected2027: 4999272477,
+    incrementoNominal: 327055208,
+    variacionPct: 7.00,
+    color: '#06b6d4',
+    interpretation: 'Indexación macroeconómica con base en el Marco Fiscal de Mediano Plazo.',
+    isOfficial: false
+  },
+  {
+    id: 'holt',
+    name: 'Suavizamiento Exponencial Holt (+4,66%)',
+    shortName: 'Suavizado Holt (+4,66%)',
+    tag: 'Holt (+4,66%)',
+    formula: 'Tendencia Holt Suavizada',
+    projected2027: 4890000000,
+    incrementoNominal: 217782731,
+    variacionPct: 4.66,
+    color: '#8b5cf6',
+    interpretation: 'Atenúa el impacto de la dispersión de resoluciones extraordinarias de la DIAN.',
+    isOfficial: false
+  },
+  {
+    id: 'inercial',
+    name: 'Base Inercial 2026 (0,0%)',
+    shortName: 'Base Inercial ($4.672M)',
+    tag: 'Base Inercial',
+    formula: 'Base 2026 (0,0%)',
+    projected2027: 4672217269,
+    incrementoNominal: 0,
+    variacionPct: 0.00,
+    color: '#64748b',
+    interpretation: 'Suelo prudente manteniendo la base recaudada en 2026.',
+    isOfficial: false
+  }
+];
+
 export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
   {
     id: 'c1_r10_funcionamiento',
@@ -3388,6 +3638,7 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     models: [
       { id: 'calculado644', name: 'Aumento Calculado PGN (+6,44%)', value: 387451499572, variationPct: 6.44 },
       { id: 'pgn', name: 'Techo Global PGN 2027 (R10+R17+R18)', value: 395704592082, variationPct: 8.71 },
+      { id: 'macro6', name: 'Macro +6,0% Estándar', value: 385849858650, variationPct: 6.00 },
       { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 364009300613, variationPct: 0.00 }
     ]
   },
@@ -3887,41 +4138,38 @@ export function exportBalanceGeneralCSV(summary: OfficialConsolidatedSummary): v
   csv += `Fecha de Generación:;${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}\n`;
   csv += `Total Consolidado 2027:;$ ${summary.totalConsolidado.y27.toLocaleString('es-CO')};Variación Global:;+${summary.totalConsolidado.variationPct.toFixed(2)}%\n\n`;
 
-  // Encabezado exacto solicitado: Unidad;Código concepto;Concepto;Recurso...
-  csv += 'Unidad;Código concepto;Concepto;Recurso;Recaudo 2024;Recaudo 2025;Recaudo Base 2026;Proyección 2027 (COP);Proyección 2027 ($M);Variación vs 2026 (%);Participación Presupuestal (%);Método o Criterio Seleccionado\n';
+  // Encabezado oficial exclusivo para valores de la vigencia 2027
+  csv += 'Unidad;Código concepto;Concepto;Recurso;Proyección 2027 (COP);Proyección 2027 ($M);Variación vs 2026 (%);Participación Presupuestal (%);Método o Criterio Seleccionado\n';
 
-  // Filas individuales con Unidad, Código concepto, Concepto, Recurso
+  // Filas individuales con valores del 2027
   for (const r of summary.rows) {
     const cUnidad = `"${r.unidad}"`;
     const cCode = `"${r.codigoConcepto}"`;
     const cName = `"${r.concepto.replace(/"/g, '""')}"`;
     const cRec = `"${r.recurso}"`;
-    const y24 = `$ ${Math.round(r.recaudo2024).toLocaleString('es-CO')}`;
-    const y25 = `$ ${Math.round(r.recaudo2025).toLocaleString('es-CO')}`;
-    const y26 = `$ ${Math.round(r.base2026).toLocaleString('es-CO')}`;
     const y27 = `$ ${Math.round(r.projected2027).toLocaleString('es-CO')}`;
     const y27M = `$ ${r.projected2027Millions.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M`;
     const varPct = `${r.variationPct >= 0 ? '+' : ''}${r.variationPct.toFixed(2)}%`;
     const partPct = `${r.participationPct.toFixed(2)}%`;
     const model = `"${r.selectedModelName.replace(/"/g, '""')}"`;
 
-    csv += `${cUnidad};${cCode};${cName};${cRec};${y24};${y25};${y26};${y27};${y27M};${varPct};${partPct};${model}\n`;
+    csv += `${cUnidad};${cCode};${cName};${cRec};${y27};${y27M};${varPct};${partPct};${model}\n`;
   }
 
-  // Subtotal Nacion
-  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL GIROS Y FONDOS DE LA NACION (7 CONCEPTOS)";"NACION";"$ ${Math.round(summary.subtotalNacion.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalNacion.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalNacion.variationPct.toFixed(2)}%";"${summary.subtotalNacion.participationPct.toFixed(2)}%";"Transferencias y Fondos Nacionales"\n`;
+  // Subtotal Nacion 2027
+  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL GIROS Y FONDOS DE LA NACION (7 CONCEPTOS)";"NACION";"$ ${Math.round(summary.subtotalNacion.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalNacion.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalNacion.variationPct.toFixed(2)}%";"${summary.subtotalNacion.participationPct.toFixed(2)}%";"Transferencias y Fondos Nacionales"\n`;
 
-  // Subtotal Propios
-  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL RECURSOS PROPIOS - R20 (10 CONCEPTOS)";"20-PROPIOS";"$ ${Math.round(summary.subtotalPropios.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalPropios.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalPropios.variationPct.toFixed(2)}%";"${summary.subtotalPropios.participationPct.toFixed(2)}%";"Autogestión Académica y Administrativa"\n`;
+  // Subtotal Propios 2027
+  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL RECURSOS PROPIOS - R20 (10 CONCEPTOS)";"20-PROPIOS";"$ ${Math.round(summary.subtotalPropios.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalPropios.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalPropios.variationPct.toFixed(2)}%";"${summary.subtotalPropios.participationPct.toFixed(2)}%";"Autogestión Académica y Administrativa"\n`;
 
-  // Subtotal IVA
-  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.02.06.006.02";"SUBTOTAL DEVOLUCION IVA - R21 (1 CONCEPTO)";"21-DEVOLUCION IVA";"$ ${Math.round(summary.subtotalIVA.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalIVA.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalIVA.variationPct.toFixed(2)}%";"${summary.subtotalIVA.participationPct.toFixed(2)}%";"Beneficio Tributario Art. 92 Ley 30"\n`;
+  // Subtotal IVA 2027
+  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.02.06.006.02";"SUBTOTAL DEVOLUCION IVA - R21 (1 CONCEPTO)";"21-DEVOLUCION IVA";"$ ${Math.round(summary.subtotalIVA.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalIVA.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalIVA.variationPct.toFixed(2)}%";"${summary.subtotalIVA.participationPct.toFixed(2)}%";"Beneficio Tributario Art. 92 Ley 30"\n`;
 
-  // Subtotal Estampilla UPTC
-  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.01.02.300.32";"SUBTOTAL ESTAMPILLA UPTC - R40 (1 CONCEPTO)";"40-ESTAMPILLA UPTC";"$ ${Math.round(summary.subtotalEstampillas.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalEstampillas.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalEstampillas.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalEstampillas.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalEstampillas.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalEstampillas.variationPct.toFixed(2)}%";"${summary.subtotalEstampillas.participationPct.toFixed(2)}%";"Estampilla Pro-UPTC Departamental"\n`;
+  // Subtotal Estampilla UPTC 2027
+  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.01.02.300.32";"SUBTOTAL ESTAMPILLA UPTC - R40 (1 CONCEPTO)";"40-ESTAMPILLA UPTC";"$ ${Math.round(summary.subtotalEstampillas.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalEstampillas.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalEstampillas.variationPct.toFixed(2)}%";"${summary.subtotalEstampillas.participationPct.toFixed(2)}%";"Estampilla Pro-UPTC Departamental"\n`;
 
-  // Total Consolidado
-  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"TOTAL CONSOLIDADO UPTC 2027 (19 CONCEPTOS)";"UPTC CONSOLIDADO";"$ ${Math.round(summary.totalConsolidado.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y27).toLocaleString('es-CO')}";"$ ${(summary.totalConsolidado.y27 / 1e6).toFixed(2)}M";"+${summary.totalConsolidado.variationPct.toFixed(2)}%";"100.00%";"Consolidado Total Institucional"\n`;
+  // Total Consolidado 2027
+  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"TOTAL CONSOLIDADO UPTC 2027 (19 CONCEPTOS)";"UPTC CONSOLIDADO";"$ ${Math.round(summary.totalConsolidado.y27).toLocaleString('es-CO')}";"$ ${(summary.totalConsolidado.y27 / 1e6).toFixed(2)}M";"+${summary.totalConsolidado.variationPct.toFixed(2)}%";"100.00%";"Consolidado Total Institucional"\n`;
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

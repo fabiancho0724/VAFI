@@ -21,8 +21,8 @@ import {
   R10BaseComponent2026, R10_BASE_COMPONENTS_2026, R10_BASE_TOTAL_2026,
   R10_PROJECTION_6PCT_DATA, RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES,
   TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES, FACTOR_AUMENTO_FUNCIONAMIENTO, exportRecursosNacionProyeccionCSV,
-  PGN_2027_DATA, R10HistoricalRecord, R10_HISTORICAL_SERIES, exportR10CSV,
-  R18HistoricalRecord, R18_HISTORICAL_SERIES, R18_PROJECTION_DATA, exportR18CSV,
+  PGN_2027_DATA, R10HistoricalRecord, R10_HISTORICAL_SERIES, R10_FORECAST_MODELS, exportR10CSV,
+  R18HistoricalRecord, R18_HISTORICAL_SERIES, R18_PROJECTION_DATA, R18_FORECAST_MODELS, exportR18CSV,
   R12HistoricalRecord, R12ForecastModel, R12_BASE_2026,
   R12_HISTORICAL_SERIES, R12_FORECAST_MODELS, R12_DESCRIPTIVE_STATS, exportR12CSV,
   R14_BASE_2026, R14_HISTORICAL_SERIES, R14_FORECAST_MODELS,
@@ -35,6 +35,7 @@ import {
   R17_HISTORICAL_SERIES, R17_FORECAST_MODELS, exportR17CSV,
   R40HistoricalRecord, R40ForecastModel, R40_BASE_2026,
   R40_HISTORICAL_SERIES, R40_FORECAST_MODELS, R40_DESCRIPTIVE_STATS, exportR40CSV,
+  R20_GLOBAL_FORECAST_MODELS, R21_FORECAST_MODELS,
   OFFICIAL_17_CONCEPTS_CATALOG, OFFICIAL_BALANCE_GENERAL_CATALOG,
   Official17ConceptDefinition, OfficialConceptDefinition,
   Official17ConceptComputedRow, OfficialConceptComputedRow,
@@ -50,6 +51,9 @@ export function R20ResourceProjectionSection() {
   const [nacionSearchTerm, setNacionSearchTerm] = useState('');
   const [nacionCategoryFilter, setNacionCategoryFilter] = useState<string>('TODAS');
 
+  // Modelo activo para R10 (Aportes de la Nación - Funcionamiento)
+  const [r10SelectedModel, setR10SelectedModel] = useState<'calculado644' | 'pgn' | 'macro6' | 'inercial'>('calculado644');
+
   // Modelo activo para R12 (Estampilla Pro- Universidad Nacional y Demás)
   const [r12SelectedModel, setR12SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear'>('macro');
 
@@ -64,6 +68,9 @@ export function R20ResourceProjectionSection() {
 
   // Modelo activo para R17 (Devolución de Descuento por Votación)
   const [r17SelectedModel, setR17SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media'>('macro');
+
+  // Modelo activo para R18 (Aportes Artículo 87 CESU)
+  const [r18SelectedModel, setR18SelectedModel] = useState<'calculado644' | 'macro' | 'inercial'>('calculado644');
 
   // Modelo activo para R40 (Estampilla pro UPTC - Ley 64 de 1988)
   const [r40SelectedModel, setR40SelectedModel] = useState<'macro' | 'inercial' | 'cagr' | 'wma' | 'media3' | 'media4' | 'linear'>('macro');
@@ -296,24 +303,35 @@ export function R20ResourceProjectionSection() {
   }, [r21Years, r21Values, r21Models]);
 
   // =========================================================================
-  // SERIE DE DATOS PARA GRÁFICO HISTÓRICO RECURSO 10.0 (APORTES NACIÓN)
+  // MODELACIÓN Y SERIE HISTÓRICA RECURSO 10.0 (APORTES NACIÓN)
   // =========================================================================
+  const r10ActiveModel = useMemo(() => {
+    return R10_FORECAST_MODELS.find(m => m.id === r10SelectedModel) || R10_FORECAST_MODELS[0];
+  }, [r10SelectedModel]);
+
   const r10ChartSeries = useMemo(() => {
-    return R10_HISTORICAL_SERIES.map((h) => ({
-      year: `${h.vigencia}`,
-      numericYear: h.vigencia,
-      vigencia: h.vigencia,
-      recaudo: h.totalRecaudo,
-      recaudoMillones: Number((h.totalRecaudo / 1e6).toFixed(2)),
-      recaudoMilesMillones: Number((h.totalRecaudo / 1e9).toFixed(2)),
-      variacionCOP: h.variacionAnualCOP,
-      variacionPct: h.variacionAnualPct,
-      tipo: h.tipo,
-      notaNormativa: h.notaNormativa,
-      is2027: h.vigencia === 2027,
-      is2026: h.vigencia === 2026
-    }));
-  }, []);
+    return R10_HISTORICAL_SERIES.map((h) => {
+      const is2027 = h.vigencia === 2027;
+      const recaudo = is2027 ? r10ActiveModel.projected2027 : h.totalRecaudo;
+      const variacionCOP = is2027 ? r10ActiveModel.incrementoNominal : h.variacionAnualCOP;
+      const variacionPct = is2027 ? r10ActiveModel.variacionPct : h.variacionAnualPct;
+
+      return {
+        year: `${h.vigencia}`,
+        numericYear: h.vigencia,
+        vigencia: h.vigencia,
+        recaudo: recaudo,
+        recaudoMillones: Number((recaudo / 1e6).toFixed(2)),
+        recaudoMilesMillones: Number((recaudo / 1e9).toFixed(2)),
+        variacionCOP: variacionCOP,
+        variacionPct: variacionPct,
+        tipo: h.tipo,
+        notaNormativa: is2027 ? `${r10ActiveModel.name} — ${r10ActiveModel.formula}` : h.notaNormativa,
+        is2027: is2027,
+        is2026: h.vigencia === 2026
+      };
+    });
+  }, [r10ActiveModel]);
 
   // =========================================================================
   // MODELACIÓN Y SERIE HISTÓRICA RECURSO 14 (POLÍTICA DE GRATUIDAD)
@@ -346,22 +364,34 @@ export function R20ResourceProjectionSection() {
   }, [r14ActiveModel]);
 
   // =========================================================================
-  // SERIE DE DATOS PARA GRÁFICO HISTÓRICO RECURSO 18 (ART. 87 CESU)
+  // MODELACIÓN Y SERIE DE DATOS RECURSO 18 (ART. 87 CESU)
   // =========================================================================
+  const r18ActiveModel = useMemo(() => {
+    return R18_FORECAST_MODELS.find(m => m.id === r18SelectedModel) || R18_FORECAST_MODELS[0];
+  }, [r18SelectedModel]);
+
   const r18ChartSeries = useMemo(() => {
-    return R18_HISTORICAL_SERIES.map((h) => ({
-      year: `${h.vigencia}`,
-      numericYear: h.vigencia,
-      vigencia: h.vigencia,
-      recaudo: h.totalRecaudo,
-      recaudoMillones: Number((h.totalRecaudo / 1e6).toFixed(2)),
-      variacionCOP: h.variacionAnualCOP,
-      variacionPct: h.variacionAnualPct,
-      tipo: h.tipo,
-      notaNormativa: h.notaNormativa,
-      is2027: h.vigencia === 2027
-    }));
-  }, []);
+    return R18_HISTORICAL_SERIES.map((h) => {
+      const is2027 = h.vigencia === 2027;
+      const recaudo = is2027 ? r18ActiveModel.projected2027 : h.totalRecaudo;
+      const variacionCOP = is2027 ? r18ActiveModel.incrementoNominal : h.variacionAnualCOP;
+      const variacionPct = is2027 ? r18ActiveModel.variacionPct : h.variacionAnualPct;
+
+      return {
+        year: `${h.vigencia}`,
+        numericYear: h.vigencia,
+        vigencia: h.vigencia,
+        recaudo: recaudo,
+        recaudoMillones: Number((recaudo / 1e6).toFixed(2)),
+        variacionCOP: variacionCOP,
+        variacionPct: variacionPct,
+        tipo: h.tipo,
+        notaNormativa: is2027 ? `${r18ActiveModel.name} — ${r18ActiveModel.formula}` : h.notaNormativa,
+        is2027: is2027,
+        is2026: h.vigencia === 2026
+      };
+    });
+  }, [r18ActiveModel]);
 
   // =========================================================================
   // MODELACIÓN Y SERIE HISTÓRICA RECURSO 12 (ESTAMPILLA PRO-UNAL Y DEMÁS UNIVERSIDADES)
@@ -651,6 +681,9 @@ export function R20ResourceProjectionSection() {
 
   const effective17Selections = useMemo(() => {
     const map: Record<string, { modelId: string; customValue?: number }> = { ...official17Selections };
+    if (!map['c1_r10_funcionamiento']) {
+      map['c1_r10_funcionamiento'] = { modelId: r10SelectedModel };
+    }
     if (!map['c2_r12_estampilla_unal']) {
       map['c2_r12_estampilla_unal'] = { modelId: r12SelectedModel === 'macro' ? 'macro6' : r12SelectedModel };
     }
@@ -666,11 +699,14 @@ export function R20ResourceProjectionSection() {
     if (!map['c6_r17_votacion']) {
       map['c6_r17_votacion'] = { modelId: r17SelectedModel };
     }
+    if (!map['c7_r18_cesu']) {
+      map['c7_r18_cesu'] = { modelId: r18SelectedModel };
+    }
     if (!map['c19_r40_estampilla_uptc']) {
       map['c19_r40_estampilla_uptc'] = { modelId: r40SelectedModel === 'macro' ? 'macro6' : r40SelectedModel };
     }
     return map;
-  }, [official17Selections, r12SelectedModel, r13SelectedModel, r14SelectedModel, r16SelectedModel, r17SelectedModel, r40SelectedModel]);
+  }, [official17Selections, r10SelectedModel, r12SelectedModel, r13SelectedModel, r14SelectedModel, r16SelectedModel, r17SelectedModel, r18SelectedModel, r40SelectedModel]);
 
   const official17Consolidated: OfficialConsolidatedSummary = useMemo(() => {
     return computeOfficialBalanceGeneral(effective17Selections);
@@ -686,7 +722,9 @@ export function R20ResourceProjectionSection() {
         ...prev,
         [conceptId]: { modelId: newModelId, customValue: undefined }
       }));
-      if (conceptId === 'c2_r12_estampilla_unal') {
+      if (conceptId === 'c1_r10_funcionamiento' && ['calculado644', 'pgn', 'macro6', 'inercial'].includes(newModelId)) {
+        setR10SelectedModel(newModelId as any);
+      } else if (conceptId === 'c2_r12_estampilla_unal') {
         if (newModelId === 'macro6') setR12SelectedModel('macro');
         else if (['inercial', 'wma', 'media3', 'media4', 'linear'].includes(newModelId)) {
           setR12SelectedModel(newModelId as any);
@@ -699,6 +737,8 @@ export function R20ResourceProjectionSection() {
         setR16SelectedModel(newModelId as any);
       } else if (conceptId === 'c6_r17_votacion' && ['macro', 'inercial', 'wma', 'media'].includes(newModelId)) {
         setR17SelectedModel(newModelId as any);
+      } else if (conceptId === 'c7_r18_cesu' && ['calculado644', 'macro', 'inercial'].includes(newModelId)) {
+        setR18SelectedModel(newModelId as any);
       } else if (conceptId === 'c19_r40_estampilla_uptc') {
         if (newModelId === 'macro6') setR40SelectedModel('macro');
         else if (['inercial', 'cagr', 'wma', 'media3', 'media4', 'linear'].includes(newModelId)) {
@@ -735,6 +775,10 @@ export function R20ResourceProjectionSection() {
     return effective17Selections[R21_CONCEPT_ID]?.modelId || 'macro6';
   }, [effective17Selections]);
 
+  const r21ActiveModel = useMemo(() => {
+    return R21_FORECAST_MODELS.find(m => m.id === currentR21State) || R21_FORECAST_MODELS[0];
+  }, [currentR21State]);
+
   const handleSaveCustomValue = (conceptId: string) => {
     const cleanStr = customInputValue.replace(/[^0-9.-]+/g, '');
     const num = parseFloat(cleanStr);
@@ -757,11 +801,13 @@ export function R20ResourceProjectionSection() {
       sel[c.id] = { modelId: c.defaultModelId };
     }
     setOfficial17Selections(sel);
+    setR10SelectedModel('calculado644');
     setR12SelectedModel('macro');
     setR13SelectedModel('macro');
     setR14SelectedModel('macro');
     setR16SelectedModel('pgn');
     setR17SelectedModel('macro');
+    setR18SelectedModel('calculado644');
     setR40SelectedModel('macro');
     setEditingConceptId(null);
   };
@@ -773,11 +819,13 @@ export function R20ResourceProjectionSection() {
       sel[c.id] = { modelId: inercial ? 'inercial' : c.defaultModelId };
     }
     setOfficial17Selections(sel);
+    setR10SelectedModel('inercial');
     setR12SelectedModel('inercial');
     setR13SelectedModel('inercial');
     setR14SelectedModel('macro');
     setR16SelectedModel('inercial');
     setR17SelectedModel('inercial');
+    setR18SelectedModel('inercial');
     setR40SelectedModel('inercial');
     setEditingConceptId(null);
   };
@@ -800,11 +848,13 @@ export function R20ResourceProjectionSection() {
       }
     }
     setOfficial17Selections(sel);
+    setR10SelectedModel('pgn');
     setR12SelectedModel('wma');
     setR13SelectedModel('wma');
     setR14SelectedModel('linear');
     setR16SelectedModel('pgn');
     setR17SelectedModel('wma');
+    setR18SelectedModel('macro');
     setR40SelectedModel('cagr');
     setEditingConceptId(null);
   };
@@ -1788,29 +1838,86 @@ export function R20ResourceProjectionSection() {
                 </div>
               </div>
 
+              {/* SELECTOR INTERACTIVO DE MODELO R10 PARA 2027 */}
+              <div className="mt-6 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-semibold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-cyan-400" />
+                    SELECCIONAR MODELO DE PROYECCIÓN R10 PARA 2027:
+                  </span>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Modelo Activo: <strong className="text-white">{r10ActiveModel.name}</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {R10_FORECAST_MODELS.map((m) => {
+                    const isSelected = r10SelectedModel === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => setR10SelectedModel(m.id)}
+                        className={`p-3.5 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-cyan-500/20 border-cyan-400 ring-2 ring-cyan-500/40 shadow-lg scale-[1.02]'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                              isSelected ? 'bg-cyan-500 text-black font-extrabold' : 'bg-white/10 text-on-surface-variant'
+                            }`}>
+                              {m.tag}
+                            </span>
+                            {m.isOfficial && (
+                              <span className="text-[8px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1 py-0.5 rounded border border-emerald-500/30">
+                                Oficial (+6,44%)
+                              </span>
+                            )}
+                          </div>
+                          <div className="font-bold text-[11px] text-white mt-1 line-clamp-1">
+                            {m.shortName}
+                          </div>
+                          <div className="font-mono text-base font-extrabold text-cyan-300 mt-0.5">
+                            {formatCurrencyShortCOP(m.projected2027)}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
+                          <span className={`${m.variacionPct > 0 ? 'text-emerald-400' : 'text-on-surface-variant'} font-bold`}>
+                            {m.variacionPct > 0 ? '+' : ''}{m.variacionPct.toFixed(2)}%
+                          </span>
+                          <span>{m.incrementoNominal > 0 ? `+${formatCurrencyShortCOP(m.incrementoNominal)}` : '$0'}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* TARJETAS KPI DE IMPACTO */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                {/* KPI 1: Proyección R10.0 (+6,44%) */}
+                {/* KPI 1: Proyección R10.0 */}
                 <div className="p-5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider">
-                      Proyección Oficial R10.0 (+6,44%)
+                      Proyección 2027 (R10.0)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-500/30">
-                      +6,44% Calculado
+                      {r10ActiveModel.tag}
                     </span>
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-extrabold text-cyan-300 block">
-                      {formatCurrencyShortCOP(R10_PROJECTION_6PCT_DATA.proyeccion2027)}
+                      {formatCurrencyShortCOP(r10ActiveModel.projected2027)}
                     </span>
                     <span className="text-[11px] font-mono text-white/90 block mt-0.5">
-                      {formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.proyeccion2027)}
+                      {formatCurrencyCOP(r10ActiveModel.projected2027)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-cyan-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Aportes Nación Funcionamiento</span>
-                    <strong className="text-cyan-200">+6,44% sobre Base 2026</strong>
+                    <span>Fórmula:</span>
+                    <strong className="text-cyan-200 font-mono">{r10ActiveModel.formula}</strong>
                   </div>
                 </div>
 
@@ -2521,7 +2628,7 @@ export function R20ResourceProjectionSection() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <span className="text-xs font-semibold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles size={14} className="text-indigo-400" />
-                    Seleccionar Modelo de Proyección R12 para 2027:
+                    SELECCIONAR MODELO DE PROYECCIÓN R12 PARA 2027:
                   </span>
                   <span className="text-[11px] font-mono text-on-surface-variant">
                     Modelo Activo: <strong className="text-white">{r12ActiveModel.name}</strong>
@@ -3325,7 +3432,7 @@ export function R20ResourceProjectionSection() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles size={14} className="text-amber-400" />
-                    Seleccionar Modelo de Proyección R13 para 2027:
+                    SELECCIONAR MODELO DE PROYECCIÓN R13 PARA 2027:
                   </span>
                   <span className="text-[11px] font-mono text-on-surface-variant">
                     Modelo Activo: <strong className="text-white">{r13ActiveModel.name}</strong>
@@ -3973,8 +4080,8 @@ export function R20ResourceProjectionSection() {
               <div className="mt-6 pt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <span className="text-xs font-semibold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-amber-400" />
-                    Seleccionar Escenario de Proyección R14 para 2027:
+                    <Sparkles size={14} className="text-teal-400" />
+                    SELECCIONAR MODELO DE PROYECCIÓN R14 PARA 2027:
                   </span>
                   <span className="text-[11px] font-mono text-on-surface-variant">
                     Modelo Activo: <strong className="text-white">{r14ActiveModel.name}</strong>
@@ -4571,7 +4678,7 @@ export function R20ResourceProjectionSection() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <span className="text-xs font-semibold text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles size={14} className="text-blue-400" />
-                    Seleccionar Criterio de Presupuestación R16 para 2027:
+                    SELECCIONAR MODELO DE PROYECCIÓN R16 PARA 2027:
                   </span>
                   <span className="text-[11px] font-mono text-on-surface-variant">
                     Modelo Activo: <strong className="text-white">{r16ActiveModel.name}</strong>
@@ -5383,8 +5490,8 @@ export function R20ResourceProjectionSection() {
               <div className="mt-6 pt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <span className="text-xs font-semibold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-amber-400" />
-                    Seleccionar Escenario de Proyección R17 para 2027:
+                    <Sparkles size={14} className="text-sky-400" />
+                    SELECCIONAR MODELO DE PROYECCIÓN R17 PARA 2027:
                   </span>
                   <span className="text-[11px] font-mono text-on-surface-variant">
                     Modelo Activo: <strong className="text-white">{r17ActiveModel.name}</strong>
@@ -5976,6 +6083,63 @@ export function R20ResourceProjectionSection() {
                 </div>
               </div>
 
+              {/* SELECTOR INTERACTIVO DE MODELO R18 PARA 2027 */}
+              <div className="mt-6 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-semibold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-purple-400" />
+                    SELECCIONAR MODELO DE PROYECCIÓN R18 PARA 2027:
+                  </span>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Modelo Activo: <strong className="text-white">{r18ActiveModel.name}</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {R18_FORECAST_MODELS.map((m) => {
+                    const isSelected = r18SelectedModel === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => setR18SelectedModel(m.id)}
+                        className={`p-3.5 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-purple-500/20 border-purple-400 ring-2 ring-purple-500/40 shadow-lg scale-[1.02]'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                              isSelected ? 'bg-purple-500 text-white font-extrabold' : 'bg-white/10 text-on-surface-variant'
+                            }`}>
+                              {m.tag}
+                            </span>
+                            {m.isOfficial && (
+                              <span className="text-[8px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1 py-0.5 rounded border border-emerald-500/30">
+                                Oficial (+6,44%)
+                              </span>
+                            )}
+                          </div>
+                          <div className="font-bold text-[11px] text-white mt-1 line-clamp-1">
+                            {m.shortName}
+                          </div>
+                          <div className="font-mono text-base font-extrabold text-purple-300 mt-0.5">
+                            {formatCurrencyShortCOP(m.projected2027)}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
+                          <span className={`${m.variacionPct > 0 ? 'text-emerald-400' : 'text-on-surface-variant'} font-bold`}>
+                            {m.variacionPct > 0 ? '+' : ''}{m.variacionPct.toFixed(2)}%
+                          </span>
+                          <span>{m.incrementoNominal > 0 ? `+${formatCurrencyShortCOP(m.incrementoNominal)}` : '$0'}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* TARJETAS KPI DE IMPACTO */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                 {/* KPI 1: Proyección 2027 */}
@@ -5985,20 +6149,20 @@ export function R20ResourceProjectionSection() {
                       Proyección 2027 (R18)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-200 px-2 py-0.5 rounded border border-purple-500/30">
-                      +{R18_PROJECTION_DATA.tasaAumentoPct.toFixed(2)}% Calculado
+                      {r18ActiveModel.tag}
                     </span>
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-extrabold text-purple-300 block">
-                      {formatCurrencyShortCOP(R18_PROJECTION_DATA.proyeccion2027)}
+                      {formatCurrencyShortCOP(r18ActiveModel.projected2027)}
                     </span>
                     <span className="text-[11px] font-mono text-white/90 block mt-0.5">
-                      {formatCurrencyCOP(R18_PROJECTION_DATA.proyeccion2027)}
+                      {formatCurrencyCOP(r18ActiveModel.projected2027)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-purple-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Base 2026 × 1,0644</span>
-                    <strong className="text-purple-200">Tasa PGN Funcionamiento</strong>
+                    <span>Fórmula:</span>
+                    <strong className="text-purple-200 font-mono">{r18ActiveModel.formula}</strong>
                   </div>
                 </div>
 
@@ -6415,6 +6579,68 @@ export function R20ResourceProjectionSection() {
                     <Download size={16} className="text-amber-400" />
                     <span>Exportar CSV R20</span>
                   </button>
+                </div>
+              </div>
+
+              {/* SELECTOR INTERACTIVO DE MODELO R20 PARA 2027 */}
+              <div className="mt-6 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-amber-400" />
+                    SELECCIONAR MODELO DE PROYECCIÓN R20 PARA 2027:
+                  </span>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Modelo Activo: <strong className="text-white">{
+                      currentR20GlobalState === 'macro6' ? 'Macro +6,0% (10 Conceptos Propios)' :
+                      currentR20GlobalState === 'ipc7' ? 'Indexación IPC (+7,0%)' :
+                      currentR20GlobalState === 'inercial' ? 'Base Inercial 2026 (0,0%)' :
+                      'Personalizado / Mixto'
+                    }</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {R20_GLOBAL_FORECAST_MODELS.map((m) => {
+                    const isSelected = currentR20GlobalState === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => handleR20GlobalModelChange(m.id)}
+                        className={`p-3.5 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-500/40 shadow-lg scale-[1.02]'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                              isSelected ? 'bg-amber-500 text-black font-extrabold' : 'bg-white/10 text-on-surface-variant'
+                            }`}>
+                              {m.tag}
+                            </span>
+                            {m.isOfficial && (
+                              <span className="text-[8px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1 py-0.5 rounded border border-emerald-500/30">
+                                Oficial (+6,0%)
+                              </span>
+                            )}
+                          </div>
+                          <div className="font-bold text-[11px] text-white mt-1 line-clamp-1">
+                            {m.shortName}
+                          </div>
+                          <div className="font-mono text-base font-extrabold text-amber-300 mt-0.5">
+                            {formatCurrencyShortCOP(m.projected2027)}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
+                          <span className={`${m.variacionPct > 0 ? 'text-emerald-400' : 'text-on-surface-variant'} font-bold`}>
+                            {m.variacionPct > 0 ? '+' : ''}{m.variacionPct.toFixed(2)}%
+                          </span>
+                          <span>{m.incrementoNominal > 0 ? `+${formatCurrencyShortCOP(m.incrementoNominal)}` : '$0'}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -7126,6 +7352,63 @@ export function R20ResourceProjectionSection() {
                   </button>
                 </div>
               </div>
+
+              {/* SELECTOR INTERACTIVO DE MODELO R21 PARA 2027 */}
+              <div className="mt-6 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-emerald-400" />
+                    SELECCIONAR MODELO DE PROYECCIÓN R21 PARA 2027:
+                  </span>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Modelo Activo: <strong className="text-white">{r21ActiveModel.name}</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {R21_FORECAST_MODELS.map((m) => {
+                    const isSelected = currentR21State === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => handleR21ModelChange(m.id)}
+                        className={`p-3.5 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-emerald-500/20 border-emerald-400 ring-2 ring-emerald-500/40 shadow-lg scale-[1.02]'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                              isSelected ? 'bg-emerald-500 text-black font-extrabold' : 'bg-white/10 text-on-surface-variant'
+                            }`}>
+                              {m.tag}
+                            </span>
+                            {m.isOfficial && (
+                              <span className="text-[8px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1 py-0.5 rounded border border-emerald-500/30">
+                                Oficial (+6,0%)
+                              </span>
+                            )}
+                          </div>
+                          <div className="font-bold text-[11px] text-white mt-1 line-clamp-1">
+                            {m.shortName}
+                          </div>
+                          <div className="font-mono text-base font-extrabold text-emerald-300 mt-0.5">
+                            {formatCurrencyShortCOP(m.projected2027)}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
+                          <span className={`${m.variacionPct > 0 ? 'text-emerald-400' : 'text-on-surface-variant'} font-bold`}>
+                            {m.variacionPct > 0 ? '+' : ''}{m.variacionPct.toFixed(2)}%
+                          </span>
+                          <span>{m.incrementoNominal > 0 ? `+${formatCurrencyShortCOP(m.incrementoNominal)}` : '$0'}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -7137,14 +7420,14 @@ export function R20ResourceProjectionSection() {
               </span>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-3xl font-display font-bold text-white tracking-tight">
-                  {r21BestModel ? formatCurrencyShortCOP(r21BestModel.projected2027) : '$0'}
+                  {formatCurrencyShortCOP(r21ActiveModel.projected2027)}
                 </span>
                 <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400">
-                  +{r21BestModel ? r21BestModel.variationPct.toFixed(1) : 7.0}% vs 2026
+                  +{r21ActiveModel.variacionPct.toFixed(1)}% vs 2026
                 </span>
               </div>
               <p className="text-[11px] font-mono text-on-surface-variant mt-2 truncate">
-                {r21BestModel ? formatCurrencyCOP(r21BestModel.projected2027) : '$0'}
+                {formatCurrencyCOP(r21ActiveModel.projected2027)}
               </p>
             </div>
 
@@ -7456,7 +7739,7 @@ export function R20ResourceProjectionSection() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <span className="text-xs font-semibold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles size={14} className="text-teal-400" />
-                    Seleccionar Modelo de Proyección R40 para 2027:
+                    SELECCIONAR MODELO DE PROYECCIÓN R40 PARA 2027:
                   </span>
                   <span className="text-[11px] font-mono text-on-surface-variant">
                     Modelo Activo: <strong className="text-white">{r40ActiveModel.name}</strong>
@@ -8522,7 +8805,7 @@ export function R20ResourceProjectionSection() {
               <div>
                 <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
                   <Table size={18} className="text-indigo-400" />
-                  Balance General y Matriz de Proyección Presupuestal UPTC (2024–2027)
+                  Balance General y Matriz de Proyección Presupuestal UPTC 2027
                 </h4>
                 <p className="text-xs text-on-surface-variant">
                   Estructurada en el formato oficial: <strong className="text-white">Unidad | Código concepto | Concepto | Recurso</strong>. Permite cambiar el modelo o editar el valor de cualquier concepto.
@@ -8542,14 +8825,11 @@ export function R20ResourceProjectionSection() {
                     <th className="p-3.5 font-semibold text-indigo-300 min-w-[145px]">Código concepto</th>
                     <th className="p-3.5 font-semibold text-white min-w-[240px]">Concepto</th>
                     <th className="p-3.5 font-semibold text-sky-300 min-w-[170px]">Recurso</th>
-                    <th className="p-3.5 font-semibold text-right text-on-surface-variant whitespace-nowrap">2024</th>
-                    <th className="p-3.5 font-semibold text-right text-on-surface-variant whitespace-nowrap">2025</th>
-                    <th className="p-3.5 font-semibold text-right text-sky-300 whitespace-nowrap">Base 2026</th>
-                    <th className="p-3.5 font-semibold text-right text-emerald-300 whitespace-nowrap">Proy. 2027 ($ M Det.)</th>
-                    <th className="p-3.5 font-semibold text-right text-white whitespace-nowrap">Proy. 2027 ($ M)</th>
-                    <th className="p-3.5 font-semibold text-center text-amber-300 whitespace-nowrap">Var %</th>
+                    <th className="p-3.5 font-semibold text-right text-emerald-300 whitespace-nowrap">Proyección 2027 ($ COP)</th>
+                    <th className="p-3.5 font-semibold text-right text-white whitespace-nowrap">Proyección 2027 ($ M)</th>
+                    <th className="p-3.5 font-semibold text-center text-amber-300 whitespace-nowrap">Var % vs 2026</th>
                     <th className="p-3.5 font-semibold text-center text-purple-300 whitespace-nowrap">Part %</th>
-                    <th className="p-3.5 font-semibold text-left text-white min-w-[230px]">Modelo / Elección de Valor</th>
+                    <th className="p-3.5 font-semibold text-left text-white min-w-[230px]">Modelo / Criterio Seleccionado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 font-sans">
@@ -8557,7 +8837,7 @@ export function R20ResourceProjectionSection() {
                   {/* GRUPO 1: GIROS DE LA NACIÓN (Filas 1 a 7)                  */}
                   {/* ========================================================= */}
                   <tr className="bg-cyan-500/10 border-t-2 border-cyan-500/30">
-                    <td colSpan={13} className="px-4 py-2 font-bold text-cyan-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                    <td colSpan={10} className="px-4 py-2 font-bold text-cyan-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
                       <Landmark size={14} className="text-cyan-400" />
                       <span>1. Giros y Transferencias de la Nación (Leyes 30/1992, 1819/2016, 2307/2023, 403/1997 y CESU)</span>
                     </td>
@@ -8590,15 +8870,6 @@ export function R20ResourceProjectionSection() {
                           <span className="px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20">
                             {row.recurso}
                           </span>
-                        </td>
-                        <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.recaudo2024 > 0 ? formatCurrencyShortCOP(row.recaudo2024) : '—'}
-                        </td>
-                        <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.recaudo2025 > 0 ? formatCurrencyShortCOP(row.recaudo2025) : '—'}
-                        </td>
-                        <td className="p-3 text-right font-mono font-semibold text-sky-300">
-                          {formatCurrencyShortCOP(row.base2026)}
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
@@ -8685,15 +8956,6 @@ export function R20ResourceProjectionSection() {
                     <td colSpan={5} className="p-3.5 pl-6 text-cyan-300 italic">
                       ↳ Subtotal Giros y Transferencias de la Nación (Conceptos 1 al 7)
                     </td>
-                    <td className="p-3.5 text-right font-mono">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y24)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y25)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-sky-200">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y26)}
-                    </td>
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
                       {formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}
                     </td>
@@ -8715,7 +8977,7 @@ export function R20ResourceProjectionSection() {
                   {/* GRUPO 2: RECURSOS PROPIOS (Filas 8 a 17)                   */}
                   {/* ========================================================= */}
                   <tr className="bg-amber-500/10 border-t-2 border-amber-500/30">
-                    <td colSpan={13} className="px-4 py-2 font-bold text-amber-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                    <td colSpan={10} className="px-4 py-2 font-bold text-amber-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
                       <Building2 size={14} className="text-amber-400" />
                       <span>2. Recursos Propios UPTC (20-Propios — Derechos Pecuniarios, Matrículas y Servicios de Autogestión)</span>
                     </td>
@@ -8748,15 +9010,6 @@ export function R20ResourceProjectionSection() {
                           <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
                             {row.recurso}
                           </span>
-                        </td>
-                        <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.recaudo2024 > 0 ? formatCurrencyShortCOP(row.recaudo2024) : '—'}
-                        </td>
-                        <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.recaudo2025 > 0 ? formatCurrencyShortCOP(row.recaudo2025) : '—'}
-                        </td>
-                        <td className="p-3 text-right font-mono font-semibold text-sky-300">
-                          {formatCurrencyShortCOP(row.base2026)}
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
@@ -8843,15 +9096,6 @@ export function R20ResourceProjectionSection() {
                     <td colSpan={5} className="p-3.5 pl-6 text-amber-300 italic">
                       ↳ Subtotal Recursos Propios (Conceptos 8 al 17)
                     </td>
-                    <td className="p-3.5 text-right font-mono">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y24)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y25)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-sky-200">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y26)}
-                    </td>
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
                       {formatCurrencyCOP(official17Consolidated.subtotalPropios.y27)}
                     </td>
@@ -8873,7 +9117,7 @@ export function R20ResourceProjectionSection() {
                   {/* GRUPO 3: DEVOLUCIÓN IVA (Fila 18)                         */}
                   {/* ========================================================= */}
                   <tr className="bg-emerald-500/10 border-t-2 border-emerald-500/30">
-                    <td colSpan={13} className="px-4 py-2 font-bold text-emerald-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                    <td colSpan={10} className="px-4 py-2 font-bold text-emerald-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
                       <TrendingUp size={14} className="text-emerald-400" />
                       <span>3. Devolución IVA (21-Devolucion IVA — Beneficio Tributario IES Art. 92 Ley 30 / Art. 481 E.T.)</span>
                     </td>
@@ -8906,15 +9150,6 @@ export function R20ResourceProjectionSection() {
                           <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
                             {row.recurso}
                           </span>
-                        </td>
-                        <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.recaudo2024 > 0 ? formatCurrencyShortCOP(row.recaudo2024) : '—'}
-                        </td>
-                        <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.recaudo2025 > 0 ? formatCurrencyShortCOP(row.recaudo2025) : '—'}
-                        </td>
-                        <td className="p-3 text-right font-mono font-semibold text-sky-300">
-                          {formatCurrencyShortCOP(row.base2026)}
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
@@ -9001,15 +9236,6 @@ export function R20ResourceProjectionSection() {
                     <td colSpan={5} className="p-3.5 pl-6 text-emerald-300 italic">
                       ↳ Subtotal Devolución IVA (Concepto 18)
                     </td>
-                    <td className="p-3.5 text-right font-mono">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y24)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y25)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-sky-200">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalIva.y26)}
-                    </td>
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
                       {formatCurrencyCOP(official17Consolidated.subtotalIva.y27)}
                     </td>
@@ -9031,7 +9257,7 @@ export function R20ResourceProjectionSection() {
                   {/* GRUPO 4: ESTAMPILLA PRO-UPTC (Fila 19)                    */}
                   {/* ========================================================= */}
                   <tr className="bg-purple-500/10 border-t-2 border-purple-500/30">
-                    <td colSpan={13} className="px-4 py-2 font-bold text-purple-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
+                    <td colSpan={10} className="px-4 py-2 font-bold text-purple-300 uppercase text-[11px] tracking-wider flex items-center gap-2">
                       <Award size={14} className="text-purple-400" />
                       <span>4. Estampilla UPTC (40-Estampilla UPTC — Ley 1283 de 2009 / Ordenanza Departamental)</span>
                     </td>
@@ -9064,15 +9290,6 @@ export function R20ResourceProjectionSection() {
                           <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
                             {row.recurso}
                           </span>
-                        </td>
-                        <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.recaudo2024 > 0 ? formatCurrencyShortCOP(row.recaudo2024) : '—'}
-                        </td>
-                        <td className="p-3 text-right font-mono text-on-surface-variant">
-                          {row.recaudo2025 > 0 ? formatCurrencyShortCOP(row.recaudo2025) : '—'}
-                        </td>
-                        <td className="p-3 text-right font-mono font-semibold text-sky-300">
-                          {formatCurrencyShortCOP(row.base2026)}
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-300">
                           {formatCurrencyCOP(row.projected2027)}
@@ -9159,15 +9376,6 @@ export function R20ResourceProjectionSection() {
                     <td colSpan={5} className="p-3.5 pl-6 text-purple-300 italic">
                       ↳ Subtotal Estampilla Pro-UPTC (Concepto 19)
                     </td>
-                    <td className="p-3.5 text-right font-mono">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalEstampillas.y24)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalEstampillas.y25)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-sky-200">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalEstampillas.y26)}
-                    </td>
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-bold">
                       {formatCurrencyCOP(official17Consolidated.subtotalEstampillas.y27)}
                     </td>
@@ -9189,15 +9397,6 @@ export function R20ResourceProjectionSection() {
                   <tr className="bg-white/10 font-bold text-white border-t-2 border-white/20">
                     <td colSpan={5} className="p-3.5 pl-6 text-white italic">
                       ↳ Subtotal Autogestión Institucional (Recursos Propios + Devolución IVA + Estampilla UPTC)
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y24)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-on-surface-variant">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y25)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-sky-200">
-                      {formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y26)}
                     </td>
                     <td className="p-3.5 text-right font-mono text-emerald-300 font-extrabold">
                       {formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}
@@ -9223,15 +9422,6 @@ export function R20ResourceProjectionSection() {
                     <td colSpan={5} className="p-4 font-extrabold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
                       <Landmark size={17} className="text-indigo-400 shrink-0" />
                       <span>TOTAL BALANCE GENERAL UPTC 2027 (19 CONCEPTOS)</span>
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-white">
-                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y24)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-white">
-                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y25)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-sky-300 bg-sky-500/20">
-                      {formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y26)}
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-emerald-300 bg-emerald-500/20 text-sm">
                       {formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}
@@ -9318,12 +9508,9 @@ export function R20ResourceProjectionSection() {
                   <th className="border border-slate-400 p-1.5 text-center min-w-[80px]">Código concepto</th>
                   <th className="border border-slate-400 p-1.5 min-w-[130px]">Concepto</th>
                   <th className="border border-slate-400 p-1.5 min-w-[90px]">Recurso</th>
-                  <th className="border border-slate-400 p-1.5 text-right">2024 (COP)</th>
-                  <th className="border border-slate-400 p-1.5 text-right">2025 (COP)</th>
-                  <th className="border border-slate-400 p-1.5 text-right">Base 2026 (COP)</th>
-                  <th className="border border-slate-400 p-1.5 text-right bg-slate-900">Proy. 2027 (COP)</th>
-                  <th className="border border-slate-400 p-1.5 text-right">Proy. 2027 ($M)</th>
-                  <th className="border border-slate-400 p-1.5 text-center">Var %</th>
+                  <th className="border border-slate-400 p-1.5 text-right bg-slate-900">Proyección 2027 ($ COP)</th>
+                  <th className="border border-slate-400 p-1.5 text-right">Proyección 2027 ($ M)</th>
+                  <th className="border border-slate-400 p-1.5 text-center">Var % vs 2026</th>
                   <th className="border border-slate-400 p-1.5 text-center">Part %</th>
                   <th className="border border-slate-400 p-1.5">Criterio / Modelo</th>
                 </tr>
@@ -9331,7 +9518,7 @@ export function R20ResourceProjectionSection() {
               <tbody>
                 {/* Grupo 1: Nación */}
                 <tr className="bg-slate-200 font-bold text-slate-900">
-                  <td colSpan={13} className="border border-slate-300 p-1 pl-2">
+                  <td colSpan={10} className="border border-slate-300 p-1 pl-2">
                     1. GIROS Y TRANSFERENCIAS DE LA NACIÓN
                   </td>
                 </tr>
@@ -9342,9 +9529,6 @@ export function R20ResourceProjectionSection() {
                     <td className="border border-slate-300 p-1 font-mono text-center">{row.codigoConcepto}</td>
                     <td className="border border-slate-300 p-1 font-medium">{row.concepto}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.recaudo2024 > 0 ? formatCurrencyCOP(row.recaudo2024) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.recaudo2025 > 0 ? formatCurrencyCOP(row.recaudo2025) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.base2026)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-center font-mono">+{row.variationPct.toFixed(2)}%</td>
@@ -9357,9 +9541,6 @@ export function R20ResourceProjectionSection() {
                   <td colSpan={5} className="border border-slate-300 p-1.5 pl-4 italic">
                     Subtotal Giros de la Nación (Conceptos 1 al 7)
                   </td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y24)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y25)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y26)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalNacion.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalNacion.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalNacion.variationPct.toFixed(2)}%</td>
@@ -9369,7 +9550,7 @@ export function R20ResourceProjectionSection() {
 
                 {/* Grupo 2: Propios */}
                 <tr className="bg-slate-200 font-bold text-slate-900">
-                  <td colSpan={13} className="border border-slate-300 p-1 pl-2">
+                  <td colSpan={10} className="border border-slate-300 p-1 pl-2">
                     2. RECURSOS PROPIOS (20-PROPIOS)
                   </td>
                 </tr>
@@ -9380,9 +9561,6 @@ export function R20ResourceProjectionSection() {
                     <td className="border border-slate-300 p-1 font-mono text-center">{row.codigoConcepto}</td>
                     <td className="border border-slate-300 p-1 font-medium">{row.concepto}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.recaudo2024 > 0 ? formatCurrencyCOP(row.recaudo2024) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.recaudo2025 > 0 ? formatCurrencyCOP(row.recaudo2025) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.base2026)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-center font-mono">+{row.variationPct.toFixed(2)}%</td>
@@ -9395,9 +9573,6 @@ export function R20ResourceProjectionSection() {
                   <td colSpan={5} className="border border-slate-300 p-1.5 pl-4 italic">
                     Subtotal Recursos Propios (Conceptos 8 al 17)
                   </td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y24)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y25)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y26)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalPropios.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalPropios.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalPropios.variationPct.toFixed(2)}%</td>
@@ -9407,7 +9582,7 @@ export function R20ResourceProjectionSection() {
 
                 {/* Grupo 3: IVA */}
                 <tr className="bg-slate-200 font-bold text-slate-900">
-                  <td colSpan={13} className="border border-slate-300 p-1 pl-2">
+                  <td colSpan={10} className="border border-slate-300 p-1 pl-2">
                     3. DEVOLUCIÓN IVA (21-DEVOLUCION IVA)
                   </td>
                 </tr>
@@ -9418,9 +9593,6 @@ export function R20ResourceProjectionSection() {
                     <td className="border border-slate-300 p-1 font-mono text-center">{row.codigoConcepto}</td>
                     <td className="border border-slate-300 p-1 font-medium">{row.concepto}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.recaudo2024 > 0 ? formatCurrencyCOP(row.recaudo2024) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.recaudo2025 > 0 ? formatCurrencyCOP(row.recaudo2025) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.base2026)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-center font-mono">+{row.variationPct.toFixed(2)}%</td>
@@ -9433,9 +9605,6 @@ export function R20ResourceProjectionSection() {
                   <td colSpan={5} className="border border-slate-300 p-1.5 pl-4 italic">
                     Subtotal Devolución IVA (Concepto 18)
                   </td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalIva.y24)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalIva.y25)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalIva.y26)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalIva.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalIva.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalIva.variationPct.toFixed(2)}%</td>
@@ -9445,7 +9614,7 @@ export function R20ResourceProjectionSection() {
 
                 {/* Grupo 4: Estampilla UPTC */}
                 <tr className="bg-slate-200 font-bold text-slate-900">
-                  <td colSpan={13} className="border border-slate-300 p-1 pl-2">
+                  <td colSpan={10} className="border border-slate-300 p-1 pl-2">
                     4. ESTAMPILLA PRO-UPTC (40-ESTAMPILLA UPTC)
                   </td>
                 </tr>
@@ -9456,9 +9625,6 @@ export function R20ResourceProjectionSection() {
                     <td className="border border-slate-300 p-1 font-mono text-center">{row.codigoConcepto}</td>
                     <td className="border border-slate-300 p-1 font-medium">{row.concepto}</td>
                     <td className="border border-slate-300 p-1 text-slate-700">{row.recurso}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.recaudo2024 > 0 ? formatCurrencyCOP(row.recaudo2024) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono">{row.recaudo2025 > 0 ? formatCurrencyCOP(row.recaudo2025) : '—'}</td>
-                    <td className="border border-slate-300 p-1 text-right font-mono font-semibold">{formatCurrencyCOP(row.base2026)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold text-indigo-900 bg-indigo-50/50">{formatCurrencyCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-right font-mono font-bold">{formatCurrencyShortCOP(row.projected2027)}</td>
                     <td className="border border-slate-300 p-1 text-center font-mono">+{row.variationPct.toFixed(2)}%</td>
@@ -9471,9 +9637,6 @@ export function R20ResourceProjectionSection() {
                   <td colSpan={5} className="border border-slate-300 p-1.5 pl-4 italic">
                     Subtotal Estampilla Pro-UPTC (Concepto 19)
                   </td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalEstampillas.y24)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalEstampillas.y25)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalEstampillas.y26)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-indigo-950 bg-indigo-100">{formatCurrencyCOP(official17Consolidated.subtotalEstampillas.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalEstampillas.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalEstampillas.variationPct.toFixed(2)}%</td>
@@ -9486,9 +9649,6 @@ export function R20ResourceProjectionSection() {
                   <td colSpan={5} className="border border-slate-300 p-1.5 pl-4 italic">
                     Subtotal Autogestión Institucional (Recursos Propios + Devolución IVA + Estampilla UPTC)
                   </td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y24)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y25)}</td>
-                  <td className="border border-slate-300 p-1.5 text-right font-mono">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y26)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-extrabold text-slate-900">{formatCurrencyCOP(official17Consolidated.subtotalAutogestion.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-right font-mono font-bold">{formatCurrencyShortCOP(official17Consolidated.subtotalAutogestion.y27)}</td>
                   <td className="border border-slate-300 p-1.5 text-center font-mono">+{official17Consolidated.subtotalAutogestion.variationPct.toFixed(2)}%</td>
@@ -9503,9 +9663,6 @@ export function R20ResourceProjectionSection() {
                   <td colSpan={5} className="border border-slate-600 p-2 uppercase">
                     TOTAL BALANCE GENERAL UPTC 2027 (19 CONCEPTOS)
                   </td>
-                  <td className="border border-slate-600 p-2 text-right font-mono">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y24)}</td>
-                  <td className="border border-slate-600 p-2 text-right font-mono">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y25)}</td>
-                  <td className="border border-slate-600 p-2 text-right font-mono text-sky-300">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y26)}</td>
                   <td className="border border-slate-600 p-2 text-right font-mono text-emerald-400 bg-slate-950 text-xs">{formatCurrencyCOP(official17Consolidated.totalConsolidado.y27)}</td>
                   <td className="border border-slate-600 p-2 text-right font-mono text-white text-xs">{formatCurrencyShortCOP(official17Consolidated.totalConsolidado.y27)}</td>
                   <td className="border border-slate-600 p-2 text-center font-mono text-emerald-300">+{official17Consolidated.totalConsolidado.variationPct.toFixed(2)}%</td>
