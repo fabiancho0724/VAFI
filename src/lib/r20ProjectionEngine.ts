@@ -973,72 +973,46 @@ export interface R10BaseComponent2026 {
 export const R10_BASE_COMPONENTS_2026: R10BaseComponent2026[] = [
   {
     subRecurso: 'R10.0',
-    denominacion: 'Aportes Nación – Funcionamiento',
+    denominacion: 'Aportes Nación – Funcionamiento (Base Certificada)',
     recaudoEfectivo: 238714266246,
-    ingresoFaltante: 84669196293,
-    totalRecaudo: 323383462539,
-    participacionPct: (323383462539 / 347670222577) * 100 // 93.01%
-  },
-  {
-    subRecurso: 'R10.5',
-    denominacion: 'Aportes Nación – Política de Gratuidad (Base)',
-    recaudoEfectivo: 11208316954,
-    ingresoFaltante: 0,
-    totalRecaudo: 11208316954,
-    participacionPct: (11208316954 / 347670222577) * 100 // 3.22%
-  },
-  {
-    subRecurso: 'R10.1',
-    denominacion: 'Aportes Nación – PIC Convencional',
-    recaudoEfectivo: 5623807220,
-    ingresoFaltante: 2165253520,
-    totalRecaudo: 7789060740,
-    participacionPct: (7789060740 / 347670222577) * 100 // 2.24%
-  },
-  {
-    subRecurso: 'R10.2',
-    denominacion: 'Aportes Nación – PIC Territorial',
-    recaudoEfectivo: 3060211833,
-    ingresoFaltante: 0,
-    totalRecaudo: 3060211833,
-    participacionPct: (3060211833 / 347670222577) * 100 // 0.88%
-  },
-  {
-    subRecurso: 'R10.3',
-    denominacion: 'Aportes Nación – Procesos de fortalecimiento a la gestión',
-    recaudoEfectivo: 0,
-    ingresoFaltante: 2229170511,
-    totalRecaudo: 2229170511,
-    participacionPct: (2229170511 / 347670222577) * 100 // 0.64%
+    ingresoFaltante: 125295034367,
+    totalRecaudo: 364009300613,
+    participacionPct: 100.0
   }
 ];
 
-export const R10_BASE_TOTAL_2026 = 347670222577; // 347.670.222.577 COP (Base Unificada R10.0 a R10.5)
-export const R10_SUBCUATRO_TOTAL_2026 = 336461905623; // 336.461.905.623 COP (Suma 4 sub-recursos R10.0 a R10.3)
+export const BASE_FUNCIONAMIENTO_NACION_2026 = 371763051562; // 371.763.051.562 COP (Suma Base R10 + R17 + R18)
+export const ASIGNADO_FUNCIONAMIENTO_PGN_2027 = 395704592082; // 395.704.592.082 COP
+export const INCREMENTO_FUNCIONAMIENTO_NOMINAL_2027 = 23941540520; // +23.941.540.520 COP
+export const TASA_AUMENTO_FUNCIONAMIENTO_PCT = 6.44; // +6.44%
+export const FACTOR_AUMENTO_FUNCIONAMIENTO = 395704592082 / 371763051562; // 1.0643999999984055 (~1.06440000)
+
+export const R10_BASE_TOTAL_2026 = 364009300613; // 364.009.300.613 COP (Base Certificada R10.0 Funcionamiento)
+export const R10_SUBCUATRO_TOTAL_2026 = 336461905623;
 
 export const R10_PROJECTION_6PCT_DATA = {
   vigencia: 2027,
   recurso: '10.0-Aportes Nacion - Funcionamiento',
-  denominacion: 'Recurso 10.0 — Aportes de la Nación para Funcionamiento (+6.0% Oficial)',
-  basePresupuestal2026: 347670222577,
-  baseR10Puro2026: 323383462539,
-  baseCuatroComponentes2026: 336461905623,
-  tasaAumentoPct: 7.13,
-  factorAumento: 1.0712975,
-  proyeccion2027: 372458241214, // Subtotal R10 unificado dentro del techo nacional PGN 2027 ($395.704.592.082)
-  incrementoNominal: 24788018637, // +24.788.018.637 COP vs Base unificada ($347.670M)
-  variacionPct: 7.13,
-  notaAclaratoriaPolitica: 'La proyección de la vigencia 2027 para los sub-recursos 10.1, 10.2, 10.3 y 10.5 es $ 0 en todos los casos debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del anterior Gobierno Nacional continuarán en vigencia. Por tal motivo sus valores no se proyectan de forma independiente ($ 0 COP). No obstante, los recursos que fueron entregados en el 2026 quedan indexados a la base presupuestal unificada ($ 347.670.222.577 COP) y constituirán el giro por Artículo 86 de la Ley 30 de 1992 para el funcionamiento (R10.0), el cual concentra la totalidad del valor proyectado ($ 372.458.241.214 COP).',
+  denominacion: 'Recurso 10.0 — Aportes de la Nación para Funcionamiento (+6,44% Calculado PGN)',
+  basePresupuestal2026: 364009300613,
+  baseR10Puro2026: 364009300613,
+  baseCuatroComponentes2026: 364009300613,
+  tasaAumentoPct: 6.44,
+  factorAumento: 1.0643999999984055,
+  proyeccion2027: 387451499572, // 364.009.300.613 * 1.06440000
+  incrementoNominal: 23442198959, // +23.442.198.959 COP
+  variacionPct: 6.44,
+  notaAclaratoriaPolitica: 'La proyección de la vigencia 2027 para los sub-recursos 10.1, 10.2, 10.3 y 10.5 es $ 0 en todos los casos debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del anterior Gobierno Nacional continuarán en vigencia. Por tal motivo sus valores no se proyectan de forma independiente ($ 0 COP). No obstante, los recursos que fueron entregados en el 2026 quedan indexados a la base presupuestal de funcionamiento ($ 364.009.300.613 COP) y constituirán el giro por Artículo 86 de la Ley 30 de 1992 para el funcionamiento (R10.0), el cual concentra el valor proyectado ($ 387.451.499.572 COP con el +6,44%).',
   desgloseComponentes: [
     {
       subRecurso: 'R10.0',
       denominacion: 'Aportes Nación – Funcionamiento (Art. 86 Ley 30)',
-      base2026: 323383462539,
-      proyeccion2027: 372458241214,
-      incremento: 24788018637,
-      pct: 7.13,
+      base2026: 364009300613,
+      proyeccion2027: 387451499572,
+      incremento: 23442198959,
+      pct: 6.44,
       indexado: false,
-      nota: 'Concentra la totalidad del giro de funcionamiento Art. 86 (absorbiendo en la base unificada a R10.1, R10.2, R10.3 y R10.5)'
+      nota: 'Concentra la totalidad del giro de funcionamiento Art. 86 con la tasa oficial calculada del +6,44%'
     },
     {
       subRecurso: 'R10.5',
@@ -1082,7 +1056,7 @@ export const R10_PROJECTION_6PCT_DATA = {
     },
   ],
   pgn2027Referencia: 395704592082,
-  diferenciaVsPGN: 395704592082 - 372458241214 // 23.246.350.868 COP (Otros Recursos Nación: R13 + R14 + R17 + R18)
+  diferenciaVsPGN: 395704592082 - 387451499572 // 8.253.092.510 COP (R17 + R18)
 };
 
 export interface RecursoNacionProyeccionRow {
@@ -1117,131 +1091,15 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     categoria: 'Base Presupuestal',
     historico2024: 252310024180,
     historico2025: 274240602293,
-    base2026: 323383462539,
-    recaudoEfectivo2026: 238714266246,
-    ingresoFaltante2026: 84669196293,
-    tasaAumentoPct: 7.13,
-    proyeccion2027: 372458241214,
-    incrementoNominal: 24788018637,
-    participacion2027Pct: (372458241214 / 395704592082) * 100,
+    base2026: 364009300613,
+    recaudoEfectivo2026: 364009300613,
+    ingresoFaltante2026: 0,
+    tasaAumentoPct: 6.44,
+    proyeccion2027: 387451499572,
+    incrementoNominal: 23442198959,
+    participacion2027Pct: (387451499572 / 395704592082) * 100,
     indexado: false,
-    notaAclaratoria: 'Concentra la totalidad del giro unificado de funcionamiento por Art. 86 Ley 30 sobre la base unificada ($347.670M).'
-  },
-  {
-    codigo: '10.1',
-    subRecurso: 'R10.1',
-    nombre: 'Aportes Nación – PIC Convencional',
-    destinacion: 'Política gubernamental transitoria sin proyección en 2027 (Indexado a Base R10.0)',
-    marcoLegal: 'Resolución MEN - Plan de Fomento a la Calidad / Política Transitoria',
-    entidad: 'MEN - Subdirección de Apoyo a IES',
-    categoria: 'Fomento y Calidad',
-    historico2024: 6452000000,
-    historico2025: 10080716557,
-    base2026: 7789060740,
-    recaudoEfectivo2026: 5623807220,
-    ingresoFaltante2026: 2165253520,
-    tasaAumentoPct: 0.0,
-    proyeccion2027: 0,
-    incrementoNominal: 0,
-    participacion2027Pct: 0.0,
-    indexado: true,
-    notaAclaratoria: 'Proyección 2027: $ 0. Política gubernamental transitoria sin proyección individual. Indexado a base Art. 86.'
-  },
-  {
-    codigo: '10.2',
-    subRecurso: 'R10.2',
-    nombre: 'Aportes Nación – PIC Territorial',
-    destinacion: 'Operación y fomento académico en sedes regionales (Duitama, Sogamoso, Chiquinquirá, Aguazul)',
-    marcoLegal: 'Resolución MEN - Fomento Regional / Política Transitoria',
-    entidad: 'Ministerio de Educación Nacional',
-    categoria: 'Fomento y Calidad',
-    historico2024: 2534000000,
-    historico2025: 2835297958,
-    base2026: 3060211833,
-    recaudoEfectivo2026: 3060211833,
-    ingresoFaltante2026: 0,
-    tasaAumentoPct: 0.0,
-    proyeccion2027: 0,
-    incrementoNominal: 0,
-    participacion2027Pct: 0.0,
-    indexado: true,
-    notaAclaratoria: 'Proyección 2027: $ 0. Política territorial transitoria sin proyección individual. Indexado a base Art. 86.'
-  },
-  {
-    codigo: '10.3',
-    subRecurso: 'R10.3',
-    nombre: 'Aportes Nación – Procesos de fortalecimiento a la gestión',
-    destinacion: 'Modernización tecnológica y fortalecimiento a la gestión administrativa',
-    marcoLegal: 'Resolución MEN - Fortalecimiento Institucional',
-    entidad: 'Ministerio de Educación Nacional',
-    categoria: 'Fomento y Calidad',
-    historico2024: 1845000000,
-    historico2025: 2050000000,
-    base2026: 2229170511,
-    recaudoEfectivo2026: 0,
-    ingresoFaltante2026: 2229170511,
-    tasaAumentoPct: 0.0,
-    proyeccion2027: 0,
-    incrementoNominal: 0,
-    participacion2027Pct: 0.0,
-    indexado: true,
-    notaAclaratoria: 'Proyección 2027: $ 0. Indexado a base permanente Art. 86 (+$0 individual).'
-  },
-  {
-    codigo: '10.5',
-    subRecurso: 'R10.5',
-    nombre: 'Aportes Nación – Política de Gratuidad (Base)',
-    destinacion: 'Costo operativo de matrícula pregrado Ley de Gratuidad incorporado a la base',
-    marcoLegal: 'Ley 2307/2023 / Decreto Reglamentario MEN',
-    entidad: 'MEN / Fondo de Gratuidad',
-    categoria: 'Gratuidad',
-    historico2024: 9280000000,
-    historico2025: 10300000000,
-    base2026: 11208316954,
-    recaudoEfectivo2026: 11208316954,
-    ingresoFaltante2026: 0,
-    tasaAumentoPct: 0.0,
-    proyeccion2027: 0,
-    incrementoNominal: 0,
-    participacion2027Pct: 0.0,
-    indexado: true,
-    notaAclaratoria: 'Proyección 2027: $ 0. Indexado a la base presupuestal Art. 86 (+$0 individual).'
-  },
-  {
-    codigo: '13',
-    subRecurso: 'R13',
-    nombre: 'Excedentes Financieros Cooperativas',
-    destinacion: 'Financiación de cupos, permanencia y apoyos de funcionamiento estudiantil',
-    marcoLegal: 'Artículo 142 Ley 1819 de 2016 / DIAN',
-    entidad: 'Sector Cooperativo / DIAN',
-    categoria: 'Transferencia Especial',
-    historico2024: 2078952994,
-    historico2025: 2080840690,
-    base2026: 1534765063,
-    recaudoEfectivo2026: 1534765063,
-    ingresoFaltante2026: 0,
-    tasaAumentoPct: 6.01,
-    proyeccion2027: 1626937884,
-    incrementoNominal: 92172821,
-    participacion2027Pct: (1626937884 / 395704592082) * 100
-  },
-  {
-    codigo: '14',
-    subRecurso: 'R14',
-    nombre: 'Matrículas FSE / Gratuidad "Puedo Estudiar"',
-    destinacion: 'Financiamiento operativo de exención de matrícula pregrado',
-    marcoLegal: 'Ley 2307 de 2023 / Fondo Solidario para la Educación (FSE)',
-    entidad: 'Ministerio de Educación Nacional (FSE)',
-    categoria: 'Gratuidad',
-    historico2024: 37090700264,
-    historico2025: 36210311946,
-    base2026: 12640832058,
-    recaudoEfectivo2026: 12640832058,
-    ingresoFaltante2026: 0,
-    tasaAumentoPct: 6.01,
-    proyeccion2027: 13399997861,
-    incrementoNominal: 759165803,
-    participacion2027Pct: (13399997861 / 395704592082) * 100
+    notaAclaratoria: 'Componente 1 de Funcionamiento Nación: concentra el giro de funcionamiento Art. 86 con el +6,44%.'
   },
   {
     codigo: '17',
@@ -1253,13 +1111,14 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     categoria: 'Transferencia Especial',
     historico2024: 4531561319,
     historico2025: 5183761916,
-    base2026: 5643523905,
-    recaudoEfectivo2026: 4206990540,
-    ingresoFaltante2026: 1436533365,
-    tasaAumentoPct: 6.01,
-    proyeccion2027: 5982454945,
-    incrementoNominal: 338931040,
-    participacion2027Pct: (5982454945 / 395704592082) * 100
+    base2026: 5643523903,
+    recaudoEfectivo2026: 5643523903,
+    ingresoFaltante2026: 0,
+    tasaAumentoPct: 6.44,
+    proyeccion2027: 6006966842,
+    incrementoNominal: 363442939,
+    participacion2027Pct: (6006966842 / 395704592082) * 100,
+    notaAclaratoria: 'Componente 2 de Funcionamiento Nación: proyectado con la tasa oficial calculada del +6,44%.'
   },
   {
     codigo: '18',
@@ -1271,38 +1130,55 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     categoria: 'Transferencia Especial',
     historico2024: 1067037785,
     historico2025: 457065634,
-    base2026: 2110227048,
-    recaudoEfectivo2026: 1573078344,
-    ingresoFaltante2026: 537148704,
-    tasaAumentoPct: 6.01,
-    proyeccion2027: 2236960178,
-    incrementoNominal: 126733130,
-    participacion2027Pct: (2236960178 / 395704592082) * 100
+    base2026: 2110227046,
+    recaudoEfectivo2026: 2110227046,
+    ingresoFaltante2026: 0,
+    tasaAumentoPct: 6.44,
+    proyeccion2027: 2246125668,
+    incrementoNominal: 135898622,
+    participacion2027Pct: (2246125668 / 395704592082) * 100,
+    notaAclaratoria: 'Componente 3 de Funcionamiento Nación: proyectado con la tasa oficial calculada del +6,44%.'
   }
 ];
 
 export const TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES = {
-  historico2024: 297078276272,
-  historico2025: 331088597004,
-  base2026: 369599570651,
-  tasaAumentoPct: 7.06,
+  historico2024: 257908623284,
+  historico2025: 279881429843,
+  base2026: 371763051562,
+  tasaAumentoPct: 6.44,
   proyeccion2027: 395704592082,
-  incrementoNominal: 26105021431,
+  incrementoNominal: 23941540520,
   subtotalR10: {
     historico2024: 252310024180,
-    historico2025: 287156616808,
-    base2026: 347670222577,
-    tasaAumentoPct: 7.13,
-    proyeccion2027: 372458241214,
-    incrementoNominal: 24788018637
+    historico2025: 274240602293,
+    base2026: 364009300613,
+    tasaAumentoPct: 6.44,
+    proyeccion2027: 387451499572,
+    incrementoNominal: 23442198959
+  },
+  subtotalR17: {
+    historico2024: 4531561319,
+    historico2025: 5183761916,
+    base2026: 5643523903,
+    tasaAumentoPct: 6.44,
+    proyeccion2027: 6006966842,
+    incrementoNominal: 363442939
+  },
+  subtotalR18: {
+    historico2024: 1067037785,
+    historico2025: 457065634,
+    base2026: 2110227046,
+    tasaAumentoPct: 6.44,
+    proyeccion2027: 2246125668,
+    incrementoNominal: 135898622
   },
   otrosRecursosNacion: {
-    historico2024: 44768252092,
-    historico2025: 43931980196,
-    base2026: 21929348074,
-    tasaAumentoPct: 6.01,
-    proyeccion2027: 23246350868,
-    incrementoNominal: 1317002794
+    historico2024: 5598599104,
+    historico2025: 5640827550,
+    base2026: 7753750949,
+    tasaAumentoPct: 6.44,
+    proyeccion2027: 8253092510,
+    incrementoNominal: 499341561
   }
 };
 
@@ -1310,14 +1186,14 @@ export const PGN_2027_DATA = {
   vigencia: 2027,
   institucion: 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)',
   normaLegal: 'Proyecto / Ley de Presupuesto General de la Nación (PGN 2027)',
-  funcionamientoR10: 395704592082, // A. PRESUPUESTO DE FUNCIONAMIENTO (Total 9 Recursos Nación: R10 a R18)
+  funcionamientoR10: 395704592082, // A. PRESUPUESTO DE FUNCIONAMIENTO (R10 + R17 + R18)
   inversion: 8310959010,           // C. PRESUPUESTO DE INVERSIÓN (2202 Calidad y Fomento / 0700 Intersubsectorial)
   totalPresupuestoEjecutora: 404015551092, // TOTAL PRESUPUESTO UNIDAD EJECUTORA
-  basePresupuestal2026: 369599570651, // Base Consolidada 9 Recursos Nación ($369.600M)
-  variacionNominal: 395704592082 - 369599570651, // +26.105.021.431 COP
-  variacionPct: ((395704592082 - 369599570651) / 369599570651) * 100, // +7.06%
-  variacionVsR10Ordinario: 395704592082 - 323383462539, // +72.321.129.543 COP
-  variacionVsR10OrdinarioPct: ((395704592082 - 323383462539) / 323383462539) * 100 // +22.36%
+  basePresupuestal2026: 371763051562, // Base Consolidada Funcionamiento Nación ($371.763M)
+  variacionNominal: 395704592082 - 371763051562, // +23.941.540.520 COP
+  variacionPct: ((395704592082 - 371763051562) / 371763051562) * 100, // +6.44%
+  variacionVsR10Ordinario: 395704592082 - 364009300613, // +31.695.291.469 COP
+  variacionVsR10OrdinarioPct: ((395704592082 - 364009300613) / 364009300613) * 100 // +8.71%
 };
 
 export interface R10HistoricalRecord {
@@ -1446,51 +1322,50 @@ export const R10_HISTORICAL_SERIES: R10HistoricalRecord[] = [
   {
     vigencia: 2026,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Base Presupuestal Unificada (R10.0 + R10.1 + R10.2 + R10.3 + R10.5)',
-    recurso: '10.0 Base Consolidada de Referencia',
-    totalRecaudo: 347670222577,
-    variacionAnualCOP: 60513605769,
-    variacionAnualPct: 21.07,
+    concepto: 'Base Presupuestal Funcionamiento Nación (R10.0)',
+    recurso: '10.0-Aportes Nacion - Funcionamiento',
+    totalRecaudo: 364009300613,
+    variacionAnualCOP: 76852683805,
+    variacionAnualPct: 26.76,
     tipo: 'base2026',
-    notaNormativa: 'Base Presupuestal Certificada (Efectivo $258.607M + Faltante $89.064M)'
+    notaNormativa: 'Base Presupuestal Certificada 2026 ($364.009.300.613 COP)'
   },
   {
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Aportes Nación Funcionamiento (Giro Art. 86 Ley 30 Unificado)',
-    recurso: '10.0-Aportes Nación Funcionamiento',
-    totalRecaudo: 372458241214,
-    variacionAnualCOP: 24788018637,
-    variacionAnualPct: 7.13,
+    concepto: 'Aportes Nación Funcionamiento (Giro Art. 86 Ley 30)',
+    recurso: '10.0-Aportes Nacion - Funcionamiento',
+    totalRecaudo: 387451499572,
+    variacionAnualCOP: 23442198959,
+    variacionAnualPct: 6.44,
     tipo: 'proyeccion',
-    notaNormativa: 'Subtotal R10 Unificado (+7.13% sobre Base Unificada 2026 de $347.670M dentro del techo PGN 2027)'
+    notaNormativa: 'Proyección Oficial Funcionamiento (+6,44% calculado sobre Base 2026 dentro del techo PGN 2027)'
   }
 ];
 
 export function exportRecursosNacionProyeccionCSV(): void {
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += `PROYECCIONES DE RECURSOS DE LA NACION PARA EL FUNCIONAMIENTO (POLITICA +6.0%)\n`;
+  csvContent += `BASE DE APORTES PARA FUNCIONAMIENTO NACION (R10, R17 Y R18) - PROYECCION 2027 (+6.44% PGN)\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
   csvContent += `Vigencia Proyectada:;2027\n`;
-  csvContent += `Politica de Incremento:;+6.0% anual sobre Base 2026 ($369.600M -> $395.705M Techo PGN)\n`;
+  csvContent += `Politica de Incremento:;+6.44% anual sobre Base 2026 ($371.763M -> $395.705M Asignado PGN 2027)\n`;
   csvContent += `Base Presupuestal 2026 Total (COP):;${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026}\n`;
-  csvContent += `Proyeccion Total 2027 (+6%) (COP):;${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027}\n`;
+  csvContent += `Proyeccion Total 2027 (+6.44%) (COP):;${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027}\n`;
   csvContent += `Incremento Nominal Total (COP):;+${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal}\n\n`;
   csvContent += `NOTA ACLARATORIA OFICIAL:;"${R10_PROJECTION_6PCT_DATA.notaAclaratoriaPolitica}"\n\n`;
 
-  csvContent += `DESGLOSE POR RECURSO DE FUNCIONAMIENTO\n`;
+  csvContent += `DESGLOSE POR RECURSO DE FUNCIONAMIENTO NACION\n`;
   csvContent += `Codigo;Sub-Recurso;Nombre;Destinacion;Marco Legal;Entidad;Historico 2024 (COP);Historico 2025 (COP);Base 2026 (COP);Tasa Aumento (%);Incremento Nominal (COP);Proyeccion 2027 (COP);Participacion (%);Estado / Nota\n`;
   for (const r of RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES) {
     const tasaStr = r.indexado ? '0.00% (Indexado a Base)' : `+${r.tasaAumentoPct.toFixed(2)}%`;
     csvContent += `"${r.codigo}";"${r.subRecurso}";"${r.nombre}";"${r.destinacion}";"${r.marcoLegal}";"${r.entidad}";"${r.historico2024}";"${r.historico2025}";"${r.base2026}";"${tasaStr}";"+${r.incrementoNominal}";"${r.proyeccion2027}";"${r.participacion2027Pct.toFixed(2)}%";"${r.notaAclaratoria || ''}"\n`;
   }
-  csvContent += `"SUBTOTAL R10";"R10 CONSOLIDADO";"Base Unificada R10";"Nomina y Operacion Central";"Ley 30/1992 Art. 86";"MEN";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2024}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2025}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026}";"+6.00%";"+${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.incrementoNominal}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027}";"${((TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 / TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027) * 100).toFixed(2)}%";"Absorbe base de R10.1, R10.2, R10.3 y R10.5"\n`;
-  csvContent += `"TOTAL NACION";"—";"TOTAL RECURSOS NACION FUNCIONAMIENTO";"Funcionamiento Global";"—";"—";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2024}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2025}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026}";"+6.00%";"+${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027}";"100.00%";"Techo Legal Proyecto PGN 2027 Cumplido al 100%"\n`;
+  csvContent += `"TOTAL FUNCIONAMIENTO NACION";"—";"TOTAL RECURSOS NACION FUNCIONAMIENTO (R10+R17+R18)";"Funcionamiento Global PGN";"—";"—";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2024}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2025}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026}";"+6.44%";"+${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal}";"${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027}";"100.00%";"Techo Legal Proyecto PGN 2027 Cumplido al 100%"\n`;
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `Proyecciones_Recursos_Nacion_Funcionamiento_6pct_2027.csv`);
+  link.setAttribute('download', `Base_Aportes_Funcionamiento_Nacion_2027.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -1498,14 +1373,14 @@ export function exportRecursosNacionProyeccionCSV(): void {
 
 export function exportR10CSV(): void {
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += `RECURSO 10.0 - APORTES NACION (FUNCIONAMIENTO) - PROYECCION OFICIAL 2027 (+6.0%)\n`;
+  csvContent += `RECURSO 10.0 - APORTES NACION (FUNCIONAMIENTO) - PROYECCION OFICIAL 2027 (+6.44%)\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
-  csvContent += `Base Presupuestal Unificada 2026 (COP):;${R10_PROJECTION_6PCT_DATA.basePresupuestal2026}\n`;
-  csvContent += `Tasa de Incremento Oficial Gubernamental:;+${R10_PROJECTION_6PCT_DATA.tasaAumentoPct.toFixed(2)}%\n`;
-  csvContent += `Incremento Nominal Calculado (+6%) (COP):;+${R10_PROJECTION_6PCT_DATA.incrementoNominal}\n`;
+  csvContent += `Base Presupuestal 2026 (COP):;${R10_PROJECTION_6PCT_DATA.basePresupuestal2026}\n`;
+  csvContent += `Tasa de Incremento Calculada PGN:;+${R10_PROJECTION_6PCT_DATA.tasaAumentoPct.toFixed(2)}%\n`;
+  csvContent += `Incremento Nominal Calculado (+6.44%) (COP):;+${R10_PROJECTION_6PCT_DATA.incrementoNominal}\n`;
   csvContent += `Valor Proyectado R10.0 Vigencia 2027 (COP):;${R10_PROJECTION_6PCT_DATA.proyeccion2027}\n`;
-  csvContent += `Referencia Techo Proyecto PGN 2027 (COP):;${R10_PROJECTION_6PCT_DATA.pgn2027Referencia}\n`;
-  csvContent += `Diferencia vs Proyecto PGN 2027 (COP):;${R10_PROJECTION_6PCT_DATA.diferenciaVsPGN}\n\n`;
+  csvContent += `Referencia Techo Asignado PGN 2027 (COP):;${R10_PROJECTION_6PCT_DATA.pgn2027Referencia}\n`;
+  csvContent += `Diferencia vs Techo PGN 2027 (R17+R18) (COP):;${R10_PROJECTION_6PCT_DATA.diferenciaVsPGN}\n\n`;
   csvContent += `NOTA ACLARATORIA OFICIAL:;"${R10_PROJECTION_6PCT_DATA.notaAclaratoriaPolitica}"\n\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
   csvContent += `Asignacion Fija PGN 2027 Funcionamiento (COP):;${PGN_2027_DATA.funcionamientoR10}\n`;
@@ -1582,45 +1457,47 @@ export const R18_HISTORICAL_SERIES: R18HistoricalRecord[] = [
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Aportes Art. 87 Ley 30 - CESU',
     recurso: '18-Articulo 87 CESU',
-    totalRecaudo: 1573078344,
-    variacionAnualCOP: 1116012710,
-    variacionAnualPct: 244.17,
+    totalRecaudo: 2110227046,
+    variacionAnualCOP: 1653161412,
+    variacionAnualPct: 361.69,
     tipo: 'historico',
-    notaNormativa: 'Recaudo de referencia aprobado para proyección institucional'
+    notaNormativa: 'Recaudo de referencia base 2026 ($2.110.227.046 COP)'
   },
   {
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Aportes Art. 87 Ley 30 - CESU (Proyectado +6.0%)',
+    concepto: 'Aportes Art. 87 Ley 30 - CESU (Proyectado +6.44%)',
     recurso: '18-Articulo 87 CESU',
-    totalRecaudo: 1667463045,
-    variacionAnualCOP: 94384701,
-    variacionAnualPct: 6.00,
+    totalRecaudo: 2246125668,
+    variacionAnualCOP: 135898622,
+    variacionAnualPct: 6.44,
     tipo: 'proyeccion',
-    notaNormativa: 'Proyección técnica con parámetro macroeconómico aprobado (+6,0%)'
+    notaNormativa: 'Proyección técnica con tasa calculada (+6,44%) sobre la base 2026'
   }
 ];
+
+export const R18_BASE_2026 = 2110227046;
 
 export const R18_PROJECTION_DATA = {
   vigencia: 2027,
   recurso: '18-Articulo 87 CESU',
   denominacion: 'Recurso 18 — Aportes Artículo 87 de la Ley 30 de 1992 (CESU)',
-  base2026: 1573078344,
-  tasaAumentoPct: 6.0, // Parámetro macroeconómico aprobado
-  factorAumento: 1.06,
-  proyeccion2027: 1667463045, // 1.573.078.344 * 1.06
-  incrementoNominal: 94384701,
+  base2026: 2110227046,
+  tasaAumentoPct: 6.44,
+  factorAumento: 1.0643999999984055,
+  proyeccion2027: 2246125668, // 2.110.227.046 * 1.0644
+  incrementoNominal: 135898622,
   recaudo2024: 1067037785,
   recaudo2025: 457065634,
-  justificacion: 'Dado que no existe una serie histórica extendida con suficiente número de observaciones para ajustar modelos estocásticos (ARIMA / Holt / Regresiones), se aplica la metodología de indexación sobre el recaudo base 2026 ajustado por el parámetro macroeconómico oficial aprobado del 6,0%.'
+  justificacion: 'Aplica el porcentaje de aumento calculado (+6,44%) sobre la base certificada de 2026 ($2.110.227.046 COP), garantizando el cumplimiento riguroso del techo global del PGN 2027 ($395.704.592.082 COP).'
 };
 
 export function exportR18CSV(): void {
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += `PROYECCION RECURSO 18 - ARTICULO 87 CESU - VIGENCIA 2027\n`;
+  csvContent += `PROYECCION RECURSO 18 - ARTICULO 87 CESU - VIGENCIA 2027 (+6.44%)\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
   csvContent += `Base Recaudo 2026 (COP):;${R18_PROJECTION_DATA.base2026}\n`;
-  csvContent += `Parametro Macroeconomico Aprobado:;+${R18_PROJECTION_DATA.tasaAumentoPct.toFixed(1)}%\n`;
+  csvContent += `Parametro Calculado PGN:;+${R18_PROJECTION_DATA.tasaAumentoPct.toFixed(2)}%\n`;
   csvContent += `Proyeccion 2027 (COP):;${R18_PROJECTION_DATA.proyeccion2027}\n`;
   csvContent += `Incremento Nominal (COP):;+${R18_PROJECTION_DATA.incrementoNominal}\n\n`;
 
@@ -1629,7 +1506,6 @@ export function exportR18CSV(): void {
   for (const h of R18_HISTORICAL_SERIES) {
     csvContent += `"${h.vigencia}";"${h.unidad}";"${h.concepto}";"${h.recurso}";"${h.totalRecaudo}";"${(h.totalRecaudo / 1e6).toFixed(2)}";"${h.variacionAnualCOP >= 0 ? '+' : ''}${h.variacionAnualCOP}";"${h.variacionAnualPct >= 0 ? '+' : ''}${h.variacionAnualPct.toFixed(2)}%";"${h.tipo}";"${h.notaNormativa}"\n`;
   }
-
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
@@ -1878,7 +1754,7 @@ export interface R13ForecastModel {
   isOfficial?: boolean;
 }
 
-export const R13_BASE_2026 = 1530000000;
+export const R13_BASE_2026 = 1621800000;
 
 export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
   {
@@ -1963,22 +1839,22 @@ export const R13_HISTORICAL_SERIES: R13HistoricalRecord[] = [
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016 (Base Referencia)',
     recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
-    totalRecaudo: 1530000000,
-    variacionAnualCOP: -550840690,
-    variacionAnualPct: -26.47,
+    totalRecaudo: 1621800000,
+    variacionAnualCOP: -459040690,
+    variacionAnualPct: -22.06,
     tipo: 'base2026',
-    notaNormativa: 'Caída significativa (-26,5%): recaudo efectivo por debajo de la meta presupuestada institucional'
+    notaNormativa: 'Base real certificada 2026 ($1.621.800.000 COP)'
   },
   {
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016 (Proyectado)',
     recurso: '13-Excedentes Cooperativas Art.142, Ley 1819 del 2016',
-    totalRecaudo: 1621800000,
-    variacionAnualCOP: 91800000,
+    totalRecaudo: 1719108000,
+    variacionAnualCOP: 97308000,
     variacionAnualPct: 6.00,
     tipo: 'proyeccion',
-    notaNormativa: 'Proyección prudente con parámetro macroeconómico oficial (+6,0%) sobre la base real de 2026'
+    notaNormativa: 'Proyección prudente con parámetro macroeconómico oficial (+6,0%) sobre la base real de 2026 ($1.621.800.000 COP)'
   }
 ];
 
@@ -1989,11 +1865,11 @@ export const R13_FORECAST_MODELS: R13ForecastModel[] = [
     shortName: 'Macro +6,0% (Base Real)',
     tag: 'Prudente Oficial',
     formula: 'Recaudo 2026 × 1,060',
-    projected2027: 1621800000,
-    incrementoNominal: 91800000,
+    projected2027: 1719108000,
+    incrementoNominal: 97308000,
     variacionPct: 6.00,
     color: '#f97316',
-    interpretation: 'Toma como ancla la realidad deprimida de 2026 ($1.530M) y aplica únicamente la indexación macroeconómica (+6,0%). Protege el flujo de caja contra el déficit de compromisos.',
+    interpretation: 'Aplica la indexación macroeconómica (+6,0%) sobre la base real certificada de 2026 ($1.621.800.000 COP). Proporciona un piso de recaudo seguro para el anteproyecto presupuestal.',
     alertaRiesgo: 'Bajo Riesgo. La opción más prudente para formular el anteproyecto de presupuesto.',
     riskLevel: 'bajo',
     isOfficial: true
@@ -2001,14 +1877,14 @@ export const R13_FORECAST_MODELS: R13ForecastModel[] = [
   {
     id: 'inercial',
     name: 'Piso Inercial Estricto (0,0% / Base 2026)',
-    shortName: 'Piso Inercial ($1.530M)',
+    shortName: 'Piso Inercial ($1.622M)',
     tag: 'Piso Conservador',
     formula: 'Recaudo 2026 (Crecimiento Cero)',
-    projected2027: 1530000000,
+    projected2027: 1621800000,
     incrementoNominal: 0,
     variacionPct: 0.00,
     color: '#ef4444',
-    interpretation: 'Mantiene plano el valor de 2026 sin asumir recuperación alguna en los excedentes de las cooperativas. Máxima cautela ante incertidumbre macroeconómica del sector solidario.',
+    interpretation: 'Mantiene plano el valor de 2026 ($1.621.800.000 COP) sin asumir recuperación en los excedentes de las cooperativas.',
     alertaRiesgo: 'Riesgo Nulo de Déficit. Presupuesto ultra-defensivo.',
     riskLevel: 'bajo',
     isOfficial: false
@@ -2018,28 +1894,28 @@ export const R13_FORECAST_MODELS: R13ForecastModel[] = [
     name: 'Promedio Ponderado Trienal (WMA-3 Ponderación 3:2:1)',
     shortName: 'WMA-3 Ponderado',
     tag: 'Ponderado WMA-3',
-    formula: '(1.530M·3 + 2.081M·2 + 2.079M·1) / 6',
-    projected2027: 1805105729,
-    incrementoNominal: 275105729,
-    variacionPct: 17.98,
+    formula: '(1.622M·3 + 2.081M·2 + 2.079M·1) / 6',
+    projected2027: 1851005729,
+    incrementoNominal: 229205729,
+    variacionPct: 14.13,
     color: '#eab308',
-    interpretation: 'Asigna el 50% de peso a la caída de 2026 y el 50% restante a la estabilidad de 2024-2025, modelando una recuperación gradual hacia la media.',
-    alertaRiesgo: 'Riesgo Moderado. Requiere que el sector cooperativo recupere utilidades operativas.',
+    interpretation: 'Asigna el 50% de peso a la vigencia de 2026 y el 50% restante a la estabilidad de 2024-2025.',
+    alertaRiesgo: 'Riesgo Moderado. Requiere repunte del sector solidario.',
     riskLevel: 'medio',
     isOfficial: false
   },
   {
     id: 'media',
     name: 'Media de Estabilidad Cuatrienal (2023–2026)',
-    shortName: 'Media Cuatrienal ($1.889M)',
+    shortName: 'Media Cuatrienal',
     tag: 'Media Cuatrienal',
     formula: 'Promedio(2023, 2024, 2025, 2026)',
-    projected2027: 1889404948,
-    incrementoNominal: 359404948,
-    variacionPct: 23.49,
+    projected2027: 1912354948,
+    incrementoNominal: 290554948,
+    variacionPct: 17.92,
     color: '#a855f7',
-    interpretation: 'Promedia las cuatro vigencias posteriores al shock atípico de 2022. Supone que la caída de 2026 fue transitoria y se normalizará el giro.',
-    alertaRiesgo: 'Riesgo Alto. Puede revivir la brecha presupuestal de 2026 si el sector no repunta.',
+    interpretation: 'Promedia las cuatro vigencias posteriores al shock atípico de 2022.',
+    alertaRiesgo: 'Riesgo Alto. Puede revivir la brecha presupuestal si el sector no repunta.',
     riskLevel: 'alto',
     isOfficial: false
   }
@@ -2115,7 +1991,7 @@ export interface R17ForecastModel {
   isOfficial?: boolean;
 }
 
-export const R17_BASE_2026 = 4728146085;
+export const R17_BASE_2026 = 5643523903;
 
 export const R17_HISTORICAL_SERIES: R17HistoricalRecord[] = [
   {
@@ -2145,48 +2021,48 @@ export const R17_HISTORICAL_SERIES: R17HistoricalRecord[] = [
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Devolución Descuento por Votación (Base Referencia)',
     recurso: '17-Devolución Descuento por Votación',
-    totalRecaudo: 4728146085,
-    variacionAnualCOP: -455615831,
-    variacionAnualPct: -8.79,
+    totalRecaudo: 5643523903,
+    variacionAnualCOP: 459761987,
+    variacionAnualPct: 8.87,
     tipo: 'base2026',
-    notaNormativa: 'Recaudo base certificado para proyecciones institucionales (-8,79% vs 2025)'
+    notaNormativa: 'Recaudo base certificado para proyecciones institucionales 2026 ($5.643.523.903 COP)'
   },
   {
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Devolución Descuento por Votación (Proyectado)',
     recurso: '17-Devolución Descuento por Votación',
-    totalRecaudo: 5011834850,
-    variacionAnualCOP: 283688765,
-    variacionAnualPct: 6.00,
+    totalRecaudo: 6006966842,
+    variacionAnualCOP: 363442939,
+    variacionAnualPct: 6.44,
     tipo: 'proyeccion',
-    notaNormativa: 'Proyección institucional técnica con parámetro macroeconómico oficial aprobado (+6,0%) sobre la base real de 2026'
+    notaNormativa: 'Proyección oficial calculada (+6,44%) sobre la base real de 2026 dentro del techo PGN 2027'
   }
 ];
 
 export const R17_FORECAST_MODELS: R17ForecastModel[] = [
   {
     id: 'macro',
-    name: 'Parámetro Macroeconómico Aprobado (+6,0%)',
-    shortName: 'Macro +6,0% (Base Real)',
+    name: 'Aumento Calculado Funcionamiento PGN (+6,44%)',
+    shortName: 'Calculado +6,44% (Base Real)',
     tag: 'Oficial Aprobado',
-    formula: 'Recaudo 2026 × 1,060',
-    projected2027: 5011834850,
-    incrementoNominal: 283688765,
-    variacionPct: 6.00,
+    formula: 'Recaudo 2026 × 1,0644',
+    projected2027: 6006966842,
+    incrementoNominal: 363442939,
+    variacionPct: 6.44,
     color: '#0284c7',
-    interpretation: 'Aplica el parámetro macroeconómico aprobado institucional del +6,0% sobre la base real certificada de 2026 ($4.728M). Satisface los criterios del Ministerio de Hacienda y Crédito Público (MHCP).',
-    alertaRiesgo: 'Bajo Riesgo. Modelo oficial prudente, respaldado en la indexación de costos de matrícula.',
+    interpretation: 'Aplica el porcentaje de aumento calculado (+6,44%) sobre la base de 2026 ($5.643.523.903 COP), asegurando el cierre exacto dentro del techo global del PGN 2027 ($395.704.592.082 COP).',
+    alertaRiesgo: 'Bajo Riesgo. Modelo oficial armónico con el techo de funcionamiento.',
     riskLevel: 'bajo',
     isOfficial: true
   },
   {
     id: 'inercial',
     name: 'Piso Inercial Estricto (0,0% / Base 2026)',
-    shortName: 'Piso Inercial ($4.728M)',
+    shortName: 'Piso Inercial ($5.644M)',
     tag: 'Piso Inercial',
     formula: 'Recaudo 2026 (Crecimiento Cero)',
-    projected2027: 4728146085,
+    projected2027: 5643523903,
     incrementoNominal: 0,
     variacionPct: 0.00,
     color: '#64748b',
@@ -2200,12 +2076,12 @@ export const R17_FORECAST_MODELS: R17ForecastModel[] = [
     name: 'Promedio Móvil Ponderado Trienal (WMA-3 Ponderación 3:2:1)',
     shortName: 'WMA-3 Ponderado',
     tag: 'Ponderado WMA-3',
-    formula: '(4.728M·3 + 5.184M·2 + 4.532M·1) / 6',
-    projected2027: 4847253901,
-    incrementoNominal: 119107816,
-    variacionPct: 2.52,
+    formula: '(5.644M·3 + 5.184M·2 + 4.532M·1) / 6',
+    projected2027: 5305436666,
+    incrementoNominal: -338087237,
+    variacionPct: -5.99,
     color: '#f59e0b',
-    interpretation: 'Pondera con 50% de peso la base 2026, 33,3% a 2025 y 16,7% a 2024, mitigando la oscilación entre comicios electorales y alcanzando $4.847M (+2,52%).',
+    interpretation: 'Pondera con 50% de peso la base 2026, 33,3% a 2025 y 16,7% a 2024, mitigando la oscilación entre comicios electorales.',
     alertaRiesgo: 'Bajo Riesgo. Modelo estadístico ponderado de suavizamiento.',
     riskLevel: 'bajo',
     isOfficial: false
@@ -2213,15 +2089,15 @@ export const R17_FORECAST_MODELS: R17ForecastModel[] = [
   {
     id: 'media',
     name: 'Media Trienal Histórica (2024–2026)',
-    shortName: 'Media Trienal ($4.814M)',
+    shortName: 'Media Trienal ($5.120M)',
     tag: 'Media Trienal',
     formula: 'Promedio(2024, 2025, 2026)',
-    projected2027: 4814489773,
-    incrementoNominal: 86343688,
-    variacionPct: 1.83,
+    projected2027: 5119612379,
+    incrementoNominal: -523911524,
+    variacionPct: -9.28,
     color: '#a855f7',
-    interpretation: 'Promedio aritmético simple de los tres años de datos oficiales disponibles en la UPTC, reflejando el flujo medio trienal de reembolsos de la Nación.',
-    alertaRiesgo: 'Bajo Riesgo. Proyección conservadora con crecimiento moderado del +1,83%.',
+    interpretation: 'Promedio aritmético simple de los tres años de datos oficiales disponibles en la UPTC.',
+    alertaRiesgo: 'Bajo Riesgo. Proyección conservadora.',
     riskLevel: 'bajo',
     isOfficial: false
   }
@@ -2349,13 +2225,13 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     recurso: '10.0-Aportes Nacion - Funcionamiento',
     grupo: 'nacion',
     recaudo2024: 252310024180,
-    recaudo2025: 287156616808,
-    base2026: 347670222577,
-    defaultModelId: 'macro6',
+    recaudo2025: 274240602293,
+    base2026: 364009300613,
+    defaultModelId: 'calculado644',
     models: [
-      { id: 'macro6', name: 'Aumento Gubernamental +6,0% (Base Unificada)', value: 372458241214, variationPct: 7.13 },
-      { id: 'pgn', name: 'Proyecto PGN 2027 (Techo Referencial)', value: 395704592082, variationPct: 13.82 },
-      { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 347670222577, variationPct: 0.00 }
+      { id: 'calculado644', name: 'Aumento Calculado PGN (+6,44%)', value: 387451499572, variationPct: 6.44 },
+      { id: 'pgn', name: 'Techo Global PGN 2027 (R10+R17+R18)', value: 395704592082, variationPct: 8.71 },
+      { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 364009300613, variationPct: 0.00 }
     ]
   },
   {
@@ -2367,13 +2243,13 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     grupo: 'nacion',
     recaudo2024: 2078952994,
     recaudo2025: 2080840690,
-    base2026: 1530000000,
+    base2026: 1621800000,
     defaultModelId: 'macro',
     models: [
-      { id: 'macro', name: 'Macro +6,0% (Base Real Aprobada)', value: 1621800000, variationPct: 6.00 },
-      { id: 'inercial', name: 'Piso Inercial 2026 ($1.530M)', value: 1530000000, variationPct: 0.00 },
-      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 1726969809, variationPct: 12.87 },
-      { id: 'media', name: 'Media Histórica (8 Años)', value: 1986347506, variationPct: 29.83 }
+      { id: 'macro', name: 'Macro +6,0% (Base Real Aprobada)', value: 1719108000, variationPct: 6.00 },
+      { id: 'inercial', name: 'Piso Inercial 2026 ($1.622M)', value: 1621800000, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 1851005729, variationPct: 14.13 },
+      { id: 'media', name: 'Media Cuatrienal ($1.912M)', value: 1912354948, variationPct: 17.92 }
     ]
   },
   {
@@ -2421,13 +2297,13 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     grupo: 'nacion',
     recaudo2024: 4531561319,
     recaudo2025: 5183761916,
-    base2026: 4728146085,
-    defaultModelId: 'macro',
+    base2026: 5643523903,
+    defaultModelId: 'calculado644',
     models: [
-      { id: 'macro', name: 'Macro +6,0% (Base Real Aprobada)', value: 5011834850, variationPct: 6.00 },
-      { id: 'inercial', name: 'Piso Inercial 2026 ($4.728M)', value: 4728146085, variationPct: 0.00 },
-      { id: 'wma', name: 'Promedio Móvil WMA-3', value: 4847253901, variationPct: 2.52 },
-      { id: 'media', name: 'Media Trienal 2024-2026', value: 4814489773, variationPct: 1.83 }
+      { id: 'calculado644', name: 'Aumento Calculado PGN (+6,44%)', value: 6006966842, variationPct: 6.44 },
+      { id: 'macro', name: 'Macro +6,0% Estándar', value: 5982135337, variationPct: 6.00 },
+      { id: 'inercial', name: 'Piso Inercial 2026 ($5.644M)', value: 5643523903, variationPct: 0.00 },
+      { id: 'wma', name: 'Promedio Móvil WMA-3', value: 5305436666, variationPct: -5.99 }
     ]
   },
   {
@@ -2439,12 +2315,12 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     grupo: 'nacion',
     recaudo2024: 1067037785,
     recaudo2025: 457065634,
-    base2026: 1573078344,
-    defaultModelId: 'macro',
+    base2026: 2110227046,
+    defaultModelId: 'calculado644',
     models: [
-      { id: 'macro', name: 'Macro +6,0% (Parámetro Aprobado)', value: 1667463045, variationPct: 6.00 },
-      { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 1573078344, variationPct: 0.00 },
-      { id: 'media', name: 'Media Trienal 2024-2026', value: 1032393921, variationPct: -34.37 }
+      { id: 'calculado644', name: 'Aumento Calculado PGN (+6,44%)', value: 2246125668, variationPct: 6.44 },
+      { id: 'macro', name: 'Macro +6,0% Estándar', value: 2236840669, variationPct: 6.00 },
+      { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 2110227046, variationPct: 0.00 }
     ]
   },
   {

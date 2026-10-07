@@ -20,7 +20,7 @@ import {
   R21_HISTORICAL_RECORDS, fetchAndParseR21, exportR21CSV,
   R10BaseComponent2026, R10_BASE_COMPONENTS_2026, R10_BASE_TOTAL_2026,
   R10_PROJECTION_6PCT_DATA, RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES,
-  TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES, exportRecursosNacionProyeccionCSV,
+  TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES, FACTOR_AUMENTO_FUNCIONAMIENTO, exportRecursosNacionProyeccionCSV,
   PGN_2027_DATA, R10HistoricalRecord, R10_HISTORICAL_SERIES, exportR10CSV,
   R18HistoricalRecord, R18_HISTORICAL_SERIES, R18_PROJECTION_DATA, exportR18CSV,
   R14_BASE_2026, R14_HISTORICAL_SERIES, R14_FORECAST_MODELS,
@@ -172,35 +172,35 @@ export function R20ResourceProjectionSection() {
     });
   }, [nacionCategoryFilter, nacionSearchTerm]);
 
-  // Datos para gráfico de evolución de Recursos Nación para el Funcionamiento
+  // Datos para gráfico de evolución de Recursos Nación para el Funcionamiento (R10, R17 y R18)
   const nacionChartData = useMemo(() => {
     return [
       {
         year: '2024',
         r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2024 / 1e6,
-        r14: 37090.70,
-        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2024 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2024 - 37090700264) / 1e6,
+        r17: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR17.historico2024 / 1e6,
+        r18: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR18.historico2024 / 1e6,
         total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2024 / 1e6
       },
       {
         year: '2025',
         r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2025 / 1e6,
-        r14: 36210.31,
-        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2025 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2025 - 36210311946) / 1e6,
+        r17: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR17.historico2025 / 1e6,
+        r18: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR18.historico2025 / 1e6,
         total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2025 / 1e6
       },
       {
         year: '2026 Base',
         r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026 / 1e6,
-        r14: 12640.83,
-        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026 - 12640832058) / 1e6,
+        r17: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR17.base2026 / 1e6,
+        r18: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR18.base2026 / 1e6,
         total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026 / 1e6
       },
       {
-        year: '2027 Proy (+6%)',
+        year: '2027 Proy (+6,44%)',
         r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 / 1e6,
-        r14: 13400.00,
-        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 - 13399997861) / 1e6,
+        r17: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR17.proyeccion2027 / 1e6,
+        r18: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR18.proyeccion2027 / 1e6,
         total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027 / 1e6
       }
     ];
@@ -421,13 +421,13 @@ export function R20ResourceProjectionSection() {
 
     const r10_2024 = 252310024180;
     const r10_2025 = 287156616808;
-    const r10_2026 = R10_PROJECTION_6PCT_DATA.basePresupuestal2026; // 347.670.222.577
-    const r10_2027 = R10_PROJECTION_6PCT_DATA.proyeccion2027;      // 372.458.241.214 (+6.0% Oficial Absorbe Base)
+    const r10_2026 = R10_PROJECTION_6PCT_DATA.basePresupuestal2026; // 364.009.300.613
+    const r10_2027 = R10_PROJECTION_6PCT_DATA.proyeccion2027;      // 387.451.499.572 (+6,44% Calculado PGN)
 
     const r13_2024 = 2078952994;
     const r13_2025 = 2080840690;
-    const r13_2026 = R13_BASE_2026;                     // 1.530.000.000
-    const r13_2027 = r13ActiveModel.projected2027;      // 1.621.800.000 (o modelo seleccionado)
+    const r13_2026 = R13_BASE_2026;                     // 1.621.800.000
+    const r13_2027 = r13ActiveModel.projected2027;      // 1.719.108.000 (+6,0% Macro Oficial)
 
     const r14_2024 = 37090700264;
     const r14_2025 = 36210311946;
@@ -436,13 +436,13 @@ export function R20ResourceProjectionSection() {
 
     const r17_2024 = 4531561319;
     const r17_2025 = 5183761916;
-    const r17_2026 = R17_BASE_2026;                     // 4.728.146.085
-    const r17_2027 = r17ActiveModel.projected2027;      // 5.011.834.850 (o modelo seleccionado)
+    const r17_2026 = R17_BASE_2026;                     // 5.643.523.903
+    const r17_2027 = r17ActiveModel.projected2027;      // 6.006.966.842 (+6,44% Calculado PGN)
 
     const r18_2024 = R18_PROJECTION_DATA.recaudo2024;    // 1.067.037.785
     const r18_2025 = R18_PROJECTION_DATA.recaudo2025;    // 457.065.634
-    const r18_2026 = R18_PROJECTION_DATA.base2026;       // 1.573.078.344
-    const r18_2027 = R18_PROJECTION_DATA.proyeccion2027; // 1.667.463.045
+    const r18_2026 = R18_PROJECTION_DATA.base2026;       // 2.110.227.046
+    const r18_2027 = R18_PROJECTION_DATA.proyeccion2027; // 2.246.125.668 (+6,44% Calculado PGN)
 
     const autogestion_2024 = r20_2024 + r21_2024;
     const autogestion_2025 = r20_2025 + r21_2025;
@@ -812,9 +812,9 @@ export function R20ResourceProjectionSection() {
             }`}
           >
             <ShieldCheck size={15} className="text-cyan-300" />
-            <span>Recursos Nación para el Funcionamiento</span>
+            <span>Base Aportes Funcionamiento Nación (R10, R17, R18)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/30 text-cyan-200 font-bold border border-cyan-400/30">
-              $433.575M (+6% Gob)
+              $395.705M (+6,44%)
             </span>
           </button>
 
@@ -829,7 +829,7 @@ export function R20ResourceProjectionSection() {
             <Building2 size={15} />
             <span>Recurso 10.0 (Aportes Nación)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
-              $372.439M (+6%)
+              $387.451M (+6,44%)
             </span>
           </button>
 
@@ -844,7 +844,7 @@ export function R20ResourceProjectionSection() {
             <Coins size={15} />
             <span>Excedentes Cooperativas Art.142, Ley 1819 del 2016</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
-              $1.622M (+6%)
+              $1.719M (+6,0%)
             </span>
           </button>
 
@@ -859,7 +859,7 @@ export function R20ResourceProjectionSection() {
             <GraduationCap size={15} />
             <span>Recurso 14 (Política Gratuidad)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
-              $52.835M (+6%)
+              $52.835M (+6,0%)
             </span>
           </button>
 
@@ -874,7 +874,7 @@ export function R20ResourceProjectionSection() {
             <Vote size={15} />
             <span>Recurso 17 (Descuento Votación)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
-              $5.012M (+6%)
+              $6.007M (+6,44%)
             </span>
           </button>
 
@@ -889,7 +889,7 @@ export function R20ResourceProjectionSection() {
             <Award size={15} />
             <span>Recurso 18 (Art. 87 CESU)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
-              $1.667M (+6%)
+              $2.246M (+6,44%)
             </span>
           </button>
 
@@ -947,7 +947,8 @@ export function R20ResourceProjectionSection() {
       </div>
 
       {/* ========================================================================= */}
-      {/* SECCIÓN ESPECIAL: RECURSOS NACIÓN PARA EL FUNCIONAMIENTO (POLÍTICA +6.0%)  */}
+      {/* ========================================================================= */}
+      {/* SECCIÓN ESPECIAL: BASE DE APORTES PARA FUNCIONAMIENTO NACIÓN (R10, R17, R18) */}
       {/* ========================================================================= */}
       {selectedRecursoTab === 'nacion-funcionamiento' && (
         <div className="space-y-6 animate-in fade-in">
@@ -965,22 +966,22 @@ export function R20ResourceProjectionSection() {
                   <div>
                     <div className="flex flex-wrap items-center gap-2.5">
                       <span className="text-xs font-mono uppercase tracking-wider font-bold text-cyan-300 bg-cyan-500/20 px-3 py-1 rounded-full border border-cyan-500/30 flex items-center gap-1.5">
-                        <TrendingUp size={13} /> Directriz de Política: Crecimiento Fijo +6.0%
+                        <TrendingUp size={13} /> Directriz PGN 2027: Crecimiento Calculado +6,44%
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                        <CheckCircle2 size={13} /> 9 Recursos Nacionales de Funcionamiento
+                        <CheckCircle2 size={13} /> Base Funcionamiento Nación: R10 + R17 + R18
                       </span>
                       <span className="text-xs font-mono font-bold text-sky-300 bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/30">
                         Vigencia Fiscal 2027
                       </span>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
-                      Recursos Nación para el Funcionamiento — Proyecciones Oficiales (+6.0%)
+                      Base de Aportes para Funcionamiento Nación (R10, R17 y R18) — Proyecciones Oficiales (+6,44%)
                     </h3>
                     <p className="text-xs md:text-sm text-on-surface-variant max-w-4xl mt-1 leading-relaxed">
-                      Consolidación integral de todas las fuentes y transferencias provenientes del Presupuesto General de la Nación para el funcionamiento de la <strong className="text-white">Universidad Pedagógica y Tecnológica de Colombia (UPTC)</strong>: 
-                      <strong className="text-cyan-300"> R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17 y R18</strong>. 
-                      Bajo la directriz fiscal de transferencias, los recursos gubernamentales se proyectan con un incremento uniforme del <strong className="text-emerald-300">+6,0%</strong> sobre la base de referencia certificada 2026 (<strong className="text-white">$ 409.033,3 M</strong>), alcanzando un valor total para 2027 de <strong className="text-cyan-300">$ 433.575,3 M COP</strong> (+<strong className="text-emerald-400">$ 24.542,0 M COP</strong>).
+                      Consolidación oficial de los aportes de la Nación para el funcionamiento institucional de la <strong className="text-white">Universidad Pedagógica y Tecnológica de Colombia (UPTC)</strong>: 
+                      <strong className="text-cyan-300"> R10.0 ($ 364.009,3 M)</strong>, <strong className="text-sky-300">R17 ($ 5.643,5 M)</strong> y <strong className="text-purple-300">R18 ($ 2.110,2 M)</strong>. 
+                      Sumando estrictamente estos tres recursos se conforma la <strong className="text-white">Base Presupuestal 2026 de $ 371.763.051.562 COP ($ 371.763,1 M)</strong>. Al contrastarla frente al valor legal asignado para la vigencia 2027 en el Proyecto/Ley de Presupuesto General de la Nación (<strong className="text-cyan-300">$ 395.704.592.082 COP</strong>), se calcula una tasa de aumento exacta del <strong className="text-emerald-300">+6,44%</strong> (+6,4400%), generando un incremento nominal neto de +<strong className="text-emerald-400">$ 23.941.540.520 COP</strong>.
                     </p>
                   </div>
                 </div>
@@ -991,11 +992,11 @@ export function R20ResourceProjectionSection() {
                     className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.02] cursor-pointer"
                   >
                     <Download size={15} />
-                    <span>Descargar Proyecciones Nación (+6% CSV)</span>
+                    <span>Descargar Proyecciones Funcionamiento Nación (+6,44% CSV)</span>
                   </button>
                   <div className="flex items-center gap-2 text-right">
                     <span className="text-[11px] font-mono text-on-surface-variant">
-                      Base Presupuestal 2026: <strong className="text-sky-300">{formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026)}</strong>
+                      Base Presupuestal 2026 (R10+R17+R18): <strong className="text-sky-300">{formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026)}</strong>
                     </span>
                   </div>
                 </div>
@@ -1003,14 +1004,14 @@ export function R20ResourceProjectionSection() {
 
               {/* TARJETAS KPI DE IMPACTO */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                {/* KPI 1: Proyección Total Nación 2027 */}
+                {/* KPI 1: Asignado Funcionamiento Nación PGN 2027 */}
                 <div className="p-5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex flex-col justify-between shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider">
-                      Proyección Nación 2027 (+6%)
+                      Asignado PGN 2027 (Funcionamiento)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-500/30">
-                      Total 9 Recursos
+                      Techo Legal PGN
                     </span>
                   </div>
                   <div>
@@ -1022,19 +1023,19 @@ export function R20ResourceProjectionSection() {
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-cyan-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>9 Fuentes de Funcionamiento</span>
-                    <strong className="text-cyan-200">+6,00% Fijado</strong>
+                    <span>R10 + R17 + R18</span>
+                    <strong className="text-cyan-200">100,00% Cumplido ($0 descuadre)</strong>
                   </div>
                 </div>
 
-                {/* KPI 2: Base Consolidada 2026 */}
+                {/* KPI 2: Base Consolidada 2026 (R10 + R17 + R18) */}
                 <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
-                      Base Consolidada 2026
+                      Base Funcionamiento 2026
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded border border-sky-500/30">
-                      R10 + R13 a R18
+                      R10 + R17 + R18
                     </span>
                   </div>
                   <div>
@@ -1046,57 +1047,179 @@ export function R20ResourceProjectionSection() {
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Referencia Certificada</span>
-                    <strong className="text-sky-300">Base Histórica 2026</strong>
+                    <span>R10 ($364.009M) + R17 ($5.644M) + R18 ($2.110M)</span>
+                    <strong className="text-sky-300">Base Histórica</strong>
                   </div>
                 </div>
 
-                {/* KPI 3: Incremento Nominal Total (+6%) */}
+                {/* KPI 3: Porcentaje de Aumento Calculado */}
                 <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
-                      Incremento Total (+6.0%)
+                      % Aumento Calculado
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
-                      +{TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.tasaAumentoPct.toFixed(2)}%
+                      +6,4400% Exacto
                     </span>
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-extrabold text-emerald-400 block">
-                      +{formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal)}
+                      +{TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.tasaAumentoPct.toFixed(2)}%
                     </span>
                     <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
-                      +{formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal)}
+                      Factor: × {FACTOR_AUMENTO_FUNCIONAMIENTO.toFixed(8)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Crecimiento Gubernamental</span>
-                    <strong className="text-emerald-300">+6,00% General</strong>
+                    <span>(Asignado 2027 - Base 2026) / Base 2026</span>
+                    <strong className="text-emerald-300">Tasa PGN Aplicada</strong>
                   </div>
                 </div>
 
-                {/* KPI 4: Proyección Subtotal R10 Unificado */}
+                {/* KPI 4: Incremento Nominal Neto */}
                 <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex flex-col justify-between shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-purple-300 uppercase tracking-wider">
-                      Subtotal R10 Unificado (2027)
+                      Incremento Nominal Global
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-200 px-2 py-0.5 rounded border border-purple-500/30">
-                      94,1% de la Nación
+                      +$23.941.540.520
                     </span>
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-extrabold text-purple-300 block">
-                      {formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027)}
+                      +{formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal)}
                     </span>
                     <span className="text-[11px] font-mono text-purple-200/90 block mt-0.5">
-                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027)}
+                      +{formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-purple-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Base 2026: $351.358M</span>
-                    <strong className="text-purple-300">+${formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.incrementoNominal)}</strong>
+                    <span>Diferencia Neta vs. Base 2026</span>
+                    <strong className="text-purple-300">+6,44% Distribuido</strong>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* PANEL DE CÁLCULO DETALLADO Y COMPARACIÓN BASE VS ASIGNADO PGN 2027 */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border-2 border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 via-surface-container/60 to-surface-container-low shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                  <Calculator size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                      Operación Matemática Oficial
+                    </span>
+                    <span className="text-[10px] font-mono text-on-surface-variant">
+                      Artículos 86 y 87 Ley 30/1992 + Ley 403/1997
+                    </span>
+                  </div>
+                  <h4 className="text-lg md:text-xl font-display text-white font-extrabold mt-1">
+                    Cálculo y Determinación de la Tasa de Aumento (+6,44%) sobre la Base de Funcionamiento Nación
+                  </h4>
+                  <p className="text-xs text-on-surface-variant">
+                    Suma estricta de R10, R17 y R18 como base de funcionamiento 2026, contrastada frente al valor legal asignado para 2027 en el PGN.
+                  </p>
+                </div>
+              </div>
+              <div className="text-right bg-black/40 px-4 py-2.5 rounded-2xl border border-cyan-500/20">
+                <span className="text-[10px] uppercase text-cyan-300/80 font-bold block">Tasa de Aumento Calculada</span>
+                <span className="text-xl md:text-2xl font-mono font-extrabold text-cyan-300">
+                  +6,4400%
+                </span>
+              </div>
+            </div>
+
+            {/* PASOS DEL CÁLCULO MATEMÁTICO */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
+              {/* Paso 1: Suma de la Base 2026 */}
+              <div className="p-4 rounded-2xl bg-black/30 border border-white/10 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-mono uppercase text-sky-400 font-bold">Paso 1: Base 2026</span>
+                    <span className="text-[10px] font-mono text-white/60">R10 + R17 + R18</span>
+                  </div>
+                  <span className="text-lg font-mono font-bold text-white block">
+                    $ 371.763.051.562
+                  </span>
+                  <div className="text-[11px] font-mono text-on-surface-variant mt-2 space-y-1">
+                    <div className="flex justify-between"><span>R10.0 Funcionamiento:</span> <strong className="text-sky-300">$ 364.009.300.613</strong></div>
+                    <div className="flex justify-between"><span>R17 Votación:</span> <strong className="text-sky-300">$ 5.643.523.903</strong></div>
+                    <div className="flex justify-between"><span>R18 Art. 87 CESU:</span> <strong className="text-sky-300">$ 2.110.227.046</strong></div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t border-white/10 text-[10px] text-sky-300/80 font-mono">
+                  Suma Base Consolidada = $ 371.763,1 M
+                </div>
+              </div>
+
+              {/* Paso 2: Techo Asignado PGN 2027 */}
+              <div className="p-4 rounded-2xl bg-black/30 border border-cyan-500/20 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-mono uppercase text-cyan-300 font-bold">Paso 2: Asignado PGN 2027</span>
+                    <span className="text-[10px] font-mono text-cyan-200">Ley Presupuesto</span>
+                  </div>
+                  <span className="text-lg font-mono font-extrabold text-cyan-300 block">
+                    $ 395.704.592.082
+                  </span>
+                  <div className="text-[11px] font-mono text-on-surface-variant mt-2 space-y-1">
+                    <div className="flex justify-between"><span>Vigencia Fiscal:</span> <strong className="text-white">2027</strong></div>
+                    <div className="flex justify-between"><span>Unidad Ejecutora:</span> <strong className="text-white">UPTC</strong></div>
+                    <div className="flex justify-between"><span>Concepto PGN:</span> <strong className="text-cyan-200">A. Funcionamiento</strong></div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t border-cyan-500/20 text-[10px] text-cyan-300/80 font-mono">
+                  Techo Legal Garantizado = $ 395.704,6 M
+                </div>
+              </div>
+
+              {/* Paso 3: Cálculo del % de Aumento */}
+              <div className="p-4 rounded-2xl bg-black/30 border border-emerald-500/20 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold">Paso 3: % Aumento</span>
+                    <span className="text-[10px] font-mono text-emerald-300">(PGN - Base) / Base</span>
+                  </div>
+                  <span className="text-lg font-mono font-extrabold text-emerald-400 block">
+                    +6,4400%
+                  </span>
+                  <div className="text-[11px] font-mono text-on-surface-variant mt-2 space-y-1">
+                    <div className="flex justify-between"><span>Diferencia Nominal:</span> <strong className="text-emerald-300">+$ 23.941.540.520</strong></div>
+                    <div className="flex justify-between"><span>Factor Multiplicador:</span> <strong className="text-white font-mono">1,06440000</strong></div>
+                    <div className="flex justify-between"><span>Tasa Porcentual:</span> <strong className="text-emerald-400">+6,44%</strong></div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t border-emerald-500/20 text-[10px] text-emerald-300/80 font-mono">
+                  Incremento Global = +$ 23.941,5 M COP
+                </div>
+              </div>
+
+              {/* Paso 4: Aplicación y Cierre Exacto */}
+              <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-mono uppercase text-emerald-200 font-bold">Paso 4: Proyección R10, R17, R18</span>
+                    <span className="text-[10px] font-mono text-emerald-300 font-bold">Diferencia $0</span>
+                  </div>
+                  <span className="text-lg font-mono font-extrabold text-emerald-300 block">
+                    $ 395.704.592.082
+                  </span>
+                  <div className="text-[11px] font-mono text-white/90 mt-2 space-y-1">
+                    <div className="flex justify-between"><span>R10.0 Proy (+6,44%):</span> <strong className="text-cyan-300 font-mono">$ 387.451.499.572</strong></div>
+                    <div className="flex justify-between"><span>R17 Proy (+6,44%):</span> <strong className="text-sky-300 font-mono">$ 6.006.966.842</strong></div>
+                    <div className="flex justify-between"><span>R18 Proy (+6,44%):</span> <strong className="text-purple-300 font-mono">$ 2.246.125.668</strong></div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t border-emerald-500/30 text-[10px] text-emerald-200 font-bold font-mono">
+                  Suma Exacta = $ 395.704.592.082 COP ($0 dif)
                 </div>
               </div>
             </div>
@@ -1108,25 +1231,25 @@ export function R20ResourceProjectionSection() {
               <div>
                 <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
                   <BarChart3 size={20} className="text-cyan-400" />
-                  Evolución Histórica y Proyección de los Recursos de la Nación (2024–2027)
+                  Evolución Histórica y Proyección de la Base de Funcionamiento Nación (2024–2027)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Comportamiento comparativo de transferencias de funcionamiento ($ M) aplicando la regla de incremento del +6.0% para 2027.
+                  Comportamiento histórico (2024–2025), Base Presupuestal 2026 y Proyección 2027 con la tasa calculada del <strong>+6,44%</strong> ($ M).
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
                   <span className="w-3 h-3 rounded-full bg-cyan-400"></span>
-                  R10 Consolidado (Base)
+                  R10.0 Aportes Nación Funcionamiento
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
-                  <span className="w-3 h-3 rounded-full bg-teal-400"></span>
-                  R14 Gratuidad FSE
+                  <span className="w-3 h-3 rounded-full bg-sky-400"></span>
+                  R17 Devolución Descuento Electoral
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
-                  <span className="w-3 h-3 rounded-full bg-amber-400"></span>
-                  Otros Recursos (R13, R17, R18)
+                  <span className="w-3 h-3 rounded-full bg-purple-400"></span>
+                  R18 Artículo 87 CESU
                 </span>
               </div>
             </div>
@@ -1145,27 +1268,27 @@ export function R20ResourceProjectionSection() {
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px' }}
                     formatter={(val: any, name: any) => [
                       `$ ${Number(val).toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M`,
-                      name === 'r10' ? 'R10 Consolidado' : name === 'r14' ? 'R14 Gratuidad' : name === 'otros' ? 'Otros (R13, R17, R18)' : 'Total'
+                      name === 'r10' ? 'R10.0 Aportes Nación Funcionamiento' : name === 'r17' ? 'R17 Descuento Votación' : name === 'r18' ? 'R18 Art. 87 CESU' : 'Total'
                     ]}
                   />
                   <Bar dataKey="r10" name="r10" fill="#06b6d4" stackId="a" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="r14" name="r14" fill="#14b8a6" stackId="a" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="otros" name="otros" fill="#f59e0b" stackId="a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="r17" name="r17" fill="#38bdf8" stackId="a" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="r18" name="r18" fill="#a855f7" stackId="a" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* TABLA 1: DESGLOSE COMPLETO HISTÓRICO Y PROYECCIÓN 2027 (+6.0%) */}
+          {/* TABLA 1: DESGLOSE COMPLETO HISTÓRICO Y PROYECCIÓN 2027 (+6,44%) */}
           <div className="glass-card p-6 md:p-8 rounded-[28px] border border-cyan-500/20 shadow-xl">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
               <div>
                 <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
                   <Table size={20} className="text-cyan-400" />
-                  Tabla Oficial: Históricos y Proyecciones 2027 (+6.0%) de Recursos Nación para el Funcionamiento
+                  Tabla Oficial: Históricos y Proyecciones 2027 (+6,44%) de la Base de Funcionamiento Nación (R10, R17 y R18)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Desglose oficial de las 9 fuentes nacionales con sus históricos certificados (2024–2025), la Base Presupuestal 2026 y el cálculo proyectado con el aumento del <strong>+6,0%</strong> para 2027.
+                  Desglose de los 3 recursos de transferencias que constituyen la base de funcionamiento nacional con sus históricos (2024–2025), la Base 2026 y el cálculo proyectado con el aumento del <strong>+6,44%</strong> para 2027.
                 </p>
               </div>
 
@@ -1193,7 +1316,7 @@ export function R20ResourceProjectionSection() {
 
             {/* FILTRO DE CATEGORÍAS */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              {['TODAS', 'Base Presupuestal', 'Fomento y Calidad', 'Gratuidad', 'Transferencia Especial'].map(cat => (
+              {['TODAS', 'Base Presupuestal', 'Transferencia Especial'].map(cat => (
                 <button
                   key={cat}
                   onClick={() => setNacionCategoryFilter(cat)}
@@ -1219,9 +1342,9 @@ export function R20ResourceProjectionSection() {
                     <th className="p-4 font-semibold text-right text-slate-300">Histórico 2024</th>
                     <th className="p-4 font-semibold text-right text-slate-300">Histórico 2025</th>
                     <th className="p-4 font-semibold text-right text-sky-300">Base 2026</th>
-                    <th className="p-4 font-semibold text-center text-amber-300">Aumento</th>
-                    <th className="p-4 font-semibold text-right text-emerald-300">Incremento (+6%)</th>
-                    <th className="p-4 font-semibold text-right text-cyan-300 font-bold">Proyección 2027 (+6%)</th>
+                    <th className="p-4 font-semibold text-center text-amber-300">% Aumento</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Incremento (+6,44%)</th>
+                    <th className="p-4 font-semibold text-right text-cyan-300 font-bold">Proyección 2027 (+6,44%)</th>
                     <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
                     <th className="p-4 font-semibold text-center text-purple-300">Part. (%)</th>
                   </tr>
@@ -1252,40 +1375,18 @@ export function R20ResourceProjectionSection() {
                         {formatCurrencyCOP(r.base2026)}
                       </td>
                       <td className="p-4 text-center font-mono whitespace-nowrap">
-                        {r.indexado ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[10px]" title="Política gubernamental transitoria: Proyección 2027 = $ 0 (Indexado a Base R10.0)">
-                            0,0% ($ 0 Proy.)
-                          </span>
-                        ) : r.subRecurso === 'R10' ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]" title="Concentra la totalidad del giro de funcionamiento Art. 86 (+6.0% sobre base indexada de $351.358M)">
-                            +6,00% (Giro Art. 86)
-                          </span>
-                        ) : (
-                          <span className="font-bold text-amber-300">
-                            +{r.tasaAumentoPct.toFixed(2)}%
-                          </span>
-                        )}
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]">
+                          +{r.tasaAumentoPct.toFixed(2)}%
+                        </span>
                       </td>
                       <td className="p-4 text-right font-mono whitespace-nowrap">
-                        {r.indexado ? (
-                          <span className="text-slate-400 font-medium">+$ 0</span>
-                        ) : (
-                          <span className="font-medium text-emerald-300">+{formatCurrencyCOP(r.incrementoNominal)}</span>
-                        )}
+                        <span className="font-medium text-emerald-300">+{formatCurrencyCOP(r.incrementoNominal)}</span>
                       </td>
                       <td className="p-4 text-right font-mono font-extrabold whitespace-nowrap">
-                        {r.proyeccion2027 > 0 ? (
-                          <span className="text-cyan-300">{formatCurrencyCOP(r.proyeccion2027)}</span>
-                        ) : (
-                          <span className="text-slate-400 font-bold font-mono">$ 0</span>
-                        )}
+                        <span className="text-cyan-300">{formatCurrencyCOP(r.proyeccion2027)}</span>
                       </td>
                       <td className="p-4 text-right font-mono font-bold whitespace-nowrap">
-                        {r.proyeccion2027 > 0 ? (
-                          <span className="text-white">{formatCurrencyShortCOP(r.proyeccion2027)}</span>
-                        ) : (
-                          <span className="text-slate-400">$ 0 M</span>
-                        )}
+                        <span className="text-white">{formatCurrencyShortCOP(r.proyeccion2027)}</span>
                       </td>
                       <td className="p-4 text-center font-mono font-bold text-purple-300 whitespace-nowrap">
                         {r.participacion2027Pct.toFixed(2)}%
@@ -1294,41 +1395,10 @@ export function R20ResourceProjectionSection() {
                   ))}
                 </tbody>
                 <tfoot className="border-t-2 border-cyan-500/40 bg-black/40 font-bold text-white text-xs">
-                  {/* SUBTOTAL R10 CONSOLIDADO */}
-                  <tr className="bg-sky-500/10 border-b border-white/10">
-                    <td className="p-4 font-extrabold text-sky-300 uppercase tracking-wider font-mono" colSpan={3}>
-                      SUBTOTAL R10 UNIFICADO (R10 + R10.1 + R10.2 + R10.3 + R10.5)
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-slate-300 whitespace-nowrap">
-                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2024)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-slate-300 whitespace-nowrap">
-                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.historico2025)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-sky-300 whitespace-nowrap">
-                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026)}
-                    </td>
-                    <td className="p-4 text-center font-mono font-extrabold text-amber-300">
-                      +6,00%
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-emerald-300 whitespace-nowrap">
-                      +{formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.incrementoNominal)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-cyan-300 whitespace-nowrap">
-                      {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027)}
-                    </td>
-                    <td className="p-4 text-right font-mono font-extrabold text-white whitespace-nowrap">
-                      {formatCurrencyShortCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027)}
-                    </td>
-                    <td className="p-4 text-center font-mono font-extrabold text-purple-300">
-                      {((TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 / TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027) * 100).toFixed(2)}%
-                    </td>
-                  </tr>
-
-                  {/* TOTAL GENERAL RECURSOS NACIÓN PARA FUNCIONAMIENTO */}
+                  {/* TOTAL GENERAL BASE DE APORTES FUNCIONAMIENTO NACIÓN */}
                   <tr className="bg-black/60 shadow-xl">
                     <td className="p-4 font-extrabold text-cyan-300 uppercase tracking-wider text-sm" colSpan={3}>
-                      TOTAL RECURSOS NACIÓN PARA EL FUNCIONAMIENTO (9 RECURSOS)
+                      TOTAL BASE DE APORTES FUNCIONAMIENTO NACIÓN (R10 + R17 + R18)
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-slate-200 whitespace-nowrap">
                       {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.historico2024)}
@@ -1340,7 +1410,7 @@ export function R20ResourceProjectionSection() {
                       {formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026)}
                     </td>
                     <td className="p-4 text-center font-mono font-extrabold text-amber-300 text-sm">
-                      +6,00%
+                      +{TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.tasaAumentoPct.toFixed(2)}%
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-emerald-300 whitespace-nowrap">
                       +{formatCurrencyCOP(TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal)}
@@ -1360,7 +1430,7 @@ export function R20ResourceProjectionSection() {
             </div>
 
             <div className="mt-4 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-on-surface-variant leading-relaxed">
-              <strong className="text-white">Conclusión Técnica del Escenario Oficial 2027:</strong> El valor total de los recursos de funcionamiento para la vigencia 2027 está fijado legalmente en <strong>$ 395.704.592.082 COP</strong> ($ 395.705M) y equivale a la sumatoria exacta de los <strong>9 recursos proyectados de la Nación</strong> (R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17 y R18). Con la base real certificada de 2026 (<strong>$ 369.599.570.651 COP</strong>), se genera un incremento nominal neto de <strong>+$ 26.105.021.431 COP (+7.06%)</strong>, cumpliendo con precisión de peso el techo presupuestal asignado en el PGN 2027 de <strong>$ 395.704.592.082 COP</strong>. El <strong>R10 Unificado</strong> concentra el 94,13% ($ 372.458M) y los otros cuatro recursos suman el 5,87% ($ 23.246M).
+              <strong className="text-white">Conclusión Técnica del Escenario Oficial 2027:</strong> El valor total de los recursos de funcionamiento de la Nación para la vigencia 2027 está fijado legalmente en <strong>$ 395.704.592.082 COP</strong> ($ 395.704,6 M) en el Presupuesto General de la Nación (PGN 2027). La Base de Aportes para Funcionamiento Nación para 2026 se conforma estrictamente sumando <strong>R10.0 ($ 364.009.300.613 COP)</strong>, <strong>R17 ($ 5.643.523.903 COP)</strong> y <strong>R18 ($ 2.110.227.046 COP)</strong> para un total de <strong>$ 371.763.051.562 COP</strong>. Al contrastar la base 2026 frente a la asignación 2027 se obtiene un porcentaje de aumento exacto del <strong>+6,44%</strong> (factor multiplicador 1,06440000), generando un incremento nominal neto de <strong>+$ 23.941.540.520 COP</strong>. Al aplicar este +6,44% a cada recurso, R10.0 proyecta <strong>$ 387.451.499.572 COP</strong> (97,91%), R17 proyecta <strong>$ 6.006.966.842 COP</strong> (1,52%) y R18 proyecta <strong>$ 2.246.125.668 COP</strong> (0,57%), sumando con exactitud matemática <strong>$ 395.704.592.082 COP ($0 de diferencia frente al techo del PGN)</strong>.
             </div>
 
             {/* NOTA ACLARATORIA OFICIAL: POLÍTICA GUBERNAMENTAL E INDEXACIÓN A LA BASE */}
@@ -1371,7 +1441,7 @@ export function R20ResourceProjectionSection() {
                   Nota Aclaratoria Oficial sobre Políticas Gubernamentales e Indexación a la Base:
                 </strong>
                 <p>
-                  La proyección de la vigencia 2027 para los sub-recursos <strong>10.1 (Ampliación de Cobertura)</strong>, <strong>10.2 (Ampliación de Cobertura con Enfoque Territorial)</strong>, <strong>10.3 (Aportes Adicionales a la Base)</strong> y <strong>10.5 (Política de Gratuidad Base)</strong> es <strong>$ 0 en todos los casos</strong> debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del antiguo Gobierno Nacional continuarán en vigencia; por tal motivo sus valores no se proyectan de forma independiente (<strong>$ 0 COP</strong>). No obstante, los recursos que fueron entregados en el 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 347.670.222.577 COP) y constituirán el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual concentra el 100% del valor proyectado (<strong>$ 372.458.241.214 COP</strong>).
+                  Los ingresos por Ampliación de Cobertura (PIC Convencional R10.1), Ampliación de Cobertura con Enfoque Territorial (PIC Territorial R10.2), Fortalecimiento a la Gestión (R10.3) y Gratuidad Base (R10.5) obedecen a políticas gubernamentales sobre las cuales existe incertidumbre si para el 2027 estos planes del anterior Gobierno Nacional van a seguir en vigencia. Por tal motivo sus valores no se proyectan de forma separada (<strong>$ 0 COP</strong>), pero los valores percibidos en 2026 quedan <strong>indexados en su totalidad a la base presupuestal</strong> y constituyen el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual parte de la base certificada de <strong>$ 364.009.300.613 COP</strong> e incrementa con la tasa del <strong>+6,44%</strong> calculada hacia 2027 (<strong>$ 387.451.499.572 COP</strong>).
                 </p>
               </div>
             </div>
@@ -1449,14 +1519,14 @@ export function R20ResourceProjectionSection() {
 
               {/* TARJETAS KPI DE IMPACTO */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                {/* KPI 1: Proyección R10.0 (+6.0%) */}
+                {/* KPI 1: Proyección R10.0 (+6,44%) */}
                 <div className="p-5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider">
-                      Proyección Oficial R10.0 (+6%)
+                      Proyección Oficial R10.0 (+6,44%)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-500/30">
-                      +6.0% Oficial
+                      +6,44% Calculado
                     </span>
                   </div>
                   <div>
@@ -1469,7 +1539,7 @@ export function R20ResourceProjectionSection() {
                   </div>
                   <div className="mt-3 pt-3 border-t border-cyan-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
                     <span>Aportes Nación Funcionamiento</span>
-                    <strong className="text-cyan-200">+6,0% sobre Base 2026</strong>
+                    <strong className="text-cyan-200">+6,44% sobre Base 2026</strong>
                   </div>
                 </div>
 
@@ -1480,7 +1550,7 @@ export function R20ResourceProjectionSection() {
                       Base Presupuestal 2026
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded border border-sky-500/30">
-                      R10.0 a R10.5
+                      R10.0 Certificado
                     </span>
                   </div>
                   <div>
@@ -1492,16 +1562,16 @@ export function R20ResourceProjectionSection() {
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>5 Sub-recursos Base</span>
-                    <strong className="text-sky-300">$258.607M Efec + $92.750M Falt</strong>
+                    <span>Base Funcionamiento 2026</span>
+                    <strong className="text-sky-300">$ 364.009,3 M COP</strong>
                   </div>
                 </div>
 
-                {/* KPI 3: Variación Nominal y % (+6%) */}
+                {/* KPI 3: Variación Nominal y % (+6,44%) */}
                 <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
-                      Incremento Nominal (+6.0%)
+                      Incremento Nominal (+6,44%)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
                       +{R10_PROJECTION_6PCT_DATA.variacionPct.toFixed(2)}%
@@ -1516,8 +1586,8 @@ export function R20ResourceProjectionSection() {
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Aumento Neto R10</span>
-                    <strong className="text-emerald-300">+6,00% Autorizado</strong>
+                    <span>Aumento Neto R10.0</span>
+                    <strong className="text-emerald-300">+6,44% Calculado PGN</strong>
                   </div>
                 </div>
 
@@ -1528,7 +1598,7 @@ export function R20ResourceProjectionSection() {
                       Techo Proyecto PGN 2027
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-200 px-2 py-0.5 rounded border border-purple-500/30">
-                      Escenario PGN
+                      R10 + R17 + R18
                     </span>
                   </div>
                   <div>
@@ -1540,8 +1610,8 @@ export function R20ResourceProjectionSection() {
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-purple-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Diferencia vs +6%:</span>
-                    <strong className="text-amber-300">-$23.265M COP</strong>
+                    <span>Bolsa Funcionamiento:</span>
+                    <strong className="text-cyan-300">R10 ($387.451M) + R17 + R18</strong>
                   </div>
                 </div>
               </div>
@@ -1568,11 +1638,11 @@ export function R20ResourceProjectionSection() {
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
                   <span className="w-3 h-3 rounded-full bg-sky-500"></span>
-                  Base 2026 ($351.358M)
+                  Base 2026 ($364.009M)
                 </span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
                   <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
-                  Fijo Ley PGN 2027 ($395.705M)
+                  Proyección R10 2027 ($387.451M)
                 </span>
               </div>
             </div>
@@ -1629,7 +1699,7 @@ export function R20ResourceProjectionSection() {
                                 ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
                                 : 'bg-white/10 text-on-surface-variant'
                             }`}>
-                              {item.is2027 ? 'PGN 2027 FIJO POR LEY' : item.is2026 ? 'BASE CONSOLIDADA 2026' : 'CERTIFICADO'}
+                              {item.is2027 ? 'PROYECCIÓN (+6,44%)' : item.is2026 ? 'BASE CONSOLIDADA 2026' : 'CERTIFICADO'}
                             </span>
                           </div>
 
@@ -1696,11 +1766,11 @@ export function R20ResourceProjectionSection() {
               <div className="flex items-center gap-2 text-cyan-300">
                 <Info size={16} className="shrink-0" />
                 <span>
-                  <strong>Análisis de Tendencia:</strong> La curva histórica muestra un crecimiento nominal continuo de <strong>$118.125M (2016)</strong> a <strong>$395.705M (2027)</strong>, multiplicándose por <strong>3.35x</strong> debido a ajustes de IPC salarial, transferencias de fomento y expansión de la gratuidad.
+                  <strong>Análisis de Tendencia:</strong> La curva histórica muestra un crecimiento nominal continuo de <strong>$118.125M (2016)</strong> a <strong>$387.451M (2027)</strong>, multiplicándose por <strong>3.28x</strong> debido a ajustes de IPC salarial, transferencias de fomento e indexación de políticas a la base.
                 </span>
               </div>
               <span className="font-mono text-emerald-400 font-bold shrink-0">
-                Tasa Crec. 2026 $\rightarrow$ 2027: +12.62%
+                Tasa Crec. 2026 $\rightarrow$ 2027: +6,44%
               </span>
             </div>
           </div>
@@ -1711,14 +1781,14 @@ export function R20ResourceProjectionSection() {
               <div>
                 <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
                   <Table size={18} className="text-sky-400" />
-                  Tabla 1: Desglose de la Base Presupuestal de Referencia Vigencia 2026 (Recursos R10)
+                  Tabla 1: Desglose de la Base Presupuestal de Referencia Vigencia 2026 (Recurso 10.0)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-0.5">
-                  Conformación de la base de comparación de <strong>$ 347.670.222.577 COP</strong> a partir del componente ordinario R10.0 ($ 323.383M), fomento y PIC.
+                  Conformación de la base de comparación de <strong>$ 364.009.300.613 COP</strong> para Aportes de la Nación - Funcionamiento.
                 </p>
               </div>
               <span className="text-xs font-mono font-bold text-sky-300 bg-sky-500/10 px-3 py-1.5 rounded-xl border border-sky-500/30">
-                Total Base: $ 347.670.222.577 COP
+                Total Base: $ 364.009.300.613 COP
               </span>
             </div>
 
@@ -1765,19 +1835,19 @@ export function R20ResourceProjectionSection() {
                 <tfoot className="border-t-2 border-sky-500/40 bg-black/40 font-bold text-white text-xs">
                   <tr className="shadow-lg">
                     <td className="p-4 font-extrabold text-sky-400 uppercase tracking-wider" colSpan={2}>
-                      TOTAL BASE PRESUPUESTAL 2026 (R10 CONSOLIDADO)
+                      TOTAL BASE PRESUPUESTAL 2026 (R10.0)
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-emerald-300">
-                      $ 258.606.602.253
+                      $ 238.714.266.246
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-amber-300">
-                      $ 89.063.620.324
+                      $ 125.295.034.367
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-sky-300 bg-sky-500/20 text-sm">
-                      $ 347.670.222.577
+                      $ 364.009.300.613
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-white text-sm">
-                      $ 347.670M
+                      $ 364.009M
                     </td>
                     <td className="p-4 text-center font-mono font-extrabold text-purple-300">
                       100.00%
@@ -1788,11 +1858,11 @@ export function R20ResourceProjectionSection() {
             </div>
 
             <div className="mt-4 p-4 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-xs text-on-surface-variant leading-relaxed">
-              <strong className="text-white">Importancia de la Base Unificada:</strong> El R10.0 ordinario ($323.383M) concentra el 93.01% del recaudo nacional de funcionamiento. Al integrar los sub-recursos R10.1 (PIC Convencional $7.789M), R10.2 (PIC Territorial $3.060M), R10.3 ($2.229M) y R10.5 ($11.208M), se obtiene la base integral real certificada de <strong>$ 347.670.222.577 COP</strong>, sobre la cual se calcula la asignación de funcionamiento dentro del techo del PGN 2027.
+              <strong className="text-white">Importancia de la Base Certificada R10.0:</strong> El valor base para 2026 asciende a <strong>$ 364.009.300.613 COP</strong> ($ 364.009,3 M), consolidando el recaudo efectivo y el ingreso faltante de la vigencia. Al indexar los recursos transitorios a la base permanente del Artículo 86 de la Ley 30, esta cifra constituye la base sobre la cual se aplica el porcentaje de aumento calculado (+6,44%) para determinar el giro de funcionamiento en 2027.
             </div>
           </div>
 
-          {/* CÁLCULO OFICIAL DEL VALOR PROYECTADO R10.0 VIGENCIA 2027 (+6.0% GOBIERNO) */}
+          {/* CÁLCULO OFICIAL DEL VALOR PROYECTADO R10.0 VIGENCIA 2027 (+6,44%) */}
           <div className="glass-card p-6 md:p-8 rounded-[28px] border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 via-surface-container/60 to-surface-container-low shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
             
@@ -1804,17 +1874,17 @@ export function R20ResourceProjectionSection() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      Directriz Gubernamental 2027
+                      Directriz PGN 2027
                     </span>
                     <span className="text-[10px] font-mono text-on-surface-variant">
-                      Tope de Crecimiento: +6.0%
+                      Tasa Calculada: +6,44%
                     </span>
                   </div>
                   <h4 className="text-lg md:text-xl font-display text-white font-extrabold mt-1">
-                    Cálculo del Valor Proyectado R10.0 Vigencia 2027 (+6.0% sobre Base 2026)
+                    Cálculo del Valor Proyectado R10.0 Vigencia 2027 (+6,44% sobre Base 2026)
                   </h4>
                   <p className="text-xs text-on-surface-variant">
-                    Determinación matemática del Aporte de la Nación para Funcionamiento aplicando el tope del +6,0% sobre la base unificada de $ 347.670.222.577 COP.
+                    Determinación matemática del Aporte de la Nación para Funcionamiento aplicando la tasa calculada del +6,44% sobre la base de $ 364.009.300.613 COP.
                   </p>
                 </div>
               </div>
@@ -1836,19 +1906,19 @@ export function R20ResourceProjectionSection() {
                   {formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.basePresupuestal2026)}
                 </span>
                 <span className="text-[10px] text-sky-400 mt-1 block">
-                  5 Sub-recursos Unificados (Efectivo + Faltante)
+                  Base Certificada Aportes Nación Funcionamiento
                 </span>
               </div>
 
               <div className="p-4 rounded-2xl bg-black/30 border border-emerald-500/20">
                 <span className="text-[11px] font-medium text-emerald-300 block mb-1">
-                  Incremento Nominal Autorizado (+6.0%)
+                  Incremento Nominal (+6,44%)
                 </span>
                 <span className="text-xl font-mono font-extrabold text-emerald-400 block">
                   +{formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.incrementoNominal)}
                 </span>
                 <span className="text-[10px] text-emerald-200/80 mt-1 block">
-                  Factor Multiplicador: × 1.060000000
+                  Factor Multiplicador: × 1,06440000
                 </span>
               </div>
 
@@ -1875,7 +1945,7 @@ export function R20ResourceProjectionSection() {
                     <th className="p-3 text-right font-semibold text-sky-300">Base 2026 (COP)</th>
                     <th className="p-3 text-center font-semibold text-emerald-300">Aumento</th>
                     <th className="p-3 text-right font-semibold text-emerald-300">Incremento (+ COP)</th>
-                    <th className="p-3 text-right font-semibold text-emerald-400">Proyección 2027 (+6%)</th>
+                    <th className="p-3 text-right font-semibold text-emerald-400">Proyección 2027 (+6,44%)</th>
                     <th className="p-3 text-right font-semibold text-white">Cifra ($M)</th>
                   </tr>
                 </thead>
@@ -1904,8 +1974,8 @@ export function R20ResourceProjectionSection() {
                               0,0% ($ 0 Proy.)
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]" title="Concentra la totalidad del giro de funcionamiento Art. 86 (+6.0% sobre base indexada de $351.358M)">
-                              +6,00% (Giro Art. 86)
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]" title="Concentra la totalidad del giro de funcionamiento Art. 86 (+6,44% sobre base indexada)">
+                              +{sub.pct.toFixed(2)}% (Giro Art. 86)
                             </span>
                           )}
                         </td>
@@ -1937,13 +2007,13 @@ export function R20ResourceProjectionSection() {
                 <tfoot className="border-t-2 border-emerald-500/40 bg-emerald-950/40 font-bold text-white text-xs">
                   <tr>
                     <td className="p-3 font-extrabold text-emerald-300 uppercase tracking-wider" colSpan={2}>
-                      TOTAL R10.0 PROYECTADO 2027 (+6.0%)
+                      TOTAL R10.0 PROYECTADO 2027 (+6,44%)
                     </td>
                     <td className="p-3 text-right font-mono font-extrabold text-sky-300">
                       {formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.basePresupuestal2026)}
                     </td>
                     <td className="p-3 text-center font-mono font-extrabold text-emerald-300">
-                      +6.00%
+                      +{R10_PROJECTION_6PCT_DATA.variacionPct.toFixed(2)}%
                     </td>
                     <td className="p-3 text-right font-mono font-extrabold text-emerald-300">
                       +{formatCurrencyCOP(R10_PROJECTION_6PCT_DATA.incrementoNominal)}
@@ -1967,7 +2037,7 @@ export function R20ResourceProjectionSection() {
                   Nota Aclaratoria Oficial sobre Políticas Gubernamentales e Indexación a la Base:
                 </strong>
                 <p>
-                  La proyección de la vigencia 2027 para los sub-recursos <strong>10.1 (Ampliación de Cobertura)</strong>, <strong>10.2 (Ampliación de Cobertura con Enfoque Territorial)</strong>, <strong>10.3 (Aportes Adicionales a la Base)</strong> y <strong>10.5 (Política de Gratuidad Base)</strong> es <strong>$ 0 en todos los casos</strong> debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del antiguo Gobierno Nacional continuarán en vigencia; por tal motivo sus valores no se proyectan de forma independiente (<strong>$ 0 COP</strong>). No obstante, los recursos que fueron entregados en el 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 347.670.222.577 COP) y constituirán el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual concentra el 100% del valor proyectado (<strong>$ 372.458.241.214 COP</strong>).
+                  Los ingresos por Ampliación de Cobertura (PIC Convencional R10.1), Ampliación de Cobertura con Enfoque Territorial (PIC Territorial R10.2), Fortalecimiento a la Gestión (R10.3) y Gratuidad Base (R10.5) obedecen a políticas gubernamentales sobre las cuales existe incertidumbre si para el 2027 estos planes del anterior Gobierno Nacional van a seguir en vigencia. Por tal motivo sus valores no se proyectan de forma separada (<strong>$ 0 COP</strong>), pero los valores percibidos en 2026 quedan <strong>indexados en su totalidad a la base presupuestal</strong> y constituirán el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual parte de la base certificada de <strong>$ 364.009.300.613 COP</strong> e incrementa con la tasa del <strong>+6,44%</strong> calculada hacia 2027 (<strong>$ 387.451.499.572 COP</strong>).
                 </p>
               </div>
             </div>
@@ -1976,7 +2046,7 @@ export function R20ResourceProjectionSection() {
               <div className="flex items-center gap-2 text-on-surface-variant">
                 <Info size={16} className="text-emerald-400 shrink-0" />
                 <span>
-                  <strong>Fórmula Aplicada:</strong> <code className="text-emerald-300 font-mono bg-black/40 px-1.5 py-0.5 rounded">R10_2027 = $ 347.670.222.577 + $ 24.788.018.637 = $ 372.458.241.214 COP</code>
+                  <strong>Fórmula Aplicada:</strong> <code className="text-emerald-300 font-mono bg-black/40 px-1.5 py-0.5 rounded">R10_2027 = $ 364.009.300.613 × 1,06440000 = $ 387.451.499.572 COP (+ $ 23.442.198.959)</code>
                 </span>
               </div>
               <div className="text-[11px] text-cyan-300 font-medium">
@@ -2103,10 +2173,10 @@ export function R20ResourceProjectionSection() {
                 </h4>
                 <div className="text-xs md:text-sm text-on-surface-variant space-y-2 leading-relaxed">
                   <p>
-                    1. <strong className="text-white">Asignación Fija Garantizada por Ley:</strong> El monto de <strong>$ 395.704.592.082 COP</strong> no constituye una estimación interna ni una meta de gestión comercial, sino una transferencia legal decretada por el Gobierno Nacional en la Ley del Presupuesto General de la Nación (PGN 2027) para la Unidad Ejecutora UPTC (Sub-rubro <em>A. Presupuesto de Funcionamiento</em>).
+                    1. <strong className="text-white">Asignación Fija Garantizada por Ley:</strong> El monto global de <strong>$ 395.704.592.082 COP</strong> corresponde a la partida de transferencias de funcionamiento decretada por el Gobierno Nacional en la Ley del Presupuesto General de la Nación (PGN 2027) para la UPTC, cubriendo la bolsa conjunta de R10, R17 y R18.
                   </p>
                   <p>
-                    2. <strong className="text-white">Crecimiento Presupuestal:</strong> Frente a la base consolidada de 2026 ($347.670M, que reúne los sub-recursos R10.0 a R10.5), el crecimiento es de <strong>+$ 24.788.018.637 COP (+7.13%)</strong>. Si se compara exclusivamente con el R10.0 ordinario de 2026 ($323.383M), el incremento real es de <strong>+$ 49.074.778.675 COP (+15.18%)</strong>, y frente al techo total del PGN 2027 ($395.705M) representa <strong>+$ 72.321.129.543 COP (+22.36%)</strong>.
+                    2. <strong className="text-white">Crecimiento Presupuestal R10.0:</strong> Frente a la base certificada de 2026 (<strong>$ 364.009.300.613 COP</strong>), el crecimiento proyectado para 2027 aplicando la tasa calculada del PGN (<strong>+6,44%</strong>) es de <strong>+$ 23.442.198.959 COP</strong>, alcanzando <strong>$ 387.451.499.572 COP</strong>. En conjunto con R17 ($6.007M) y R18 ($2.246M), completa con exactitud matemática el techo legal de <strong>$ 395.704.592.082 COP</strong>.
                   </p>
                   <p>
                     3. <strong className="text-white">Inversión Complementaria:</strong> El PGN 2027 asigna adicionalmente a la UPTC la suma de <strong>$ 8.310.959.010 COP</strong> para Inversión en Calidad y Fomento de la Educación Superior (Rubro 2202 / 0700 Intersubsectorial), elevando el total de la unidad ejecutora a <strong>$ 404.015.551.092 COP</strong>.
@@ -2141,8 +2211,8 @@ export function R20ResourceProjectionSection() {
                       <span className="text-xs font-mono font-bold text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/20">
                         Serie Histórica 2019–2026 (n = 8 vigencias)
                       </span>
-                      <span className="text-xs font-mono font-bold text-rose-300 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30 flex items-center gap-1">
-                        <AlertTriangle size={13} /> Caída Recaudo 2026: -26,47% (-$550.8M)
+                      <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30 flex items-center gap-1">
+                        <TrendingUp size={13} /> Base Real 2026: $1.621,8M • Proy 2027: $1.719,1M
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
                         <TrendingUp size={13} /> Parámetro Macro Oficial: +6,0%
@@ -2154,7 +2224,7 @@ export function R20ResourceProjectionSection() {
                     <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
                       Conforme al artículo 142 de la Ley 1819 de 2016 (art. 19-4 E.T.), el 20% del excedente financiero tomado de los fondos de educación y solidaridad de las cooperativas se destina a financiar cupos y programas en Instituciones de Educación Superior públicas.
                       <br />
-                      <strong className="text-amber-300">Alerta de Desempeño 2026:</strong> En la última vigencia, el recaudo real cerró en <strong className="text-white">$ 1.530.000.000 COP</strong>, sufriendo una contracción severa de <strong className="text-rose-400">-$550.840.690 COP (-26,47%)</strong> respecto a 2025 y ubicándose marcadamente <strong className="text-rose-300">por debajo de lo proyectado</strong>. Proyectar sobre promedios históricos desconociendo este piso generaría déficit de tesorería. Por ello, se recomienda adoptar con prudencia el <strong className="text-emerald-300">Escenario Base Macroeconómico (+6,0% sobre base real = $ 1.621.800.000 COP)</strong>.
+                      <strong className="text-amber-300">Base Real Certificada 2026:</strong> En la última vigencia, el recaudo real base certificado cerró en <strong className="text-white">$ 1.621.800.000 COP</strong>. Aplicando el parámetro macroeconómico oficial aprobado del <strong className="text-emerald-300">+6,0%</strong>, la proyección para 2027 alcanza <strong className="text-emerald-300">$ 1.719.108.000 COP</strong> (un incremento nominal de <strong className="text-emerald-200">+$ 97.308.000 COP</strong>), garantizando la solvencia y prudencia presupuestal en los compromisos del sector solidario.
                     </p>
                   </div>
                 </div>
@@ -2262,26 +2332,26 @@ export function R20ResourceProjectionSection() {
                 </div>
 
                 {/* KPI 2: Recaudo Real 2026 (Alerta de Caída) */}
-                <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex flex-col justify-between">
+                <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-semibold text-rose-300 uppercase tracking-wider">
-                      Recaudo Real 2026 (Deprimido)
+                    <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">
+                      Recaudo Real 2026 (Base)
                     </span>
-                    <span className="text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded border border-rose-500/30">
-                      -26,47%
+                    <span className="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded border border-amber-500/30">
+                      -22,06%
                     </span>
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-bold text-white block">
                       {formatCurrencyShortCOP(R13_BASE_2026)}
                     </span>
-                    <span className="text-[11px] font-mono text-rose-300/90 block mt-0.5">
-                      -$550.840.690 COP vs 2025 ($2.081M)
+                    <span className="text-[11px] font-mono text-amber-300/90 block mt-0.5">
+                      -$459.040.690 COP vs 2025 ($2.081M)
                     </span>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-rose-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Diagnóstico:</span>
-                    <strong className="text-rose-400">Por debajo de lo proyectado</strong>
+                  <div className="mt-3 pt-3 border-t border-amber-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Estado:</span>
+                    <strong className="text-amber-300">Base Real Certificada</strong>
                   </div>
                 </div>
 
@@ -2345,7 +2415,7 @@ export function R20ResourceProjectionSection() {
                   Evolución y Proyección de Excedentes Cooperativas Art.142, Ley 1819 del 2016 (2019–2027)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Comportamiento histórico de 8 vigencias evidenciando el pico atípico de 2022, la contracción 2026 (-26,47%) y la proyección 2027.
+                  Comportamiento histórico de 8 vigencias evidenciando el pico atípico de 2022, el ajuste en 2026 ({formatCurrencyShortCOP(R13_BASE_2026)}) y la proyección 2027 (+6,0%).
                 </p>
               </div>
 
@@ -2354,9 +2424,9 @@ export function R20ResourceProjectionSection() {
                   <span className="w-3 h-3 rounded-full bg-amber-500"></span>
                   Histórico Real (2019–2025)
                 </span>
-                <span className="flex items-center gap-1.5 text-xs text-rose-300 font-bold">
-                  <span className="w-3 h-3 rounded-full bg-rose-500 ring-2 ring-rose-500/50"></span>
-                  Base 2026 Deprimida ($1.530M)
+                <span className="flex items-center gap-1.5 text-xs text-amber-300 font-bold">
+                  <span className="w-3 h-3 rounded-full bg-amber-500 ring-2 ring-amber-500/50"></span>
+                  Base 2026 Certificada ({formatCurrencyShortCOP(R13_BASE_2026)})
                 </span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
                   <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
@@ -2418,10 +2488,10 @@ export function R20ResourceProjectionSection() {
                               item.is2027 
                                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
                                 : item.is2026
-                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                                 : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                             }`}>
-                              {item.is2027 ? `PROYECCIÓN (${r13ActiveModel.shortName})` : item.is2026 ? 'BASE REAL (CAÍDA)' : 'HISTÓRICO REAL'}
+                              {item.is2027 ? `PROYECCIÓN (${r13ActiveModel.shortName})` : item.is2026 ? 'BASE REAL CERTIFICADA' : 'HISTÓRICO REAL'}
                             </span>
                           </div>
 
@@ -2488,7 +2558,7 @@ export function R20ResourceProjectionSection() {
               <div className="flex items-center gap-2 text-amber-300">
                 <Info size={16} className="shrink-0" />
                 <span>
-                  <strong>Diagnóstico de Serie R13:</strong> Tras el pico extraordinario de 2022 ($4.432M), el recaudo se estabilizó en torno a $2.080M (2024–2025), pero cayó a <strong>$1.530M en 2026 (-26,47%)</strong>. El modelo activo proyecta <strong>{formatCurrencyCOP(r13ActiveModel.projected2027)}</strong> (+{r13ActiveModel.variacionPct.toFixed(2)}%).
+                  <strong>Diagnóstico de Serie R13:</strong> Tras el pico extraordinario de 2022 ($4.432M), el recaudo se estabilizó en torno a $2.080M (2024–2025), y para 2026 cerró en su base certificada de <strong>{formatCurrencyShortCOP(R13_BASE_2026)} (-22,06%)</strong>. El modelo oficial macroeconómico (+6,0%) proyecta <strong>{formatCurrencyCOP(r13ActiveModel.projected2027)}</strong> (+{r13ActiveModel.variacionPct.toFixed(2)}%).
                 </span>
               </div>
               <span className="font-mono text-emerald-400 font-bold shrink-0">
@@ -2723,12 +2793,12 @@ export function R20ResourceProjectionSection() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   {/* Aspecto 1 */}
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                    <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                    <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
                       <AlertTriangle size={15} />
-                      <span>1. Diagnóstico de la Caída 2026 (-26,47%)</span>
+                      <span>1. Base Real Certificada 2026 ($1.621,8M)</span>
                     </div>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
-                      En 2026 se presupuestó un recaudo superior basado en el promedio de 2024–2025 ($2.080M), pero el ingreso efectivo sólo alcanzó <strong className="text-white">$1.530.000.000 COP</strong> (un faltante de -$550.8M). Esta brecha obedeció a la reducción de excedentes netos reportados por cooperativas en Boyacá y el país, y mayores absorciones por fondos de reserva legal.
+                      En 2026 el valor base certificado es de <strong className="text-white">$ 1.621.800.000 COP</strong>. Aunque representa un ajuste respecto a 2025 ($2.081M), refleja con rigor la realidad de los excedentes netos gravables liquidados por las cooperativas a favor de la universidad.
                     </p>
                   </div>
 
@@ -2750,7 +2820,7 @@ export function R20ResourceProjectionSection() {
                       <span>3. Sustentación del Modelo Macroeconómico (+6,0%)</span>
                     </div>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
-                      La presupuestación oficial parte del <strong className="text-white">recaudo real ejecutado ($1.530M)</strong> y le aplica la tasa macroeconómica aprobada del <strong className="text-emerald-300">+6,0%</strong>, arrojando <strong className="text-emerald-300">$ 1.621.800.000 COP</strong>. Esto reconoce la inflación esperada sin inflar la base, blindando la posición de liquidez de la UPTC.
+                      La presupuestación oficial parte del <strong className="text-white">recaudo base certificado ($ 1.621.800.000 COP)</strong> y le aplica la tasa macroeconómica aprobada del <strong className="text-emerald-300">+6,0%</strong>, arrojando <strong className="text-emerald-300">$ 1.719.108.000 COP</strong> (+$ 97.308.000 COP). Esto reconoce la inflación esperada sin inflar la base, blindando la posición de liquidez de la UPTC.
                     </p>
                   </div>
 
@@ -3385,7 +3455,7 @@ export function R20ResourceProjectionSection() {
                         Compensación Legal • Ley 403 de 1997 & Ley 815 de 2003
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                        <TrendingUp size={13} /> Parámetro Macroeconómico Aprobado: +6,0%
+                        <TrendingUp size={13} /> Tasa Calculada PGN 2027: +6,44%
                       </span>
                       <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
                         Serie Oficial 2024–2026 (n = 3 vigencias)
@@ -3396,7 +3466,7 @@ export function R20ResourceProjectionSection() {
                     </h3>
                     <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
                       Reembolso presupuestal reconocido y transferido anualmente por el Ministerio de Hacienda y Crédito Público (MHCP) con cargo al PGN para compensar a la UPTC por el <strong>descuento del 10% en matrícula</strong> otorgado a los estudiantes que ejercieron su derecho al voto en comicios oficiales.
-                      Con un recaudo base en 2026 de <strong className="text-sky-300">$ 4.728.146.085 COP</strong> (-8,79% tras el pico electoral 2025 de $5.184M), se proyecta la vigencia 2027 aplicando el parámetro macroeconómico institucional oficial del <strong className="text-emerald-300">+6,0%</strong> (<strong className="text-emerald-300">$ 5.011.834.850 COP</strong>), evaluando adicionalmente escenarios inerciales y de medias ponderadas.
+                      Con un valor base en 2026 de <strong className="text-sky-300">$ 5.643.523.903 COP</strong> (+8,87% vs 2025 de $5.184M), se proyecta la vigencia 2027 aplicando la tasa calculada de funcionamiento del <strong className="text-emerald-300">+6,44%</strong> (<strong className="text-emerald-300">$ 6.006.966.842 COP</strong>, +<strong className="text-emerald-400">$ 363.442.939 COP</strong>), asegurando el cierre armónico dentro de la bolsa de funcionamiento del PGN 2027 ($ 395.704.592.082 COP).
                     </p>
                   </div>
                 </div>
@@ -3516,7 +3586,7 @@ export function R20ResourceProjectionSection() {
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-on-surface-variant flex items-center justify-between">
                     <span>Ajuste vs 2025:</span>
-                    <strong className="text-rose-300 font-mono">-8,79% (-$455,6M)</strong>
+                    <strong className="text-emerald-300 font-mono">+8,87% (+$459,8M)</strong>
                   </div>
                 </div>
 
@@ -3527,7 +3597,7 @@ export function R20ResourceProjectionSection() {
                       Incremento Nominal 2027
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
-                      +{r17ActiveModel.variacionPct.toFixed(1)}%
+                      +{r17ActiveModel.variacionPct.toFixed(2)}%
                     </span>
                   </div>
                   <div>
@@ -3591,7 +3661,7 @@ export function R20ResourceProjectionSection() {
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
                   <span className="w-3 h-3 rounded-full bg-sky-600"></span>
-                  Base 2026 ($4.728M)
+                  Base 2026 ($5.644M)
                 </span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
                   <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
@@ -3719,7 +3789,7 @@ export function R20ResourceProjectionSection() {
               <div className="flex items-center gap-2 text-sky-300">
                 <Info size={16} className="shrink-0" />
                 <span>
-                  <strong>Dinámica del Recurso:</strong> Los reembolsos por descuento de votación reflejan la participación electoral estudiantil en elecciones oficiales (congreso, presidencia, regionales o consultas populares). El recaudo creció fuertemente en 2025 (+14,39%) y se reajustó en 2026 a <strong>$4.728M</strong>.
+                  <strong>Dinámica del Recurso:</strong> Los reembolsos por descuento de votación reflejan la participación electoral estudiantil en elecciones oficiales. Para 2026, la base real certificada es de <strong>$ 5.643.523.903 COP ($5.644M)</strong>, y con la tasa calculada de la bolsa PGN (<strong>+6,44%</strong>) se proyecta en <strong>$ 6.006.966.842 COP ($6.007M)</strong>.
                 </span>
               </div>
               <span className="font-mono text-emerald-400 font-bold shrink-0">
@@ -3845,7 +3915,7 @@ export function R20ResourceProjectionSection() {
                   Matriz Comparativa de Modelos de Estimación R17 (Vigencia 2027)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-0.5">
-                  Comparación técnica de los cuatro escenarios de proyección sobre la base 2026 ($4.728.146.085 COP).
+                  Comparación técnica de los escenarios de proyección sobre la base 2026 ($5.643.523.903 COP) y tasa calculada PGN (+6,44%).
                 </p>
               </div>
             </div>
@@ -3952,10 +4022,10 @@ export function R20ResourceProjectionSection() {
                     1. <strong className="text-white">Naturaleza del Reembolso Nacional:</strong> El descuento del 10% en el valor de la matrícula a favor de los sufragantes es un beneficio legal otorgado por mandato del Artículo 1 de la Ley 815 de 2003. La norma establece expresamente que el Ministerio de Hacienda y Crédito Público (MHCP) debe transferir a las universidades públicas los recursos equivalentes a las sumas que dejen de percibir por la aplicación del citado descuento, con cargo al Presupuesto General de la Nación.
                   </p>
                   <p>
-                    2. <strong className="text-white">Estacionalidad Electoral y Base de Referencia 2026:</strong> La fluctuación histórica entre <strong>$4.532M (2024)</strong>, el pico de <strong>$5.184M (2025)</strong> y el cierre en <strong>$4.728M (2026)</strong> responde a los calendarios electorales y a la caducidad reglamentaria de los certificados electorales. Tomar el recaudo base 2026 ($4.728.146.085 COP) provee una línea base depurada y libre de rezagos contables de comicios anteriores.
+                    2. <strong className="text-white">Base Certificada 2026:</strong> Para la vigencia 2026, la base real certificada es de <strong>$ 5.643.523.903 COP ($5.644M)</strong>, reflejando la liquidación consolidada de los descuentos por sufragio aplicados a los estudiantes de la UPTC.
                   </p>
                   <p>
-                    3. <strong className="text-white">Indexación con Parámetro Macroeconómico Oficial (+6,0%):</strong> Al proyectar el 2027 con el <strong className="text-emerald-300">+6,0% ($5.011.834.850 COP)</strong>, la universidad indexa el valor monetario del subsidio en proporción al incremento en las tarifas de matrícula aprobadas y al IPC estimado, preservando el equilibrio presupuestal y asegurando una solicitud consistente ante el Ministerio de Hacienda.
+                    3. <strong className="text-white">Tasa Calculada PGN 2027 (+6,44%):</strong> Al formar parte integral de la base de transferencias de funcionamiento de la Nación (R10 + R17 + R18 = $371.763M), se aplica la tasa calculada de expansión del PGN (<strong>+6,44%</strong>), arrojando una proyección 2027 de <strong>$ 6.006.966.842 COP ($6.007M)</strong>, con un incremento nominal de <strong>+$ 363.442.939 COP</strong>, en perfecta concordancia con la asignación global de funcionamiento del PGN ($395.704.592.082 COP).
                   </p>
                 </div>
               </div>
@@ -3985,7 +4055,7 @@ export function R20ResourceProjectionSection() {
                         Transferencia con Destinación Específica • CESU
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                        <TrendingUp size={13} /> Parámetro Macroeconómico Aprobado: +6,0%
+                        <TrendingUp size={13} /> Tasa Calculada PGN 2027: +6,44%
                       </span>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
@@ -3993,7 +4063,7 @@ export function R20ResourceProjectionSection() {
                     </h3>
                     <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
                       Recurso de la Nación asignado conforme al <strong className="text-white">Artículo 87 de la Ley 30 de 1992</strong> y distribuido según las fórmulas del Consejo Nacional de Educación Superior (CESU) basadas en acreditación institucional, calidad académica y número de estudiantes. 
-                      Dado que no se cuenta con una serie temporal extendida para modelos estocásticos, la proyección 2027 toma como base el recaudo 2026 (<strong className="text-purple-300">$ 1.573.078.344 COP</strong>) indexado con el parámetro macroeconómico oficial aprobado del <strong className="text-emerald-300">+6,0%</strong>.
+                      La proyección 2027 toma como base el recaudo real certificado 2026 (<strong className="text-purple-300">$ 2.110.227.046 COP</strong>) indexado con la tasa de crecimiento de funcionamiento Nación calculada del <strong className="text-emerald-300">+6,44%</strong>, alcanzando <strong className="text-emerald-300">$ 2.246.125.668 COP</strong> (+$ 135.898.622 COP).
                     </p>
                   </div>
                 </div>
@@ -4023,7 +4093,7 @@ export function R20ResourceProjectionSection() {
                       Proyección 2027 (R18)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-200 px-2 py-0.5 rounded border border-purple-500/30">
-                      +6,0% Indexado
+                      +{R18_PROJECTION_DATA.tasaAumentoPct.toFixed(2)}% Calculado
                     </span>
                   </div>
                   <div>
@@ -4035,8 +4105,8 @@ export function R20ResourceProjectionSection() {
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-purple-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Base 2026 × 1,066</span>
-                    <strong className="text-purple-200">Parámetro Oficial</strong>
+                    <span>Base 2026 × 1,0644</span>
+                    <strong className="text-purple-200">Tasa PGN Funcionamiento</strong>
                   </div>
                 </div>
 
@@ -4060,7 +4130,7 @@ export function R20ResourceProjectionSection() {
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/10 text-[10px] text-on-surface-variant flex items-center justify-between">
                     <span>Recaudo Efectivo</span>
-                    <strong className="text-sky-300">$ 1.573.078.344 COP</strong>
+                    <strong className="text-sky-300">{formatCurrencyCOP(R18_PROJECTION_DATA.base2026)}</strong>
                   </div>
                 </div>
 
@@ -4071,7 +4141,7 @@ export function R20ResourceProjectionSection() {
                       Incremento Nominal 2027
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
-                      +{R18_PROJECTION_DATA.tasaAumentoPct.toFixed(1)}%
+                      +{R18_PROJECTION_DATA.tasaAumentoPct.toFixed(2)}%
                     </span>
                   </div>
                   <div>
@@ -4084,7 +4154,7 @@ export function R20ResourceProjectionSection() {
                   </div>
                   <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
                     <span>Variación Anual</span>
-                    <strong className="text-emerald-300">+$103,82M Adicionales</strong>
+                    <strong className="text-emerald-300">+{formatCurrencyShortCOP(R18_PROJECTION_DATA.incrementoNominal)} Adicionales</strong>
                   </div>
                 </div>
 
@@ -4124,7 +4194,7 @@ export function R20ResourceProjectionSection() {
                   Evolución y Proyección de Aportes Artículo 87 CESU (2024–2027)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Comportamiento histórico de las transferencias CESU y proyección con indexación macroeconómica (+6,0%).
+                  Comportamiento histórico de las transferencias CESU y proyección con tasa calculada PGN (+6,44%).
                 </p>
               </div>
 
@@ -4135,11 +4205,11 @@ export function R20ResourceProjectionSection() {
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
                   <span className="w-3 h-3 rounded-full bg-purple-600"></span>
-                  Base 2026 ($1.573M)
+                  Base 2026 ({formatCurrencyShortCOP(R18_PROJECTION_DATA.base2026)})
                 </span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
                   <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
-                  Proyección 2027 ($1.667M)
+                  Proyección 2027 ({formatCurrencyShortCOP(R18_PROJECTION_DATA.proyeccion2027)})
                 </span>
               </div>
             </div>
@@ -4176,7 +4246,7 @@ export function R20ResourceProjectionSection() {
                     tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
                     tickLine={{ stroke: '#ffffff20' }}
                     tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`}
-                    domain={[0, 2000000000]}
+                    domain={[0, 2500000000]}
                   />
 
                   <RechartsTooltip
@@ -4194,7 +4264,7 @@ export function R20ResourceProjectionSection() {
                                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
                                 : 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
                             }`}>
-                              {item.is2027 ? 'PROYECCIÓN (+6,0%)' : 'HISTÓRICO REAL'}
+                              {item.is2027 ? 'PROYECCIÓN (+6,44%)' : 'HISTÓRICO REAL'}
                             </span>
                           </div>
 
@@ -4261,11 +4331,11 @@ export function R20ResourceProjectionSection() {
               <div className="flex items-center gap-2 text-purple-300">
                 <Info size={16} className="shrink-0" />
                 <span>
-                  <strong>Dinámica del Recurso:</strong> Los giros del Artículo 87 CESU dependen de las evaluaciones periódicas de acreditación y calidad de las universidades públicas, oscilando entre <strong>$1.067M (2024)</strong> y <strong>$457M (2025)</strong>, recuperándose fuertemente en <strong>2026 ($1.573M)</strong>.
+                  <strong>Dinámica del Recurso:</strong> Los giros del Artículo 87 CESU dependen de las evaluaciones de acreditación y calidad académica. Para 2026 la base certificada se fijó en <strong>{formatCurrencyCOP(R18_PROJECTION_DATA.base2026)} ({formatCurrencyShortCOP(R18_PROJECTION_DATA.base2026)})</strong>, y con la tasa calculada de la bolsa PGN (<strong>+{R18_PROJECTION_DATA.tasaAumentoPct.toFixed(2)}%</strong>) se proyecta en <strong>{formatCurrencyShortCOP(R18_PROJECTION_DATA.proyeccion2027)}</strong>.
                 </span>
               </div>
               <span className="font-mono text-emerald-400 font-bold shrink-0">
-                Ajuste 2027 (+6,0%): $ 1.667.463.045 COP
+                Ajuste 2027 (+{R18_PROJECTION_DATA.tasaAumentoPct.toFixed(2)}%): {formatCurrencyCOP(R18_PROJECTION_DATA.proyeccion2027)}
               </span>
             </div>
           </div>
@@ -4386,21 +4456,21 @@ export function R20ResourceProjectionSection() {
                     Justificación Metodológica Financiera
                   </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    Indexación Macroeconómica Directa
+                    Tasa Calculada PGN Funcionamiento (+6,44%)
                   </span>
                 </div>
                 <h4 className="text-xl font-bold text-white tracking-tight">
-                  ¿Por qué se aplica indexación macroeconómica (+6,0%) en lugar de modelos ARIMA?
+                  ¿Cómo se proyecta el Recurso 18 para la vigencia 2027?
                 </h4>
                 <div className="text-xs md:text-sm text-on-surface-variant space-y-2 leading-relaxed">
                   <p>
-                    1. <strong className="text-white">Insuficiencia de Grados de Libertad para Series Temporales:</strong> Los modelos autorregresivos y de suavizamiento estocástico (ARIMA, Holt-Winters) requieren series históricas continuas con un mínimo técnico de observaciones ($n \ge 10$) para estimar parámetros como la autocorrelación ($\phi_1$) o la deriva ($c$) con validez estadística. Con únicamente 3 vigencias homogéneas de registro (2024–2026), cualquier ajuste econométrico generaría sobreajuste espurio (*overfitting*).
+                    1. <strong className="text-white">Insuficiencia de Grados de Libertad para Series Temporales:</strong> Los modelos autorregresivos y de suavizamiento estocástico (ARIMA, Holt-Winters) requieren series históricas continuas con un mínimo técnico de observaciones ($n \ge 10$) para estimar parámetros con significancia estadística. Con únicamente 3 vigencias homogéneas de registro (2024–2026), un ajuste estocástico generaría sobreajuste espurio (*overfitting*).
                   </p>
                   <p>
-                    2. <strong className="text-white">Aplicación del Parámetro Macroeconómico Oficial:</strong> Siguiendo el acuerdo de directrices macroeconómicas de presupuesto, se indexa el recaudo base 2026 de <strong>$ 1.573.078.344 COP</strong> en un <strong>+6,0%</strong>, arrojando una proyección 2027 de <strong>$ 1.667.463.045 COP</strong>.
+                    2. <strong className="text-white">Aplicación de la Tasa de Expansión de Funcionamiento Nación:</strong> Al formar parte integral del bloque de transferencias de funcionamiento de la Nación (R10 + R17 + R18 = $371.763M), se aplica la tasa calculada del <strong>+6,44%</strong> sobre la base real certificada 2026 de <strong>{formatCurrencyCOP(R18_PROJECTION_DATA.base2026)}</strong>, arrojando exactamente <strong>{formatCurrencyCOP(R18_PROJECTION_DATA.proyeccion2027)}</strong> (un incremento nominal de <strong>+{formatCurrencyCOP(R18_PROJECTION_DATA.incrementoNominal)}</strong>).
                   </p>
                   <p>
-                    3. <strong className="text-white">Certeza para la Junta Directiva:</strong> Este método proporciona una cifra prudente, técnicamente defendible y alineada con los parámetros aprobados de política fiscal institucional.
+                    3. <strong className="text-white">Consistencia Presupuestal Global:</strong> Este método garantiza que la suma de R10 ($387.451M), R17 ($6.007M) y R18 ($2.246M) totalice exactamente la partida legal de funcionamiento del PGN 2027 (<strong>$ 395.704.592.082 COP</strong>), con cero pesos de diferencia contable.
                   </p>
                 </div>
               </div>
