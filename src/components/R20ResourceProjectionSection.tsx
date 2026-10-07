@@ -543,7 +543,24 @@ export function R20ResourceProjectionSection() {
   // MODELACIÓN Y SERIE HISTÓRICA RECURSO 16 (APORTES PARA INVERSIÓN NACIÓN - FIJO LEY PGN 2027)
   // =========================================================================
   const r16ActiveModel = useMemo(() => {
-    return R16_FORECAST_MODELS.find(m => m.id === r16SelectedModel) || R16_FORECAST_MODELS[0];
+    const found = R16_FORECAST_MODELS.find(m => m.id === r16SelectedModel) || R16_FORECAST_MODELS[0];
+    const val = found.value ?? found.projected2027 ?? 8310959010;
+    const diff = found.diffCop ?? found.incrementoNominal ?? 570677739;
+    const vPct = found.variationPct ?? found.variacionPct ?? 7.37;
+    const conf = found.confidence ?? (found.isFixedLegal ? '100% Vinculante' : 'Estimación');
+    const desc = found.description ?? found.interpretation ?? '';
+
+    return {
+      ...found,
+      value: val,
+      projected2027: val,
+      diffCop: diff,
+      incrementoNominal: diff,
+      variationPct: vPct,
+      variacionPct: vPct,
+      confidence: conf,
+      description: desc
+    };
   }, [r16SelectedModel]);
 
   const r16ChartSeries = useMemo(() => {
@@ -570,18 +587,24 @@ export function R20ResourceProjectionSection() {
   }, [r16ActiveModel]);
 
   const r16ModelsChartData = useMemo(() => {
-    return R16_FORECAST_MODELS.map(m => ({
-      name: m.tag,
-      fullName: m.name,
-      value: m.value,
-      valueMillones: Number((m.value / 1e6).toFixed(2)),
-      variacionPct: m.variationPct,
-      diffCop: m.diffCop,
-      id: m.id,
-      isSelected: r16SelectedModel === m.id,
-      isOfficial: m.isOfficial,
-      isFixedLegal: m.isFixedLegal
-    }));
+    return R16_FORECAST_MODELS.map(m => {
+      const val = m.value ?? m.projected2027 ?? 0;
+      const vPct = m.variationPct ?? m.variacionPct ?? 0;
+      const diff = m.diffCop ?? m.incrementoNominal ?? 0;
+      return {
+        name: m.tag,
+        fullName: m.name,
+        value: val,
+        valueMillones: Number((val / 1e6).toFixed(2)),
+        variacionPct: vPct,
+        variationPct: vPct,
+        diffCop: diff,
+        id: m.id,
+        isSelected: r16SelectedModel === m.id,
+        isOfficial: m.isOfficial,
+        isFixedLegal: m.isFixedLegal
+      };
+    });
   }, [r16SelectedModel]);
 
   // =========================================================================
@@ -4715,14 +4738,14 @@ export function R20ResourceProjectionSection() {
                             {m.name}
                           </div>
                           <div className="font-mono text-base font-extrabold text-blue-300 mt-0.5">
-                            {formatCurrencyShortCOP(m.value)}
+                            {formatCurrencyShortCOP(m.value ?? m.projected2027 ?? 0)}
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
-                          <span className={`${m.variationPct > 0 ? 'text-emerald-400' : m.variationPct < 0 ? 'text-rose-400' : 'text-on-surface-variant'} font-bold`}>
-                            {m.variationPct > 0 ? '+' : ''}{m.variationPct.toFixed(2)}%
+                          <span className={`${(m.variationPct ?? m.variacionPct ?? 0) > 0 ? 'text-emerald-400' : (m.variationPct ?? m.variacionPct ?? 0) < 0 ? 'text-rose-400' : 'text-on-surface-variant'} font-bold`}>
+                            {(m.variationPct ?? m.variacionPct ?? 0) > 0 ? '+' : ''}{(m.variationPct ?? m.variacionPct ?? 0).toFixed(2)}%
                           </span>
-                          <span>{m.diffCop > 0 ? `+${formatCurrencyShortCOP(m.diffCop)}` : m.diffCop < 0 ? formatCurrencyShortCOP(m.diffCop) : '$0'}</span>
+                          <span>{(m.diffCop ?? m.incrementoNominal ?? 0) > 0 ? `+${formatCurrencyShortCOP(m.diffCop ?? m.incrementoNominal ?? 0)}` : (m.diffCop ?? m.incrementoNominal ?? 0) < 0 ? formatCurrencyShortCOP(m.diffCop ?? m.incrementoNominal ?? 0) : '$0'}</span>
                         </div>
                       </button>
                     );
@@ -4744,15 +4767,15 @@ export function R20ResourceProjectionSection() {
                   </div>
                   <div>
                     <span className="text-2xl md:text-3xl font-mono font-extrabold text-blue-300 block">
-                      {formatCurrencyShortCOP(r16ActiveModel.value)}
+                      {formatCurrencyShortCOP(r16ActiveModel.value ?? r16ActiveModel.projected2027 ?? 0)}
                     </span>
                     <span className="text-[11px] font-mono text-white/90 block mt-0.5">
-                      {formatCurrencyCOP(r16ActiveModel.value)}
+                      {formatCurrencyCOP(r16ActiveModel.value ?? r16ActiveModel.projected2027 ?? 0)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-blue-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
                     <span>Criterio:</span>
-                    <strong className="text-blue-200 font-mono">{r16ActiveModel.confidence}</strong>
+                    <strong className="text-blue-200 font-mono">{r16ActiveModel.confidence ?? (r16ActiveModel.isFixedLegal ? '100% Vinculante' : 'Estimación')}</strong>
                   </div>
                 </div>
 
@@ -4787,20 +4810,20 @@ export function R20ResourceProjectionSection() {
                       Incremento Nominal 2027
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
-                      {r16ActiveModel.variationPct >= 0 ? '+' : ''}{r16ActiveModel.variationPct.toFixed(2)}%
+                      {(r16ActiveModel.variationPct ?? r16ActiveModel.variacionPct ?? 0) >= 0 ? '+' : ''}{(r16ActiveModel.variationPct ?? r16ActiveModel.variacionPct ?? 0).toFixed(2)}%
                     </span>
                   </div>
                   <div>
-                    <span className={`text-2xl md:text-3xl font-mono font-extrabold ${r16ActiveModel.diffCop >= 0 ? 'text-emerald-400' : 'text-rose-400'} block`}>
-                      {r16ActiveModel.diffCop >= 0 ? '+' : ''}{formatCurrencyShortCOP(r16ActiveModel.diffCop)}
+                    <span className={`text-2xl md:text-3xl font-mono font-extrabold ${(r16ActiveModel.diffCop ?? r16ActiveModel.incrementoNominal ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'} block`}>
+                      {(r16ActiveModel.diffCop ?? r16ActiveModel.incrementoNominal ?? 0) >= 0 ? '+' : ''}{formatCurrencyShortCOP(r16ActiveModel.diffCop ?? r16ActiveModel.incrementoNominal ?? 0)}
                     </span>
                     <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
-                      {r16ActiveModel.diffCop >= 0 ? '+' : ''}{formatCurrencyCOP(r16ActiveModel.diffCop)}
+                      {(r16ActiveModel.diffCop ?? r16ActiveModel.incrementoNominal ?? 0) >= 0 ? '+' : ''}{formatCurrencyCOP(r16ActiveModel.diffCop ?? r16ActiveModel.incrementoNominal ?? 0)}
                     </span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
                     <span>Sobre base 2026:</span>
-                    <strong className="text-emerald-300">+{r16ActiveModel.variationPct.toFixed(2)}% garantizado</strong>
+                    <strong className="text-emerald-300">+{(r16ActiveModel.variationPct ?? r16ActiveModel.variacionPct ?? 0).toFixed(2)}% garantizado</strong>
                   </div>
                 </div>
 
@@ -4983,7 +5006,7 @@ export function R20ResourceProjectionSection() {
               <div className="flex items-center gap-2 text-blue-300">
                 <Info size={16} className="shrink-0" />
                 <span>
-                  <strong>Diagnóstico de Serie R16:</strong> Los aportes de inversión de la Nación están determinados por el Presupuesto General de la Nación (PGN). Aunque la serie histórica exhibe picos extraordinarios en 2014 ($14.562M) y 2025 ($15.810M por convenios especiales), la base ordinaria 2026 se consolidó en <strong>{formatCurrencyShortCOP(R16_BASE_2026)}</strong>. La ley PGN 2027 fija de manera obligatoria y vinculante <strong>{formatCurrencyCOP(R16_PROJECTION_PGN_2027)}</strong> (+{r16ActiveModel.variationPct.toFixed(2)}%), garantizando el financiamiento del POAI sin riesgo de déficit presupuestal.
+                  <strong>Diagnóstico de Serie R16:</strong> Los aportes de inversión de la Nación están determinados por el Presupuesto General de la Nación (PGN). Aunque la serie histórica exhibe picos extraordinarios en 2014 ($14.562M) y 2025 ($15.810M por convenios especiales), la base ordinaria 2026 se consolidó en <strong>{formatCurrencyShortCOP(R16_BASE_2026)}</strong>. La ley PGN 2027 fija de manera obligatoria y vinculante <strong>{formatCurrencyCOP(R16_PROJECTION_PGN_2027)}</strong> (+{(r16ActiveModel.variationPct ?? r16ActiveModel.variacionPct ?? 0).toFixed(2)}%), garantizando el financiamiento del POAI sin riesgo de déficit presupuestal.
                 </span>
               </div>
               <span className="font-mono text-emerald-400 font-bold shrink-0">
@@ -5314,21 +5337,21 @@ export function R20ResourceProjectionSection() {
                           </div>
                         </td>
                         <td className="p-4 font-mono text-[11px] text-on-surface-variant">
-                          {m.description}
+                          {m.description ?? m.interpretation ?? ''}
                         </td>
                         <td className="p-4 text-right font-mono font-bold text-blue-300 text-sm">
-                          {formatCurrencyCOP(m.value)}
+                          {formatCurrencyCOP(m.value ?? m.projected2027 ?? 0)}
                         </td>
                         <td className="p-4 text-right font-mono font-bold text-white">
-                          {formatCurrencyShortCOP(m.value)}
+                          {formatCurrencyShortCOP(m.value ?? m.projected2027 ?? 0)}
                         </td>
                         <td className="p-4 text-right font-mono font-semibold">
-                          <span className={m.diffCop >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                            {m.diffCop >= 0 ? `+${formatCurrencyShortCOP(m.diffCop)}` : formatCurrencyShortCOP(m.diffCop)}
+                          <span className={(m.diffCop ?? m.incrementoNominal ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                            {(m.diffCop ?? m.incrementoNominal ?? 0) >= 0 ? `+${formatCurrencyShortCOP(m.diffCop ?? m.incrementoNominal ?? 0)}` : formatCurrencyShortCOP(m.diffCop ?? m.incrementoNominal ?? 0)}
                           </span>
                         </td>
                         <td className="p-4 text-center font-mono font-bold text-blue-300">
-                          {m.variationPct >= 0 ? `+${m.variationPct.toFixed(2)}%` : `${m.variationPct.toFixed(2)}%`}
+                          {(m.variationPct ?? m.variacionPct ?? 0) >= 0 ? `+${(m.variationPct ?? m.variacionPct ?? 0).toFixed(2)}%` : `${(m.variationPct ?? m.variacionPct ?? 0).toFixed(2)}%`}
                         </td>
                         <td className="p-4 text-center">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
@@ -5338,7 +5361,7 @@ export function R20ResourceProjectionSection() {
                               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
                               : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                           }`}>
-                            {m.confidence}
+                            {m.confidence ?? (m.isFixedLegal ? '100% Vinculante' : 'Estimación')}
                           </span>
                         </td>
                         <td className="p-4 text-center">

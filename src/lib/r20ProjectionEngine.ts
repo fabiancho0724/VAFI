@@ -3022,11 +3022,16 @@ export interface R16ForecastModel {
   tag: string;
   formula: string;
   projected2027: number;
+  value: number;
   incrementoNominal: number;
+  diffCop: number;
   variacionPct: number;
+  variationPct: number;
   color: string;
   interpretation: string;
+  description: string;
   alertaRiesgo: string;
+  confidence: string;
   riskLevel: 'bajo' | 'medio' | 'alto';
   isOfficial?: boolean;
   isFixedLegal?: boolean;
@@ -3255,11 +3260,16 @@ export const R16_FORECAST_MODELS: R16ForecastModel[] = [
     tag: 'Fijo Oficial Ley PGN',
     formula: 'Partida Fija Decretada PGN 2027 ($8.310.959.010 COP)',
     projected2027: 8310959010,
+    value: 8310959010,
     incrementoNominal: 570677739,
+    diffCop: 570677739,
     variacionPct: 7.37,
+    variationPct: 7.37,
     color: '#10b981',
     interpretation: 'Monto oficial fijado en la Ley del Presupuesto General de la Nación (PGN 2027) para Inversión en Educación Superior (Rubro 2202 Intersubsectorial Calidad y Fomento). Posee certeza legal vinculante del 100%.',
+    description: 'Monto oficial fijado en la Ley del Presupuesto General de la Nación (PGN 2027) para Inversión en Educación Superior (Rubro 2202 Intersubsectorial Calidad y Fomento).',
     alertaRiesgo: 'Certeza Legal Absoluta. Techo legal normado por Ley de la República.',
+    confidence: '100% Vinculante',
     riskLevel: 'bajo',
     isOfficial: true,
     isFixedLegal: true
@@ -3271,11 +3281,16 @@ export const R16_FORECAST_MODELS: R16ForecastModel[] = [
     tag: 'Macro +6,0%',
     formula: 'Base 2026 × 1,060',
     projected2027: 8204698147,
+    value: 8204698147,
     incrementoNominal: 464416876,
+    diffCop: 464416876,
     variacionPct: 6.00,
+    variationPct: 6.00,
     color: '#06b6d4',
     interpretation: 'Escenario contrafactual aplicando la tasa macroeconómica (+6,0%). Es inferior a la asignación real por ley en $106,3M.',
+    description: 'Escenario contrafactual aplicando la tasa macroeconómica (+6,0%).',
     alertaRiesgo: 'Innecesariamente restrictivo frente a la partida legal ya decretada de $8.311M.',
+    confidence: 'Alta (Oficial)',
     riskLevel: 'bajo',
     isOfficial: false
   },
@@ -3286,11 +3301,16 @@ export const R16_FORECAST_MODELS: R16ForecastModel[] = [
     tag: 'Piso Inercial',
     formula: 'Base 2026 (Crecimiento Cero)',
     projected2027: 7740281271,
+    value: 7740281271,
     incrementoNominal: 0,
+    diffCop: 0,
     variacionPct: 0.00,
+    variationPct: 0.00,
     color: '#64748b',
     interpretation: 'Mantiene el recaudo base certificado 2026 sin ajuste nominal.',
+    description: 'Mantiene el recaudo base certificado 2026 sin ajuste nominal.',
     alertaRiesgo: 'No aplicable: el PGN ya decretó $8.310.959.010 (+7,37%).',
+    confidence: 'Base Certificada',
     riskLevel: 'bajo',
     isOfficial: false
   },
@@ -3301,11 +3321,16 @@ export const R16_FORECAST_MODELS: R16ForecastModel[] = [
     tag: 'Ponderado WMA-3',
     formula: '(3×2026 + 2×2025 + 1×2024) / 6',
     projected2027: 10354248285,
+    value: 10354248285,
     incrementoNominal: 2613967014,
+    diffCop: 2613967014,
     variacionPct: 33.77,
+    variationPct: 33.77,
     color: '#f59e0b',
     interpretation: 'Estimación estadística sobrestimada por el pico excepcional de 2025 ($15.810M).',
+    description: 'Estimación estadística sobrestimada por el pico excepcional de 2025 ($15.810M).',
     alertaRiesgo: 'Alto Riesgo de Déficit si se proyectara por encima del valor fijo del PGN.',
+    confidence: 'Riesgo de Déficit',
     riskLevel: 'alto',
     isOfficial: false
   },
@@ -3316,11 +3341,16 @@ export const R16_FORECAST_MODELS: R16ForecastModel[] = [
     tag: 'Media Trienal',
     formula: '(2024 + 2025 + 2026) / 3',
     projected2027: 10278378058,
+    value: 10278378058,
     incrementoNominal: 2538096787,
+    diffCop: 2538096787,
     variacionPct: 32.79,
+    variationPct: 32.79,
     color: '#8b5cf6',
     interpretation: 'Promedio simple del último trienio.',
+    description: 'Promedio simple del último trienio.',
     alertaRiesgo: 'Superaría la apropiación de la ley nacional por más de $1.967 millones.',
+    confidence: 'Riesgo de Déficit',
     riskLevel: 'alto',
     isOfficial: false
   },
@@ -3331,11 +3361,16 @@ export const R16_FORECAST_MODELS: R16ForecastModel[] = [
     tag: 'Media Cuatrienal',
     formula: '(2023 + 2024 + 2025 + 2026) / 4',
     projected2027: 11159304058,
+    value: 11159304058,
     incrementoNominal: 3419022787,
+    diffCop: 3419022787,
     variacionPct: 44.17,
+    variationPct: 44.17,
     color: '#ec4899',
     interpretation: 'Promedio simple de los últimos 4 años.',
+    description: 'Promedio simple de los últimos 4 años.',
     alertaRiesgo: 'Superaría la asignación del PGN por más de $2.848 millones.',
+    confidence: 'Riesgo de Déficit',
     riskLevel: 'alto',
     isOfficial: false
   },
@@ -3346,11 +3381,16 @@ export const R16_FORECAST_MODELS: R16ForecastModel[] = [
     tag: 'Tendencia Lineal OLS',
     formula: 'OLS: Y = 7.196M + 360,5M × t (R²=24,9%)',
     projected2027: 14045349312,
+    value: 14045349312,
     incrementoNominal: 6305068041,
+    diffCop: 6305068041,
     variacionPct: 81.46,
+    variationPct: 81.46,
     color: '#3b82f6',
     interpretation: 'Tendencia matemática histórica de largo plazo.',
+    description: 'Tendencia matemática histórica de largo plazo.',
     alertaRiesgo: 'Inviable. Los aportes nacionales de inversión son un cupo cerrado decretado por Ley.',
+    confidence: 'Inviable (Déficit)',
     riskLevel: 'alto',
     isOfficial: false
   }
