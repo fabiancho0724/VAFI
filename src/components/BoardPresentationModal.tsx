@@ -796,7 +796,7 @@ export function BoardPresentationModal({
             <ul className="text-xs text-slate-300 space-y-1.5 pt-1">
               <li className="flex items-start gap-1.5">
                 <span className="text-blue-400 font-bold">•</span>
-                <span><strong>Fundamento Legal:</strong> Aportes ordinarios Ley 30 Art. 86 ($327.070M) y Política de Gratuidad Ley 2307 ($11.208M).</span>
+                <span><strong>Fundamento Legal:</strong> Aportes ordinarios Ley 30 Art. 86 ($323.383M) y Política de Gratuidad Ley 2307 ($11.208M).</span>
               </li>
               <li className="flex items-start gap-1.5">
                 <span className="text-blue-400 font-bold">•</span>

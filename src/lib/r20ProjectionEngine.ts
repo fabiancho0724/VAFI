@@ -972,74 +972,77 @@ export interface R10BaseComponent2026 {
 
 export const R10_BASE_COMPONENTS_2026: R10BaseComponent2026[] = [
   {
-    subRecurso: 'R10',
-    denominacion: 'Aporte Ordinario Nación - Funcionamiento',
+    subRecurso: 'R10.0',
+    denominacion: 'Aportes Nación – Funcionamiento',
     recaudoEfectivo: 238714266246,
-    ingresoFaltante: 88355901123,
-    totalRecaudo: 327070167369,
-    participacionPct: (327070167369 / 351357927407) * 100 // 93.09%
+    ingresoFaltante: 84669196293,
+    totalRecaudo: 323383462539,
+    participacionPct: (323383462539 / 347670222577) * 100 // 93.01%
   },
   {
     subRecurso: 'R10.5',
-    denominacion: 'Aportes Fomento / Base Presupuestal',
+    denominacion: 'Aportes Nación – Política de Gratuidad (Base)',
     recaudoEfectivo: 11208316954,
     ingresoFaltante: 0,
     totalRecaudo: 11208316954,
-    participacionPct: (11208316954 / 351357927407) * 100 // 3.19%
+    participacionPct: (11208316954 / 347670222577) * 100 // 3.22%
   },
   {
     subRecurso: 'R10.1',
-    denominacion: 'Aportes Nación - PIC Convencional',
+    denominacion: 'Aportes Nación – PIC Convencional',
     recaudoEfectivo: 5623807220,
     ingresoFaltante: 2165253520,
     totalRecaudo: 7789060740,
-    participacionPct: (7789060740 / 351357927407) * 100 // 2.22%
+    participacionPct: (7789060740 / 347670222577) * 100 // 2.24%
   },
   {
     subRecurso: 'R10.2',
-    denominacion: 'Aportes Nación - PIC Territorial',
+    denominacion: 'Aportes Nación – PIC Territorial',
     recaudoEfectivo: 3060211833,
     ingresoFaltante: 0,
     totalRecaudo: 3060211833,
-    participacionPct: (3060211833 / 351357927407) * 100 // 0.87%
+    participacionPct: (3060211833 / 347670222577) * 100 // 0.88%
   },
   {
     subRecurso: 'R10.3',
-    denominacion: 'Aportes Adicionales a la Base',
+    denominacion: 'Aportes Nación – Procesos de fortalecimiento a la gestión',
     recaudoEfectivo: 0,
     ingresoFaltante: 2229170511,
     totalRecaudo: 2229170511,
-    participacionPct: (2229170511 / 351357927407) * 100 // 0.63%
+    participacionPct: (2229170511 / 347670222577) * 100 // 0.64%
   }
 ];
 
-export const R10_BASE_TOTAL_2026 = 351357927407; // 351.357.927.407 COP
+export const R10_BASE_TOTAL_2026 = 347670222577; // 347.670.222.577 COP (Base Unificada R10.0 a R10.5)
+export const R10_SUBCUATRO_TOTAL_2026 = 336461905623; // 336.461.905.623 COP (Suma 4 sub-recursos R10.0 a R10.3)
 
 export const R10_PROJECTION_6PCT_DATA = {
   vigencia: 2027,
   recurso: '10.0-Aportes Nacion - Funcionamiento',
   denominacion: 'Recurso 10.0 — Aportes de la Nación para Funcionamiento (+6.0% Oficial)',
-  basePresupuestal2026: 351357927407,
-  tasaAumentoPct: 6.01,
-  factorAumento: 1.0600566323,
+  basePresupuestal2026: 347670222577,
+  baseR10Puro2026: 323383462539,
+  baseCuatroComponentes2026: 336461905623,
+  tasaAumentoPct: 7.13,
+  factorAumento: 1.0712975,
   proyeccion2027: 372458241214, // Subtotal R10 unificado dentro del techo nacional PGN 2027 ($395.704.592.082)
-  incrementoNominal: 21100313807, // +21.100.313.807 COP
-  variacionPct: 6.01,
-  notaAclaratoriaPolitica: 'La proyección de la vigencia 2027 para los sub-recursos 10.1, 10.2, 10.3 y 10.5 es $ 0 en todos los casos debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del anterior Gobierno Nacional continuarán en vigencia. Por tal motivo sus valores no se proyectan de forma independiente ($ 0 COP). No obstante, los recursos que fueron entregados en el 2026 quedan indexados a la base presupuestal unificada ($ 351.357.927.407 COP) y constituirán el giro por Artículo 86 de la Ley 30 de 1992 para el funcionamiento (R10.0), el cual concentra la totalidad del valor proyectado ($ 372.458.241.214 COP).',
+  incrementoNominal: 24788018637, // +24.788.018.637 COP vs Base unificada ($347.670M)
+  variacionPct: 7.13,
+  notaAclaratoriaPolitica: 'La proyección de la vigencia 2027 para los sub-recursos 10.1, 10.2, 10.3 y 10.5 es $ 0 en todos los casos debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del anterior Gobierno Nacional continuarán en vigencia. Por tal motivo sus valores no se proyectan de forma independiente ($ 0 COP). No obstante, los recursos que fueron entregados en el 2026 quedan indexados a la base presupuestal unificada ($ 347.670.222.577 COP) y constituirán el giro por Artículo 86 de la Ley 30 de 1992 para el funcionamiento (R10.0), el cual concentra la totalidad del valor proyectado ($ 372.458.241.214 COP).',
   desgloseComponentes: [
     {
-      subRecurso: 'R10',
-      denominacion: 'Aporte Ordinario Nación - Funcionamiento (Art. 86 Ley 30)',
-      base2026: 327070167369,
+      subRecurso: 'R10.0',
+      denominacion: 'Aportes Nación – Funcionamiento (Art. 86 Ley 30)',
+      base2026: 323383462539,
       proyeccion2027: 372458241214,
-      incremento: 21100313807,
-      pct: 6.01,
+      incremento: 24788018637,
+      pct: 7.13,
       indexado: false,
-      nota: 'Concentra la totalidad del giro de funcionamiento Art. 86 (+6.0% sobre base unificada de $351.358M, absorbiendo R10.1 a R10.5)'
+      nota: 'Concentra la totalidad del giro de funcionamiento Art. 86 (absorbiendo en la base unificada a R10.1, R10.2, R10.3 y R10.5)'
     },
     {
       subRecurso: 'R10.5',
-      denominacion: 'Aportes Fomento / Gratuidad Base Presupuestal',
+      denominacion: 'Aportes Nación – Política de Gratuidad (Base)',
       base2026: 11208316954,
       proyeccion2027: 0,
       incremento: 0,
@@ -1049,7 +1052,7 @@ export const R10_PROJECTION_6PCT_DATA = {
     },
     {
       subRecurso: 'R10.1',
-      denominacion: 'Aportes Nación - Ampliación de Cobertura (PIC)',
+      denominacion: 'Aportes Nación – PIC Convencional',
       base2026: 7789060740,
       proyeccion2027: 0,
       incremento: 0,
@@ -1059,7 +1062,7 @@ export const R10_PROJECTION_6PCT_DATA = {
     },
     {
       subRecurso: 'R10.2',
-      denominacion: 'Aportes Nación - Cobertura con Enfoque Territorial (PIC)',
+      denominacion: 'Aportes Nación – PIC Territorial',
       base2026: 3060211833,
       proyeccion2027: 0,
       incremento: 0,
@@ -1069,7 +1072,7 @@ export const R10_PROJECTION_6PCT_DATA = {
     },
     {
       subRecurso: 'R10.3',
-      denominacion: 'Aportes Adicionales a la Base / Fortalecimiento',
+      denominacion: 'Aportes Nación – Procesos de fortalecimiento a la gestión',
       base2026: 2229170511,
       proyeccion2027: 0,
       incremento: 0,
@@ -1106,28 +1109,28 @@ export interface RecursoNacionProyeccionRow {
 export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccionRow[] = [
   {
     codigo: '10',
-    subRecurso: 'R10',
-    nombre: 'Aportes Ordinarios Nación - Funcionamiento',
+    subRecurso: 'R10.0',
+    nombre: 'Aportes Nación – Funcionamiento',
     destinacion: 'Nómina docente, administrativa y gastos de operación central (Giro Unificado Art. 86 Ley 30)',
     marcoLegal: 'Ley 30/1992 Art. 86 / Res. MEN Anual',
     entidad: 'Ministerio de Educación Nacional (MEN)',
     categoria: 'Base Presupuestal',
     historico2024: 252310024180,
     historico2025: 274240602293,
-    base2026: 327070167369,
+    base2026: 323383462539,
     recaudoEfectivo2026: 238714266246,
-    ingresoFaltante2026: 88355901123,
-    tasaAumentoPct: 6.01,
+    ingresoFaltante2026: 84669196293,
+    tasaAumentoPct: 7.13,
     proyeccion2027: 372458241214,
-    incrementoNominal: 21100313807,
+    incrementoNominal: 24788018637,
     participacion2027Pct: (372458241214 / 395704592082) * 100,
     indexado: false,
-    notaAclaratoria: 'Concentra la totalidad del giro unificado de funcionamiento por Art. 86 Ley 30 al +6.0% sobre la base unificada ($351.357M).'
+    notaAclaratoria: 'Concentra la totalidad del giro unificado de funcionamiento por Art. 86 Ley 30 sobre la base unificada ($347.670M).'
   },
   {
     codigo: '10.1',
     subRecurso: 'R10.1',
-    nombre: 'Aportes Nación - Ampliación de Cobertura (PIC)',
+    nombre: 'Aportes Nación – PIC Convencional',
     destinacion: 'Política gubernamental transitoria sin proyección en 2027 (Indexado a Base R10.0)',
     marcoLegal: 'Resolución MEN - Plan de Fomento a la Calidad / Política Transitoria',
     entidad: 'MEN - Subdirección de Apoyo a IES',
@@ -1147,7 +1150,7 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
   {
     codigo: '10.2',
     subRecurso: 'R10.2',
-    nombre: 'Aportes Nación - Cobertura con Enfoque Territorial (PIC)',
+    nombre: 'Aportes Nación – PIC Territorial',
     destinacion: 'Operación y fomento académico en sedes regionales (Duitama, Sogamoso, Chiquinquirá, Aguazul)',
     marcoLegal: 'Resolución MEN - Fomento Regional / Política Transitoria',
     entidad: 'Ministerio de Educación Nacional',
@@ -1167,7 +1170,7 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
   {
     codigo: '10.3',
     subRecurso: 'R10.3',
-    nombre: 'Aportes Adicionales a la Base / Fortalecimiento Gestión',
+    nombre: 'Aportes Nación – Procesos de fortalecimiento a la gestión',
     destinacion: 'Modernización tecnológica y fortalecimiento a la gestión administrativa',
     marcoLegal: 'Resolución MEN - Fortalecimiento Institucional',
     entidad: 'Ministerio de Educación Nacional',
@@ -1187,7 +1190,7 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
   {
     codigo: '10.5',
     subRecurso: 'R10.5',
-    nombre: 'Aportes Nación - Política de Gratuidad (Base)',
+    nombre: 'Aportes Nación – Política de Gratuidad (Base)',
     destinacion: 'Costo operativo de matrícula pregrado Ley de Gratuidad incorporado a la base',
     marcoLegal: 'Ley 2307/2023 / Decreto Reglamentario MEN',
     entidad: 'MEN / Fondo de Gratuidad',
@@ -1281,17 +1284,17 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
 export const TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES = {
   historico2024: 297078276272,
   historico2025: 331088597004,
-  base2026: 373286275481,
-  tasaAumentoPct: 6.01,
+  base2026: 369599570651,
+  tasaAumentoPct: 7.06,
   proyeccion2027: 395704592082,
-  incrementoNominal: 22418316601,
+  incrementoNominal: 26105021431,
   subtotalR10: {
     historico2024: 252310024180,
     historico2025: 287156616808,
-    base2026: 351357927407,
-    tasaAumentoPct: 6.01,
+    base2026: 347670222577,
+    tasaAumentoPct: 7.13,
     proyeccion2027: 372458241214,
-    incrementoNominal: 21100313807
+    incrementoNominal: 24788018637
   },
   otrosRecursosNacion: {
     historico2024: 44768252092,
@@ -1310,11 +1313,11 @@ export const PGN_2027_DATA = {
   funcionamientoR10: 395704592082, // A. PRESUPUESTO DE FUNCIONAMIENTO (Total 9 Recursos Nación: R10 a R18)
   inversion: 8310959010,           // C. PRESUPUESTO DE INVERSIÓN (2202 Calidad y Fomento / 0700 Intersubsectorial)
   totalPresupuestoEjecutora: 404015551092, // TOTAL PRESUPUESTO UNIDAD EJECUTORA
-  basePresupuestal2026: 373286275481, // Base Consolidada 9 Recursos Nación ($373.286M)
-  variacionNominal: 395704592082 - 373286275481, // +22.418.316.601 COP
-  variacionPct: ((395704592082 - 373286275481) / 373286275481) * 100, // +6.01%
-  variacionVsR10Ordinario: 395704592082 - 327070167369, // +68.634.424.713 COP
-  variacionVsR10OrdinarioPct: ((395704592082 - 327070167369) / 327070167369) * 100 // +20.98%
+  basePresupuestal2026: 369599570651, // Base Consolidada 9 Recursos Nación ($369.600M)
+  variacionNominal: 395704592082 - 369599570651, // +26.105.021.431 COP
+  variacionPct: ((395704592082 - 369599570651) / 369599570651) * 100, // +7.06%
+  variacionVsR10Ordinario: 395704592082 - 323383462539, // +72.321.129.543 COP
+  variacionVsR10OrdinarioPct: ((395704592082 - 323383462539) / 323383462539) * 100 // +22.36%
 };
 
 export interface R10HistoricalRecord {
@@ -1443,24 +1446,24 @@ export const R10_HISTORICAL_SERIES: R10HistoricalRecord[] = [
   {
     vigencia: 2026,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Base Presupuestal Unificada (R10 + R10.1 + R10.2 + R10.3 + R10.5)',
+    concepto: 'Base Presupuestal Unificada (R10.0 + R10.1 + R10.2 + R10.3 + R10.5)',
     recurso: '10.0 Base Consolidada de Referencia',
-    totalRecaudo: 351357927407,
-    variacionAnualCOP: 64201310599,
-    variacionAnualPct: 22.36,
+    totalRecaudo: 347670222577,
+    variacionAnualCOP: 60513605769,
+    variacionAnualPct: 21.07,
     tipo: 'base2026',
-    notaNormativa: 'Base Presupuestal Certificada (Efectivo $258.606M + Faltante $92.750M)'
+    notaNormativa: 'Base Presupuestal Certificada (Efectivo $258.607M + Faltante $89.064M)'
   },
   {
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Aportes Nación Funcionamiento (Subtotal R10 Unificado al +6.0%)',
+    concepto: 'Aportes Nación Funcionamiento (Giro Art. 86 Ley 30 Unificado)',
     recurso: '10.0-Aportes Nación Funcionamiento',
     totalRecaudo: 372458241214,
-    variacionAnualCOP: 21100313807,
-    variacionAnualPct: 6.01,
+    variacionAnualCOP: 24788018637,
+    variacionAnualPct: 7.13,
     tipo: 'proyeccion',
-    notaNormativa: 'Subtotal R10 Unificado (+6.0% sobre Base Unificada 2026 de $351.358M dentro del techo PGN 2027)'
+    notaNormativa: 'Subtotal R10 Unificado (+7.13% sobre Base Unificada 2026 de $347.670M dentro del techo PGN 2027)'
   }
 ];
 
@@ -1469,7 +1472,7 @@ export function exportRecursosNacionProyeccionCSV(): void {
   csvContent += `PROYECCIONES DE RECURSOS DE LA NACION PARA EL FUNCIONAMIENTO (POLITICA +6.0%)\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
   csvContent += `Vigencia Proyectada:;2027\n`;
-  csvContent += `Politica de Incremento:;+6.0% anual sobre Base 2026 ($373.286M -> $395.705M Techo PGN)\n`;
+  csvContent += `Politica de Incremento:;+6.0% anual sobre Base 2026 ($369.600M -> $395.705M Techo PGN)\n`;
   csvContent += `Base Presupuestal 2026 Total (COP):;${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026}\n`;
   csvContent += `Proyeccion Total 2027 (+6%) (COP):;${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027}\n`;
   csvContent += `Incremento Nominal Total (COP):;+${TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.incrementoNominal}\n\n`;
@@ -2347,12 +2350,12 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     grupo: 'nacion',
     recaudo2024: 252310024180,
     recaudo2025: 287156616808,
-    base2026: 351357927407,
+    base2026: 347670222577,
     defaultModelId: 'macro6',
     models: [
-      { id: 'macro6', name: 'Aumento Gubernamental +6,0% (Oficial Solicitado)', value: 372439403051, variationPct: 6.00 },
-      { id: 'pgn', name: 'Proyecto PGN 2027 (Techo Referencial +12,62%)', value: 395704592082, variationPct: 12.62 },
-      { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 351357927407, variationPct: 0.00 }
+      { id: 'macro6', name: 'Aumento Gubernamental +6,0% (Base Unificada)', value: 372458241214, variationPct: 7.13 },
+      { id: 'pgn', name: 'Proyecto PGN 2027 (Techo Referencial)', value: 395704592082, variationPct: 13.82 },
+      { id: 'inercial', name: 'Base 2026 Inercial (0,0%)', value: 347670222577, variationPct: 0.00 }
     ]
   },
   {

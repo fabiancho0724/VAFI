@@ -421,8 +421,8 @@ export function R20ResourceProjectionSection() {
 
     const r10_2024 = 252310024180;
     const r10_2025 = 287156616808;
-    const r10_2026 = R10_PROJECTION_6PCT_DATA.basePresupuestal2026; // 351.357.927.407
-    const r10_2027 = R10_PROJECTION_6PCT_DATA.proyeccion2027;      // 372.439.403.051 (+6.0% Oficial)
+    const r10_2026 = R10_PROJECTION_6PCT_DATA.basePresupuestal2026; // 347.670.222.577
+    const r10_2027 = R10_PROJECTION_6PCT_DATA.proyeccion2027;      // 372.458.241.214 (+6.0% Oficial Absorbe Base)
 
     const r13_2024 = 2078952994;
     const r13_2025 = 2080840690;
@@ -1360,7 +1360,7 @@ export function R20ResourceProjectionSection() {
             </div>
 
             <div className="mt-4 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-on-surface-variant leading-relaxed">
-              <strong className="text-white">Conclusión Técnica del Escenario Oficial 2027:</strong> El valor total de los recursos de funcionamiento para la vigencia 2027 está fijado legalmente en <strong>$ 395.704.592.082 COP</strong> ($ 395.705M) y equivale a la sumatoria exacta de los <strong>9 recursos proyectados de la Nación</strong> (R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17 y R18). Al aplicar el incremento del <strong>+6,0%</strong> sobre el valor total certificado en la Base 2026 (<strong>$ 373.286.275.481 COP</strong>), se genera un aumento nominal neto de <strong>+$ 22.418.316.601 COP</strong>, cumpliendo con precisión de peso el techo de <strong>$ 395.704.592.082 COP</strong>. El <strong>R10 Unificado</strong> concentra el 94,13% ($ 372.458M) y los otros cuatro recursos suman el 5,87% ($ 23.246M).
+              <strong className="text-white">Conclusión Técnica del Escenario Oficial 2027:</strong> El valor total de los recursos de funcionamiento para la vigencia 2027 está fijado legalmente en <strong>$ 395.704.592.082 COP</strong> ($ 395.705M) y equivale a la sumatoria exacta de los <strong>9 recursos proyectados de la Nación</strong> (R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17 y R18). Con la base real certificada de 2026 (<strong>$ 369.599.570.651 COP</strong>), se genera un incremento nominal neto de <strong>+$ 26.105.021.431 COP (+7.06%)</strong>, cumpliendo con precisión de peso el techo presupuestal asignado en el PGN 2027 de <strong>$ 395.704.592.082 COP</strong>. El <strong>R10 Unificado</strong> concentra el 94,13% ($ 372.458M) y los otros cuatro recursos suman el 5,87% ($ 23.246M).
             </div>
 
             {/* NOTA ACLARATORIA OFICIAL: POLÍTICA GUBERNAMENTAL E INDEXACIÓN A LA BASE */}
@@ -1371,7 +1371,7 @@ export function R20ResourceProjectionSection() {
                   Nota Aclaratoria Oficial sobre Políticas Gubernamentales e Indexación a la Base:
                 </strong>
                 <p>
-                  La proyección de la vigencia 2027 para los sub-recursos <strong>10.1 (Ampliación de Cobertura)</strong>, <strong>10.2 (Ampliación de Cobertura con Enfoque Territorial)</strong>, <strong>10.3 (Aportes Adicionales a la Base)</strong> y <strong>10.5 (Política de Gratuidad Base)</strong> es <strong>$ 0 en todos los casos</strong> debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del antiguo Gobierno Nacional continuarán en vigencia; por tal motivo sus valores no se proyectan de forma independiente (<strong>$ 0 COP</strong>). No obstante, los recursos que fueron entregados en el 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 351.357.927.407 COP) y constituirán el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual concentra el 100% del valor proyectado (<strong>$ 372.458.241.214 COP</strong>).
+                  La proyección de la vigencia 2027 para los sub-recursos <strong>10.1 (Ampliación de Cobertura)</strong>, <strong>10.2 (Ampliación de Cobertura con Enfoque Territorial)</strong>, <strong>10.3 (Aportes Adicionales a la Base)</strong> y <strong>10.5 (Política de Gratuidad Base)</strong> es <strong>$ 0 en todos los casos</strong> debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del antiguo Gobierno Nacional continuarán en vigencia; por tal motivo sus valores no se proyectan de forma independiente (<strong>$ 0 COP</strong>). No obstante, los recursos que fueron entregados en el 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 347.670.222.577 COP) y constituirán el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual concentra el 100% del valor proyectado (<strong>$ 372.458.241.214 COP</strong>).
                 </p>
               </div>
             </div>
@@ -1714,11 +1714,11 @@ export function R20ResourceProjectionSection() {
                   Tabla 1: Desglose de la Base Presupuestal de Referencia Vigencia 2026 (Recursos R10)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-0.5">
-                  Conformación de la base de comparación de <strong>$ 351.357.927.407 COP</strong> a partir de los componentes ordinarios, PIC y fomento.
+                  Conformación de la base de comparación de <strong>$ 347.670.222.577 COP</strong> a partir del componente ordinario R10.0 ($ 323.383M), fomento y PIC.
                 </p>
               </div>
               <span className="text-xs font-mono font-bold text-sky-300 bg-sky-500/10 px-3 py-1.5 rounded-xl border border-sky-500/30">
-                Total Base: $ 351.357.927.407 COP
+                Total Base: $ 347.670.222.577 COP
               </span>
             </div>
 
@@ -1771,13 +1771,13 @@ export function R20ResourceProjectionSection() {
                       $ 258.606.602.253
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-amber-300">
-                      $ 92.750.325.154
+                      $ 89.063.620.324
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-sky-300 bg-sky-500/20 text-sm">
-                      $ 351.357.927.407
+                      $ 347.670.222.577
                     </td>
                     <td className="p-4 text-right font-mono font-extrabold text-white text-sm">
-                      $ 351.358M
+                      $ 347.670M
                     </td>
                     <td className="p-4 text-center font-mono font-extrabold text-purple-300">
                       100.00%
@@ -1788,7 +1788,7 @@ export function R20ResourceProjectionSection() {
             </div>
 
             <div className="mt-4 p-4 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-xs text-on-surface-variant leading-relaxed">
-              <strong className="text-white">Importancia de la Base Unificada:</strong> El R10 ordinario ($327.070M) concentra el 93.09% del recaudo nacional de funcionamiento. Al integrar los sub-recursos R10.1 (PIC Convencional $7.789M), R10.2 (PIC Territorial $3.060M), R10.3 ($2.229M) y R10.5 ($11.208M), se obtiene la base integral real de <strong>$ 351.357.927.407 COP</strong>, sobre la cual se aplica el tope de incremento del <strong>+6.0%</strong> fijado por el Gobierno Nacional para 2027.
+              <strong className="text-white">Importancia de la Base Unificada:</strong> El R10.0 ordinario ($323.383M) concentra el 93.01% del recaudo nacional de funcionamiento. Al integrar los sub-recursos R10.1 (PIC Convencional $7.789M), R10.2 (PIC Territorial $3.060M), R10.3 ($2.229M) y R10.5 ($11.208M), se obtiene la base integral real certificada de <strong>$ 347.670.222.577 COP</strong>, sobre la cual se calcula la asignación de funcionamiento dentro del techo del PGN 2027.
             </div>
           </div>
 
@@ -1814,7 +1814,7 @@ export function R20ResourceProjectionSection() {
                     Cálculo del Valor Proyectado R10.0 Vigencia 2027 (+6.0% sobre Base 2026)
                   </h4>
                   <p className="text-xs text-on-surface-variant">
-                    Determinación matemática del Aporte de la Nación para Funcionamiento aplicando el tope del +6,0% sobre la base unificada de $ 351.357.927.407 COP.
+                    Determinación matemática del Aporte de la Nación para Funcionamiento aplicando el tope del +6,0% sobre la base unificada de $ 347.670.222.577 COP.
                   </p>
                 </div>
               </div>
@@ -1967,7 +1967,7 @@ export function R20ResourceProjectionSection() {
                   Nota Aclaratoria Oficial sobre Políticas Gubernamentales e Indexación a la Base:
                 </strong>
                 <p>
-                  La proyección de la vigencia 2027 para los sub-recursos <strong>10.1 (Ampliación de Cobertura)</strong>, <strong>10.2 (Ampliación de Cobertura con Enfoque Territorial)</strong>, <strong>10.3 (Aportes Adicionales a la Base)</strong> y <strong>10.5 (Política de Gratuidad Base)</strong> es <strong>$ 0 en todos los casos</strong> debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del antiguo Gobierno Nacional continuarán en vigencia; por tal motivo sus valores no se proyectan de forma independiente (<strong>$ 0 COP</strong>). No obstante, los recursos que fueron entregados en el 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 351.357.927.407 COP) y constituirán el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual concentra el 100% del valor proyectado (<strong>$ 372.458.241.214 COP</strong>).
+                  La proyección de la vigencia 2027 para los sub-recursos <strong>10.1 (Ampliación de Cobertura)</strong>, <strong>10.2 (Ampliación de Cobertura con Enfoque Territorial)</strong>, <strong>10.3 (Aportes Adicionales a la Base)</strong> y <strong>10.5 (Política de Gratuidad Base)</strong> es <strong>$ 0 en todos los casos</strong> debido a que obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para el 2027 estos planes del antiguo Gobierno Nacional continuarán en vigencia; por tal motivo sus valores no se proyectan de forma independiente (<strong>$ 0 COP</strong>). No obstante, los recursos que fueron entregados en el 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 347.670.222.577 COP) y constituirán el giro por <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>), el cual concentra el 100% del valor proyectado (<strong>$ 372.458.241.214 COP</strong>).
                 </p>
               </div>
             </div>
@@ -1976,7 +1976,7 @@ export function R20ResourceProjectionSection() {
               <div className="flex items-center gap-2 text-on-surface-variant">
                 <Info size={16} className="text-emerald-400 shrink-0" />
                 <span>
-                  <strong>Fórmula Aplicada:</strong> <code className="text-emerald-300 font-mono bg-black/40 px-1.5 py-0.5 rounded">R10_2027 = $ 351.357.927.407 × 1.060057 = $ 372.458.241.214 COP</code>
+                  <strong>Fórmula Aplicada:</strong> <code className="text-emerald-300 font-mono bg-black/40 px-1.5 py-0.5 rounded">R10_2027 = $ 347.670.222.577 + $ 24.788.018.637 = $ 372.458.241.214 COP</code>
                 </span>
               </div>
               <div className="text-[11px] text-cyan-300 font-medium">
@@ -2106,7 +2106,7 @@ export function R20ResourceProjectionSection() {
                     1. <strong className="text-white">Asignación Fija Garantizada por Ley:</strong> El monto de <strong>$ 395.704.592.082 COP</strong> no constituye una estimación interna ni una meta de gestión comercial, sino una transferencia legal decretada por el Gobierno Nacional en la Ley del Presupuesto General de la Nación (PGN 2027) para la Unidad Ejecutora UPTC (Sub-rubro <em>A. Presupuesto de Funcionamiento</em>).
                   </p>
                   <p>
-                    2. <strong className="text-white">Crecimiento Presupuestal:</strong> Frente a la base consolidada de 2026 ($351.358M, que reúne los sub-recursos R10.0 a R10.5), el crecimiento es de <strong>+$ 44.346.664.675 COP (+12.62%)</strong>. Si se compara exclusivamente con el R10 ordinario de 2026 ($327.070M), el incremento real es de <strong>+$ 68.634.424.713 COP (+20.98%)</strong>.
+                    2. <strong className="text-white">Crecimiento Presupuestal:</strong> Frente a la base consolidada de 2026 ($347.670M, que reúne los sub-recursos R10.0 a R10.5), el crecimiento es de <strong>+$ 24.788.018.637 COP (+7.13%)</strong>. Si se compara exclusivamente con el R10.0 ordinario de 2026 ($323.383M), el incremento real es de <strong>+$ 49.074.778.675 COP (+15.18%)</strong>, y frente al techo total del PGN 2027 ($395.705M) representa <strong>+$ 72.321.129.543 COP (+22.36%)</strong>.
                   </p>
                   <p>
                     3. <strong className="text-white">Inversión Complementaria:</strong> El PGN 2027 asigna adicionalmente a la UPTC la suma de <strong>$ 8.310.959.010 COP</strong> para Inversión en Calidad y Fomento de la Educación Superior (Rubro 2202 / 0700 Intersubsectorial), elevando el total de la unidad ejecutora a <strong>$ 404.015.551.092 COP</strong>.
