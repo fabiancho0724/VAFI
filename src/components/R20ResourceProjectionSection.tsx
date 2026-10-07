@@ -9,7 +9,7 @@ import {
   Info, Building2, Table, Filter, ArrowUpRight, Scale, ChevronDown, ChevronUp,
   Search, CheckCheck, Landmark, DollarSign, Wallet, FileText, Award, GraduationCap,
   Coins, Vote, Printer, Edit3, Save, RotateCcw, FileSpreadsheet, X,
-  Activity, ShieldCheck
+  Activity, ShieldCheck, AlertCircle
 } from 'lucide-react';
 import { 
   R20Record, R20ForecastModelResult, R20ConceptForecast, 
@@ -1251,11 +1251,27 @@ export function R20ResourceProjectionSection() {
                       <td className="p-4 text-right font-mono font-semibold text-sky-300 whitespace-nowrap">
                         {formatCurrencyCOP(r.base2026)}
                       </td>
-                      <td className="p-4 text-center font-mono font-bold text-amber-300 whitespace-nowrap">
-                        +6,00%
+                      <td className="p-4 text-center font-mono whitespace-nowrap">
+                        {r.indexado ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[10px]">
+                            0,0% Indexado
+                          </span>
+                        ) : r.subRecurso === 'R10' ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]" title="Absorbe el incremento del +6.0% de la base unificada de $351.357M">
+                            +{r.tasaAumentoPct.toFixed(2)}%*
+                          </span>
+                        ) : (
+                          <span className="font-bold text-amber-300">
+                            +{r.tasaAumentoPct.toFixed(2)}%
+                          </span>
+                        )}
                       </td>
-                      <td className="p-4 text-right font-mono font-medium text-emerald-300 whitespace-nowrap">
-                        +{formatCurrencyCOP(r.incrementoNominal)}
+                      <td className="p-4 text-right font-mono whitespace-nowrap">
+                        {r.indexado ? (
+                          <span className="text-slate-400 font-medium">+$ 0</span>
+                        ) : (
+                          <span className="font-medium text-emerald-300">+{formatCurrencyCOP(r.incrementoNominal)}</span>
+                        )}
                       </td>
                       <td className="p-4 text-right font-mono font-extrabold text-cyan-300 whitespace-nowrap">
                         {formatCurrencyCOP(r.proyeccion2027)}
@@ -1337,6 +1353,19 @@ export function R20ResourceProjectionSection() {
 
             <div className="mt-4 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-on-surface-variant leading-relaxed">
               <strong className="text-white">Conclusión Técnica del Escenario Oficial 2027:</strong> El valor total de los recursos de funcionamiento para la vigencia 2027 está fijado legalmente en <strong>$ 395.704.592.082 COP</strong> ($ 395.705M) y equivale a la sumatoria exacta de los <strong>9 recursos proyectados de la Nación</strong> (R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17 y R18). Al aplicar el incremento del <strong>+6,0%</strong> sobre el valor total certificado en la Base 2026 (<strong>$ 373.286.275.481 COP</strong>), se genera un aumento nominal neto de <strong>+$ 22.418.316.601 COP</strong>, cumpliendo con precisión de peso el techo de <strong>$ 395.704.592.082 COP</strong>. El <strong>R10 Unificado</strong> concentra el 94,13% ($ 372.458M) y los otros cuatro recursos suman el 5,87% ($ 23.246M).
+            </div>
+
+            {/* NOTA ACLARATORIA OFICIAL: POLÍTICA GUBERNAMENTAL E INDEXACIÓN A LA BASE */}
+            <div className="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs leading-relaxed">
+              <AlertCircle size={20} className="text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-amber-200/90">
+                <strong className="text-amber-300 block mb-1 font-semibold uppercase tracking-wider text-[11px]">
+                  Nota Aclaratoria Oficial sobre Políticas Gubernamentales e Indexación a la Base:
+                </strong>
+                <p>
+                  Los ingresos por <strong>Ampliación de Cobertura (R10.1)</strong> y <strong>Ampliación de Cobertura con enfoque territorial (R10.2)</strong> obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para la vigencia 2027 estos planes del anterior Gobierno Nacional continuarán en vigencia. Por tal motivo, sus valores individuales no se proyectan con incremento independiente (<strong>0,0% / +$ 0 COP</strong>). No obstante, los recursos entregados en la vigencia 2026 han sido <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 351.357.927.407 COP) y constituirán el giro unificado por el <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>).
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1843,31 +1872,51 @@ export function R20ResourceProjectionSection() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 font-sans">
-                  {R10_PROJECTION_6PCT_DATA.desgloseComponentes.map((sub) => (
-                    <tr key={sub.subRecurso} className="hover:bg-white/5 transition-colors">
-                      <td className="p-3 font-bold text-sky-300 font-mono">
-                        {sub.subRecurso}
-                      </td>
-                      <td className="p-3 font-medium text-white/90">
-                        {sub.denominacion}
-                      </td>
-                      <td className="p-3 text-right font-mono text-sky-200">
-                        {formatCurrencyCOP(sub.base2026)}
-                      </td>
-                      <td className="p-3 text-center font-mono font-bold text-emerald-300">
-                        +{sub.pct.toFixed(1)}%
-                      </td>
-                      <td className="p-3 text-right font-mono text-emerald-300">
-                        +{formatCurrencyCOP(sub.incremento)}
-                      </td>
-                      <td className="p-3 text-right font-mono font-bold text-emerald-400">
-                        {formatCurrencyCOP(sub.proyeccion2027)}
-                      </td>
-                      <td className="p-3 text-right font-mono font-bold text-white">
-                        {formatCurrencyShortCOP(sub.proyeccion2027)}
-                      </td>
-                    </tr>
-                  ))}
+                  {R10_PROJECTION_6PCT_DATA.desgloseComponentes.map((sub) => {
+                    const isIndexado = sub.indexado ?? (sub.incremento === 0);
+                    return (
+                      <tr key={sub.subRecurso} className={`hover:bg-white/5 transition-colors ${isIndexado ? 'bg-amber-500/[0.02]' : ''}`}>
+                        <td className="p-3 font-bold text-sky-300 font-mono">
+                          {sub.subRecurso}
+                        </td>
+                        <td className="p-3 font-medium text-white/90">
+                          <div>{sub.denominacion}</div>
+                          {sub.nota && (
+                            <div className="text-[10px] text-amber-300/80 mt-0.5 font-normal">
+                              {sub.nota}
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-3 text-right font-mono text-sky-200">
+                          {formatCurrencyCOP(sub.base2026)}
+                        </td>
+                        <td className="p-3 text-center font-mono">
+                          {isIndexado ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[10px]">
+                              0,0% Indexado
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[10px]">
+                              +{sub.pct.toFixed(2)}% (Absorbe Base)
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right font-mono">
+                          {isIndexado ? (
+                            <span className="text-slate-400 font-medium">+$ 0</span>
+                          ) : (
+                            <span className="text-emerald-300 font-bold">+{formatCurrencyCOP(sub.incremento)}</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-emerald-400">
+                          {formatCurrencyCOP(sub.proyeccion2027)}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(sub.proyeccion2027)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
                 <tfoot className="border-t-2 border-emerald-500/40 bg-emerald-950/40 font-bold text-white text-xs">
                   <tr>
@@ -1892,6 +1941,19 @@ export function R20ResourceProjectionSection() {
                   </tr>
                 </tfoot>
               </table>
+            </div>
+
+            {/* NOTA ACLARATORIA OFICIAL: POLÍTICA GUBERNAMENTAL E INDEXACIÓN */}
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 mb-4 flex items-start gap-3 relative z-10">
+              <AlertCircle size={20} className="text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-xs text-amber-200/90 leading-relaxed">
+                <strong className="text-amber-300 block mb-1 font-semibold uppercase tracking-wider text-[11px]">
+                  Nota Aclaratoria Oficial sobre Políticas Gubernamentales e Indexación a la Base:
+                </strong>
+                <p>
+                  Los ingresos percibidos por <strong>Ampliación de Cobertura (R10.1)</strong> y <strong>Ampliación de Cobertura con enfoque territorial (R10.2)</strong> obedecen a políticas gubernamentales transitorias, existiendo incertidumbre sobre si para la vigencia 2027 estos planes del anterior Gobierno Nacional continuarán en vigencia. Por tal motivo, sus valores individuales no se proyectan con incremento independiente (<strong>0,0% / +$ 0 COP</strong>), manteniendo su valor nominal recibido en 2026. No obstante, los valores entregados en 2026 quedan <strong>indexados en su totalidad a la base presupuestal unificada</strong> ($ 351.357.927.407 COP) y constituirán el giro unificado por el <strong>Artículo 86 de la Ley 30 de 1992</strong> para el funcionamiento institucional (<strong>R10.0</strong>).
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-white/5 border border-white/10 text-xs">
