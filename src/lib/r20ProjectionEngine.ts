@@ -2142,10 +2142,12 @@ export function exportR17CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'me
 }
 
 // =========================================================================
-// CATÁLOGO OFICIAL DE 17 CONCEPTOS PRESUPUESTALES INSTITUCIONALES (2027)
+// =========================================================================
+// CATÁLOGO OFICIAL DE 19 CONCEPTOS PRESUPUESTALES INSTITUCIONALES (2027)
+// BALANCE GENERAL CONSOLIDADO - VICERRECTORÍA ADMINISTRATIVA Y FINANCIERA
 // =========================================================================
 
-export interface Official17ConceptModelOption {
+export interface OfficialConceptModelOption {
   id: string;
   name: string;
   value: number;
@@ -2153,29 +2155,31 @@ export interface Official17ConceptModelOption {
   description?: string;
 }
 
-export interface Official17ConceptDefinition {
+export interface OfficialConceptDefinition {
   id: string;
   order: number;
+  unidad: string;
   concepto: string;
   codigoConcepto: string;
   recurso: string;
-  grupo: 'nacion' | 'propios' | 'iva';
+  grupo: 'nacion' | 'propios' | 'iva' | 'estampillas';
   recaudo2024: number;
   recaudo2025: number;
   base2026: number;
   defaultModelId: string;
-  models: Official17ConceptModelOption[];
+  models: OfficialConceptModelOption[];
 }
 
-export interface Official17ConceptComputedRow {
+export interface OfficialConceptComputedRow {
   id: string;
   order: number;
+  unidad: string;
   concepto: string;
   nombre: string;
   codigoConcepto: string;
   codigo: string;
   recurso: string;
-  grupo: 'nacion' | 'propios' | 'iva';
+  grupo: 'nacion' | 'propios' | 'iva' | 'estampillas';
   recaudo2024: number;
   y24: number;
   recaudo2025: number;
@@ -2195,7 +2199,7 @@ export interface Official17ConceptComputedRow {
   isCustom: boolean;
 }
 
-export interface Official17SubtotalItem {
+export interface OfficialSubtotalItem {
   y24: number;
   y25: number;
   y26: number;
@@ -2206,20 +2210,29 @@ export interface Official17SubtotalItem {
   part: number;
 }
 
-export interface Official17ConsolidatedSummary {
-  rows: Official17ConceptComputedRow[];
-  subtotalNacion: Official17SubtotalItem;
-  subtotalPropios: Official17SubtotalItem;
-  subtotalIVA: Official17SubtotalItem;
-  subtotalIva: Official17SubtotalItem;
-  subtotalAutogestion: Official17SubtotalItem;
-  totalConsolidado: Official17SubtotalItem;
+export interface OfficialConsolidatedSummary {
+  rows: OfficialConceptComputedRow[];
+  subtotalNacion: OfficialSubtotalItem;
+  subtotalPropios: OfficialSubtotalItem;
+  subtotalIVA: OfficialSubtotalItem;
+  subtotalIva: OfficialSubtotalItem;
+  subtotalEstampillas: OfficialSubtotalItem;
+  subtotalAutogestion: OfficialSubtotalItem;
+  totalConsolidado: OfficialSubtotalItem;
 }
 
-export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
+// Aliases para retrocompatibilidad
+export type Official17ConceptModelOption = OfficialConceptModelOption;
+export type Official17ConceptDefinition = OfficialConceptDefinition;
+export type Official17ConceptComputedRow = OfficialConceptComputedRow;
+export type Official17SubtotalItem = OfficialSubtotalItem;
+export type Official17ConsolidatedSummary = OfficialConsolidatedSummary;
+
+export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
   {
     id: 'c1_r10_funcionamiento',
     order: 1,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Aportes para Funcionamiento',
     codigoConcepto: '1.1.02.06.006.01.01',
     recurso: '10.0-Aportes Nacion - Funcionamiento',
@@ -2235,8 +2248,27 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c2_r13_cooperativas',
+    id: 'c2_r12_estampilla_unal',
     order: 2,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia',
+    codigoConcepto: '1.1.02.06.006.07.01',
+    recurso: '12-Estampillas Otras Universidades',
+    grupo: 'nacion',
+    recaudo2024: 6431335851,
+    recaudo2025: 14785650242,
+    base2026: 7265094590,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 7701000265, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 7773651211, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 7265094590, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c3_r13_cooperativas',
+    order: 3,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Excedentes Cooperativas Art.142, Ley 1819 del 2016',
     codigoConcepto: '1.1.02.06.006.06.00',
     recurso: '13-Cooperativas',
@@ -2253,25 +2285,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c3_r13_balance',
-    order: 3,
-    concepto: 'Recursos del Balance - Cooperativas',
-    codigoConcepto: '1.2.10.02.022',
-    recurso: '13-Cooperativas',
-    grupo: 'nacion',
-    recaudo2024: 0,
-    recaudo2025: 0,
-    base2026: 1887697,
-    defaultModelId: 'saldo2026',
-    models: [
-      { id: 'saldo2026', name: 'Saldo Certificado Balance ($1,88M)', value: 1887697, variationPct: 0.00 },
-      { id: 'macro6', name: 'Indexación Macro (+6,0%)', value: 2000959, variationPct: 6.00 },
-      { id: 'cero', name: 'Sin Recursos del Balance ($0)', value: 0, variationPct: -100.00 }
-    ]
-  },
-  {
     id: 'c4_r14_gratuidad',
     order: 4,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Politica Gratuidad',
     codigoConcepto: '1.1.02.06.006.06.02',
     recurso: '14-Matriculas FSE',
@@ -2289,8 +2305,28 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c5_r17_votacion',
+    id: 'c5_r16_inversion',
     order: 5,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    codigoConcepto: '1.1.02.06.006.01.02',
+    recurso: '16.0-Aportes inversion',
+    grupo: 'nacion',
+    recaudo2024: 7285059912,
+    recaudo2025: 14362012132,
+    base2026: 7740281271,
+    defaultModelId: 'pgn',
+    models: [
+      { id: 'pgn', name: 'Asignado PGN Inversión (+7,37%)', value: 8310959010, variationPct: 7.37 },
+      { id: 'macro6', name: 'Macro +6,0%', value: 8204698147, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 8282100960, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 7740281271, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c6_r17_votacion',
+    order: 6,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Devolucion de descuento por votacion',
     codigoConcepto: '1.1.02.06.006.01.04',
     recurso: '17-Devolucion descuento electoral',
@@ -2307,8 +2343,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c6_r18_cesu',
-    order: 6,
+    id: 'c7_r18_cesu',
+    order: 7,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Articulo 87 CESU',
     codigoConcepto: '1.1.02.06.006.01.05',
     recurso: '18-Articulo 87 CESU',
@@ -2324,8 +2361,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c7_r20_certificaciones',
-    order: 7,
+    id: 'c8_r20_certificaciones',
+    order: 8,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Certificaciones y constancias',
     codigoConcepto: '1.1.02.02.015',
     recurso: '20-Propios',
@@ -2341,8 +2379,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c8_r20_comercio',
-    order: 8,
+    id: 'c9_r20_comercio',
+    order: 9,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua',
     codigoConcepto: '1.1.02.05.002.06',
     recurso: '20-Propios',
@@ -2358,8 +2397,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c9_r20_minerales',
-    order: 9,
+    id: 'c10_r20_minerales',
+    order: 10,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Minerales; electricidad, gas y agua',
     codigoConcepto: '1.1.02.05.002.01',
     recurso: '20-Propios',
@@ -2375,8 +2415,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c10_r20_derechos_comp',
-    order: 10,
+    id: 'c11_r20_derechos_comp',
+    order: 11,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Pregrado - Certificaciones, constancias académicas y derechos complementarios',
     codigoConcepto: '1.1.02.02.116.01.01.04',
     recurso: '20-Propios',
@@ -2392,8 +2433,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c11_r20_grado',
-    order: 11,
+    id: 'c12_r20_grado',
+    order: 12,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Pregrado - Derechos de grado',
     codigoConcepto: '1.1.02.02.116.01.01.02',
     recurso: '20-Propios',
@@ -2409,9 +2451,10 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c12_r20_inscripciones',
-    order: 12,
-    concepto: 'Pregrado - Inscripciones',
+    id: 'c13_r20_inscripciones',
+    order: 13,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Pregrado - Inscripciones ',
     codigoConcepto: '1.1.02.02.116.01.01.01',
     recurso: '20-Propios',
     grupo: 'propios',
@@ -2426,8 +2469,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c13_r20_matriculas',
-    order: 13,
+    id: 'c14_r20_matriculas',
+    order: 14,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Pregrado - Matrículas',
     codigoConcepto: '1.1.02.02.116.01.01.03',
     recurso: '20-Propios',
@@ -2443,8 +2487,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c14_r20_productos_metalicos',
-    order: 14,
+    id: 'c15_r20_productos_metalicos',
+    order: 15,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Productos metálicos, maquinaria y equipo',
     codigoConcepto: '1.1.02.05.002.04',
     recurso: '20-Propios',
@@ -2460,8 +2505,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c15_r20_sanciones',
-    order: 15,
+    id: 'c16_r20_sanciones',
+    order: 16,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Sanciones administrativas',
     codigoConcepto: '1.1.02.03.001.05',
     recurso: '20-Propios',
@@ -2477,8 +2523,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c16_r20_financieros',
-    order: 16,
+    id: 'c17_r20_financieros',
+    order: 17,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing',
     codigoConcepto: '1.1.02.05.002.07',
     recurso: '20-Propios',
@@ -2494,8 +2541,9 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     ]
   },
   {
-    id: 'c17_r21_iva',
-    order: 17,
+    id: 'c18_r21_iva',
+    order: 18,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Devolución IVA - Instituciones de Educación Superior',
     codigoConcepto: '1.1.02.06.006.02',
     recurso: '21-Devolucion IVA',
@@ -2507,19 +2555,39 @@ export const OFFICIAL_17_CONCEPTS_CATALOG: Official17ConceptDefinition[] = [
     models: [
       { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 4952550305, variationPct: 6.00 },
       { id: 'meta7', name: 'Modelo Referencia (+7,0%)', value: 4999272477, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 4672217269, variationPct: 0.00 },
-      { id: 'holt', name: 'Suavizamiento Holt (+4,66%)', value: 4890000000, variationPct: 4.66 }
+      { id: 'holt', name: 'Suavizamiento Holt (+4,66%)', value: 4890000000, variationPct: 4.66 },
+      { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 4672217269, variationPct: 0.00 }
+    ]
+  },
+  {
+    id: 'c19_r40_estampilla_uptc',
+    order: 19,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    codigoConcepto: '1.1.01.02.300.32',
+    recurso: '40-Estampilla UPTC',
+    grupo: 'estampillas',
+    recaudo2024: 4793044583,
+    recaudo2025: 5566844388,
+    base2026: 5191244662,
+    defaultModelId: 'macro6',
+    models: [
+      { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 5502719342, variationPct: 6.00 },
+      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 5554631788, variationPct: 7.00 },
+      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 5191244662, variationPct: 0.00 }
     ]
   }
 ];
 
-export function computeOfficial17Consolidated(
+export const OFFICIAL_17_CONCEPTS_CATALOG = OFFICIAL_BALANCE_GENERAL_CATALOG;
+
+export function computeOfficialBalanceGeneral(
   userSelections?: Record<string, { modelId: string; customValue?: number }>
-): Official17ConsolidatedSummary {
+): OfficialConsolidatedSummary {
   const selections = userSelections || {};
   
   // Calcular proyecciones por fila
-  const computedRows: Official17ConceptComputedRow[] = OFFICIAL_17_CONCEPTS_CATALOG.map(def => {
+  const computedRows: OfficialConceptComputedRow[] = OFFICIAL_BALANCE_GENERAL_CATALOG.map(def => {
     const userSel = selections[def.id];
     let selectedModelId = userSel ? userSel.modelId : def.defaultModelId;
     let projVal = 0;
@@ -2543,6 +2611,7 @@ export function computeOfficial17Consolidated(
     return {
       id: def.id,
       order: def.order,
+      unidad: def.unidad,
       concepto: def.concepto,
       nombre: def.concepto,
       codigoConcepto: def.codigoConcepto,
@@ -2573,6 +2642,7 @@ export function computeOfficial17Consolidated(
   let nacionY24 = 0, nacionY25 = 0, nacionY26 = 0, nacionY27 = 0;
   let propiosY24 = 0, propiosY25 = 0, propiosY26 = 0, propiosY27 = 0;
   let ivaY24 = 0, ivaY25 = 0, ivaY26 = 0, ivaY27 = 0;
+  let estampillasY24 = 0, estampillasY25 = 0, estampillasY26 = 0, estampillasY27 = 0;
 
   for (const r of computedRows) {
     if (r.grupo === 'nacion') {
@@ -2590,13 +2660,18 @@ export function computeOfficial17Consolidated(
       ivaY25 += r.recaudo2025;
       ivaY26 += r.base2026;
       ivaY27 += r.projected2027;
+    } else if (r.grupo === 'estampillas') {
+      estampillasY24 += r.recaudo2024;
+      estampillasY25 += r.recaudo2025;
+      estampillasY26 += r.base2026;
+      estampillasY27 += r.projected2027;
     }
   }
 
-  const autogestionY24 = propiosY24 + ivaY24;
-  const autogestionY25 = propiosY25 + ivaY25;
-  const autogestionY26 = propiosY26 + ivaY26;
-  const autogestionY27 = propiosY27 + ivaY27;
+  const autogestionY24 = propiosY24 + ivaY24 + estampillasY24;
+  const autogestionY25 = propiosY25 + ivaY25 + estampillasY25;
+  const autogestionY26 = propiosY26 + ivaY26 + estampillasY26;
+  const autogestionY27 = propiosY27 + ivaY27 + estampillasY27;
 
   const totalY24 = nacionY24 + autogestionY24;
   const totalY25 = nacionY25 + autogestionY25;
@@ -2614,7 +2689,7 @@ export function computeOfficial17Consolidated(
   const calcVar = (y27: number, y26: number) => y26 > 0 ? Number((((y27 - y26) / y26) * 100).toFixed(2)) : 0;
   const calcPart = (y27: number) => denom > 0 ? Number(((y27 / denom) * 100).toFixed(2)) : 0;
 
-  const makeSubtotal = (y24: number, y25: number, y26: number, y27: number, isTotal = false): Official17SubtotalItem => {
+  const makeSubtotal = (y24: number, y25: number, y26: number, y27: number, isTotal = false): OfficialSubtotalItem => {
     const vPct = calcVar(y27, y26);
     const pPct = isTotal ? 100.00 : calcPart(y27);
     return {
@@ -2632,6 +2707,7 @@ export function computeOfficial17Consolidated(
   const nacSub = makeSubtotal(nacionY24, nacionY25, nacionY26, nacionY27);
   const propSub = makeSubtotal(propiosY24, propiosY25, propiosY26, propiosY27);
   const ivaSub = makeSubtotal(ivaY24, ivaY25, ivaY26, ivaY27);
+  const estampSub = makeSubtotal(estampillasY24, estampillasY25, estampillasY26, estampillasY27);
   const autoSub = makeSubtotal(autogestionY24, autogestionY25, autogestionY26, autogestionY27);
   const totSub = makeSubtotal(totalY24, totalY25, totalY26, totalY27, true);
 
@@ -2641,25 +2717,30 @@ export function computeOfficial17Consolidated(
     subtotalPropios: propSub,
     subtotalIVA: ivaSub,
     subtotalIva: ivaSub,
+    subtotalEstampillas: estampSub,
     subtotalAutogestion: autoSub,
     totalConsolidado: totSub
   };
 }
 
-export function exportConsolidated17ConceptsCSV(summary: Official17ConsolidatedSummary): void {
+export const computeOfficial17Consolidated = computeOfficialBalanceGeneral;
+
+export function exportBalanceGeneralCSV(summary: OfficialConsolidatedSummary): void {
   let csv = '\uFEFF'; // Byte Order Mark for Excel UTF-8 compatibility
   csv += 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n';
   csv += 'VICERRECTORIA ADMINISTRATIVA Y FINANCIERA (VAFI)\n';
-  csv += 'CONSOLIDADO DE PROYECCION INSTITUCIONAL DE INGRESOS - VIGENCIA 2027\n';
-  csv += `Fecha de Generacion:;${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}\n`;
-  csv += `Total Consolidado 2027:;$ ${summary.totalConsolidado.y27.toLocaleString('es-CO')};Variacion Global:;+${summary.totalConsolidado.variationPct.toFixed(2)}%\n\n`;
+  csv += 'BALANCE GENERAL Y MATRIZ DE PROYECCION INSTITUCIONAL DE INGRESOS - VIGENCIA 2027\n';
+  csv += `Fecha de Generación:;${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}\n`;
+  csv += `Total Consolidado 2027:;$ ${summary.totalConsolidado.y27.toLocaleString('es-CO')};Variación Global:;+${summary.totalConsolidado.variationPct.toFixed(2)}%\n\n`;
 
-  csv += 'Concepto;Código concepto;Recurso;Recaudo 2024;Recaudo 2025;Recaudo Base 2026;Proyección 2027 (COP);Proyección 2027 ($M);Variación vs 2026 (%);Participación Presupuestal (%);Método o Criterio Seleccionado\n';
+  // Encabezado exacto solicitado: Unidad;Código concepto;Concepto;Recurso...
+  csv += 'Unidad;Código concepto;Concepto;Recurso;Recaudo 2024;Recaudo 2025;Recaudo Base 2026;Proyección 2027 (COP);Proyección 2027 ($M);Variación vs 2026 (%);Participación Presupuestal (%);Método o Criterio Seleccionado\n';
 
-  // Filas individuales
+  // Filas individuales con Unidad, Código concepto, Concepto, Recurso
   for (const r of summary.rows) {
-    const cName = `"${r.concepto.replace(/"/g, '""')}"`;
+    const cUnidad = `"${r.unidad}"`;
     const cCode = `"${r.codigoConcepto}"`;
+    const cName = `"${r.concepto.replace(/"/g, '""')}"`;
     const cRec = `"${r.recurso}"`;
     const y24 = `$ ${Math.round(r.recaudo2024).toLocaleString('es-CO')}`;
     const y25 = `$ ${Math.round(r.recaudo2025).toLocaleString('es-CO')}`;
@@ -2670,29 +2751,35 @@ export function exportConsolidated17ConceptsCSV(summary: Official17ConsolidatedS
     const partPct = `${r.participationPct.toFixed(2)}%`;
     const model = `"${r.selectedModelName.replace(/"/g, '""')}"`;
 
-    csv += `${cName};${cCode};${cRec};${y24};${y25};${y26};${y27};${y27M};${varPct};${partPct};${model}\n`;
+    csv += `${cUnidad};${cCode};${cName};${cRec};${y24};${y25};${y26};${y27};${y27M};${varPct};${partPct};${model}\n`;
   }
 
   // Subtotal Nacion
-  csv += `\n"SUBTOTAL GIROS Y FONDOS DE LA NACION (6 CONCEPTOS)";"";"NACION";"$ ${Math.round(summary.subtotalNacion.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalNacion.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalNacion.variationPct.toFixed(2)}%";"${summary.subtotalNacion.participationPct.toFixed(2)}%";"Transferencias y Fondos Nacionales"\n`;
+  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL GIROS Y FONDOS DE LA NACION (7 CONCEPTOS)";"NACION";"$ ${Math.round(summary.subtotalNacion.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalNacion.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalNacion.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalNacion.variationPct.toFixed(2)}%";"${summary.subtotalNacion.participationPct.toFixed(2)}%";"Transferencias y Fondos Nacionales"\n`;
 
   // Subtotal Propios
-  csv += `"SUBTOTAL RECURSOS PROPIOS - R20 (10 CONCEPTOS)";"";"20-PROPIOS";"$ ${Math.round(summary.subtotalPropios.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalPropios.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalPropios.variationPct.toFixed(2)}%";"${summary.subtotalPropios.participationPct.toFixed(2)}%";"Autogestión Académica y Administrativa"\n`;
+  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"";"SUBTOTAL RECURSOS PROPIOS - R20 (10 CONCEPTOS)";"20-PROPIOS";"$ ${Math.round(summary.subtotalPropios.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalPropios.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalPropios.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalPropios.variationPct.toFixed(2)}%";"${summary.subtotalPropios.participationPct.toFixed(2)}%";"Autogestión Académica y Administrativa"\n`;
 
   // Subtotal IVA
-  csv += `"SUBTOTAL DEVOLUCION IVA - R21 (1 CONCEPTO)";"1.1.02.06.006.02";"21-DEVOLUCION IVA";"$ ${Math.round(summary.subtotalIVA.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalIVA.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalIVA.variationPct.toFixed(2)}%";"${summary.subtotalIVA.participationPct.toFixed(2)}%";"Beneficio Tributario Art. 92 Ley 30"\n`;
+  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.02.06.006.02";"SUBTOTAL DEVOLUCION IVA - R21 (1 CONCEPTO)";"21-DEVOLUCION IVA";"$ ${Math.round(summary.subtotalIVA.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalIVA.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalIVA.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalIVA.variationPct.toFixed(2)}%";"${summary.subtotalIVA.participationPct.toFixed(2)}%";"Beneficio Tributario Art. 92 Ley 30"\n`;
+
+  // Subtotal Estampilla UPTC
+  csv += `"01 - ADMINISTRATIVA Y FINANCIERA";"1.1.01.02.300.32";"SUBTOTAL ESTAMPILLA UPTC - R40 (1 CONCEPTO)";"40-ESTAMPILLA UPTC";"$ ${Math.round(summary.subtotalEstampillas.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalEstampillas.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalEstampillas.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.subtotalEstampillas.y27).toLocaleString('es-CO')}";"$ ${(summary.subtotalEstampillas.y27 / 1e6).toFixed(2)}M";"+${summary.subtotalEstampillas.variationPct.toFixed(2)}%";"${summary.subtotalEstampillas.participationPct.toFixed(2)}%";"Estampilla Pro-UPTC Departamental"\n`;
 
   // Total Consolidado
-  csv += `\n"TOTAL CONSOLIDADO UPTC 2027 (17 CONCEPTOS)";"";"UPTC CONSOLIDADO";"$ ${Math.round(summary.totalConsolidado.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y27).toLocaleString('es-CO')}";"$ ${(summary.totalConsolidado.y27 / 1e6).toFixed(2)}M";"+${summary.totalConsolidado.variationPct.toFixed(2)}%";"100.00%";"Consolidado Total Institucional"\n`;
+  csv += `\n"01 - ADMINISTRATIVA Y FINANCIERA";"";"TOTAL CONSOLIDADO UPTC 2027 (19 CONCEPTOS)";"UPTC CONSOLIDADO";"$ ${Math.round(summary.totalConsolidado.y24).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y25).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y26).toLocaleString('es-CO')}";"$ ${Math.round(summary.totalConsolidado.y27).toLocaleString('es-CO')}";"$ ${(summary.totalConsolidado.y27 / 1e6).toFixed(2)}M";"+${summary.totalConsolidado.variationPct.toFixed(2)}%";"100.00%";"Consolidado Total Institucional"\n`;
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Consolidado_Proyeccion_UPTC_2027_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `Balance_General_UPTC_2027_${new Date().toISOString().slice(0, 10)}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+export const exportConsolidated17ConceptsCSV = exportBalanceGeneralCSV;
+
 
