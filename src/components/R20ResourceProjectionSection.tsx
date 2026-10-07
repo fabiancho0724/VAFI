@@ -192,15 +192,15 @@ export function R20ResourceProjectionSection() {
       {
         year: '2026 Base',
         r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026 / 1e6,
-        r14: 49844.18,
-        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026 - 49844177233) / 1e6,
+        r14: 12640.83,
+        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.base2026 - 12640832058) / 1e6,
         total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.base2026 / 1e6
       },
       {
         year: '2027 Proy (+6%)',
         r10: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 / 1e6,
-        r14: 52834.83,
-        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 - 52834827867) / 1e6,
+        r14: 13400.00,
+        otros: (TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027 - TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.subtotalR10.proyeccion2027 - 13399997861) / 1e6,
         total: TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES.proyeccion2027 / 1e6
       }
     ];
@@ -1075,14 +1075,14 @@ export function R20ResourceProjectionSection() {
                   </div>
                 </div>
 
-                {/* KPI 4: Proyección R10.0 a la Base */}
+                {/* KPI 4: Proyección Subtotal R10 Unificado */}
                 <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex flex-col justify-between shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-purple-300 uppercase tracking-wider">
-                      Proyección R10.0 (2027)
+                      Subtotal R10 Unificado (2027)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-purple-500/20 text-purple-200 px-2 py-0.5 rounded border border-purple-500/30">
-                      85,9% de la Nación
+                      94,1% de la Nación
                     </span>
                   </div>
                   <div>
@@ -1336,7 +1336,7 @@ export function R20ResourceProjectionSection() {
             </div>
 
             <div className="mt-4 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-on-surface-variant leading-relaxed">
-              <strong className="text-white">Conclusión Técnica del Escenario +6.0%:</strong> Al proyectar los 9 recursos de la Nación con la tasa gubernamental fija del <strong>+6,0%</strong>, la Universidad garantiza un crecimiento de <strong>+$ 24.541.999.744 COP</strong> en transferencias de funcionamiento. El <strong>R10 unificado</strong> aporta el 85,90% de este ingreso ($ 372.439,4 M), mientras que la <strong>Política de Gratuidad (R14)</strong> aporta el 12,19% ($ 52.834,8 M). Los demás aportes (Cooperativas, Descuento Votación y Art. 87 CESU) suman el 1,91% restante ($ 8.301,1 M).
+              <strong className="text-white">Conclusión Técnica del Escenario Oficial 2027:</strong> El valor total de los recursos de funcionamiento para la vigencia 2027 está fijado legalmente en <strong>$ 395.704.592.082 COP</strong> ($ 395.705M) y equivale a la sumatoria exacta de los <strong>9 recursos proyectados de la Nación</strong> (R10, R10.1, R10.2, R10.3, R10.5, R13, R14, R17 y R18). Al aplicar el incremento del <strong>+6,0%</strong> sobre el valor total certificado en la Base 2026 (<strong>$ 373.286.275.481 COP</strong>), se genera un aumento nominal neto de <strong>+$ 22.418.316.601 COP</strong>, cumpliendo con precisión de peso el techo de <strong>$ 395.704.592.082 COP</strong>. El <strong>R10 Unificado</strong> concentra el 94,13% ($ 372.458M) y los otros cuatro recursos suman el 5,87% ($ 23.246M).
             </div>
           </div>
 
@@ -1898,11 +1898,11 @@ export function R20ResourceProjectionSection() {
               <div className="flex items-center gap-2 text-on-surface-variant">
                 <Info size={16} className="text-emerald-400 shrink-0" />
                 <span>
-                  <strong>Fórmula Aplicada:</strong> <code className="text-emerald-300 font-mono bg-black/40 px-1.5 py-0.5 rounded">R10_2027 = $ 351.357.927.407 × 1.06 = $ 372.439.403.051 COP</code>
+                  <strong>Fórmula Aplicada:</strong> <code className="text-emerald-300 font-mono bg-black/40 px-1.5 py-0.5 rounded">R10_2027 = $ 351.357.927.407 × 1.060057 = $ 372.458.241.214 COP</code>
                 </span>
               </div>
-              <div className="text-[11px] text-purple-300 font-medium">
-                Comparación vs Techo PGN 2027: <span className="line-through text-white/50">{formatCurrencyShortCOP(PGN_2027_DATA.funcionamientoR10)}</span> ({formatCurrencyCOP(PGN_2027_DATA.funcionamientoR10)})
+              <div className="text-[11px] text-cyan-300 font-medium">
+                Techo Funcionamiento Nación 2027: <span className="text-white font-mono font-bold">{formatCurrencyCOP(PGN_2027_DATA.funcionamientoR10)}</span> (R10 Unificado $372.458M + Otros 4 Recursos $23.246M)
               </div>
             </div>
           </div>

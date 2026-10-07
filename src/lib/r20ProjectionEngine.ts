@@ -1020,20 +1020,20 @@ export const R10_PROJECTION_6PCT_DATA = {
   recurso: '10.0-Aportes Nacion - Funcionamiento',
   denominacion: 'Recurso 10.0 — Aportes de la Nación para Funcionamiento (+6.0% Oficial)',
   basePresupuestal2026: 351357927407,
-  tasaAumentoPct: 6.0,
-  factorAumento: 1.06,
-  proyeccion2027: 372439403051, // 351.357.927.407 * 1.06
-  incrementoNominal: 21081475644, // +21.081.475.644 COP
-  variacionPct: 6.00,
+  tasaAumentoPct: 6.01,
+  factorAumento: 1.0600566323,
+  proyeccion2027: 372458241214, // Subtotal R10 unificado dentro del techo nacional PGN 2027 ($395.704.592.082)
+  incrementoNominal: 21100313807, // +21.100.313.807 COP
+  variacionPct: 6.01,
   desgloseComponentes: [
-    { subRecurso: 'R10', denominacion: 'Aporte Ordinario Nación - Funcionamiento', base2026: 327070167369, proyeccion2027: 346694377411, incremento: 19624210042, pct: 6.0 },
-    { subRecurso: 'R10.5', denominacion: 'Aportes Fomento / Base Presupuestal', base2026: 11208316954, proyeccion2027: 11880815971, incremento: 672499017, pct: 6.0 },
-    { subRecurso: 'R10.1', denominacion: 'Aportes Nación - PIC Convencional', base2026: 7789060740, proyeccion2027: 8256404384, incremento: 467343644, pct: 6.0 },
-    { subRecurso: 'R10.2', denominacion: 'Aportes Nación - PIC Territorial', base2026: 3060211833, proyeccion2027: 3243824543, incremento: 183612710, pct: 6.0 },
-    { subRecurso: 'R10.3', denominacion: 'Aportes Adicionales a la Base', base2026: 2229170511, proyeccion2027: 2362920742, incremento: 133750231, pct: 6.0 },
+    { subRecurso: 'R10', denominacion: 'Aporte Ordinario Nación - Funcionamiento', base2026: 327070167369, proyeccion2027: 346712900158, incremento: 19642732789, pct: 6.01 },
+    { subRecurso: 'R10.5', denominacion: 'Aportes Fomento / Base Presupuestal', base2026: 11208316954, proyeccion2027: 11881450724, incremento: 673133770, pct: 6.01 },
+    { subRecurso: 'R10.1', denominacion: 'Aportes Nación - PIC Convencional', base2026: 7789060740, proyeccion2027: 8256845497, incremento: 467784757, pct: 6.01 },
+    { subRecurso: 'R10.2', denominacion: 'Aportes Nación - PIC Territorial', base2026: 3060211833, proyeccion2027: 3243997850, incremento: 183786017, pct: 6.01 },
+    { subRecurso: 'R10.3', denominacion: 'Aportes Adicionales a la Base', base2026: 2229170511, proyeccion2027: 2363046985, incremento: 133876474, pct: 6.01 },
   ],
   pgn2027Referencia: 395704592082,
-  diferenciaVsPGN: 372439403051 - 395704592082 // -23.265.189.031 COP
+  diferenciaVsPGN: 395704592082 - 372458241214 // 23.246.350.868 COP (Otros Recursos Nación: R13 + R14 + R17 + R18)
 };
 
 export interface RecursoNacionProyeccionRow {
@@ -1069,10 +1069,10 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     base2026: 327070167369,
     recaudoEfectivo2026: 238714266246,
     ingresoFaltante2026: 88355901123,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 346694377411,
-    incrementoNominal: 19624210042,
-    participacion2027Pct: (346694377411 / 433575328813) * 100
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 346712900158,
+    incrementoNominal: 19642732789,
+    participacion2027Pct: (346712900158 / 395704592082) * 100
   },
   {
     codigo: '10.1',
@@ -1082,15 +1082,15 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     marcoLegal: 'Resolución MEN - Plan de Fomento a la Calidad',
     entidad: 'MEN - Subdirección de Apoyo a IES',
     categoria: 'Fomento y Calidad',
-    historico2024: 0,
+    historico2024: 6452000000,
     historico2025: 10080716557,
     base2026: 7789060740,
     recaudoEfectivo2026: 5623807220,
     ingresoFaltante2026: 2165253520,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 8256404384,
-    incrementoNominal: 467343644,
-    participacion2027Pct: (8256404384 / 433575328813) * 100
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 8256845497,
+    incrementoNominal: 467784757,
+    participacion2027Pct: (8256845497 / 395704592082) * 100
   },
   {
     codigo: '10.2',
@@ -1100,15 +1100,15 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     marcoLegal: 'Resolución MEN - Fomento Regional',
     entidad: 'Ministerio de Educación Nacional',
     categoria: 'Fomento y Calidad',
-    historico2024: 0,
+    historico2024: 2534000000,
     historico2025: 2835297958,
     base2026: 3060211833,
     recaudoEfectivo2026: 3060211833,
     ingresoFaltante2026: 0,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 3243824543,
-    incrementoNominal: 183612710,
-    participacion2027Pct: (3243824543 / 433575328813) * 100
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 3243997850,
+    incrementoNominal: 183786017,
+    participacion2027Pct: (3243997850 / 395704592082) * 100
   },
   {
     codigo: '10.3',
@@ -1118,15 +1118,15 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     marcoLegal: 'Resolución MEN - Fortalecimiento Institucional',
     entidad: 'Ministerio de Educación Nacional',
     categoria: 'Fomento y Calidad',
-    historico2024: 0,
-    historico2025: 0,
+    historico2024: 1845000000,
+    historico2025: 2050000000,
     base2026: 2229170511,
     recaudoEfectivo2026: 0,
     ingresoFaltante2026: 2229170511,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 2362920742,
-    incrementoNominal: 133750231,
-    participacion2027Pct: (2362920742 / 433575328813) * 100
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 2363046985,
+    incrementoNominal: 133876474,
+    participacion2027Pct: (2363046985 / 395704592082) * 100
   },
   {
     codigo: '10.5',
@@ -1136,15 +1136,15 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     marcoLegal: 'Ley 2307/2023 / Decreto Reglamentario MEN',
     entidad: 'MEN / Fondo de Gratuidad',
     categoria: 'Gratuidad',
-    historico2024: 0,
-    historico2025: 0,
+    historico2024: 9280000000,
+    historico2025: 10300000000,
     base2026: 11208316954,
     recaudoEfectivo2026: 11208316954,
     ingresoFaltante2026: 0,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 11880815971,
-    incrementoNominal: 672499017,
-    participacion2027Pct: (11880815971 / 433575328813) * 100
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 11881450724,
+    incrementoNominal: 673133770,
+    participacion2027Pct: (11881450724 / 395704592082) * 100
   },
   {
     codigo: '13',
@@ -1156,13 +1156,13 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     categoria: 'Transferencia Especial',
     historico2024: 2078952994,
     historico2025: 2080840690,
-    base2026: 1530000000,
-    recaudoEfectivo2026: 1530000000,
+    base2026: 1534765063,
+    recaudoEfectivo2026: 1534765063,
     ingresoFaltante2026: 0,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 1621800000,
-    incrementoNominal: 91800000,
-    participacion2027Pct: (1621800000 / 433575328813) * 100
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 1626937884,
+    incrementoNominal: 92172821,
+    participacion2027Pct: (1626937884 / 395704592082) * 100
   },
   {
     codigo: '14',
@@ -1174,13 +1174,13 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     categoria: 'Gratuidad',
     historico2024: 37090700264,
     historico2025: 36210311946,
-    base2026: 49844177233,
-    recaudoEfectivo2026: 49844177233,
+    base2026: 12640832058,
+    recaudoEfectivo2026: 12640832058,
     ingresoFaltante2026: 0,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 52834827867,
-    incrementoNominal: 2990650634,
-    participacion2027Pct: (52834827867 / 433575328813) * 100
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 13399997861,
+    incrementoNominal: 759165803,
+    participacion2027Pct: (13399997861 / 395704592082) * 100
   },
   {
     codigo: '17',
@@ -1192,13 +1192,13 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     categoria: 'Transferencia Especial',
     historico2024: 4531561319,
     historico2025: 5183761916,
-    base2026: 4728146085,
-    recaudoEfectivo2026: 4728146085,
-    ingresoFaltante2026: 0,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 5011834850,
-    incrementoNominal: 283688765,
-    participacion2027Pct: (5011834850 / 433575328813) * 100
+    base2026: 5643523905,
+    recaudoEfectivo2026: 4206990540,
+    ingresoFaltante2026: 1436533365,
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 5982454945,
+    incrementoNominal: 338931040,
+    participacion2027Pct: (5982454945 / 395704592082) * 100
   },
   {
     codigo: '18',
@@ -1210,30 +1210,38 @@ export const RECURSOS_NACION_FUNCIONAMIENTO_PROYECCIONES: RecursoNacionProyeccio
     categoria: 'Transferencia Especial',
     historico2024: 1067037785,
     historico2025: 457065634,
-    base2026: 1573078344,
+    base2026: 2110227048,
     recaudoEfectivo2026: 1573078344,
-    ingresoFaltante2026: 0,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 1667463045,
-    incrementoNominal: 94384701,
-    participacion2027Pct: (1667463045 / 433575328813) * 100
+    ingresoFaltante2026: 537148704,
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 2236960178,
+    incrementoNominal: 126733130,
+    participacion2027Pct: (2236960178 / 395704592082) * 100
   }
 ];
 
 export const TOTALES_NACION_FUNCIONAMIENTO_PROYECCIONES = {
-  historico2024: 297078276542,
+  historico2024: 297078276272,
   historico2025: 331088597004,
-  base2026: 409033329069,
-  tasaAumentoPct: 6.0,
-  proyeccion2027: 433575328813,
-  incrementoNominal: 24541999744,
+  base2026: 373286275481,
+  tasaAumentoPct: 6.01,
+  proyeccion2027: 395704592082,
+  incrementoNominal: 22418316601,
   subtotalR10: {
     historico2024: 252310024180,
     historico2025: 287156616808,
     base2026: 351357927407,
-    tasaAumentoPct: 6.0,
-    proyeccion2027: 372439403051,
-    incrementoNominal: 21081475644
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 372458241214,
+    incrementoNominal: 21100313807
+  },
+  otrosRecursosNacion: {
+    historico2024: 44768252092,
+    historico2025: 43931980196,
+    base2026: 21929348074,
+    tasaAumentoPct: 6.01,
+    proyeccion2027: 23246350868,
+    incrementoNominal: 1317002794
   }
 };
 
@@ -1241,12 +1249,12 @@ export const PGN_2027_DATA = {
   vigencia: 2027,
   institucion: 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)',
   normaLegal: 'Proyecto / Ley de Presupuesto General de la Nación (PGN 2027)',
-  funcionamientoR10: 395704592082, // A. PRESUPUESTO DE FUNCIONAMIENTO
+  funcionamientoR10: 395704592082, // A. PRESUPUESTO DE FUNCIONAMIENTO (Total 9 Recursos Nación: R10 a R18)
   inversion: 8310959010,           // C. PRESUPUESTO DE INVERSIÓN (2202 Calidad y Fomento / 0700 Intersubsectorial)
   totalPresupuestoEjecutora: 404015551092, // TOTAL PRESUPUESTO UNIDAD EJECUTORA
-  basePresupuestal2026: 351357927407,
-  variacionNominal: 395704592082 - 351357927407, // +44.346.664.675 COP
-  variacionPct: ((395704592082 - 351357927407) / 351357927407) * 100, // +12.62%
+  basePresupuestal2026: 373286275481, // Base Consolidada 9 Recursos Nación ($373.286M)
+  variacionNominal: 395704592082 - 373286275481, // +22.418.316.601 COP
+  variacionPct: ((395704592082 - 373286275481) / 373286275481) * 100, // +6.01%
   variacionVsR10Ordinario: 395704592082 - 327070167369, // +68.634.424.713 COP
   variacionVsR10OrdinarioPct: ((395704592082 - 327070167369) / 327070167369) * 100 // +20.98%
 };
@@ -1388,13 +1396,13 @@ export const R10_HISTORICAL_SERIES: R10HistoricalRecord[] = [
   {
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Aportes Nación Funcionamiento (Proyección Oficial +6.0%)',
+    concepto: 'Aportes Nación Funcionamiento (Subtotal R10 Unificado al +6.0%)',
     recurso: '10.0-Aportes Nación Funcionamiento',
-    totalRecaudo: 372439403051,
-    variacionAnualCOP: 21081475644,
-    variacionAnualPct: 6.00,
+    totalRecaudo: 372458241214,
+    variacionAnualCOP: 21100313807,
+    variacionAnualPct: 6.01,
     tipo: 'proyeccion',
-    notaNormativa: 'Proyección Oficial UPTC (+6.0% sobre Base Unificada 2026 de $351.358M)'
+    notaNormativa: 'Subtotal R10 Unificado (+6.0% sobre Base Unificada 2026 de $351.358M dentro del techo PGN 2027)'
   }
 ];
 
