@@ -2875,6 +2875,417 @@ export function exportR40CSV(selectedModelId: string): void {
 }
 
 // =========================================================================
+// RECURSO 16 - APORTES PARA INVERSIÓN NACIÓN (PGN 2027 FIJO DE LEY)
+// =========================================================================
+
+export interface R16HistoricalRecord {
+  vigencia: number;
+  unidad: string;
+  concepto: string;
+  recurso: string;
+  totalRecaudo: number;
+  variacionAnualCOP: number;
+  variacionAnualPct: number;
+  tipo: 'historico' | 'base2026' | 'proyeccion';
+  notaNormativa: string;
+}
+
+export interface R16ForecastModel {
+  id: 'pgn' | 'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear';
+  name: string;
+  shortName: string;
+  tag: string;
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  color: string;
+  interpretation: string;
+  alertaRiesgo: string;
+  riskLevel: 'bajo' | 'medio' | 'alto';
+  isOfficial?: boolean;
+  isFixedLegal?: boolean;
+}
+
+export const R16_BASE_2026 = 7740281271;
+export const R16_PROJECTION_PGN_2027 = 8310959010;
+
+export const R16_HISTORICAL_SERIES: R16HistoricalRecord[] = [
+  {
+    vigencia: 2009,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 3434273530.00,
+    variacionAnualCOP: 0,
+    variacionAnualPct: 0,
+    tipo: 'historico',
+    notaNormativa: 'Asignación PGN para infraestructura y fomento'
+  },
+  {
+    vigencia: 2010,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 6502666854.00,
+    variacionAnualCOP: 3068393324.00,
+    variacionAnualPct: 89.35,
+    tipo: 'historico',
+    notaNormativa: 'Expansión de partidas nacionales de inversión (+89,35%)'
+  },
+  {
+    vigencia: 2011,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 5602463219.00,
+    variacionAnualCOP: -900203635.00,
+    variacionAnualPct: -13.84,
+    tipo: 'historico',
+    notaNormativa: 'Ajuste de transferencias del orden central (-13,84%)'
+  },
+  {
+    vigencia: 2012,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 5665937229.00,
+    variacionAnualCOP: 63474010.00,
+    variacionAnualPct: 1.13,
+    tipo: 'historico',
+    notaNormativa: 'Estabilidad de asignación del PGN (+1,13%)'
+  },
+  {
+    vigencia: 2013,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 11394536572.00,
+    variacionAnualCOP: 5728599343.00,
+    variacionAnualPct: 101.11,
+    tipo: 'historico',
+    notaNormativa: 'Duplicación de inversión nacional para calidad educativa (+101,11%)'
+  },
+  {
+    vigencia: 2014,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 14562337822.00,
+    variacionAnualCOP: 3167801250.00,
+    variacionAnualPct: 27.80,
+    tipo: 'historico',
+    notaNormativa: 'Consolidación de proyectos de infraestructura universitaria (+27,80%)'
+  },
+  {
+    vigencia: 2015,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 11938404787.00,
+    variacionAnualCOP: -2623933035.00,
+    variacionAnualPct: -18.02,
+    tipo: 'historico',
+    notaNormativa: 'Reajuste macrofiscal del Gobierno Nacional (-18,02%)'
+  },
+  {
+    vigencia: 2016,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 13140644206.00,
+    variacionAnualCOP: 1202239419.00,
+    variacionAnualPct: 10.07,
+    tipo: 'historico',
+    notaNormativa: 'Recuperación de proyectos estratégicos de inversión (+10,07%)'
+  },
+  {
+    vigencia: 2017,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 11555194355.00,
+    variacionAnualCOP: -1585449851.00,
+    variacionAnualPct: -12.07,
+    tipo: 'historico',
+    notaNormativa: 'Ajuste en asignación de fomento (-12,07%)'
+  },
+  {
+    vigencia: 2018,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 7382768794.00,
+    variacionAnualCOP: -4172425561.00,
+    variacionAnualPct: -36.11,
+    tipo: 'historico',
+    notaNormativa: 'Contracción fiscal previa a acuerdos estudiantiles de 2018 (-36,11%)'
+  },
+  {
+    vigencia: 2019,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 13268691407.00,
+    variacionAnualCOP: 5885922613.00,
+    variacionAnualPct: 79.73,
+    tipo: 'historico',
+    notaNormativa: 'Cumplimiento de compromisos de inversión de la Mesa Nacional (+79,73%)'
+  },
+  {
+    vigencia: 2020,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 14115253234.00,
+    variacionAnualCOP: 846561827.00,
+    variacionAnualPct: 6.38,
+    tipo: 'historico',
+    notaNormativa: 'Refuerzo de recursos de inversión y tecnología por pandemia (+6,38%)'
+  },
+  {
+    vigencia: 2021,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 14594510749.00,
+    variacionAnualCOP: 479257515.00,
+    variacionAnualPct: 3.40,
+    tipo: 'historico',
+    notaNormativa: 'Mantenimiento de transferencias extraordinarias de inversión (+3,40%)'
+  },
+  {
+    vigencia: 2022,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 13375260601.00,
+    variacionAnualCOP: -1219250148.00,
+    variacionAnualPct: -8.35,
+    tipo: 'historico',
+    notaNormativa: 'Cierre de ciclo presupuestal cuatrienal (-8,35%)'
+  },
+  {
+    vigencia: 2023,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 13802082055.00,
+    variacionAnualCOP: 426821454.00,
+    variacionAnualPct: 3.19,
+    tipo: 'historico',
+    notaNormativa: 'Asignaciones de fomento y cobertura territorial (+3,19%)'
+  },
+  {
+    vigencia: 2024,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 7285059912.00,
+    variacionAnualCOP: -6517022143.00,
+    variacionAnualPct: -47.22,
+    tipo: 'historico',
+    notaNormativa: 'Contracción en asignaciones directas del PGN (-47,22%)'
+  },
+  {
+    vigencia: 2025,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 15809792992.00,
+    variacionAnualCOP: 8524733080.00,
+    variacionAnualPct: 117.02,
+    tipo: 'historico',
+    notaNormativa: 'Máximo histórico por partidas extraordinarias de fomento y calidad (+117,02%)'
+  },
+  {
+    vigencia: 2026,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion (Base Referencia)',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 7740281271.00,
+    variacionAnualCOP: -8069511721.00,
+    variacionAnualPct: -51.04,
+    tipo: 'base2026',
+    notaNormativa: 'Base real certificada de inversión 2026 ($7.740.281.271 COP)'
+  },
+  {
+    vigencia: 2027,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Aportes para Inversion (Asignación Fija PGN)',
+    recurso: '16.0-Aportes inversion',
+    totalRecaudo: 8310959010.00,
+    variacionAnualCOP: 570677739.00,
+    variacionAnualPct: 7.37,
+    tipo: 'proyeccion',
+    notaNormativa: 'Valor FIJO OFICIAL decretado en el Presupuesto General de la Nación (PGN 2027) para Inversión'
+  }
+];
+
+export const R16_FORECAST_MODELS: R16ForecastModel[] = [
+  {
+    id: 'pgn',
+    name: 'Asignación Fija Ley PGN 2027 (Decreto Nacional)',
+    shortName: 'Fijo PGN 2027 ($8.311M)',
+    tag: 'Fijo Oficial Ley PGN',
+    formula: 'Partida Fija Decretada PGN 2027 ($8.310.959.010 COP)',
+    projected2027: 8310959010,
+    incrementoNominal: 570677739,
+    variacionPct: 7.37,
+    color: '#10b981',
+    interpretation: 'Monto oficial fijado en la Ley del Presupuesto General de la Nación (PGN 2027) para Inversión en Educación Superior (Rubro 2202 Intersubsectorial Calidad y Fomento). Posee certeza legal vinculante del 100%.',
+    alertaRiesgo: 'Certeza Legal Absoluta. Techo legal normado por Ley de la República.',
+    riskLevel: 'bajo',
+    isOfficial: true,
+    isFixedLegal: true
+  },
+  {
+    id: 'macro',
+    name: 'Escenario Macroeconómico (+6,0%)',
+    shortName: 'Macro +6,0% ($8.205M)',
+    tag: 'Macro +6,0%',
+    formula: 'Base 2026 × 1,060',
+    projected2027: 8204698147,
+    incrementoNominal: 464416876,
+    variacionPct: 6.00,
+    color: '#06b6d4',
+    interpretation: 'Escenario contrafactual aplicando la tasa macroeconómica (+6,0%). Es inferior a la asignación real por ley en $106,3M.',
+    alertaRiesgo: 'Innecesariamente restrictivo frente a la partida legal ya decretada de $8.311M.',
+    riskLevel: 'bajo',
+    isOfficial: false
+  },
+  {
+    id: 'inercial',
+    name: 'Piso Inercial 2026 (0,0%)',
+    shortName: 'Piso Inercial ($7.740M)',
+    tag: 'Piso Inercial',
+    formula: 'Base 2026 (Crecimiento Cero)',
+    projected2027: 7740281271,
+    incrementoNominal: 0,
+    variacionPct: 0.00,
+    color: '#64748b',
+    interpretation: 'Mantiene el recaudo base certificado 2026 sin ajuste nominal.',
+    alertaRiesgo: 'No aplicable: el PGN ya decretó $8.310.959.010 (+7,37%).',
+    riskLevel: 'bajo',
+    isOfficial: false
+  },
+  {
+    id: 'wma',
+    name: 'Promedio Ponderado Trienal WMA-3',
+    shortName: 'Ponderado WMA-3 ($10.354M)',
+    tag: 'Ponderado WMA-3',
+    formula: '(3×2026 + 2×2025 + 1×2024) / 6',
+    projected2027: 10354248285,
+    incrementoNominal: 2613967014,
+    variacionPct: 33.77,
+    color: '#f59e0b',
+    interpretation: 'Estimación estadística sobrestimada por el pico excepcional de 2025 ($15.810M).',
+    alertaRiesgo: 'Alto Riesgo de Déficit si se proyectara por encima del valor fijo del PGN.',
+    riskLevel: 'alto',
+    isOfficial: false
+  },
+  {
+    id: 'media3',
+    name: 'Media Trienal Simple (2024–2026)',
+    shortName: 'Media Trienal ($10.278M)',
+    tag: 'Media Trienal',
+    formula: '(2024 + 2025 + 2026) / 3',
+    projected2027: 10278378058,
+    incrementoNominal: 2538096787,
+    variacionPct: 32.79,
+    color: '#8b5cf6',
+    interpretation: 'Promedio simple del último trienio.',
+    alertaRiesgo: 'Superaría la apropiación de la ley nacional por más de $1.967 millones.',
+    riskLevel: 'alto',
+    isOfficial: false
+  },
+  {
+    id: 'media4',
+    name: 'Media Cuatrienal (2023–2026)',
+    shortName: 'Media Cuatrienal ($11.159M)',
+    tag: 'Media Cuatrienal',
+    formula: '(2023 + 2024 + 2025 + 2026) / 4',
+    projected2027: 11159304058,
+    incrementoNominal: 3419022787,
+    variacionPct: 44.17,
+    color: '#ec4899',
+    interpretation: 'Promedio simple de los últimos 4 años.',
+    alertaRiesgo: 'Superaría la asignación del PGN por más de $2.848 millones.',
+    riskLevel: 'alto',
+    isOfficial: false
+  },
+  {
+    id: 'linear',
+    name: 'Regresión Lineal OLS (2009–2026)',
+    shortName: 'Regresión OLS ($14.045M)',
+    tag: 'Tendencia Lineal OLS',
+    formula: 'OLS: Y = 7.196M + 360,5M × t (R²=24,9%)',
+    projected2027: 14045349312,
+    incrementoNominal: 6305068041,
+    variacionPct: 81.46,
+    color: '#3b82f6',
+    interpretation: 'Tendencia matemática histórica de largo plazo.',
+    alertaRiesgo: 'Inviable. Los aportes nacionales de inversión son un cupo cerrado decretado por Ley.',
+    riskLevel: 'alto',
+    isOfficial: false
+  }
+];
+
+export const R16_DESCRIPTIVE_STATS = {
+  n: 18,
+  media: 10620564422,
+  mediana: 11746799571,
+  desvEstandar: 3857676020,
+  coeficienteVariacionPct: 36.32,
+  minimo: 3434273530,
+  minimoAnio: 2009,
+  maximo: 15809792992,
+  maximoAnio: 2025,
+  rango: 12375519462,
+  cagrPct: 4.90,
+  crecimientoAcumuladoPct: 125.38,
+  tendenciaAnualCOP: 360503673,
+  r2Pct: 24.89
+};
+
+export function exportR16CSV(selectedModelId: string): void {
+  const model = R16_FORECAST_MODELS.find(m => m.id === selectedModelId) || R16_FORECAST_MODELS[0];
+  let csv = '\uFEFF';
+  csv += 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n';
+  csv += 'VICERRECTORIA ADMINISTRATIVA Y FINANCIERA (VAFI)\n';
+  csv += 'CERTIFICADO DE ASIGNACION PRESUPUESTAL RECURSO 16 - VIGENCIA 2027\n';
+  csv += 'Aportes para Inversion (Presupuesto General de la Nacion - Ley PGN 2027)\n';
+  csv += `Fecha de Generación:;${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}\n`;
+  csv += `Modelo / Asignación:;${model.name}\n`;
+  csv += `Base Real 2026:;$ ${R16_BASE_2026.toLocaleString('es-CO')}\n`;
+  csv += `Proyección / Asignación 2027:;$ ${model.projected2027.toLocaleString('es-CO')}\n`;
+  csv += `Incremento Nominal:;$ ${model.incrementoNominal.toLocaleString('es-CO')};Variación:;${model.variacionPct >= 0 ? '+' : ''}${model.variacionPct.toFixed(2)}%\n\n`;
+  csv += 'Vigencia;Unidad;Concepto Presupuestal;Recurso;Total Recaudo (COP);Cifra en Millones ($M);Variación Anual (COP);Variación Anual (%);Tipo de Registro;Nota Normativa\n';
+
+  for (const r of R16_HISTORICAL_SERIES) {
+    const isProy = r.tipo === 'proyeccion';
+    const recaudo = isProy ? model.projected2027 : r.totalRecaudo;
+    const varCop = isProy ? model.incrementoNominal : r.variacionAnualCOP;
+    const varPct = isProy ? model.variacionPct : r.variacionAnualPct;
+    const millones = (recaudo / 1e6).toFixed(2);
+
+    csv += `${r.vigencia};"${r.unidad}";"${r.concepto}";"${r.recurso}";` +
+      `$ ${recaudo.toLocaleString('es-CO')};$ ${millones}M;` +
+      `$ ${varCop.toLocaleString('es-CO')};${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%;` +
+      `"${r.tipo.toUpperCase()}";"${r.notaNormativa}"\n`;
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `Certificado_Asignacion_R16_Aportes_Inversion_2027_${model.id}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// =========================================================================
 // =========================================================================
 // CATÁLOGO OFICIAL DE 19 CONCEPTOS PRESUPUESTALES INSTITUCIONALES (2027)
 // BALANCE GENERAL CONSOLIDADO - VICERRECTORÍA ADMINISTRATIVA Y FINANCIERA
@@ -3050,14 +3461,17 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     recurso: '16.0-Aportes inversion',
     grupo: 'nacion',
     recaudo2024: 7285059912,
-    recaudo2025: 14362012132,
+    recaudo2025: 15809792992,
     base2026: 7740281271,
     defaultModelId: 'pgn',
     models: [
-      { id: 'pgn', name: 'Asignado PGN Inversión (+7,37%)', value: 8310959010, variationPct: 7.37 },
-      { id: 'macro6', name: 'Macro +6,0%', value: 8204698147, variationPct: 6.00 },
-      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 8282100960, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 7740281271, variationPct: 0.00 }
+      { id: 'pgn', name: 'Asignado Ley PGN 2027 (Fijo +7,37%)', value: 8310959010, variationPct: 7.37 },
+      { id: 'macro', name: 'Macro +6,0% Estándar', value: 8204698147, variationPct: 6.00 },
+      { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 7740281271, variationPct: 0.00 },
+      { id: 'wma', name: 'Ponderado Trienal WMA-3 (+33,77%)', value: 10354248285, variationPct: 33.77 },
+      { id: 'media3', name: 'Media Trienal 2024–2026 (+32,79%)', value: 10278378058, variationPct: 32.79 },
+      { id: 'media4', name: 'Media Cuatrienal 2023–2026 (+44,17%)', value: 11159304058, variationPct: 44.17 },
+      { id: 'linear', name: 'Regresión Lineal OLS (+81,46%)', value: 14045349312, variationPct: 81.46 }
     ]
   },
   {

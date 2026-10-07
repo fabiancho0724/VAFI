@@ -29,6 +29,8 @@ import {
   R14HistoricalRecord, R14ForecastModel, exportR14CSV,
   R13HistoricalRecord, R13ForecastModel, R13_BASE_2026,
   R13_HISTORICAL_SERIES, R13_FORECAST_MODELS, exportR13CSV,
+  R16HistoricalRecord, R16ForecastModel, R16_BASE_2026, R16_PROJECTION_PGN_2027,
+  R16_HISTORICAL_SERIES, R16_FORECAST_MODELS, R16_DESCRIPTIVE_STATS, exportR16CSV,
   R17HistoricalRecord, R17ForecastModel, R17_BASE_2026,
   R17_HISTORICAL_SERIES, R17_FORECAST_MODELS, exportR17CSV,
   R40HistoricalRecord, R40ForecastModel, R40_BASE_2026,
@@ -43,8 +45,8 @@ import {
 import { RecursosNacionFuncionamientoTable } from './RecursosNacionFuncionamientoTable';
 
 export function R20ResourceProjectionSection() {
-  // Selector de Recurso Principal: Recursos Nación Funcionamiento | R10.0 | R12 | R13 | R14 | R17 | R18 | R20 | R21 | R40 | Consolidado
-  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'nacion-funcionamiento' | 'r10' | 'r12' | 'r13' | 'r14' | 'r17' | 'r18' | 'r20' | 'r21' | 'r40' | 'consolidado'>('nacion-funcionamiento');
+  // Selector de Recurso Principal: Recursos Nación Funcionamiento | R10.0 | R12 | R13 | R14 | R16 | R17 | R18 | R20 | R21 | R40 | Consolidado
+  const [selectedRecursoTab, setSelectedRecursoTab] = useState<'nacion-funcionamiento' | 'r10' | 'r12' | 'r13' | 'r14' | 'r16' | 'r17' | 'r18' | 'r20' | 'r21' | 'r40' | 'consolidado'>('nacion-funcionamiento');
   const [nacionSearchTerm, setNacionSearchTerm] = useState('');
   const [nacionCategoryFilter, setNacionCategoryFilter] = useState<string>('TODAS');
 
@@ -56,6 +58,9 @@ export function R20ResourceProjectionSection() {
 
   // Modelo activo para R14 (Política de Gratuidad)
   const [r14SelectedModel, setR14SelectedModel] = useState<'macro' | 'linear' | 'holt' | 'optimista'>('macro');
+
+  // Modelo activo para R16 (Aportes para Inversión Nación - Fijo Ley PGN 2027)
+  const [r16SelectedModel, setR16SelectedModel] = useState<'pgn' | 'macro' | 'inercial' | 'wma' | 'media3' | 'media4' | 'linear'>('pgn');
 
   // Modelo activo para R17 (Devolución de Descuento por Votación)
   const [r17SelectedModel, setR17SelectedModel] = useState<'macro' | 'inercial' | 'wma' | 'media'>('macro');
@@ -505,7 +510,52 @@ export function R20ResourceProjectionSection() {
   }, [r40SelectedModel]);
 
   // =========================================================================
-  // MODELACIÓN COMBINADA INSTITUCIONAL (R10 + R13 + R14 + R17 + R18 + R20 + R21 + R40)
+  // MODELACIÓN Y SERIE HISTÓRICA RECURSO 16 (APORTES PARA INVERSIÓN NACIÓN - FIJO LEY PGN 2027)
+  // =========================================================================
+  const r16ActiveModel = useMemo(() => {
+    return R16_FORECAST_MODELS.find(m => m.id === r16SelectedModel) || R16_FORECAST_MODELS[0];
+  }, [r16SelectedModel]);
+
+  const r16ChartSeries = useMemo(() => {
+    return R16_HISTORICAL_SERIES.map((h) => {
+      const is2027 = h.vigencia === 2027;
+      const recaudo = is2027 ? r16ActiveModel.value : h.totalRecaudo;
+      const variacionCOP = is2027 ? r16ActiveModel.diffCop : h.variacionAnualCOP;
+      const variacionPct = is2027 ? r16ActiveModel.variationPct : h.variacionAnualPct;
+
+      return {
+        year: `${h.vigencia}`,
+        numericYear: h.vigencia,
+        vigencia: h.vigencia,
+        recaudo: recaudo,
+        recaudoMillones: Number((recaudo / 1e6).toFixed(2)),
+        variacionCOP: variacionCOP,
+        variacionPct: variacionPct,
+        tipo: h.tipo,
+        notaNormativa: is2027 ? `${r16ActiveModel.name} — ${r16ActiveModel.description}` : h.notaNormativa,
+        is2027: is2027,
+        is2026: h.vigencia === 2026
+      };
+    });
+  }, [r16ActiveModel]);
+
+  const r16ModelsChartData = useMemo(() => {
+    return R16_FORECAST_MODELS.map(m => ({
+      name: m.tag,
+      fullName: m.name,
+      value: m.value,
+      valueMillones: Number((m.value / 1e6).toFixed(2)),
+      variacionPct: m.variationPct,
+      diffCop: m.diffCop,
+      id: m.id,
+      isSelected: r16SelectedModel === m.id,
+      isOfficial: m.isOfficial,
+      isFixedLegal: m.isFixedLegal
+    }));
+  }, [r16SelectedModel]);
+
+  // =========================================================================
+  // MODELACIÓN COMBINADA INSTITUCIONAL (R10 + R13 + R14 + R16 + R17 + R18 + R20 + R21 + R40)
   // =========================================================================
   const combinedSummary = useMemo(() => {
     const r20_2024 = matrixSummary.totalesPorAno[2024] || 0;
@@ -533,6 +583,11 @@ export function R20ResourceProjectionSection() {
     const r14_2026 = R14_BASE_2026;                     // 49.844.177.233
     const r14_2027 = r14ActiveModel.projected2027;      // 52.834.827.867 (o modelo seleccionado)
 
+    const r16_2024 = 7285059912;
+    const r16_2025 = 15809792992;
+    const r16_2026 = R16_BASE_2026;                     // 7.740.281.271
+    const r16_2027 = r16ActiveModel.value;              // 8.310.959.010 (Fijo Ley PGN 2027)
+
     const r17_2024 = 4531561319;
     const r17_2025 = 5183761916;
     const r17_2026 = R17_BASE_2026;                     // 5.643.523.903
@@ -549,10 +604,10 @@ export function R20ResourceProjectionSection() {
     const autogestion_2027 = r20_2027 + r21_2027;
     const varAutogestion = autogestion_2026 > 0 ? ((autogestion_2027 - autogestion_2026) / autogestion_2026) * 100 : 0;
 
-    const nacion_2024 = r10_2024 + r13_2024 + r14_2024 + r17_2024 + r18_2024;
-    const nacion_2025 = r10_2025 + r13_2025 + r14_2025 + r17_2025 + r18_2025;
-    const nacion_2026 = r10_2026 + r13_2026 + r14_2026 + r17_2026 + r18_2026;
-    const nacion_2027 = r10_2027 + r13_2027 + r14_2027 + r17_2027 + r18_2027;
+    const nacion_2024 = r10_2024 + r13_2024 + r14_2024 + r16_2024 + r17_2024 + r18_2024;
+    const nacion_2025 = r10_2025 + r13_2025 + r14_2025 + r16_2025 + r17_2025 + r18_2025;
+    const nacion_2026 = r10_2026 + r13_2026 + r14_2026 + r16_2026 + r17_2026 + r18_2026;
+    const nacion_2027 = r10_2027 + r13_2027 + r14_2027 + r16_2027 + r17_2027 + r18_2027;
     const varNacion = nacion_2026 > 0 ? ((nacion_2027 - nacion_2026) / nacion_2026) * 100 : 0;
 
     const grand_total_2024 = nacion_2024 + autogestion_2024;
@@ -565,6 +620,7 @@ export function R20ResourceProjectionSection() {
       r10: { y24: r10_2024, y25: r10_2025, y26: r10_2026, y27: r10_2027, part: (r10_2027 / grand_total_2027) * 100, varPct: R10_PROJECTION_6PCT_DATA.variacionPct },
       r13: { y24: r13_2024, y25: r13_2025, y26: r13_2026, y27: r13_2027, part: (r13_2027 / grand_total_2027) * 100, varPct: r13ActiveModel.variacionPct },
       r14: { y24: r14_2024, y25: r14_2025, y26: r14_2026, y27: r14_2027, part: (r14_2027 / grand_total_2027) * 100, varPct: r14ActiveModel.variacionPct },
+      r16: { y24: r16_2024, y25: r16_2025, y26: r16_2026, y27: r16_2027, part: (r16_2027 / grand_total_2027) * 100, varPct: r16ActiveModel.variationPct },
       r17: { y24: r17_2024, y25: r17_2025, y26: r17_2026, y27: r17_2027, part: (r17_2027 / grand_total_2027) * 100, varPct: r17ActiveModel.variacionPct },
       r18: { y24: r18_2024, y25: r18_2025, y26: r18_2026, y27: r18_2027, part: (r18_2027 / grand_total_2027) * 100, varPct: R18_PROJECTION_DATA.tasaAumentoPct },
       r20: { y24: r20_2024, y25: r20_2025, y26: r20_2026, y27: r20_2027, part: (r20_2027 / grand_total_2027) * 100 },
@@ -573,7 +629,7 @@ export function R20ResourceProjectionSection() {
       autogestion: { y24: autogestion_2024, y25: autogestion_2025, y26: autogestion_2026, y27: autogestion_2027, varPct: varAutogestion },
       total: { y24: grand_total_2024, y25: grand_total_2025, y26: grand_total_2026, y27: grand_total_2027, varPct: varGrandTotal }
     };
-  }, [matrixSummary, r21Records, r21BestModel, r13ActiveModel, r14ActiveModel, r17ActiveModel]);
+  }, [matrixSummary, r21Records, r21BestModel, r13ActiveModel, r14ActiveModel, r16ActiveModel, r17ActiveModel]);
 
   // =========================================================================
   // MODELACIÓN CONSOLIDADA INSTITUCIONAL DE 19 CONCEPTOS OFICIALES (BALANCE GENERAL)
@@ -604,6 +660,9 @@ export function R20ResourceProjectionSection() {
     if (!map['c4_r14_gratuidad']) {
       map['c4_r14_gratuidad'] = { modelId: r14SelectedModel };
     }
+    if (!map['c5_r16_inversion']) {
+      map['c5_r16_inversion'] = { modelId: r16SelectedModel };
+    }
     if (!map['c6_r17_votacion']) {
       map['c6_r17_votacion'] = { modelId: r17SelectedModel };
     }
@@ -611,7 +670,7 @@ export function R20ResourceProjectionSection() {
       map['c19_r40_estampilla_uptc'] = { modelId: r40SelectedModel === 'macro' ? 'macro6' : r40SelectedModel };
     }
     return map;
-  }, [official17Selections, r12SelectedModel, r13SelectedModel, r14SelectedModel, r17SelectedModel, r40SelectedModel]);
+  }, [official17Selections, r12SelectedModel, r13SelectedModel, r14SelectedModel, r16SelectedModel, r17SelectedModel, r40SelectedModel]);
 
   const official17Consolidated: OfficialConsolidatedSummary = useMemo(() => {
     return computeOfficialBalanceGeneral(effective17Selections);
@@ -636,6 +695,8 @@ export function R20ResourceProjectionSection() {
         setR13SelectedModel(newModelId as any);
       } else if (conceptId === 'c4_r14_gratuidad' && ['macro', 'linear', 'holt', 'optimista'].includes(newModelId)) {
         setR14SelectedModel(newModelId as any);
+      } else if (conceptId === 'c5_r16_inversion' && ['pgn', 'macro', 'inercial', 'wma', 'media3', 'media4', 'linear'].includes(newModelId)) {
+        setR16SelectedModel(newModelId as any);
       } else if (conceptId === 'c6_r17_votacion' && ['macro', 'inercial', 'wma', 'media'].includes(newModelId)) {
         setR17SelectedModel(newModelId as any);
       } else if (conceptId === 'c19_r40_estampilla_uptc') {
@@ -699,6 +760,7 @@ export function R20ResourceProjectionSection() {
     setR12SelectedModel('macro');
     setR13SelectedModel('macro');
     setR14SelectedModel('macro');
+    setR16SelectedModel('pgn');
     setR17SelectedModel('macro');
     setR40SelectedModel('macro');
     setEditingConceptId(null);
@@ -714,6 +776,7 @@ export function R20ResourceProjectionSection() {
     setR12SelectedModel('inercial');
     setR13SelectedModel('inercial');
     setR14SelectedModel('macro');
+    setR16SelectedModel('inercial');
     setR17SelectedModel('inercial');
     setR40SelectedModel('inercial');
     setEditingConceptId(null);
@@ -740,6 +803,7 @@ export function R20ResourceProjectionSection() {
     setR12SelectedModel('wma');
     setR13SelectedModel('wma');
     setR14SelectedModel('linear');
+    setR16SelectedModel('pgn');
     setR17SelectedModel('wma');
     setR40SelectedModel('cagr');
     setEditingConceptId(null);
@@ -1037,6 +1101,21 @@ export function R20ResourceProjectionSection() {
             <span>Recurso 14 (Política Gratuidad)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
               $52.835M (+6,0%)
+            </span>
+          </button>
+
+          <button
+            onClick={() => setSelectedRecursoTab('r16')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs transition-all ${
+              selectedRecursoTab === 'r16'
+                ? 'bg-blue-600 text-white shadow-lg scale-[1.02]'
+                : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Building2 size={15} />
+            <span>Aportes Inversión Nación (R-16)</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
+              $8.311M (+7,37%)
             </span>
           </button>
 
@@ -4423,6 +4502,823 @@ export function R20ResourceProjectionSection() {
                   <p>
                     3. <strong className="text-white">Recomendación Institucional para el Escenario Base:</strong> Aunque el modelo de regresión lineal proyecta <strong>$54.459M COP (+9,26%, R²=94,65%)</strong> reflejando la alta expansión del programa, se aconseja adoptar para el anteproyecto presupuestal el <strong className="text-emerald-300">Parámetro Macroeconómico Oficial del +6,0% ($52.835M COP)</strong>. Esta postura prudente asegura el equilibrio financiero frente a posibles rezagos en las liquidaciones semestrales del Ministerio de Educación Nacional.
                   </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN 0.44: RECURSO 16 (APORTES PARA INVERSIÓN NACIÓN - LEY PGN 2027)     */}
+      {/* ========================================================================= */}
+      {selectedRecursoTab === 'r16' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* HEADER HERO R16 */}
+          <div className="bg-gradient-to-br from-surface-container-high/90 to-background border border-blue-500/30 rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+            <div className="relative z-10">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-300 shrink-0 border border-blue-500/30 shadow-lg">
+                    <Building2 size={28} />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="text-xs font-mono uppercase tracking-wider font-bold text-blue-300 bg-blue-500/20 px-3 py-1 rounded-full border border-blue-500/30">
+                        Transferencia Nación Inversión • Rubro PGN 2202 Intersubsectorial
+                      </span>
+                      <span className="text-xs font-mono font-bold text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/20">
+                        Serie Histórica 2009–2026 (n = 18 vigencias)
+                      </span>
+                      <span className="text-xs font-mono font-bold text-blue-300 bg-blue-500/20 px-3 py-1 rounded-full border border-blue-500/30 flex items-center gap-1">
+                        <TrendingUp size={13} /> Base Real 2026: $7.740,3M • Asignación Fija 2027: $8.311,0M
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                        <ShieldCheck size={13} /> Asignación Fija Vinculante: +7,37% (Ley PGN 2027)
+                      </span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
+                      Recurso 16: Aportes para Inversión de la Nación (Presupuesto General de la Nación)
+                    </h3>
+                    <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
+                      Conforme al proyecto y anteproyecto del <strong>Presupuesto General de la Nación 2027</strong> coordinado por el Ministerio de Hacienda, el DNP y el MEN (Rubro 2202 Intersubsectorial Calidad y Fomento de la Educación Superior Pública), los giros de inversión asignados a la UPTC bajo el código presupuestal <strong>1.1.02.06.006.01.02 (Recurso 16.0-Aportes inversion)</strong> corresponden a una <strong>asignación fija, cierta y jurídicamente vinculante</strong> de <strong className="text-emerald-300">$ 8.310.959.010 COP</strong> ($8.311,0M).
+                      <br />
+                      <strong className="text-blue-300">Variación Presupuestal Oficial:</strong> Frente a la base presupuestal real certificada de 2026 (<strong className="text-white">$ 7.740.281.271 COP</strong>), la apropiación definitiva representa un incremento nominal directo de <strong className="text-emerald-300">+$ 570.677.739 COP (+7,37%)</strong>, otorgando certeza jurídica absoluta (100%) y eliminando la incertidumbre de estimaciones estadísticas para el Plan Operativo Anual de Inversiones (POAI 2027).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 shrink-0">
+                  <button
+                    onClick={() => exportR16CSV(r16SelectedModel)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] cursor-pointer"
+                  >
+                    <Download size={15} />
+                    <span>Descargar Certificado R16 (CSV)</span>
+                  </button>
+                  <div className="flex items-center gap-2 text-right">
+                    <span className="text-[11px] font-mono text-on-surface-variant">
+                      Base Real Recaudada 2026: <strong className="text-blue-300">{formatCurrencyShortCOP(R16_BASE_2026)}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SELECTOR INTERACTIVO DE MODELOS R16 PARA 2027 */}
+              <div className="mt-6 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-semibold text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-blue-400" />
+                    Seleccionar Criterio de Presupuestación R16 para 2027:
+                  </span>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Modelo Activo: <strong className="text-white">{r16ActiveModel.name}</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+                  {R16_FORECAST_MODELS.map((m) => {
+                    const isSelected = r16SelectedModel === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => setR16SelectedModel(m.id)}
+                        className={`p-3.5 rounded-2xl text-left transition-all border cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-blue-500/20 border-blue-400 ring-2 ring-blue-500/40 shadow-lg scale-[1.02]'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                              isSelected ? 'bg-blue-500 text-white font-extrabold' : 'bg-white/10 text-on-surface-variant'
+                            }`}>
+                              {m.tag}
+                            </span>
+                            {m.isFixedLegal && (
+                              <span className="text-[8px] font-mono font-bold text-emerald-300 bg-emerald-500/20 px-1 py-0.5 rounded border border-emerald-500/30">
+                                Fijo de Ley
+                              </span>
+                            )}
+                          </div>
+                          <div className="font-bold text-[11px] text-white mt-1 line-clamp-1">
+                            {m.name}
+                          </div>
+                          <div className="font-mono text-base font-extrabold text-blue-300 mt-0.5">
+                            {formatCurrencyShortCOP(m.value)}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant mt-2 pt-2 border-t border-white/10">
+                          <span className={`${m.variationPct > 0 ? 'text-emerald-400' : m.variationPct < 0 ? 'text-rose-400' : 'text-on-surface-variant'} font-bold`}>
+                            {m.variationPct > 0 ? '+' : ''}{m.variationPct.toFixed(2)}%
+                          </span>
+                          <span>{m.diffCop > 0 ? `+${formatCurrencyShortCOP(m.diffCop)}` : m.diffCop < 0 ? formatCurrencyShortCOP(m.diffCop) : '$0'}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* TARJETAS KPI DE IMPACTO R16 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                {/* KPI 1: Asignación Fija Ley PGN 2027 */}
+                <div className="p-5 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-blue-300 uppercase tracking-wider">
+                      Proyección 2027 (R16)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-blue-500/20 text-blue-200 px-2 py-0.5 rounded border border-blue-500/30">
+                      {r16ActiveModel.tag}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-blue-300 block">
+                      {formatCurrencyShortCOP(r16ActiveModel.value)}
+                    </span>
+                    <span className="text-[11px] font-mono text-white/90 block mt-0.5">
+                      {formatCurrencyCOP(r16ActiveModel.value)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-blue-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Criterio:</span>
+                    <strong className="text-blue-200 font-mono">{r16ActiveModel.confidence}</strong>
+                  </div>
+                </div>
+
+                {/* KPI 2: Base Presupuestal Real 2026 */}
+                <div className="p-5 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-blue-300 uppercase tracking-wider">
+                      Base Presupuestal 2026
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-500/30">
+                      Base Real Certificada
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-bold text-white block">
+                      {formatCurrencyShortCOP(R16_BASE_2026)}
+                    </span>
+                    <span className="text-[11px] font-mono text-blue-300/90 block mt-0.5">
+                      {formatCurrencyCOP(R16_BASE_2026)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-blue-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Normalización post-pico:</span>
+                    <strong className="text-rose-300 font-mono">-51,04% vs 2025</strong>
+                  </div>
+                </div>
+
+                {/* KPI 3: Incremento Nominal Proyectado */}
+                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">
+                      Incremento Nominal 2027
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30">
+                      {r16ActiveModel.variationPct >= 0 ? '+' : ''}{r16ActiveModel.variationPct.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className={`text-2xl md:text-3xl font-mono font-extrabold ${r16ActiveModel.diffCop >= 0 ? 'text-emerald-400' : 'text-rose-400'} block`}>
+                      {r16ActiveModel.diffCop >= 0 ? '+' : ''}{formatCurrencyShortCOP(r16ActiveModel.diffCop)}
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-200/90 block mt-0.5">
+                      {r16ActiveModel.diffCop >= 0 ? '+' : ''}{formatCurrencyCOP(r16ActiveModel.diffCop)}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Sobre base 2026:</span>
+                    <strong className="text-emerald-300">+{r16ActiveModel.variationPct.toFixed(2)}% garantizado</strong>
+                  </div>
+                </div>
+
+                {/* KPI 4: Certidumbre Jurídica y Riesgo */}
+                <div className="p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">
+                      Certidumbre Presupuestal
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-200 px-2 py-0.5 rounded border border-indigo-500/30">
+                      Riesgo Cero
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-indigo-300 block">
+                      100% Vinculante
+                    </span>
+                    <span className="text-[11px] font-mono text-indigo-200/90 block mt-0.5">
+                      Ley PGN 2027 • Rubro 2202 Intersubsectorial
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-indigo-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Seguridad Presupuestal:</span>
+                    <strong className="text-emerald-300">Apropiación Nacional Aprobada</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* GRÁFICO HISTÓRICO Y PROYECCIÓN RECHARTS */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-blue-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 className="text-lg md:text-xl font-display text-white font-bold flex items-center gap-2">
+                  <BarChart3 size={20} className="text-blue-400" />
+                  Evolución y Proyección de Aportes para Inversión Nación — R16 (2009–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Serie histórica de 18 vigencias reflejando los ciclos de inversión del Gobierno Nacional, el récord extraordinario de 2025 ({formatCurrencyShortCOP(15809792992)}), la base 2026 ({formatCurrencyShortCOP(R16_BASE_2026)}) y el valor fijo de Ley PGN 2027 ({formatCurrencyShortCOP(R16_PROJECTION_PGN_2027)}).
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+                  <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                  Histórico Real (2009–2025)
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-cyan-300 font-bold">
+                  <span className="w-3 h-3 rounded-full bg-cyan-400 ring-2 ring-cyan-500/50"></span>
+                  Base 2026 Certificada ({formatCurrencyShortCOP(R16_BASE_2026)})
+                </span>
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
+                  <span className="w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-emerald-500/50"></span>
+                  Proyección 2027 ({formatCurrencyShortCOP(r16ActiveModel.value)})
+                </span>
+              </div>
+            </div>
+
+            <div className="h-[360px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={r16ChartSeries} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <defs>
+                    <linearGradient id="r16BarGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#1d4ed8" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="r16Bar2026" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#0891b2" stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="r16Bar2027" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#34d399" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="r16AreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  
+                  <XAxis 
+                    dataKey="year" 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 10, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                  />
+                  
+                  <YAxis 
+                    stroke="#94a3b8" 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }}
+                    tickLine={{ stroke: '#ffffff20' }}
+                    tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`}
+                    domain={[0, 18000000000]}
+                  />
+
+                  <RechartsTooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload;
+                      return (
+                        <div className="bg-surface-container-high/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl min-w-[290px]">
+                          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+                            <span className="font-mono font-bold text-white text-sm">
+                              Vigencia {item.vigencia}
+                            </span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                              item.is2027 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                                : item.is2026
+                                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                                : 'bg-white/10 text-white border border-white/20'
+                            }`}>
+                              {item.is2027 ? `PROYECCIÓN (${r16ActiveModel.tag})` : item.is2026 ? 'BASE REAL CERTIFICADA' : 'HISTÓRICO REAL'}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-on-surface-variant">Aportes Inversión:</span>
+                              <span className="font-mono font-bold text-blue-300 text-sm">
+                                {formatCurrencyShortCOP(item.recaudo)}
+                              </span>
+                            </div>
+                            <div className="text-right text-[11px] font-mono text-white/80">
+                              {formatCurrencyCOP(item.recaudo)}
+                            </div>
+
+                            {item.variacionCOP !== 0 && (
+                              <div className="flex justify-between items-baseline pt-2 border-t border-white/10">
+                                <span className="text-on-surface-variant">Variación vs. año ant:</span>
+                                <span className={`font-mono font-bold ${item.variacionCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {item.variacionCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(item.variacionCOP)} ({item.variacionPct >= 0 ? '+' : ''}{item.variacionPct.toFixed(2)}%)
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="pt-2 border-t border-white/10 text-[10px] text-on-surface-variant italic">
+                              {item.notaNormativa}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+
+                  <Area 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    fill="url(#r16AreaGrad)" 
+                    stroke="none" 
+                  />
+
+                  <Bar dataKey="recaudo" radius={[6, 6, 0, 0]}>
+                    {r16ChartSeries.map((entry, index) => (
+                      <Cell 
+                        key={`r16-cell-${index}`} 
+                        fill={entry.is2027 ? 'url(#r16Bar2027)' : entry.is2026 ? 'url(#r16Bar2026)' : 'url(#r16BarGradient)'}
+                        stroke={entry.is2027 ? '#10b981' : entry.is2026 ? '#06b6d4' : 'none'}
+                        strokeWidth={entry.is2027 || entry.is2026 ? 2 : 0}
+                      />
+                    ))}
+                  </Bar>
+
+                  <Line 
+                    type="monotone" 
+                    dataKey="recaudo" 
+                    stroke="#60a5fa" 
+                    strokeWidth={2.5}
+                    dot={{ fill: '#60a5fa', r: 3 }}
+                    activeDot={{ r: 6, fill: '#60a5fa', stroke: '#fff', strokeWidth: 2 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-4 p-3.5 rounded-2xl bg-black/30 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-blue-300">
+                <Info size={16} className="shrink-0" />
+                <span>
+                  <strong>Diagnóstico de Serie R16:</strong> Los aportes de inversión de la Nación están determinados por el Presupuesto General de la Nación (PGN). Aunque la serie histórica exhibe picos extraordinarios en 2014 ($14.562M) y 2025 ($15.810M por convenios especiales), la base ordinaria 2026 se consolidó en <strong>{formatCurrencyShortCOP(R16_BASE_2026)}</strong>. La ley PGN 2027 fija de manera obligatoria y vinculante <strong>{formatCurrencyCOP(R16_PROJECTION_PGN_2027)}</strong> (+{r16ActiveModel.variationPct.toFixed(2)}%), garantizando el financiamiento del POAI sin riesgo de déficit presupuestal.
+                </span>
+              </div>
+              <span className="font-mono text-emerald-400 font-bold shrink-0">
+                Criterio Activo: {r16ActiveModel.name}
+              </span>
+            </div>
+          </div>
+
+          {/* COMPARATIVA GRÁFICA DE MODELOS Y RESUMEN ESTADÍSTICO */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* GRÁFICO COMPARATIVO DE LOS 7 MODELOS */}
+            <div className="lg:col-span-2 glass-card p-6 md:p-8 rounded-[28px] border border-blue-500/20 shadow-xl flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                    <BarChart3 size={18} className="text-blue-400" />
+                    Comparativa de Metodologías y Criterios 2027 (R16)
+                  </h4>
+                  <span className="text-[11px] font-mono text-on-surface-variant">
+                    Valores en Millones de COP
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant mb-4">
+                  Contraste técnico entre la Asignación Fija de Ley PGN ($8.311,0M), el estándar Macro (+6,0% = $8.204,7M), el Piso Inercial ($7.740,3M) y los modelos estadísticos tradicionales (WMA-3 $10.354M, Media Trienal $10.278M, OLS $14.045M).
+                </p>
+
+                <div className="h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={r16ModelsChartData} margin={{ top: 20, right: 20, left: 10, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="#94a3b8" 
+                        tick={{ fill: '#94a3b8', fontSize: 10, fontFamily: 'monospace' }}
+                      />
+                      <YAxis 
+                        stroke="#94a3b8" 
+                        tick={{ fill: '#94a3b8', fontSize: 10, fontFamily: 'monospace' }}
+                        tickFormatter={(val) => `$${(val / 1e6).toFixed(0)}M`}
+                        domain={[6000000000, 15000000000]}
+                      />
+                      <RechartsTooltip 
+                        content={({ active, payload }) => {
+                          if (!active || !payload || !payload.length) return null;
+                          const d = payload[0].payload;
+                          return (
+                            <div className="bg-surface-container-high/95 p-3 rounded-xl border border-white/20 shadow-xl text-xs">
+                              <span className="font-bold text-white block">{d.fullName}</span>
+                              <span className="font-mono text-blue-300 font-bold block mt-1">
+                                {formatCurrencyShortCOP(d.value)} ({formatCurrencyCOP(d.value)})
+                              </span>
+                              <span className={`${d.variacionPct >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-mono text-[11px] block mt-0.5`}>
+                                Variación: {d.variacionPct >= 0 ? '+' : ''}{d.variacionPct.toFixed(2)}% (+{formatCurrencyShortCOP(d.diffCop)})
+                              </span>
+                              {d.isFixedLegal && (
+                                <span className="inline-block mt-1 text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+                                  Oficial Vinculante Ley PGN 2027
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }}
+                      />
+                      <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                        {r16ModelsChartData.map((entry, index) => {
+                          let barColor = '#3b82f6';
+                          if (entry.id === 'pgn') barColor = '#10b981';
+                          else if (entry.id === 'inercial') barColor = '#64748b';
+                          else if (entry.id === 'macro') barColor = '#06b6d4';
+                          else if (entry.id === 'wma' || entry.id === 'media3' || entry.id === 'media4') barColor = '#f59e0b';
+                          else if (entry.id === 'linear') barColor = '#ef4444';
+
+                          return (
+                            <Cell 
+                              key={`r16-model-bar-${index}`} 
+                              fill={entry.isSelected ? '#34d399' : barColor} 
+                              stroke={entry.isSelected ? '#ffffff' : 'none'}
+                              strokeWidth={entry.isSelected ? 2 : 0}
+                            />
+                          );
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/10 text-center">
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-[10px] text-on-surface-variant block">Base 2026 Real</span>
+                  <span className="text-xs font-mono font-bold text-white block mt-0.5">{formatCurrencyShortCOP(R16_BASE_2026)}</span>
+                  <span className="text-[9px] text-on-surface-variant">Piso inercial</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                  <span className="text-[10px] text-emerald-300 block font-bold">Fijo Ley PGN 2027</span>
+                  <span className="text-xs font-mono font-bold text-emerald-300 block mt-0.5">$ 8.311,0M</span>
+                  <span className="text-[9px] text-emerald-400">+$ 570,7M (+7,37%)</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                  <span className="text-[10px] text-amber-300 block font-bold">Medias Móviles</span>
+                  <span className="text-xs font-mono font-bold text-amber-300 block mt-0.5">$ 10.354M</span>
+                  <span className="text-[9px] text-amber-400">Sobreestimación +$2.043M</span>
+                </div>
+              </div>
+            </div>
+
+            {/* PANEL DE ESTADÍSTICAS DESCRIPTIVAS */}
+            <div className="glass-card p-6 md:p-8 rounded-[28px] border border-blue-500/20 shadow-xl flex flex-col justify-between">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2 mb-1">
+                  <Activity size={18} className="text-blue-400" />
+                  Métricas Estadísticas de la Serie
+                </h4>
+                <p className="text-xs text-on-surface-variant mb-4">
+                  Análisis cuantitativo de la serie histórica R16 (2009–2026, n = 18 vigencias).
+                </p>
+
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Observaciones (n):</span>
+                    <strong className="font-mono text-xs text-white">{R16_DESCRIPTIVE_STATS.n} vigencias</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Media Histórica:</span>
+                    <strong className="font-mono text-xs text-blue-300">{formatCurrencyShortCOP(R16_DESCRIPTIVE_STATS.media)}</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Mediana Histórica:</span>
+                    <strong className="font-mono text-xs text-white">{formatCurrencyShortCOP(R16_DESCRIPTIVE_STATS.mediana)}</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Desviación Estándar (σ):</span>
+                    <strong className="font-mono text-xs text-amber-300">{formatCurrencyShortCOP(R16_DESCRIPTIVE_STATS.desvEstandar)}</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    <span className="text-xs text-blue-200">Coeficiente de Variación (CV):</span>
+                    <strong className="font-mono text-xs text-blue-300">{R16_DESCRIPTIVE_STATS.coeficienteVariacionPct.toFixed(2)}% (Moderada-Alta)</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Mínimo Histórico:</span>
+                    <strong className="font-mono text-xs text-rose-300">{formatCurrencyShortCOP(R16_DESCRIPTIVE_STATS.minimo)} ({R16_DESCRIPTIVE_STATS.minimoAnio})</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Máximo Histórico:</span>
+                    <strong className="font-mono text-xs text-emerald-300">{formatCurrencyShortCOP(R16_DESCRIPTIVE_STATS.maximo)} ({R16_DESCRIPTIVE_STATS.maximoAnio})</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="text-xs text-emerald-200">CAGR (2009–2026):</span>
+                    <strong className="font-mono text-xs text-emerald-300">+{R16_DESCRIPTIVE_STATS.cagrPct.toFixed(2)}% anual</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Pendiente OLS (β):</span>
+                    <strong className="font-mono text-xs text-sky-300">+{formatCurrencyShortCOP(R16_DESCRIPTIVE_STATS.tendenciaAnualCOP)}/año</strong>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-xs text-on-surface-variant">Bondad de Ajuste (R²):</span>
+                    <strong className="font-mono text-xs text-white">{R16_DESCRIPTIVE_STATS.r2Pct.toFixed(2)}%</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-200">
+                <strong>Conclusión Estadística:</strong> El CV del 36,32% y el R² bajo del 24,89% confirman que los aportes de inversión no siguen un patrón autorregresivo ni lineal continuo, sino asignaciones discrecionales por convenios del Gobierno Nacional. Por esta razón técnica, <strong>la asignación fija de Ley PGN ($8.310.959.010) es el único criterio válido y legalmente blindado</strong>.
+              </div>
+            </div>
+          </div>
+
+          {/* TABLA 1: SERIE HISTÓRICA COMPLETA Y ASIGNACIÓN 2027 */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-blue-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Table size={18} className="text-blue-400" />
+                  Tabla: Histórico y Asignación Recurso 16 — Aportes para Inversión Nación (2009–2027)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Registro cronológico detallado de las 18 vigencias certificadas y la asignación oficial para 2027 conforme a la Ley PGN.
+                </p>
+              </div>
+              <button
+                onClick={() => exportR16CSV(r16SelectedModel)}
+                className="flex items-center gap-1.5 text-xs text-blue-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
+              >
+                <Download size={14} />
+                <span>Exportar Tabla CSV</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Vigencia</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Unidad</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Concepto Presupuestal</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Recurso</th>
+                    <th className="p-4 font-semibold text-right text-blue-300">Total Recaudo ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Variación Anual ($)</th>
+                    <th className="p-4 font-semibold text-center text-blue-300">Variación (%)</th>
+                    <th className="p-4 font-semibold text-left text-on-surface-variant">Hito / Diagnóstico Normativo</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R16_HISTORICAL_SERIES.map((h) => {
+                    const is2027 = h.vigencia === 2027;
+                    const is2026 = h.vigencia === 2026;
+                    const recaudo = is2027 ? r16ActiveModel.value : h.totalRecaudo;
+                    const varCOP = is2027 ? r16ActiveModel.diffCop : h.variacionAnualCOP;
+                    const varPct = is2027 ? r16ActiveModel.variationPct : h.variacionAnualPct;
+
+                    return (
+                      <tr 
+                        key={h.vigencia} 
+                        className={`transition-colors ${
+                          is2027 
+                            ? 'bg-emerald-500/10 hover:bg-emerald-500/20 font-semibold' 
+                            : is2026 
+                            ? 'bg-cyan-500/15 hover:bg-cyan-500/25 font-medium' 
+                            : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold font-mono">
+                          <span className={`px-2.5 py-1 rounded-lg text-xs ${
+                            is2027 
+                              ? 'bg-emerald-500 text-black font-extrabold' 
+                              : is2026 
+                              ? 'bg-cyan-600 text-white font-extrabold' 
+                              : 'bg-white/10 text-white'
+                          }`}>
+                            {h.vigencia}
+                          </span>
+                        </td>
+                        <td className="p-4 font-mono text-[11px] text-on-surface-variant">
+                          {h.unidad}
+                        </td>
+                        <td className={`p-4 ${is2027 ? 'text-emerald-200 font-bold' : is2026 ? 'text-cyan-200 font-bold' : 'text-white'}`}>
+                          {is2027 ? `Aportes para Inversión (${r16ActiveModel.tag})` : h.concepto}
+                        </td>
+                        <td className="p-4 font-mono text-on-surface-variant text-[11px]">
+                          {h.recurso}
+                        </td>
+                        <td className={`p-4 text-right font-mono font-bold ${
+                          is2027 ? 'text-emerald-300 text-sm' : is2026 ? 'text-cyan-300' : 'text-white'
+                        }`}>
+                          {formatCurrencyCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(recaudo)}
+                        </td>
+                        <td className="p-4 text-right font-mono">
+                          {varCOP !== 0 ? (
+                            <span className={varCOP >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                              {varCOP >= 0 ? '+' : ''}{formatCurrencyShortCOP(varCOP)}
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold">
+                          {varPct !== 0 ? (
+                            <span className={`px-2 py-0.5 rounded text-[11px] ${
+                              is2027 
+                                ? 'bg-emerald-500/30 text-emerald-300 font-extrabold' 
+                                : varPct >= 0 ? 'text-emerald-400' : 'text-rose-400 font-bold'
+                            }`}>
+                              {varPct >= 0 ? '+' : ''}{varPct.toFixed(2)}%
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="p-4 text-on-surface-variant text-[11px] italic">
+                          {is2027 ? `${r16ActiveModel.name}: ${r16ActiveModel.description}` : h.notaNormativa}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TABLA 2: COMPARACIÓN DE CRITERIOS Y METODOLOGÍAS EVALUADAS */}
+          <div className="glass-card p-6 md:p-8 rounded-[28px] border border-blue-500/20 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
+                  <Calculator size={18} className="text-blue-400" />
+                  Matriz Comparativa de Modelos y Criterios 2027 (R16)
+                </h4>
+                <p className="text-xs text-on-surface-variant mt-0.5">
+                  Evaluación de metodologías presupuestales frente a la asignación vinculante del Presupuesto General de la Nación.
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-wider">
+                  <tr>
+                    <th className="p-4 font-semibold text-white">Modelo / Metodología</th>
+                    <th className="p-4 font-semibold text-on-surface-variant">Descripción / Criterio</th>
+                    <th className="p-4 font-semibold text-right text-blue-300">Proyección 2027 ($ COP)</th>
+                    <th className="p-4 font-semibold text-right text-white">Total ($M)</th>
+                    <th className="p-4 font-semibold text-right text-emerald-300">Variación ($ COP)</th>
+                    <th className="p-4 font-semibold text-center text-blue-300">Variación %</th>
+                    <th className="p-4 font-semibold text-center text-white">Nivel de Certeza</th>
+                    <th className="p-4 font-semibold text-center text-white">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-sans">
+                  {R16_FORECAST_MODELS.map((m) => {
+                    const isSelected = r16SelectedModel === m.id;
+                    return (
+                      <tr 
+                        key={m.id} 
+                        className={`transition-colors ${
+                          isSelected ? 'bg-blue-500/20 font-semibold' : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <td className="p-4 font-bold text-white flex items-center gap-2">
+                          <span 
+                            className="w-3 h-3 rounded-full shrink-0" 
+                            style={{ 
+                              backgroundColor: m.id === 'pgn' ? '#10b981' : m.id === 'macro' ? '#06b6d4' : m.id === 'inercial' ? '#64748b' : '#f59e0b' 
+                            }}
+                          />
+                          <div>
+                            <span>{m.name}</span>
+                            <span className="text-[10px] block text-on-surface-variant font-normal">{m.tag}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 font-mono text-[11px] text-on-surface-variant">
+                          {m.description}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-blue-300 text-sm">
+                          {formatCurrencyCOP(m.value)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-white">
+                          {formatCurrencyShortCOP(m.value)}
+                        </td>
+                        <td className="p-4 text-right font-mono font-semibold">
+                          <span className={m.diffCop >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                            {m.diffCop >= 0 ? `+${formatCurrencyShortCOP(m.diffCop)}` : formatCurrencyShortCOP(m.diffCop)}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold text-blue-300">
+                          {m.variationPct >= 0 ? `+${m.variationPct.toFixed(2)}%` : `${m.variationPct.toFixed(2)}%`}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                            m.isFixedLegal
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                              : m.id === 'macro' || m.id === 'inercial'
+                              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          }`}>
+                            {m.confidence}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          {isSelected ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-blue-600 text-white shadow-md">
+                              Activo
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setR16SelectedModel(m.id)}
+                              className="px-2.5 py-1 rounded-full text-[10px] font-mono text-blue-300 hover:text-white bg-white/5 hover:bg-white/15 border border-white/10 transition-colors cursor-pointer"
+                            >
+                              Aplicar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* PANEL DE ANÁLISIS DE RIESGO Y ASPECTOS RELEVANTES R16 */}
+          <div className="p-6 md:p-8 rounded-[28px] bg-gradient-to-r from-surface-container-high/90 to-background border border-blue-500/30 shadow-xl">
+            <div className="flex flex-col md:flex-row items-start gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-300 flex items-center justify-center shrink-0 border border-blue-500/30">
+                <Scale size={24} />
+              </div>
+              <div className="space-y-4 w-full">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider font-bold text-blue-300">
+                    Dictamen Técnico Financiero Institucional • R16
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Asignación Fija Aprobada: $ 8.310.959.010 COP
+                  </span>
+                </div>
+                <h4 className="text-xl font-bold text-white tracking-tight">
+                  Aspectos Relevantes del Recurso 16 y Justificación de la Asignación Legal Vinculante 2027
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  {/* Aspecto 1 */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-wider">
+                      <Landmark size={15} />
+                      <span>1. Naturaleza Jurídica de Transferencia Exógena PGN</span>
+                    </div>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      El Recurso 16 (Aportes para Inversión) no es un ingreso tributario ni una renta de autogestión con riesgo de recaudo, sino una transferencia directa fijada por la Ley Anual de Presupuesto General de la Nación (PGN). Su valor no se estima mediante extrapolaciones discrecionales sino que se adopta con base en la apropiación legal comunicada por el Ministerio de Educación Nacional.
+                    </p>
+                  </div>
+
+                  {/* Aspecto 2 */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                      <ShieldCheck size={15} />
+                      <span>2. Certidumbre Presupuestal Plena (Fijo $8.310.959.010)</span>
+                    </div>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      La cifra de <strong className="text-white">$ 8.310.959.010 COP</strong> representa un crecimiento nominal del <strong className="text-emerald-300">+7,37% (+$ 570.677.739 COP)</strong> sobre la base 2026 ($7.740M). Esta asignación garantiza la cobertura de los compromisos de contrapartida en convenios interadministrativos y proyectos viabilizados en el Banco de Proyectos de Inversión (BPIN).
+                    </p>
+                  </div>
+
+                  {/* Aspecto 3 */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                      <AlertTriangle size={15} />
+                      <span>3. Inviabilidad Técnica de Medias Móviles y Regresiones</span>
+                    </div>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      Utilizar modelos estadísticos tradicionales induciría a un error de cálculo severo: la media trienal ($10.278M) o el promedio ponderado WMA-3 ($10.354M) sobreestimarían el presupuesto en más de <strong>$2.000 millones</strong> debido al atípico pico presupuestal de 2025 ($15.810M), creando un déficit fiscal no financiado en el presupuesto institucional.
+                    </p>
+                  </div>
+
+                  {/* Aspecto 4 */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center gap-2 text-sky-400 font-bold text-xs uppercase tracking-wider">
+                      <Layers size={15} />
+                      <span>4. Destinación Específica a Infraestructura y Fomento</span>
+                    </div>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      En virtud del Decreto 111 de 1996 (Estatuto Orgánico de Presupuesto) y el rubro 2202, los recursos de inversión están jurídicamente blindados para no ser destinados a funcionamiento ordinario. Financian adecuaciones de laboratorios, renovación tecnológica de las sedes regionales y fortalecimiento de la infraestructura física universitaria.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
