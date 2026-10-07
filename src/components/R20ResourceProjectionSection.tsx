@@ -8772,6 +8772,16 @@ export function R20ResourceProjectionSection() {
                     <FileSpreadsheet size={15} />
                     <span>Exportar CSV Oficial</span>
                   </button>
+
+                  <a
+                    href="/Documento_Tecnico_Proyeccion_Presupuestal_UPTC_2027.pdf"
+                    download="Documento_Tecnico_Proyeccion_Presupuestal_UPTC_2027.pdf"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-black text-xs font-extrabold shadow-lg shadow-amber-900/30 transition-all active:scale-95 cursor-pointer border border-amber-300/40"
+                    title="Descargar Documento Técnico Institucional Completo en formato PDF (16 Secciones, Modelos, Fundamentos Legales y Trazabilidad)"
+                  >
+                    <Award size={15} className="text-black" />
+                    <span>Documento Técnico Oficial (PDF)</span>
+                  </a>
                 </div>
               </div>
 
