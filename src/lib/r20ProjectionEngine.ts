@@ -2467,6 +2467,414 @@ export function exportR17CSV(selectedModelId: 'macro' | 'inercial' | 'wma' | 'me
 }
 
 // =========================================================================
+// RECURSO 40 - ESTAMPILLA PRO-UPTC (LEY 64 DE 1988 Y ORDENANZA 028 DE 1989)
+// =========================================================================
+
+export interface R40HistoricalRecord {
+  vigencia: number;
+  unidad: string;
+  concepto: string;
+  recurso: string;
+  totalRecaudo: number;
+  variacionAnualCOP: number;
+  variacionAnualPct: number;
+  tipo: 'historico' | 'base2026' | 'proyeccion';
+  notaNormativa: string;
+}
+
+export interface R40ForecastModel {
+  id: 'macro' | 'inercial' | 'cagr' | 'wma' | 'media3' | 'media4' | 'linear';
+  name: string;
+  shortName: string;
+  tag: string;
+  formula: string;
+  projected2027: number;
+  incrementoNominal: number;
+  variacionPct: number;
+  color: string;
+  interpretation: string;
+  alertaRiesgo: string;
+  riskLevel: 'bajo' | 'medio' | 'alto';
+  isOfficial?: boolean;
+}
+
+export const R40_BASE_2026 = 5737263195;
+
+export const R40_HISTORICAL_SERIES: R40HistoricalRecord[] = [
+  {
+    vigencia: 2009,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 1316131200.97,
+    variacionAnualCOP: 0,
+    variacionAnualPct: 0,
+    tipo: 'historico',
+    notaNormativa: 'Recaudo inicial consolidado territorial y departamental (Ley 64/1988 y Ord. 028/1989)'
+  },
+  {
+    vigencia: 2010,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 1707341568.35,
+    variacionAnualCOP: 391210367.38,
+    variacionAnualPct: 29.72,
+    tipo: 'historico',
+    notaNormativa: 'Expansión de la base gravable en contratos territoriales de Boyacá (+29,72%)'
+  },
+  {
+    vigencia: 2011,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 1990584813.80,
+    variacionAnualCOP: 283243245.45,
+    variacionAnualPct: 16.59,
+    tipo: 'historico',
+    notaNormativa: 'Crecimiento sostenido en contratos de obras departamentales (+16,59%)'
+  },
+  {
+    vigencia: 2012,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 2487014870.41,
+    variacionAnualCOP: 496430056.61,
+    variacionAnualPct: 24.94,
+    tipo: 'historico',
+    notaNormativa: 'Dinamismo en la contratación de obras civiles departamentales (+24,94%)'
+  },
+  {
+    vigencia: 2013,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 3180246939.33,
+    variacionAnualCOP: 693232068.92,
+    variacionAnualPct: 27.87,
+    tipo: 'historico',
+    notaNormativa: 'Superación de la cota de $3.000M por convenios interadministrativos (+27,87%)'
+  },
+  {
+    vigencia: 2014,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 4069026795.66,
+    variacionAnualCOP: 888779856.33,
+    variacionAnualPct: 27.95,
+    tipo: 'historico',
+    notaNormativa: 'Pico pre-recesión departamental superando $4.000M (+27,95%)'
+  },
+  {
+    vigencia: 2015,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 3450952355.64,
+    variacionAnualCOP: -618074440.02,
+    variacionAnualPct: -15.19,
+    tipo: 'historico',
+    notaNormativa: 'Contracción por desaceleración en licitaciones territoriales (-15,19%)'
+  },
+  {
+    vigencia: 2016,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 2683843182.97,
+    variacionAnualCOP: -767109172.67,
+    variacionAnualPct: -22.23,
+    tipo: 'historico',
+    notaNormativa: 'Ajuste cíclico por inicio de planes de desarrollo seccionales (-22,23%)'
+  },
+  {
+    vigencia: 2017,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 2526994068.92,
+    variacionAnualCOP: -156849114.05,
+    variacionAnualPct: -5.84,
+    tipo: 'historico',
+    notaNormativa: 'Piso de estabilización del quinquenio intermedio ($2.527M)'
+  },
+  {
+    vigencia: 2018,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 2548056067.88,
+    variacionAnualCOP: 21061998.96,
+    variacionAnualPct: 0.83,
+    tipo: 'historico',
+    notaNormativa: 'Leve recuperación en la retención estampilla departamental (+0,83%)'
+  },
+  {
+    vigencia: 2019,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 3206620819.50,
+    variacionAnualCOP: 658564751.62,
+    variacionAnualPct: 25.85,
+    tipo: 'historico',
+    notaNormativa: 'Cierre de cuatrienio departamental con aceleración de pagos (+25,85%)'
+  },
+  {
+    vigencia: 2020,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 2674855961.99,
+    variacionAnualCOP: -531764857.51,
+    variacionAnualPct: -16.58,
+    tipo: 'historico',
+    notaNormativa: 'Impacto por suspensión de contratos de obra durante pandemia (-16,58%)'
+  },
+  {
+    vigencia: 2021,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 4111927043.51,
+    variacionAnualCOP: 1437071081.52,
+    variacionAnualPct: 53.73,
+    tipo: 'historico',
+    notaNormativa: 'Fuerte reactivación económica post-pandemia superando $4.100M (+53,73%)'
+  },
+  {
+    vigencia: 2022,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 4574966585.00,
+    variacionAnualCOP: 463039541.49,
+    variacionAnualPct: 11.26,
+    tipo: 'historico',
+    notaNormativa: 'Consolidación de recaudo por proyectos de inversión territorial (+11,26%)'
+  },
+  {
+    vigencia: 2023,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 4792630917.24,
+    variacionAnualCOP: 217664332.24,
+    variacionAnualPct: 4.76,
+    tipo: 'historico',
+    notaNormativa: 'Sostenimiento en nivel alto con ejecución de regalías y convenios (+4,76%)'
+  },
+  {
+    vigencia: 2024,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 4793044583.00,
+    variacionAnualCOP: 413665.76,
+    variacionAnualPct: 0.01,
+    tipo: 'historico',
+    notaNormativa: 'Comportamiento estable en torno a $4.793M (+0,01%)'
+  },
+  {
+    vigencia: 2025,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 5566844388.00,
+    variacionAnualCOP: 773799805.00,
+    variacionAnualPct: 16.14,
+    tipo: 'historico',
+    notaNormativa: 'Crecimiento significativo alcanzando $5.566M (+16,14%)'
+  },
+  {
+    vigencia: 2026,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia (Base Referencia)',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 5737263195.00,
+    variacionAnualCOP: 170418807.00,
+    variacionAnualPct: 3.06,
+    tipo: 'base2026',
+    notaNormativa: 'Base real certificada 2026 ($5.737.263.195 COP, máximo histórico registrado)'
+  },
+  {
+    vigencia: 2027,
+    unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
+    concepto: 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia (Proyectado)',
+    recurso: '40-Estampilla UPTC',
+    totalRecaudo: 6081498987.00,
+    variacionAnualCOP: 344235792.00,
+    variacionAnualPct: 6.00,
+    tipo: 'proyeccion',
+    notaNormativa: 'Proyección prudente con parámetro macroeconómico oficial (+6,0%) sobre la base real de 2026 ($5.737.263.195 COP)'
+  }
+];
+
+export const R40_FORECAST_MODELS: R40ForecastModel[] = [
+  {
+    id: 'macro',
+    name: 'Base Prudente Macroeconómica (+6,0%)',
+    shortName: 'Macro +6,0% (Base Real)',
+    tag: 'Prudente Oficial (+6%)',
+    formula: 'Base 2026 × 1,060',
+    projected2027: 6081498987,
+    incrementoNominal: 344235792,
+    variacionPct: 6.00,
+    color: '#10b981',
+    interpretation: 'Aplica el parámetro macroeconómico institucional (+6,0%) directamente sobre el recaudo base certificado 2026 ($5.737.263.195 COP), reconociendo la inflación y el dinamismo contractual departamental sin desbordar el marco fiscal.',
+    alertaRiesgo: 'Bajo Riesgo. Modelo recomendado por la Vicerrectoría Administrativa y Financiera.',
+    riskLevel: 'bajo',
+    isOfficial: true
+  },
+  {
+    id: 'inercial',
+    name: 'Piso Inercial Estricto 2026 (0,0%)',
+    shortName: 'Piso Inercial ($5.737M)',
+    tag: 'Piso Inercial',
+    formula: 'Base 2026 (Crecimiento Cero)',
+    projected2027: 5737263195,
+    incrementoNominal: 0,
+    variacionPct: 0.00,
+    color: '#64748b',
+    interpretation: 'Escenario de estrés sin ajuste nominal. Preserva la base histórica de 2026 protegiendo la tesorería ante eventual desaceleración de contratación de obra departamental.',
+    alertaRiesgo: 'Riesgo Nulo. Escenario ultra-conservador.',
+    riskLevel: 'bajo',
+    isOfficial: false
+  },
+  {
+    id: 'cagr',
+    name: 'Crecimiento Tendencial Histórico CAGR (+9,05%)',
+    shortName: 'Tendencial CAGR (+9,05%)',
+    tag: 'Tendencial CAGR',
+    formula: 'Base 2026 × (1 + CAGR_17A)',
+    projected2027: 6256485514,
+    incrementoNominal: 519222319,
+    variacionPct: 9.05,
+    color: '#06b6d4',
+    interpretation: 'Aplica la tasa de crecimiento anual compuesta observada durante los 17 periodos de la serie (2009–2026: +9,05% anual). Captura la expansión secular de la estampilla departamental.',
+    alertaRiesgo: 'Riesgo Moderado. Requiere continuidad del dinamismo en obras del departamento de Boyacá.',
+    riskLevel: 'medio',
+    isOfficial: false
+  },
+  {
+    id: 'wma',
+    name: 'Promedio Ponderado Trienal WMA-3',
+    shortName: 'Ponderado WMA-3 ($5.523M)',
+    tag: 'Ponderado WMA-3',
+    formula: '(3×2026 + 2×2025 + 1×2024) / 6',
+    projected2027: 5523087157,
+    incrementoNominal: -214176038,
+    variacionPct: -3.73,
+    color: '#f59e0b',
+    interpretation: 'Suaviza el pico de 2026 asignando ponderaciones decrecientes a los últimos tres años. Se sitúa por debajo de 2026 debido al salto registrado en los dos últimos años.',
+    alertaRiesgo: 'Riesgo Bajo en recaudación, pero restrictivo para el presupuesto de inversión.',
+    riskLevel: 'medio',
+    isOfficial: false
+  },
+  {
+    id: 'media3',
+    name: 'Media Trienal Simple (2024–2026)',
+    shortName: 'Media Trienal ($5.366M)',
+    tag: 'Media Trienal',
+    formula: '(2024 + 2025 + 2026) / 3',
+    projected2027: 5365717389,
+    incrementoNominal: -371545806,
+    variacionPct: -6.48,
+    color: '#8b5cf6',
+    interpretation: 'Promedio simple del último trienio. Amortigua completamente las variaciones de corto plazo, proyectando $5.365,7 millones.',
+    alertaRiesgo: 'Riesgo de subpresupuestación respecto a la base real consolidada de $5.737M.',
+    riskLevel: 'medio',
+    isOfficial: false
+  },
+  {
+    id: 'media4',
+    name: 'Media Cuatrienal (2023–2026)',
+    shortName: 'Media Cuatrienal ($5.222M)',
+    tag: 'Media Cuatrienal',
+    formula: '(2023 + 2024 + 2025 + 2026) / 4',
+    projected2027: 5222445771,
+    incrementoNominal: -514817424,
+    variacionPct: -8.97,
+    color: '#ec4899',
+    interpretation: 'Incorpora el período de estabilidad 2023–2024, arrojando una base conservadora de $5.222,4 millones.',
+    alertaRiesgo: 'Riesgo de restricción excesiva en el programa de inversiones de planta física.',
+    riskLevel: 'medio',
+    isOfficial: false
+  },
+  {
+    id: 'linear',
+    name: 'Regresión Lineal OLS (2009–2026)',
+    shortName: 'Regresión OLS ($5.426M)',
+    tag: 'Tendencia Lineal OLS',
+    formula: 'OLS: Y = 1.398M + 212M × t (R²=75,0%)',
+    projected2027: 5425926682,
+    incrementoNominal: -311336513,
+    variacionPct: -5.43,
+    color: '#3b82f6',
+    interpretation: 'Ajuste econométrico lineal con 18 observaciones y R² de 75,04%. Proyecta la tendencia histórica secular hacia el periodo 19.',
+    alertaRiesgo: 'Riesgo Moderado. Modera el crecimiento acelerado de los dos últimos años.',
+    riskLevel: 'medio',
+    isOfficial: false
+  }
+];
+
+export const R40_DESCRIPTIVE_STATS = {
+  n: 18,
+  media: 3412130298,
+  mediana: 3193433879,
+  desvEstandar: 1306384388,
+  coeficienteVariacionPct: 38.29,
+  minimo: 1316131201,
+  minimoAnio: 2009,
+  maximo: 5737263195,
+  maximoAnio: 2026,
+  rango: 4421131994,
+  cagrPct: 9.05,
+  crecimientoAcumuladoPct: 335.92,
+  tendenciaAnualCOP: 211978567,
+  r2Pct: 75.04
+};
+
+export function exportR40CSV(selectedModelId: string): void {
+  const model = R40_FORECAST_MODELS.find(m => m.id === selectedModelId) || R40_FORECAST_MODELS[0];
+  let csv = '\uFEFF';
+  csv += 'UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n';
+  csv += 'VICERRECTORIA ADMINISTRATIVA Y FINANCIERA (VAFI)\n';
+  csv += 'CERTIFICADO DE PROYECCION PRESUPUESTAL RECURSO 40 - VIGENCIA 2027\n';
+  csv += 'Estampilla pro Universidad Pedagógica y Tecnológica de Colombia (Ley 64 de 1988 y Ord. 028 de 1989)\n';
+  csv += `Fecha de Generación:;${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}\n`;
+  csv += `Modelo Seleccionado:;${model.name}\n`;
+  csv += `Base Real 2026:;$ ${R40_BASE_2026.toLocaleString('es-CO')}\n`;
+  csv += `Proyección 2027:;$ ${model.projected2027.toLocaleString('es-CO')}\n`;
+  csv += `Incremento Nominal:;$ ${model.incrementoNominal.toLocaleString('es-CO')};Variación:;${model.variacionPct >= 0 ? '+' : ''}${model.variacionPct.toFixed(2)}%\n\n`;
+  csv += 'Vigencia;Unidad;Concepto Presupuestal;Recurso;Total Recaudo (COP);Cifra en Millones ($M);Variación Anual (COP);Variación Anual (%);Tipo de Registro;Nota Normativa\n';
+
+  for (const r of R40_HISTORICAL_SERIES) {
+    const isProy = r.tipo === 'proyeccion';
+    const recaudo = isProy ? model.projected2027 : r.totalRecaudo;
+    const varCop = isProy ? model.incrementoNominal : r.variacionAnualCOP;
+    const varPct = isProy ? model.variacionPct : r.variacionAnualPct;
+    const millones = (recaudo / 1e6).toFixed(2);
+
+    csv += `${r.vigencia};"${r.unidad}";"${r.concepto}";"${r.recurso}";` +
+      `$ ${recaudo.toLocaleString('es-CO')};$ ${millones}M;` +
+      `$ ${varCop.toLocaleString('es-CO')};${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%;` +
+      `"${r.tipo.toUpperCase()}";"${r.notaNormativa}"\n`;
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `Certificado_Proyeccion_R40_Estampilla_UPTC_2027_${model.id}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// =========================================================================
 // =========================================================================
 // CATÁLOGO OFICIAL DE 19 CONCEPTOS PRESUPUESTALES INSTITUCIONALES (2027)
 // BALANCE GENERAL CONSOLIDADO - VICERRECTORÍA ADMINISTRATIVA Y FINANCIERA
@@ -2898,12 +3306,15 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     grupo: 'estampillas',
     recaudo2024: 4793044583,
     recaudo2025: 5566844388,
-    base2026: 5191244662,
+    base2026: 5737263195,
     defaultModelId: 'macro6',
     models: [
-      { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 5502719342, variationPct: 6.00 },
-      { id: 'ipc7', name: 'Indexación IPC (+7,0%)', value: 5554631788, variationPct: 7.00 },
-      { id: 'inercial', name: 'Base Inercial (0,0%)', value: 5191244662, variationPct: 0.00 }
+      { id: 'macro6', name: 'Macro +6,0% (Parámetro Aprobado)', value: 6081498987, variationPct: 6.00 },
+      { id: 'inercial', name: 'Base Inercial 2026 (0,0%)', value: 5737263195, variationPct: 0.00 },
+      { id: 'cagr', name: 'Tendencial Histórico CAGR (+9,05%)', value: 6256485514, variationPct: 9.05 },
+      { id: 'wma', name: 'Promedio Ponderado WMA-3', value: 5523087157, variationPct: -3.73 },
+      { id: 'media3', name: 'Media Trienal (2024–2026)', value: 5365717389, variationPct: -6.48 },
+      { id: 'linear', name: 'Regresión Lineal OLS', value: 5425926682, variationPct: -5.43 }
     ]
   }
 ];
