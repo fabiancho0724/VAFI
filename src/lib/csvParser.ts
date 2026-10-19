@@ -125,7 +125,10 @@ export function formatFechaCorte(rawDate: string): string {
   if (parts.length === 3) {
     const day = parseInt(parts[0], 10);
     const monthIdx = parseInt(parts[1], 10) - 1;
-    const year = parts[2];
+    let year = parts[2];
+    if (year && year.length === 2) {
+      year = '20' + year;
+    }
     const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     if (!isNaN(day) && monthIdx >= 0 && monthIdx < 12) {
       return `${day} de ${months[monthIdx]} de ${year}`;
@@ -133,3 +136,4 @@ export function formatFechaCorte(rawDate: string): string {
   }
   return clean;
 }
+

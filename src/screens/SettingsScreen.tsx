@@ -67,19 +67,19 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
 
     if (type === 'ingresos') {
       fileName = "Plantilla_Ingresos_Oficial_UPTC.csv";
-      csvContent = "Unidad;Código concepto;Concepto;Recurso;Valor inicial;Valor aforo;Total recaudo;Fecha final;Tipo de Recurso;Clasificación del Recurso\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.01;Aportes para Funcionamiento;10.0-Aportes Nacion - Funcionamiento;314781873726;314781873726;211546696007;31/08/2026;Recursos UPTC;Aportes de la Nación\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.001;Recursos del balance - Aportes funcionamiento;10.0-Aportes Nacion - Funcionamiento;0;545944007;545944007;31/08/2026;Recursos del Balance;Aportes de la Nación\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.007;Derechos de Matrícula Pregrado;20-Propios;11450000000;11450000000;11450000000;31/08/2026;Recursos UPTC;Recursos Propios\n" +
-                 "04 - CIENCIAS DE LA EDUCACION;1.1.02.06.008;Posgrados Educación;31-Posgrados;19800000000;19800000000;19800000000;31/08/2026;Recursos UPTC;Extensión y Posgrados\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.009;Estampilla Pro-UPTC;40-Estampilla UPTC;24500000000;24500000000;24500000000;31/08/2026;Recursos UPTC;Estampilla Pro UPTC";
+      csvContent = "Unidad;Código concepto;Concepto;Recurso;Valor inicial;Valor aforo;Total recaudo;Fecha inicial;Fecha final;Tipo de Ingreso\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.01;Aportes para Funcionamiento;10.0-Aportes Nacion - Funcionamiento;314781873726;314781873726;211546696007;1/01/26;31/08/26;Aportes de la Nación\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.001;Recursos del balance - Aportes funcionamiento;10.0-Aportes Nacion - Funcionamiento;0;545944007;545944007;1/01/26;31/08/26;Aportes de la Nación\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.007;Derechos de Matrícula Pregrado;20-Propios;11450000000;11450000000;11450000000;1/01/26;31/08/26;Recursos Propios\n" +
+                 "04 - CIENCIAS DE LA EDUCACION;1.1.02.06.008;Posgrados Educación;31-Posgrados;19800000000;19800000000;19800000000;1/01/26;31/08/26;Extensión y Posgrados\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.009;Estampilla Pro-UPTC;40-Estampilla UPTC;24500000000;24500000000;24500000000;1/01/26;31/08/26;Estampilla Pro UPTC";
     } else if (type === 'gastos') {
       fileName = "Plantilla_Gastos_Oficial_UPTC.csv";
-      csvContent = "Unidad;Tipo de Gasto;Auxiliar;Código concepto;Concepto;Recurso;Valor inicial;Valor apropiacion;Acumulado compromiso;Acumulado pago;Fecha final\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;2.1.1 Gastos de Personal; - N/A;2.1.1.01.01.001.01.01;Sueldo básico administrativos;10.0 - Aportes Nacion - Funcionamiento;29971402020;20203424803;20179409395;20179409395;31/08/2026\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;2.1.1 Gastos de Personal; - N/A;2.1.1.01.01.001.01.02;Sueldo básico docentes;10.0 - Aportes Nacion - Funcionamiento;32554595835;29400990995;24153150758;24153150758;31/08/2026\n" +
-                 "01 - ADMINISTRATIVA Y FINANCIERA;2.1.2 Gastos de Funcionamiento; - N/A;2.1.2.02.01.001;Servicios Públicos y Vigilancia;10.0 - Aportes Nacion - Funcionamiento;124447130000;124447130000;115154400000;47737200000;31/08/2026\n" +
-                 "12 - SECCIONAL DUITAMA;2.3 Gastos de Inversión; - N/A;2.3.1.01.01.001;Construcción Laboratorios;12-Estampillas Otras Universidades;19687140000;19687140000;19687140000;15200000000;31/08/2026";
+      csvContent = "Unidad;Gasto;Tipo de Gasto;Auxiliar;Código concepto;Concepto;Recurso;Valor inicial;Valor apropiacion;Acumulado compromiso;Acumulado pago;Fecha inicial;Fecha final;Inversion\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;1. FUNCIONAMIENTO;2.1.1 Gastos de Personal; - N/A;2.1.1.01.01.001.01.01;Sueldo básico administrativos;10.0 - Aportes Nacion - Funcionamiento;29971402020;23191377269;23136927518;23136927518;1/01/26;30/09/26;Otro\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;1. FUNCIONAMIENTO;2.1.1 Gastos de Personal; - N/A;2.1.1.01.01.001.01.02;Sueldo básico docentes;10.0 - Aportes Nacion - Funcionamiento;32554595835;29400990995;27904712823;27904712823;1/01/26;30/09/26;Otro\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;1. FUNCIONAMIENTO;2.1.2 Gastos de Funcionamiento; - N/A;2.1.2.02.01.001;Servicios Públicos y Vigilancia;10.0 - Aportes Nacion - Funcionamiento;124447130000;124447130000;115154400000;47737200000;1/01/26;30/09/26;Otro\n" +
+                 "01 - ADMINISTRATIVA Y FINANCIERA;3. INVERSIÓN;2.3 Gastos de Inversión;23.1.1.1 - Calidad;2.3.2.02.01.003;Construcción Laboratorios;12 - Estampillas Otras Universidades;19687140000;19687140000;19687140000;15200000000;1/01/26;30/09/26;23.1 Articulación e innovación";
     } else if (type === 'nomina') {
       fileName = "Plantilla_Nomina_Oficial_UPTC.csv";
       csvContent = "Periodo;Numero;Concepto;Valor liquidacion;Objeto;Asignacion;Dedicacion;Vinculacion\n" +
@@ -356,9 +356,9 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
                       <tr><td className="p-2 font-bold text-[#4ade80]">E</td><td className="p-2 font-bold text-white">Valor inicial</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`314781873726`</td></tr>
                       <tr><td className="p-2 font-bold text-[#4ade80]">F</td><td className="p-2 font-bold text-white">Valor aforo</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`314781873726`</td></tr>
                       <tr><td className="p-2 font-bold text-[#4ade80]">G</td><td className="p-2 font-bold text-white">Total recaudo</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`211546696007`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#4ade80]">H</td><td className="p-2 font-bold text-white">Fecha final</td><td className="p-2 text-yellow-300">Fecha DD/MM/AAAA</td><td className="p-2">`31/08/2026`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#38bdf8]">I</td><td className="p-2 font-bold text-[#38bdf8]">Tipo de Recurso</td><td className="p-2 text-yellow-300">Texto (Nuevo)</td><td className="p-2 font-bold text-[#38bdf8]">`Recursos UPTC` / `Recursos del Balance`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#38bdf8]">J</td><td className="p-2 font-bold text-[#38bdf8]">Clasificación del Recurso</td><td className="p-2 text-yellow-300">Texto (Nuevo)</td><td className="p-2 font-bold text-[#38bdf8]">`Aportes de la Nación` / `Recursos Propios`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">H</td><td className="p-2 font-bold text-white">Fecha inicial</td><td className="p-2 text-yellow-300">Fecha DD/MM/AA</td><td className="p-2">`1/01/26`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">I</td><td className="p-2 font-bold text-white">Fecha final</td><td className="p-2 text-yellow-300">Fecha DD/MM/AA</td><td className="p-2">`31/08/26`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#38bdf8]">J</td><td className="p-2 font-bold text-[#38bdf8]">Tipo de Ingreso</td><td className="p-2 text-yellow-300">Texto Clasificación</td><td className="p-2 font-bold text-[#38bdf8]">`Aportes de la Nación` / `Recursos Propios`</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -367,16 +367,16 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
               {/* 2. ESTRUCTURA DE GASTOS */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <h4 className="text-sm font-bold text-[#ffcc29]">2. Estructura de Gastos (11 Columnas A a K):</h4>
+                  <h4 className="text-sm font-bold text-[#ffcc29]">2. Estructura de Gastos (14 Columnas A a N):</h4>
                   <span className="px-2.5 py-1 rounded-full bg-[#ffcc29]/10 text-[#ffcc29] text-[10px] font-mono font-bold border border-[#ffcc29]/30">
-                    Estructura Actualizada 11 Cols
+                    Estructura Actualizada 14 Cols
                   </span>
                 </div>
 
                 <div className="p-3.5 bg-[#ffcc29]/10 border border-[#ffcc29]/30 rounded-xl space-y-1.5 font-mono text-xs">
-                  <span className="text-[#ffcc29] font-bold block">Fórmula de Clasificación de Gasto en Excel (Basada en Código concepto Col D):</span>
+                  <span className="text-[#ffcc29] font-bold block">Fórmula de Clasificación de Gasto en Excel (Basada en Código concepto Col E):</span>
                   <code className="text-white text-[10px] block p-2 bg-black/50 rounded border border-white/10 overflow-x-auto select-all">
-                    {`=SI(IZQUIERDA(D2;5)="2.1.1";"2.1.1 Gastos de Personal";SI(IZQUIERDA(D2;5)="2.1.2";"2.1.2 Gastos de Funcionamiento";SI(IZQUIERDA(D2;5)="2.1.3";"2.1.3 Transferencias Corrientes";SI(IZQUIERDA(D2;5)="2.1.8";"2.1.8 Tasas y Multas";SI(IZQUIERDA(D2;5)="2.2.2";"2.2.2 Servicios de la Deuda";"2.3 Gastos de Inversión")))))`}
+                    {`=SI(IZQUIERDA(E2;5)="2.1.1";"2.1.1 Gastos de Personal";SI(IZQUIERDA(E2;5)="2.1.2";"2.1.2 Gastos de Funcionamiento";SI(IZQUIERDA(E2;5)="2.1.3";"2.1.3 Transferencias Corrientes";SI(IZQUIERDA(E2;5)="2.1.8";"2.1.8 Tasas y Multas";SI(IZQUIERDA(E2;5)="2.2.2";"2.2.2 Servicios de la Deuda";"2.3 Gastos de Inversión")))))`}
                   </code>
                 </div>
 
@@ -389,16 +389,19 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (s: string) => void
                     </thead>
                     <tbody className="divide-y divide-white/5 text-white/80">
                       <tr><td className="p-2 font-bold text-[#ffcc29]">A</td><td className="p-2 font-bold text-white">Unidad</td><td className="p-2 text-yellow-300">Texto Dependencia</td><td className="p-2">`01 - ADMINISTRATIVA Y FINANCIERA`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#38bdf8]">B</td><td className="p-2 font-bold text-[#38bdf8]">Tipo de Gasto</td><td className="p-2 text-yellow-300">Texto Categoría (Nuevo)</td><td className="p-2 font-bold text-[#38bdf8]">`2.1.1 Gastos de Personal`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#38bdf8]">C</td><td className="p-2 font-bold text-[#38bdf8]">Auxiliar</td><td className="p-2 text-yellow-300">Texto Auxiliar (Nuevo)</td><td className="p-2 font-bold text-[#38bdf8]">` - N/A`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">D</td><td className="p-2 font-bold text-[#ffcc29]">Código concepto</td><td className="p-2 text-yellow-300">Texto Prefijo Presupuestal</td><td className="p-2 font-bold text-white">`2.1.1.01.01.001.01.01`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">E</td><td className="p-2 font-bold text-white">Concepto</td><td className="p-2 text-yellow-300">Texto Nombre Rubro</td><td className="p-2">`Sueldo básico administrativos`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">F</td><td className="p-2 font-bold text-white">Recurso</td><td className="p-2 text-yellow-300">Texto Compuesto Fuente</td><td className="p-2">`10.0 - Aportes Nacion - Funcionamiento`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">G</td><td className="p-2 font-bold text-white">Valor inicial</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`29971402020`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">H</td><td className="p-2 font-bold text-white">Valor apropiacion</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`20203424803`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">I</td><td className="p-2 font-bold text-white">Acumulado compromiso</td><td className="p-2 text-sky-300">Numérico ($ COP - Col I)</td><td className="p-2 font-bold text-white">`20179409395`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#4ade80]">J</td><td className="p-2 font-bold text-[#4ade80]">Acumulado pago</td><td className="p-2 text-sky-300">Numérico ($ COP - Col J)</td><td className="p-2 font-bold text-[#4ade80]">`20179409395`</td></tr>
-                      <tr><td className="p-2 font-bold text-[#ffcc29]">K</td><td className="p-2 font-bold text-white">Fecha final</td><td className="p-2 text-yellow-300">Fecha DD/MM/AAAA</td><td className="p-2">`31/08/2026`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#38bdf8]">B</td><td className="p-2 font-bold text-[#38bdf8]">Gasto</td><td className="p-2 text-yellow-300">Macro Agrupador</td><td className="p-2 font-bold text-[#38bdf8]">`1. FUNCIONAMIENTO` / `3. INVERSIÓN`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#38bdf8]">C</td><td className="p-2 font-bold text-[#38bdf8]">Tipo de Gasto</td><td className="p-2 text-yellow-300">Texto Categoría</td><td className="p-2 font-bold text-[#38bdf8]">`2.1.1 Gastos de Personal`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#38bdf8]">D</td><td className="p-2 font-bold text-[#38bdf8]">Auxiliar</td><td className="p-2 text-yellow-300">Texto Auxiliar</td><td className="p-2 font-bold text-[#38bdf8]">` - N/A`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">E</td><td className="p-2 font-bold text-[#ffcc29]">Código concepto</td><td className="p-2 text-yellow-300">Texto Prefijo Rubro</td><td className="p-2 font-bold text-white">`2.1.1.01.01.001.01.01`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">F</td><td className="p-2 font-bold text-white">Concepto</td><td className="p-2 text-yellow-300">Texto Nombre Rubro</td><td className="p-2">`Sueldo básico administrativos`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">G</td><td className="p-2 font-bold text-[#ffcc29]">Recurso</td><td className="p-2 text-yellow-300">Texto Compuesto Fuente</td><td className="p-2">`10.0 - Aportes Nacion - Funcionamiento`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">H</td><td className="p-2 font-bold text-white">Valor inicial</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`29971402020`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">I</td><td className="p-2 font-bold text-white">Valor apropiacion</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2">`23191377269`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">J</td><td className="p-2 font-bold text-white">Acumulado compromiso</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2 font-bold text-white">`23136927518`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#4ade80]">K</td><td className="p-2 font-bold text-[#4ade80]">Acumulado pago</td><td className="p-2 text-sky-300">Numérico ($ COP)</td><td className="p-2 font-bold text-[#4ade80]">`23136927518`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">L</td><td className="p-2 font-bold text-white">Fecha inicial</td><td className="p-2 text-yellow-300">Fecha DD/MM/AA</td><td className="p-2">`1/01/26`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#ffcc29]">M</td><td className="p-2 font-bold text-white">Fecha final</td><td className="p-2 text-yellow-300">Fecha DD/MM/AA</td><td className="p-2">`30/09/26`</td></tr>
+                      <tr><td className="p-2 font-bold text-[#38bdf8]">N</td><td className="p-2 font-bold text-[#38bdf8]">Inversion</td><td className="p-2 text-yellow-300">Texto Eje PEI</td><td className="p-2 font-bold text-[#38bdf8]">`Otro` / `23.1 Articulación...`</td></tr>
                     </tbody>
                   </table>
                 </div>

@@ -8,12 +8,12 @@ import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, 
 export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
   
-  const [ingresosTotal, setIngresosTotal] = useState(387794.0);
-  const [ingresosAforado, setIngresosAforado] = useState(512232.6);
-  const [ingresosRecaudado, setIngresosRecaudado] = useState(387794.0);
-  const [gastosTotal, setGastosTotal] = useState(282311.9);
-  const [gastosComprometido, setGastosComprometido] = useState(345068.5);
-  const [gastosPagado, setGastosPagado] = useState(282311.9);
+  const [ingresosTotal, setIngresosTotal] = useState(446811.0);
+  const [ingresosAforado, setIngresosAforado] = useState(551235.0);
+  const [ingresosRecaudado, setIngresosRecaudado] = useState(446811.0);
+  const [gastosTotal, setGastosTotal] = useState(321674.7);
+  const [gastosComprometido, setGastosComprometido] = useState(384101.2);
+  const [gastosPagado, setGastosPagado] = useState(321674.7);
   
   const [ingresosGroups, setIngresosGroups] = useState<any[]>([]);
   const [gastosGroups, setGastosGroups] = useState<any[]>([]);
@@ -45,17 +45,17 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
   useEffect(() => {
     if (rawIngresos && rawIngresos.length > 0) {
       const firstRowKeysDef = Object.keys(rawIngresos[0]);
-      const inicialCol = firstRowKeysDef.find(k => k.toLowerCase().includes('inicial')) || firstRowKeysDef[4] || 'Valor inicial';
+      const inicialCol = firstRowKeysDef.find(k => k.toLowerCase().includes('valor inicial')) || firstRowKeysDef.find(k => k.toLowerCase().includes('inicial')) || firstRowKeysDef[4] || 'Valor inicial';
       const aforoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('aforo')) || firstRowKeysDef[5] || 'Valor aforo';
       const recaudoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('recaudo')) || firstRowKeysDef[6] || 'Total recaudo';
-      const fechaCol = firstRowKeysDef.find(k => k.toLowerCase().includes('fecha')) || firstRowKeysDef[7] || 'Fecha final';
+      const fechaCol = firstRowKeysDef.find(k => k.toLowerCase().includes('fecha final')) || firstRowKeysDef.find(k => k.toLowerCase().includes('fecha')) || firstRowKeysDef[8] || 'Fecha final';
       const recursoCol = firstRowKeysDef.find(k => k.toLowerCase() === 'recurso') || firstRowKeysDef[3] || 'Recurso';
       const conceptoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('concepto')) || firstRowKeysDef[2] || 'Concepto';
       const codigoCol = firstRowKeysDef.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || firstRowKeysDef[1] || 'Código concepto';
-      const clasifCol = firstRowKeysDef.find(k => k.toLowerCase().includes('clasificaci')) || firstRowKeysDef[9] || 'Clasificación del Recurso';
+      const clasifCol = firstRowKeysDef.find(k => k.toLowerCase().includes('clasificaci') || k.toLowerCase().includes('tipo de ingreso') || k.toLowerCase().includes('tipo de gasto')) || firstRowKeysDef[9] || 'Clasificación del Recurso';
 
-      // Update Cutoff Date dynamically from Col H (8)
-      const rawFecha = rawIngresos[0][fechaCol] || rawIngresos[0][firstRowKeysDef[7]] || '';
+      // Update Cutoff Date dynamically from Col I/H
+      const rawFecha = rawIngresos[0][fechaCol] || rawIngresos[0]['Fecha final'] || rawIngresos[0][firstRowKeysDef[8]] || '';
       if (rawFecha) {
         const formattedDate = formatFechaCorte(String(rawFecha));
         localStorage.setItem('vafi_fechaCorte', formattedDate);
@@ -85,6 +85,7 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
           '12-Estampillas Otras Universidades',
           '13-Cooperativas',
           '14-Matriculas FSE',
+          '15-Regalias',
           '16.0-Aportes inversion',
           '16.1-Inversion PFB',
           '16.2-Inversion PFC',
@@ -107,21 +108,26 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
         ]
       };
 
-      const getNormalizedGroup = (val: string) => {
+      const getNormalizedGroup = (val: string, recurso?: string) => {
          const s = String(val || '').toLowerCase();
          if (s.includes('aportes')) return 'Aportes de la Nación';
          if (s.includes('estampilla')) return 'Estampilla Pro UPTC';
-         if (s.includes('posgrados')) return 'Extensión y Posgrados';
+         if (s.includes('posgrados') || s.includes('extensi')) return 'Extensión y Posgrados';
          if (s.includes('propios')) return 'Recursos Propios';
+         const rec = String(recurso || '').toLowerCase();
+         if (rec.includes('10.') || rec.includes('12-') || rec.includes('13-') || rec.includes('14-') || rec.includes('15-') || rec.includes('16.') || rec.includes('17-') || rec.includes('18-')) return 'Aportes de la Nación';
+         if (rec.includes('40-')) return 'Estampilla Pro UPTC';
+         if (rec.includes('31-') || rec.includes('32-') || rec.includes('33-') || rec.includes('34-') || rec.includes('35-')) return 'Extensión y Posgrados';
+         if (rec.includes('20-') || rec.includes('21-')) return 'Recursos Propios';
          return null;
       };
 
       const groupKeys = validClasificaciones.filter(groupName => 
-        filteredData.some(r => getNormalizedGroup(r[clasifCol]) === groupName)
+        filteredData.some(r => getNormalizedGroup(r[clasifCol], r[recursoCol]) === groupName)
       );
       
       const parsedTiposGroups = groupKeys.map(groupName => {
-         const clasifRows = filteredData.filter(r => getNormalizedGroup(r[clasifCol]) === groupName);
+         const clasifRows = filteredData.filter(r => getNormalizedGroup(r[clasifCol], r[recursoCol]) === groupName);
          const tInicial = clasifRows.reduce((acc, r) => acc + parseNumber(r[inicialCol]), 0) / 1e6;
          const tAforo = clasifRows.reduce((acc, r) => acc + parseNumber(r[aforoCol]), 0) / 1e6;
          const tRecaudo = clasifRows.reduce((acc, r) => acc + parseNumber(r[recaudoCol]), 0) / 1e6;
@@ -217,12 +223,12 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
         processData(ingresosData, gastosData, nominaData);
       } catch (err: any) {
         console.warn('Network fetch failed, initializing with real GOOBI dataset.', err);
-        setIngresosAforado(512232.6);
-        setIngresosRecaudado(387794.0);
-        setIngresosTotal(387794.0);
-        setGastosComprometido(345068.5);
-        setGastosPagado(282311.9);
-        setGastosTotal(282311.9);
+        setIngresosAforado(551235.0);
+        setIngresosRecaudado(446811.0);
+        setIngresosTotal(446811.0);
+        setGastosComprometido(384101.2);
+        setGastosPagado(321674.7);
+        setGastosTotal(321674.7);
         setDataStage('ready');
       }
     }
@@ -274,12 +280,21 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
     if (filteredGastos && filteredGastos.length > 0) {
       const firstRowKeys = Object.keys(filteredGastos[0]);
       
-      const compCol = firstRowKeys.find(k => k.toLowerCase().includes('compromiso')) || firstRowKeys[8] || 'Acumulado compromiso';
-      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago')) || firstRowKeys[9] || 'Acumulado pago';
-      const recCol = firstRowKeys.find(k => k.toLowerCase().includes('recurso')) || firstRowKeys[5] || 'Recurso';
-      const tipoCol = firstRowKeys.find(k => k.toLowerCase().includes('tipo de gasto')) || firstRowKeys[1] || 'Tipo de Gasto';
-      const codigoCol = firstRowKeys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || firstRowKeys[3] || 'Código concepto';
-      const conceptoCol = firstRowKeys.find(k => k.toLowerCase().includes('concepto')) || firstRowKeys[4] || 'Concepto';
+      const compCol = firstRowKeys.find(k => k.toLowerCase().includes('compromiso')) || firstRowKeys[9] || 'Acumulado compromiso';
+      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago')) || firstRowKeys[10] || 'Acumulado pago';
+      const recCol = firstRowKeys.find(k => k.toLowerCase() === 'recurso') || firstRowKeys.find(k => k.toLowerCase().includes('recurso')) || firstRowKeys[6] || 'Recurso';
+      const tipoCol = firstRowKeys.find(k => k.toLowerCase().includes('tipo de gasto')) || firstRowKeys[2] || 'Tipo de Gasto';
+      const codigoCol = firstRowKeys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || firstRowKeys[4] || 'Código concepto';
+      const conceptoCol = firstRowKeys.find(k => k.toLowerCase() === 'concepto') || firstRowKeys.find(k => k.toLowerCase().includes('concepto') && !k.toLowerCase().includes('código') && !k.toLowerCase().includes('codigo')) || firstRowKeys[5] || 'Concepto';
+
+      // Update Cutoff Date dynamically from Gastos if available
+      const gFechaCol = firstRowKeys.find(k => k.toLowerCase().includes('fecha final')) || firstRowKeys.find(k => k.toLowerCase().includes('fecha'));
+      const rawGFecha = gFechaCol ? filteredGastos[0][gFechaCol] : '';
+      if (rawGFecha) {
+        const formattedDate = formatFechaCorte(String(rawGFecha));
+        localStorage.setItem('vafi_fechaCorte', formattedDate);
+        window.dispatchEvent(new Event('storage'));
+      }
 
       const compSum = filteredGastos.reduce((acc, row) => acc + parseNumber(row[compCol]), 0);
       const pagoSum = filteredGastos.reduce((acc, row) => acc + parseNumber(row[pagoCol]), 0);

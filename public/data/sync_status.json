@@ -1,8 +1,10 @@
 {
-  "lastSync": "2026-09-21 15:00:03",
-  "cutoffDate": "25 de Agosto de 2026",
+  "lastSync": "2026-10-19 10:51:00",
+  "cutoffDate": "30 de Septiembre de 2026",
   "filesSynced": [
-    "POA.csv",
+    "Ingresos.csv",
+    "Gastos.csv",
+    "Nomina.csv",
     "Historico_Ingresos_10y.csv"
   ],
   "status": "active"

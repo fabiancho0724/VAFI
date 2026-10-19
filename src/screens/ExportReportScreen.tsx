@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { FileText, Download, Printer, ChevronLeft, TrendingUp, Users, DollarSign, Award, Bot, Sparkles, BarChart2, ShieldCheck } from 'lucide-react';
-import { fetchAndParseCSV, groupAndSum, getCategoryColumn, getNumericColumn } from '../lib/csvParser';
+import { fetchAndParseCSV, groupAndSum, getCategoryColumn, getNumericColumn, parseNumber } from '../lib/csvParser';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, 
   CartesianGrid, AreaChart, Area, LineChart, Line, Legend 
@@ -23,8 +23,8 @@ const PROJECTION_COMPARISON_DATA = [
 
 export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [dataStage, setDataStage] = useState<'loading' | 'ready'>('loading');
-  const [ingresosTotal, setIngresosTotal] = useState(173254.7);
-  const [gastosTotal, setGastosTotal] = useState(110225.5);
+  const [ingresosTotal, setIngresosTotal] = useState(446811.0);
+  const [gastosTotal, setGastosTotal] = useState(321674.7);
   
   const [ingresosData, setIngresosData] = useState<any[]>([]);
   const [gastosData, setGastosData] = useState<any[]>([]);
@@ -71,14 +71,14 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
     if (ing && ing.length > 0) {
       const firstRowKeys = Object.keys(ing[0]);
       if (firstRowKeys.length >= 10) {
-        const recaudoCol = firstRowKeys[6];
-        const tipoCol = firstRowKeys[3];
-        recaudoTotal = ing.reduce((sum, r) => sum + (parseFloat(r[recaudoCol]) || 0), 0) / 1e6;
+        const recaudoCol = firstRowKeys.find(k => k.toLowerCase().includes('recaudo')) || firstRowKeys[6];
+        const tipoCol = firstRowKeys.find(k => k.toLowerCase().includes('recurso')) || firstRowKeys[3];
+        recaudoTotal = ing.reduce((sum, r) => sum + parseNumber(r[recaudoCol]), 0) / 1e6;
         
         const tipos = Array.from(new Set(ing.map(r => r[tipoCol]))).filter(Boolean);
         const colors = ['#4ade80', '#f43f5e', '#8b5cf6', '#ffcc29', '#3b82f6'];
         tipos.forEach((tipo, i) => {
-          const val = ing.filter(r => r[tipoCol] === tipo).reduce((s, r) => s + (parseFloat(r[recaudoCol]) || 0), 0) / 1e6;
+          const val = ing.filter(r => r[tipoCol] === tipo).reduce((s, r) => s + parseNumber(r[recaudoCol]), 0) / 1e6;
           ingresosGroups.push({ name: tipo, recaudo: val, fill: colors[i % colors.length] });
         });
       }
@@ -88,15 +88,15 @@ export function ExportReportScreen({ onNavigate }: { onNavigate: (s: string) => 
     const gasGroups: any[] = [];
     if (gas && gas.length > 0) {
       const firstRowKeys = Object.keys(gas[0]);
-      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago') && k.toLowerCase().includes('valor')) || firstRowKeys[10] || 'Valor pago';
-      const catCol = firstRowKeys.find(k => k.toLowerCase().includes('código recurso') || k.toLowerCase().includes('codigo recurso') || k.toLowerCase().includes('cã³digo recurso') || k.toLowerCase().includes('cdigo recurso')) || firstRowKeys[7] || 'Código recurso';
+      const pagoCol = firstRowKeys.find(k => k.toLowerCase().includes('pago')) || firstRowKeys[10] || 'Acumulado pago';
+      const catCol = firstRowKeys.find(k => k.toLowerCase() === 'recurso') || firstRowKeys.find(k => k.toLowerCase().includes('recurso')) || firstRowKeys[6] || 'Recurso';
       
-      pagoTotal = gas.reduce((sum, r) => sum + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+      pagoTotal = gas.reduce((sum, r) => sum + parseNumber(r[pagoCol]), 0) / 1e6;
       
       const tipos = Array.from(new Set(gas.map(r => r[catCol]))).filter(Boolean);
       const colors = ['#ffcc29', '#7bd0ff', '#d0bcff', '#ff5b5b', '#4ade80'];
       tipos.forEach((tipo, i) => {
-         const val = gas.filter(r => r[catCol] === tipo).reduce((s, r) => s + (parseFloat(String(r[pagoCol]).replace(/[^0-9.-]+/g, '')) || 0), 0) / 1e6;
+         const val = gas.filter(r => r[catCol] === tipo).reduce((s, r) => s + parseNumber(r[pagoCol]), 0) / 1e6;
          gasGroups.push({ name: tipo, pago: val, fill: colors[i % colors.length] });
       });
     }

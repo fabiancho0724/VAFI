@@ -1,4 +1,4 @@
-import { fetchAndParseCSV } from './csvParser';
+import { fetchAndParseCSV, parseNumber } from './csvParser';
 import { RECURSOS_FINANCIEROS, TIPOS_GASTO } from './constants';
 
 export interface FinancialData {
@@ -44,7 +44,7 @@ export const normalizeData = (ingresosRaw: any[], gastosRaw: any[], ingresoMensu
     const recursoCol = keys.find(k => k.toLowerCase().includes('recurso')) || keys[3] || 'Recurso';
 
     ingresosRaw.forEach(row => {
-      const recaudo = parseFloat(String(row[recaudoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0;
+      const recaudo = parseNumber(row[recaudoCol]);
       ingresosTotales += recaudo;
 
       let recursoId = String(row[recursoCol] || '').split('-')[0].trim();
@@ -56,14 +56,14 @@ export const normalizeData = (ingresosRaw: any[], gastosRaw: any[], ingresoMensu
   // Normalize Gastos
   if (gastosRaw && gastosRaw.length > 0) {
     const keys = Object.keys(gastosRaw[0]);
-    const compCol = keys.find(k => k.toLowerCase().includes('compromiso')) || keys[8] || 'Acumulado compromiso';
-    const pagoCol = keys.find(k => k.toLowerCase().includes('pago')) || keys[9] || 'Acumulado pago';
-    const recCol = keys.find(k => k.toLowerCase().includes('recurso')) || keys[5] || 'Recurso';
-    const tipoCol = keys.find(k => k.toLowerCase().includes('tipo de gasto')) || keys[1] || 'Tipo de Gasto';
-    const codigoCol = keys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || keys[3] || 'Código concepto';
+    const compCol = keys.find(k => k.toLowerCase().includes('compromiso')) || keys[9] || 'Acumulado compromiso';
+    const pagoCol = keys.find(k => k.toLowerCase().includes('pago')) || keys[10] || 'Acumulado pago';
+    const recCol = keys.find(k => k.toLowerCase() === 'recurso') || keys.find(k => k.toLowerCase().includes('recurso')) || keys[6] || 'Recurso';
+    const tipoCol = keys.find(k => k.toLowerCase().includes('tipo de gasto')) || keys[2] || 'Tipo de Gasto';
+    const codigoCol = keys.find(k => k.toLowerCase().includes('código') || k.toLowerCase().includes('codigo')) || keys[4] || 'Código concepto';
     
     gastosRaw.forEach(row => {
-      const pago = parseFloat(String(row[pagoCol] || 0).replace(/[^0-9.-]+/g, '')) || 0;
+      const pago = parseNumber(row[pagoCol]);
       gastosTotales += pago;
 
       let recursoText = String(row[recCol] || '');
