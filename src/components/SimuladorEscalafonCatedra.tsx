@@ -28,6 +28,7 @@ import {
   ComposedChart,
   BarChart,
   Bar,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -52,6 +53,8 @@ export const ESCALA_ARTICULO_1 = [
     tarifa2024: 52238,
     tarifa2025: 55895,
     tarifa2026: 59810,
+    tarifa2027_4pct: 62202,
+    tarifa2027_6pct: 63399,
   },
   {
     categoria: 'Profesor Asistente',
@@ -60,6 +63,8 @@ export const ESCALA_ARTICULO_1 = [
     tarifa2024: 57461,
     tarifa2025: 61485,
     tarifa2026: 65791,
+    tarifa2027_4pct: 68423,
+    tarifa2027_6pct: 69738,
   },
   {
     categoria: 'Profesor Asociado',
@@ -68,6 +73,8 @@ export const ESCALA_ARTICULO_1 = [
     tarifa2024: 62685,
     tarifa2025: 67074,
     tarifa2026: 71772,
+    tarifa2027_4pct: 74643,
+    tarifa2027_6pct: 76078,
   },
   {
     categoria: 'Profesor Titular',
@@ -76,6 +83,8 @@ export const ESCALA_ARTICULO_1 = [
     tarifa2024: 73133,
     tarifa2025: 78253,
     tarifa2026: 83734,
+    tarifa2027_4pct: 87083,
+    tarifa2027_6pct: 88758,
   },
 ];
 
@@ -85,6 +94,20 @@ const TARIFAS_POR_VIGENCIA: Record<string, Record<string, number>> = {
     'Profesor Asistente': 65791,
     'Profesor Asociado': 71772,
     'Profesor Titular': 83734,
+    'Pendiente de Clasificación': 0,
+  },
+  '2027_4pct': {
+    'Profesor Auxiliar': 62202,
+    'Profesor Asistente': 68423,
+    'Profesor Asociado': 74643,
+    'Profesor Titular': 87083,
+    'Pendiente de Clasificación': 0,
+  },
+  '2027_6pct': {
+    'Profesor Auxiliar': 63399,
+    'Profesor Asistente': 69738,
+    'Profesor Asociado': 76078,
+    'Profesor Titular': 88758,
     'Pendiente de Clasificación': 0,
   },
   '2025': {
@@ -224,9 +247,14 @@ export function SimuladorEscalafonCatedra() {
 
   // Parámetros de simulación
   const [horasPromedio, setHorasPromedio] = useState<number>(DEFAULT_HORAS_PROMEDIO);
-  const [vigencia, setVigencia] = useState<'2026' | '2025' | '2024'>('2026');
+  const [vigencia, setVigencia] = useState<'2026' | '2025' | '2024' | '2027_4pct' | '2027_6pct'>('2026');
   const [tarifasCustom, setTarifasCustom] = useState<Record<string, number>>(TARIFAS_POR_VIGENCIA['2026']);
+  const [factores, setFactores] = useState<Record<string, number>>(DEFAULT_FACTORES_PUNTOS);
   const [modoAnalisis, setModoAnalisis] = useState<'A' | 'B' | 'C'>('A');
+
+  // Parámetros de proyección 2027
+  const [pctProy4, setPctProy4] = useState<number>(4.0);
+  const [pctProy6, setPctProy6] = useState<number>(6.0);
 
   // Tarifas activas de referencia
   const tarifasActivas = useMemo(() => {
@@ -244,7 +272,7 @@ export function SimuladorEscalafonCatedra() {
   });
 
   // Pestañas internas
-  const [subTab, setSubTab] = useState<'comparativo' | 'facultades' | 'programas' | 'docentes' | 'parametros' | 'inconsistencias'>('comparativo');
+  const [subTab, setSubTab] = useState<'comparativo' | 'proyeccion' | 'facultades' | 'programas' | 'docentes' | 'parametros' | 'inconsistencias'>('comparativo');
 
   // Filtros del buscador
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -441,6 +469,93 @@ export function SimuladorEscalafonCatedra() {
       promedioDocente2,
     };
   }, [processedData]);
+
+  // ---------------------------------------------------------------------------
+  // PROYECCIONES FINANCIERAS 2027 (+4% y +6% sobre el valor total)
+  // ---------------------------------------------------------------------------
+  const proyecciones2027 = useMemo(() => {
+    const baseCosto1 = vigencia === '2026' ? kpis.totalCosto1 : 2250387136;
+    const baseCosto2 = vigencia === '2026' ? kpis.totalCosto2 : 2506086848;
+    const baseCostoCustom = kpis.totalCostoCustom;
+
+    const mult4 = 1 + (pctProy4 / 100);
+    const mult6 = 1 + (pctProy6 / 100);
+
+    // Escenario 1 (+4% y +6%)
+    const proy4_Esc1 = Math.round(baseCosto1 * mult4);
+    const proy6_Esc1 = Math.round(baseCosto1 * mult6);
+    const incAbs4_Esc1 = proy4_Esc1 - baseCosto1;
+    const incAbs6_Esc1 = proy6_Esc1 - baseCosto1;
+
+    // Escenario 2 (+4% y +6%)
+    const proy4_Esc2 = Math.round(baseCosto2 * mult4);
+    const proy6_Esc2 = Math.round(baseCosto2 * mult6);
+    const incAbs4_Esc2 = proy4_Esc2 - baseCosto2;
+    const incAbs6_Esc2 = proy6_Esc2 - baseCosto2;
+
+    // Escenario 3 (Personalizado)
+    const proy4_Custom = Math.round(baseCostoCustom * mult4);
+    const proy6_Custom = Math.round(baseCostoCustom * mult6);
+
+    // Deltas de asimilación (Escenario 2 - Escenario 1)
+    const proy4_Delta = proy4_Esc2 - proy4_Esc1;
+    const proy4_DeltaPct = proy4_Esc1 > 0 ? (proy4_Delta / proy4_Esc1) * 100 : 0;
+    const proy6_Delta = proy6_Esc2 - proy6_Esc1;
+    const proy6_DeltaPct = proy6_Esc1 > 0 ? (proy6_Delta / proy6_Esc1) * 100 : 0;
+
+    // Margen entre el escenario expansivo (+6%) y moderado (+4%)
+    const diff_6_vs_4_Esc2 = proy6_Esc2 - proy4_Esc2;
+
+    // Tarifas horarias proyectadas por categoría
+    const baseTarifas = TARIFAS_POR_VIGENCIA['2026'];
+    const tarifas4 = {
+      'Profesor Auxiliar': Math.round(baseTarifas['Profesor Auxiliar'] * mult4),
+      'Profesor Asistente': Math.round(baseTarifas['Profesor Asistente'] * mult4),
+      'Profesor Asociado': Math.round(baseTarifas['Profesor Asociado'] * mult4),
+      'Profesor Titular': Math.round(baseTarifas['Profesor Titular'] * mult4),
+    };
+    const tarifas6 = {
+      'Profesor Auxiliar': Math.round(baseTarifas['Profesor Auxiliar'] * mult6),
+      'Profesor Asistente': Math.round(baseTarifas['Profesor Asistente'] * mult6),
+      'Profesor Asociado': Math.round(baseTarifas['Profesor Asociado'] * mult6),
+      'Profesor Titular': Math.round(baseTarifas['Profesor Titular'] * mult6),
+    };
+
+    // Datos para gráfico histórico y proyectado
+    const chartHistoricoProyectado = [
+      { vigencia: '2024 (Hist.)', esc1: 1965615616, esc2: 2189037056, delta: 223421440 },
+      { vigencia: '2025 (Hist.)', esc1: 2103217664, esc2: 2342371840, delta: 239154176 },
+      { vigencia: '2026 (Base)', esc1: baseCosto1, esc2: baseCosto2, delta: baseCosto2 - baseCosto1 },
+      { vigencia: `2027 (+${pctProy4}%)`, esc1: proy4_Esc1, esc2: proy4_Esc2, delta: proy4_Delta },
+      { vigencia: `2027 (+${pctProy6}%)`, esc1: proy6_Esc1, esc2: proy6_Esc2, delta: proy6_Delta },
+    ];
+
+    return {
+      baseCosto1,
+      baseCosto2,
+      baseCostoCustom,
+      mult4,
+      mult6,
+      proy4_Esc1,
+      proy4_Esc2,
+      proy4_Custom,
+      proy4_Delta,
+      proy4_DeltaPct,
+      incAbs4_Esc1,
+      incAbs4_Esc2,
+      proy6_Esc1,
+      proy6_Esc2,
+      proy6_Custom,
+      proy6_Delta,
+      proy6_DeltaPct,
+      incAbs6_Esc1,
+      incAbs6_Esc2,
+      diff_6_vs_4_Esc2,
+      tarifas4,
+      tarifas6,
+      chartHistoricoProyectado,
+    };
+  }, [kpis, vigencia, pctProy4, pctProy6]);
 
   // ---------------------------------------------------------------------------
   // DESAGREGACIÓN POR FACULTAD
@@ -728,17 +843,21 @@ export function SimuladorEscalafonCatedra() {
           <select
             value={vigencia}
             onChange={(e) => {
-              const v = e.target.value as '2026' | '2025' | '2024';
+              const v = e.target.value as '2026' | '2025' | '2024' | '2027_4pct' | '2027_6pct';
               setVigencia(v);
               setTarifasCustom(TARIFAS_POR_VIGENCIA[v]);
             }}
             className="w-full bg-surface-container-high border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-primary-container"
           >
-            <option value="2026">Vigencia 2026 (Activa: $59.810 - $83.734)</option>
+            <option value="2026">Vigencia 2026 (Base Oficial: $59.810 - $83.734)</option>
+            <option value="2027_4pct">Proyección 2027 (+4% s/ total: $62.202 - $87.083)</option>
+            <option value="2027_6pct">Proyección 2027 (+6% s/ total: $63.399 - $88.758)</option>
             <option value="2025">Vigencia 2025 ($55.895 - $78.253)</option>
             <option value="2024">Vigencia 2024 ($52.238 - $73.133)</option>
           </select>
-          <span className="text-[10px] text-slate-400 mt-0.5 block">Punto D1279: $23.924 COP (2026)</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">
+            {vigencia.startsWith('2027') ? 'Proyección sobre valor total de nómina' : 'Punto D1279: $23.924 COP (2026)'}
+          </span>
         </div>
 
         <div>
@@ -814,11 +933,12 @@ export function SimuladorEscalafonCatedra() {
       <div className="flex flex-wrap gap-2 border-b border-white/10 pb-1">
         {[
           { id: 'comparativo', label: '1. Comparativo & Gráficos', icon: BarChart3 },
-          { id: 'facultades', label: '2. Por Facultad', icon: Building2 },
-          { id: 'programas', label: '3. Ranking Programas', icon: Layers },
-          { id: 'docentes', label: '4. Detalle Docentes', icon: UserCheck },
-          { id: 'parametros', label: '5. Matriz de Equivalencias', icon: Sliders },
-          { id: 'inconsistencias', label: `6. Auditoría (${inconsistencias.length})`, icon: AlertTriangle },
+          { id: 'proyeccion', label: '2. Proyección 2027 (+4% / +6%)', icon: TrendingUp },
+          { id: 'facultades', label: '3. Por Facultad', icon: Building2 },
+          { id: 'programas', label: '4. Ranking Programas', icon: Layers },
+          { id: 'docentes', label: '5. Detalle Docentes', icon: UserCheck },
+          { id: 'parametros', label: '6. Matriz de Equivalencias', icon: Sliders },
+          { id: 'inconsistencias', label: `7. Auditoría (${inconsistencias.length})`, icon: AlertTriangle },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = subTab === tab.id;
@@ -972,7 +1092,271 @@ export function SimuladorEscalafonCatedra() {
       )}
 
       {/* ======================================================================= */}
-      {/* SUBTAB 2: DESGLOSE POR FACULTAD */}
+      {/* SUBTAB 2: PROYECCIÓN FINANCIERA 2027 (+4% y +6%) */}
+      {/* ======================================================================= */}
+      {subTab === 'proyeccion' && (
+        <div className="space-y-6">
+          {/* Encabezado y Controles de Porcentaje */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 shadow-xl backdrop-blur-md space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-primary-container/20 text-primary-container border border-primary-container/30 mb-2">
+                  <TrendingUp size={14} />
+                  <span>Planeación Presupuestal Vigencia 2027</span>
+                </div>
+                <h3 className="text-lg font-bold text-white">
+                  Proyección de Escenarios Salariales para Docentes de Cátedra (2027)
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 max-w-3xl">
+                  Proyección modelada sobre la base presupuestal oficial 2026 ({formatCOP(proyecciones2027.baseCosto1)} en Escenario Conservador y {formatCOP(proyecciones2027.baseCosto2)} en Escenario Progresivo). Se evalúa un <strong>Escenario Moderado (+{pctProy4}%)</strong> y un <strong>Escenario Expansivo (+{pctProy6}%)</strong> sobre el valor total.
+                </p>
+              </div>
+
+              {/* Controles de Porcentaje Interactivo */}
+              <div className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                    Escenario A (% total)
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      max="30"
+                      value={pctProy4}
+                      onChange={(e) => setPctProy4(parseFloat(e.target.value) || 0)}
+                      className="w-16 bg-surface-container-high border border-white/10 rounded-lg px-2 py-1 text-xs text-right font-mono font-bold text-primary-container focus:outline-none"
+                    />
+                    <span className="text-xs text-slate-400">%</span>
+                  </div>
+                </div>
+
+                <div className="border-l border-white/10 pl-3">
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                    Escenario B (% total)
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      max="30"
+                      value={pctProy6}
+                      onChange={(e) => setPctProy6(parseFloat(e.target.value) || 0)}
+                      className="w-16 bg-surface-container-high border border-white/10 rounded-lg px-2 py-1 text-xs text-right font-mono font-bold text-emerald-400 focus:outline-none"
+                    />
+                    <span className="text-xs text-slate-400">%</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setPctProy4(4.0);
+                    setPctProy6(6.0);
+                  }}
+                  className="px-2.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 border border-white/10 transition-colors"
+                  title="Restablecer a 4% y 6%"
+                >
+                  <RefreshCw size={12} />
+                </button>
+              </div>
+            </div>
+
+            {/* 4 Tarjetas de Resumen Ejecutivo Proyectado */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+              {/* Tarjeta 1: Base 2026 */}
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 border-l-4 border-l-slate-400 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Línea Base 2026</span>
+                <div className="text-xs text-slate-300">
+                  Esc. 1: <strong className="text-white font-mono">{formatCOP(proyecciones2027.baseCosto1)}</strong>
+                </div>
+                <div className="text-xs text-slate-300">
+                  Esc. 2: <strong className="text-blue-400 font-mono">{formatCOP(proyecciones2027.baseCosto2)}</strong>
+                </div>
+                <div className="text-[11px] font-bold text-amber-400 pt-1 border-t border-white/5">
+                  Δ Asimilación: +{formatCOP(proyecciones2027.baseCosto2 - proyecciones2027.baseCosto1)} (+11.36%)
+                </div>
+              </div>
+
+              {/* Tarjeta 2: Proyección +4% */}
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 border-l-4 border-l-primary-container space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary-container">
+                    Proyección 2027 (+{pctProy4}%)
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary-container/20 text-primary-container font-mono font-bold">
+                    Moderado
+                  </span>
+                </div>
+                <div className="text-xs text-slate-300">
+                  Esc. 1: <strong className="text-white font-mono">{formatCOP(proyecciones2027.proy4_Esc1)}</strong>
+                  <span className="text-[10px] text-slate-400 ml-1">(+{formatCOP(proyecciones2027.incAbs4_Esc1)})</span>
+                </div>
+                <div className="text-xs text-slate-300">
+                  Esc. 2: <strong className="text-primary-container font-mono">{formatCOP(proyecciones2027.proy4_Esc2)}</strong>
+                  <span className="text-[10px] text-primary-container ml-1">(+{formatCOP(proyecciones2027.incAbs4_Esc2)})</span>
+                </div>
+                <div className="text-[11px] font-bold text-amber-400 pt-1 border-t border-white/5">
+                  Δ Asimilación: +{formatCOP(proyecciones2027.proy4_Delta)} (+{proyecciones2027.proy4_DeltaPct.toFixed(2)}%)
+                </div>
+              </div>
+
+              {/* Tarjeta 3: Proyección +6% */}
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 border-l-4 border-l-emerald-400 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                    Proyección 2027 (+{pctProy6}%)
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-400 font-mono font-bold">
+                    Expansivo
+                  </span>
+                </div>
+                <div className="text-xs text-slate-300">
+                  Esc. 1: <strong className="text-white font-mono">{formatCOP(proyecciones2027.proy6_Esc1)}</strong>
+                  <span className="text-[10px] text-slate-400 ml-1">(+{formatCOP(proyecciones2027.incAbs6_Esc1)})</span>
+                </div>
+                <div className="text-xs text-slate-300">
+                  Esc. 2: <strong className="text-emerald-400 font-mono">{formatCOP(proyecciones2027.proy6_Esc2)}</strong>
+                  <span className="text-[10px] text-emerald-400 ml-1">(+{formatCOP(proyecciones2027.incAbs6_Esc2)})</span>
+                </div>
+                <div className="text-[11px] font-bold text-amber-400 pt-1 border-t border-white/5">
+                  Δ Asimilación: +{formatCOP(proyecciones2027.proy6_Delta)} (+{proyecciones2027.proy6_DeltaPct.toFixed(2)}%)
+                </div>
+              </div>
+
+              {/* Tarjeta 4: Margen de Sensibilidad (+6% vs +4%) */}
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 border-l-4 border-l-rose-400 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400">Margen de Sensibilidad</span>
+                <div className="text-xs text-slate-300">
+                  Dif. Esc. 2 (+{pctProy6}% vs +{pctProy4}%):
+                </div>
+                <div className="text-base font-black text-rose-400 font-mono">
+                  +{formatCOP(proyecciones2027.diff_6_vs_4_Esc2)}
+                </div>
+                <div className="text-[11px] text-slate-400 pt-1 border-t border-white/5">
+                  Holgura presupuestal recomendada para contingencia salarial en 2027.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Gráfico Multianual e Histórico */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 shadow-xl backdrop-blur-md">
+            <h3 className="text-sm font-bold text-white flex items-center justify-between mb-4">
+              <span>Trayectoria Histórica y Proyecciones 2027 (COP)</span>
+              <span className="text-xs text-slate-400 font-normal">2024 - 2026 Oficiales vs 2027 Proyectado (+{pctProy4}% y +{pctProy6}%)</span>
+            </h3>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={proyecciones2027.chartHistoricoProyectado} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
+                  <XAxis dataKey="vigencia" stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                  <YAxis stroke="#94a3b8" tickFormatter={(v) => `$${(v / 1e6).toFixed(0)}M`} tick={{ fontSize: 11 }} />
+                  <RechartsTooltip
+                    formatter={(val: any) => [formatCOP(val), '']}
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px' }}
+                  />
+                  <Legend />
+                  <Bar dataKey="esc1" name="Escenario 1 (Conservador)" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="esc2" name="Escenario 2 (Progresivo Ac. 015)" fill="#ffcc29" radius={[4, 4, 0, 0]} />
+                  <Line type="monotone" dataKey="delta" name="Impacto Asimilación (Δ 2-1)" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 4 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Matriz Comparativa Detallada 2026 vs 2027 (+4% y +6%) */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 shadow-xl backdrop-blur-md">
+            <h3 className="text-sm font-bold text-white mb-4">
+              Matriz Comparativa de Costos y Tarifas Proyectadas (2026 vs 2027)
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-white/5 text-slate-300 uppercase tracking-wider font-semibold border-b border-white/10">
+                  <tr>
+                    <th className="p-3">Concepto / Categoría</th>
+                    <th className="p-3 text-right">Línea Base 2026</th>
+                    <th className="p-3 text-right text-primary-container">Proyección 2027 (+{pctProy4}%)</th>
+                    <th className="p-3 text-right text-slate-400">Var. Absoluta (+{pctProy4}%)</th>
+                    <th className="p-3 text-right text-emerald-400">Proyección 2027 (+{pctProy6}%)</th>
+                    <th className="p-3 text-right text-slate-400">Var. Absoluta (+{pctProy6}%)</th>
+                    <th className="p-3 text-right text-rose-400 font-bold">Diferencia (+{pctProy6}% vs +{pctProy4}%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-mono">
+                  <tr className="hover:bg-white/5">
+                    <td className="p-3 font-sans font-bold text-white">Escenario 1 (Conservador)</td>
+                    <td className="p-3 text-right">{formatCOP(proyecciones2027.baseCosto1)}</td>
+                    <td className="p-3 text-right text-primary-container font-bold">{formatCOP(proyecciones2027.proy4_Esc1)}</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.incAbs4_Esc1)}</td>
+                    <td className="p-3 text-right text-emerald-400 font-bold">{formatCOP(proyecciones2027.proy6_Esc1)}</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.incAbs6_Esc1)}</td>
+                    <td className="p-3 text-right text-rose-400">+{formatCOP(proyecciones2027.proy6_Esc1 - proyecciones2027.proy4_Esc1)}</td>
+                  </tr>
+                  <tr className="hover:bg-white/5 bg-white/[0.02]">
+                    <td className="p-3 font-sans font-bold text-blue-400">Escenario 2 (Progresivo - Asimilación Plena)</td>
+                    <td className="p-3 text-right text-blue-300 font-bold">{formatCOP(proyecciones2027.baseCosto2)}</td>
+                    <td className="p-3 text-right text-primary-container font-bold">{formatCOP(proyecciones2027.proy4_Esc2)}</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.incAbs4_Esc2)}</td>
+                    <td className="p-3 text-right text-emerald-400 font-bold">{formatCOP(proyecciones2027.proy6_Esc2)}</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.incAbs6_Esc2)}</td>
+                    <td className="p-3 text-right text-rose-400 font-bold">+{formatCOP(proyecciones2027.diff_6_vs_4_Esc2)}</td>
+                  </tr>
+                  <tr className="hover:bg-white/5">
+                    <td className="p-3 font-sans font-bold text-amber-400">Impacto Presupuestal Asimilación (Δ 2 - 1)</td>
+                    <td className="p-3 text-right text-amber-400">+{formatCOP(proyecciones2027.baseCosto2 - proyecciones2027.baseCosto1)}</td>
+                    <td className="p-3 text-right text-primary-container font-bold">+{formatCOP(proyecciones2027.proy4_Delta)}</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.proy4_Delta - (proyecciones2027.baseCosto2 - proyecciones2027.baseCosto1))}</td>
+                    <td className="p-3 text-right text-emerald-400 font-bold">+{formatCOP(proyecciones2027.proy6_Delta)}</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.proy6_Delta - (proyecciones2027.baseCosto2 - proyecciones2027.baseCosto1))}</td>
+                    <td className="p-3 text-right text-rose-400 font-bold">+{formatCOP(proyecciones2027.proy6_Delta - proyecciones2027.proy4_Delta)}</td>
+                  </tr>
+                  <tr className="border-t border-white/10 hover:bg-white/5">
+                    <td className="p-3 font-sans text-slate-300">Tarifa Horaria Profesor Auxiliar (2.50 pts)</td>
+                    <td className="p-3 text-right">{formatCOP(59810)}/h</td>
+                    <td className="p-3 text-right text-primary-container font-bold">{formatCOP(proyecciones2027.tarifas4['Profesor Auxiliar'])}/h</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.tarifas4['Profesor Auxiliar'] - 59810)}</td>
+                    <td className="p-3 text-right text-emerald-400 font-bold">{formatCOP(proyecciones2027.tarifas6['Profesor Auxiliar'])}/h</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.tarifas6['Profesor Auxiliar'] - 59810)}</td>
+                    <td className="p-3 text-right text-rose-400">+{formatCOP(proyecciones2027.tarifas6['Profesor Auxiliar'] - proyecciones2027.tarifas4['Profesor Auxiliar'])}</td>
+                  </tr>
+                  <tr className="hover:bg-white/5">
+                    <td className="p-3 font-sans text-slate-300">Tarifa Horaria Profesor Asistente (2.75 pts)</td>
+                    <td className="p-3 text-right">{formatCOP(65791)}/h</td>
+                    <td className="p-3 text-right text-primary-container font-bold">{formatCOP(proyecciones2027.tarifas4['Profesor Asistente'])}/h</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.tarifas4['Profesor Asistente'] - 65791)}</td>
+                    <td className="p-3 text-right text-emerald-400 font-bold">{formatCOP(proyecciones2027.tarifas6['Profesor Asistente'])}/h</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.tarifas6['Profesor Asistente'] - 65791)}</td>
+                    <td className="p-3 text-right text-rose-400">+{formatCOP(proyecciones2027.tarifas6['Profesor Asistente'] - proyecciones2027.tarifas4['Profesor Asistente'])}</td>
+                  </tr>
+                  <tr className="hover:bg-white/5">
+                    <td className="p-3 font-sans text-slate-300">Tarifa Horaria Profesor Asociado (3.00 pts)</td>
+                    <td className="p-3 text-right">{formatCOP(71772)}/h</td>
+                    <td className="p-3 text-right text-primary-container font-bold">{formatCOP(proyecciones2027.tarifas4['Profesor Asociado'])}/h</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.tarifas4['Profesor Asociado'] - 71772)}</td>
+                    <td className="p-3 text-right text-emerald-400 font-bold">{formatCOP(proyecciones2027.tarifas6['Profesor Asociado'])}/h</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.tarifas6['Profesor Asociado'] - 71772)}</td>
+                    <td className="p-3 text-right text-rose-400">+{formatCOP(proyecciones2027.tarifas6['Profesor Asociado'] - proyecciones2027.tarifas4['Profesor Asociado'])}</td>
+                  </tr>
+                  <tr className="hover:bg-white/5">
+                    <td className="p-3 font-sans text-slate-300">Tarifa Horaria Profesor Titular (3.50 pts)</td>
+                    <td className="p-3 text-right">{formatCOP(83734)}/h</td>
+                    <td className="p-3 text-right text-primary-container font-bold">{formatCOP(proyecciones2027.tarifas4['Profesor Titular'])}/h</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.tarifas4['Profesor Titular'] - 83734)}</td>
+                    <td className="p-3 text-right text-emerald-400 font-bold">{formatCOP(proyecciones2027.tarifas6['Profesor Titular'])}/h</td>
+                    <td className="p-3 text-right text-slate-400">+{formatCOP(proyecciones2027.tarifas6['Profesor Titular'] - 83734)}</td>
+                    <td className="p-3 text-right text-rose-400">+{formatCOP(proyecciones2027.tarifas6['Profesor Titular'] - proyecciones2027.tarifas4['Profesor Titular'])}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* SUBTAB 3: DESGLOSE POR FACULTAD */}
       {/* ======================================================================= */}
       {subTab === 'facultades' && (
         <div className="space-y-6">
@@ -1248,10 +1632,14 @@ export function SimuladorEscalafonCatedra() {
                     <th className="p-3">Categoría en Escalafón</th>
                     <th className="p-3 text-center">Puntos por Hora</th>
                     <th className="p-3">Equivalencia para Docentes Externos (Parágrafo 1)</th>
-                    <th className="p-3 text-right">Tarifa Horaria 2024</th>
-                    <th className="p-3 text-right">Tarifa Horaria 2025</th>
-                    <th className="p-3 text-right text-primary-container">Tarifa Horaria 2026</th>
-                    <th className="p-3 text-right font-bold text-white">Costo Total Semestre ({horasPromedio}h)</th>
+                    <th className="p-3 text-right">Tarifa 2024</th>
+                    <th className="p-3 text-right">Tarifa 2025</th>
+                    <th className="p-3 text-right text-primary-container">Tarifa 2026 (Base)</th>
+                    <th className="p-3 text-right text-amber-300">Proy. 2027 (+4%)</th>
+                    <th className="p-3 text-right text-emerald-400">Proy. 2027 (+6%)</th>
+                    <th className="p-3 text-right font-bold text-white">Costo 2026 ({horasPromedio}h)</th>
+                    <th className="p-3 text-right font-bold text-amber-300">Costo 2027 (+4%)</th>
+                    <th className="p-3 text-right font-bold text-emerald-400">Costo 2027 (+6%)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -1262,12 +1650,20 @@ export function SimuladorEscalafonCatedra() {
                         <span>{item.categoria}</span>
                       </td>
                       <td className="p-3 text-center font-mono font-bold text-primary-container">{item.puntos.toFixed(2)} pts</td>
-                      <td className="p-3 text-slate-300">{item.equivalencia}</td>
+                      <td className="p-3 text-slate-300 max-w-xs">{item.equivalencia}</td>
                       <td className="p-3 text-right font-mono text-slate-400">{formatCOP(item.tarifa2024)}</td>
                       <td className="p-3 text-right font-mono text-slate-400">{formatCOP(item.tarifa2025)}</td>
-                      <td className="p-3 text-right font-mono font-bold text-emerald-400">{formatCOP(item.tarifa2026)}</td>
-                      <td className="p-3 text-right font-mono font-black text-white bg-white/5">
+                      <td className="p-3 text-right font-mono font-bold text-primary-container">{formatCOP(item.tarifa2026)}</td>
+                      <td className="p-3 text-right font-mono font-bold text-amber-300">{formatCOP(item.tarifa2027_4pct)}</td>
+                      <td className="p-3 text-right font-mono font-bold text-emerald-400">{formatCOP(item.tarifa2027_6pct)}</td>
+                      <td className="p-3 text-right font-mono font-bold text-white bg-white/5">
                         {formatCOP(item.tarifa2026 * horasPromedio)}
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold text-amber-300 bg-amber-500/5">
+                        {formatCOP(item.tarifa2027_4pct * horasPromedio)}
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold text-emerald-400 bg-emerald-500/5">
+                        {formatCOP(item.tarifa2027_6pct * horasPromedio)}
                       </td>
                     </tr>
                   ))}
@@ -1279,10 +1675,19 @@ export function SimuladorEscalafonCatedra() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Factores de Puntos */}
             <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 shadow-xl backdrop-blur-md space-y-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Sliders className="text-primary-container" size={16} />
-                Factores de Puntos por Categoría (Acuerdo 015/2009)
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Sliders className="text-primary-container" size={16} />
+                  Factores de Puntos por Categoría (Acuerdo 015/2009)
+                </h3>
+                <button
+                  onClick={() => setFactores(DEFAULT_FACTORES_PUNTOS)}
+                  className="text-[11px] text-primary-container hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <RefreshCw size={11} />
+                  Restablecer
+                </button>
+              </div>
               <p className="text-xs text-slate-300">
                 Puntos fijados en el Estatuto de Hora Cátedra de la UPTC. Al modificarlos se actualizan todos los cálculos en vivo.
               </p>
@@ -1297,7 +1702,7 @@ export function SimuladorEscalafonCatedra() {
                         step="0.05"
                         min="1.0"
                         max="10.0"
-                        value={factores[cat] || 0}
+                        value={factores[cat] ?? DEFAULT_FACTORES_PUNTOS[cat] ?? 0}
                         onChange={(e) => {
                           const val = parseFloat(e.target.value) || 0;
                           setFactores((prev) => ({ ...prev, [cat]: val }));
@@ -1333,10 +1738,10 @@ export function SimuladorEscalafonCatedra() {
                       }}
                       className="bg-surface-container-high border border-white/10 rounded-lg px-3 py-1 text-xs text-white focus:outline-none focus:border-primary-container"
                     >
-                      <option value="Profesor Auxiliar">Profesor Auxiliar ({factores['Profesor Auxiliar']} pts)</option>
-                      <option value="Profesor Asistente">Profesor Asistente ({factores['Profesor Asistente']} pts)</option>
-                      <option value="Profesor Asociado">Profesor Asociado ({factores['Profesor Asociado']} pts)</option>
-                      <option value="Profesor Titular">Profesor Titular ({factores['Profesor Titular']} pts)</option>
+                      <option value="Profesor Auxiliar">Profesor Auxiliar ({factores['Profesor Auxiliar'] ?? 2.5} pts)</option>
+                      <option value="Profesor Asistente">Profesor Asistente ({factores['Profesor Asistente'] ?? 2.75} pts)</option>
+                      <option value="Profesor Asociado">Profesor Asociado ({factores['Profesor Asociado'] ?? 3.0} pts)</option>
+                      <option value="Profesor Titular">Profesor Titular ({factores['Profesor Titular'] ?? 3.5} pts)</option>
                     </select>
                   </div>
                 ))}
