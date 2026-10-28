@@ -40,9 +40,68 @@ import {
 import { DEFAULT_DOCENTES_CATEDRA, DocenteCatedraRaw } from '../data/docentesCatedraDefault';
 
 // -----------------------------------------------------------------------------
-// CONSTANTES Y CONFIGURACIÓN DEL ACUERDO 015 DE 2009
+// CONSTANTES Y CONFIGURACIÓN DEL ACUERDO 015 DE 2009 (ARTÍCULO 1)
 // -----------------------------------------------------------------------------
-const DEFAULT_MULTIPLIER = 62.0;
+const DEFAULT_HORAS_PROMEDIO = 64; // 4 horas/semana × 16 semanas
+
+export const ESCALA_ARTICULO_1 = [
+  {
+    categoria: 'Profesor Auxiliar',
+    puntos: 2.50,
+    equivalencia: 'Profesional universitario sin posgrado o con especialización en trámite',
+    tarifa2024: 52238,
+    tarifa2025: 55895,
+    tarifa2026: 59810,
+  },
+  {
+    categoria: 'Profesor Asistente',
+    puntos: 2.75,
+    equivalencia: 'Especialista graduado o Magíster con experiencia docente calificada',
+    tarifa2024: 57461,
+    tarifa2025: 61485,
+    tarifa2026: 65791,
+  },
+  {
+    categoria: 'Profesor Asociado',
+    puntos: 3.00,
+    equivalencia: 'Magíster con amplia trayectoria o Doctor (PhD) en consolidación',
+    tarifa2024: 62685,
+    tarifa2025: 67074,
+    tarifa2026: 71772,
+  },
+  {
+    categoria: 'Profesor Titular',
+    puntos: 3.50,
+    equivalencia: 'Doctor (PhD) con alta producción académica y reconocimiento en escalafón',
+    tarifa2024: 73133,
+    tarifa2025: 78253,
+    tarifa2026: 83734,
+  },
+];
+
+const TARIFAS_POR_VIGENCIA: Record<string, Record<string, number>> = {
+  '2026': {
+    'Profesor Auxiliar': 59810,
+    'Profesor Asistente': 65791,
+    'Profesor Asociado': 71772,
+    'Profesor Titular': 83734,
+    'Pendiente de Clasificación': 0,
+  },
+  '2025': {
+    'Profesor Auxiliar': 55895,
+    'Profesor Asistente': 61485,
+    'Profesor Asociado': 67074,
+    'Profesor Titular': 78253,
+    'Pendiente de Clasificación': 0,
+  },
+  '2024': {
+    'Profesor Auxiliar': 52238,
+    'Profesor Asistente': 57461,
+    'Profesor Asociado': 62685,
+    'Profesor Titular': 73133,
+    'Pendiente de Clasificación': 0,
+  },
+};
 
 const DEFAULT_FACTORES_PUNTOS: Record<string, number> = {
   'Profesor Auxiliar': 2.50,
@@ -164,9 +223,15 @@ export function SimuladorEscalafonCatedra() {
   const [nombreArchivo, setNombreArchivo] = useState<string>('Base Institucional UPTC (Corte 30 de Noviembre)');
 
   // Parámetros de simulación
-  const [multiplier, setMultiplier] = useState<number>(DEFAULT_MULTIPLIER);
-  const [factores, setFactores] = useState<Record<string, number>>(DEFAULT_FACTORES_PUNTOS);
+  const [horasPromedio, setHorasPromedio] = useState<number>(DEFAULT_HORAS_PROMEDIO);
+  const [vigencia, setVigencia] = useState<'2026' | '2025' | '2024'>('2026');
+  const [tarifasCustom, setTarifasCustom] = useState<Record<string, number>>(TARIFAS_POR_VIGENCIA['2026']);
   const [modoAnalisis, setModoAnalisis] = useState<'A' | 'B' | 'C'>('A');
+
+  // Tarifas activas de referencia
+  const tarifasActivas = useMemo(() => {
+    return TARIFAS_POR_VIGENCIA[vigencia] || TARIFAS_POR_VIGENCIA['2026'];
+  }, [vigencia]);
 
   // Reglas del escenario personalizado (Escenario 3)
   const [customRules, setCustomRules] = useState<Record<string, string>>({
@@ -189,7 +254,7 @@ export function SimuladorEscalafonCatedra() {
   const itemsPerPage = 12;
 
   // ---------------------------------------------------------------------------
-  // MOTOR DE CÁLCULO EN TIEMPO REAL
+  // MOTOR DE CÁLCULO EN TIEMPO REAL (TARIFA_HORARIA × HORAS_PROMEDIO)
   // ---------------------------------------------------------------------------
   const processedData = useMemo(() => {
     return dataRaw.map((row, idx) => {
@@ -204,23 +269,26 @@ export function SimuladorEscalafonCatedra() {
 
       // Escenario 1 (Conservador)
       const catEsc1 = ESCENARIO_1_RULES[nivel] || 'Pendiente de Clasificación';
-      const factorEsc1 = factores[catEsc1] || 0.0;
-      const costoEsc1 = (catEsc1 !== 'Pendiente de Clasificación' && sueldo > 0)
-        ? sueldo * multiplier * factorEsc1
+      const factorEsc1 = DEFAULT_FACTORES_PUNTOS[catEsc1] || 0.0;
+      const tarifaEsc1 = tarifasActivas[catEsc1] || 0;
+      const costoEsc1 = (catEsc1 !== 'Pendiente de Clasificación')
+        ? tarifaEsc1 * horasPromedio
         : 0;
 
-      // Escenario 2 (Progresivo)
+      // Escenario 2 (Progresivo - Asimilación Parágrafo 1 Acuerdo 015)
       const catEsc2 = ESCENARIO_2_RULES[nivel] || 'Pendiente de Clasificación';
-      const factorEsc2 = factores[catEsc2] || 0.0;
-      const costoEsc2 = (catEsc2 !== 'Pendiente de Clasificación' && sueldo > 0)
-        ? sueldo * multiplier * factorEsc2
+      const factorEsc2 = DEFAULT_FACTORES_PUNTOS[catEsc2] || 0.0;
+      const tarifaEsc2 = tarifasActivas[catEsc2] || 0;
+      const costoEsc2 = (catEsc2 !== 'Pendiente de Clasificación')
+        ? tarifaEsc2 * horasPromedio
         : 0;
 
       // Escenario 3 (Personalizado)
       const catEscCustom = customRules[nivel] || 'Pendiente de Clasificación';
-      const factorEscCustom = factores[catEscCustom] || 0.0;
-      const costoEscCustom = (catEscCustom !== 'Pendiente de Clasificación' && sueldo > 0)
-        ? sueldo * multiplier * factorEscCustom
+      const factorEscCustom = DEFAULT_FACTORES_PUNTOS[catEscCustom] || 0.0;
+      const tarifaEscCustom = tarifasCustom[catEscCustom] ?? tarifasActivas[catEscCustom] ?? 0;
+      const costoEscCustom = (catEscCustom !== 'Pendiente de Clasificación')
+        ? tarifaEscCustom * horasPromedio
         : 0;
 
       // Diferencias
@@ -230,7 +298,7 @@ export function SimuladorEscalafonCatedra() {
       const difAbsCust_1 = costoEscCustom - costoEsc1;
       const difPctCust_1 = costoEsc1 > 0 ? (difAbsCust_1 / costoEsc1) * 100 : 0;
 
-      const esComputable = nivel !== 'PENDIENTE' && sueldo > 0;
+      const esComputable = nivel !== 'PENDIENTE';
 
       return {
         idFila: idx + 1,
@@ -249,12 +317,15 @@ export function SimuladorEscalafonCatedra() {
         sueldo,
         catEsc1,
         factorEsc1,
+        tarifaEsc1,
         costoEsc1,
         catEsc2,
         factorEsc2,
+        tarifaEsc2,
         costoEsc2,
         catEscCustom,
         factorEscCustom,
+        tarifaEscCustom,
         costoEscCustom,
         difAbs2_1,
         difPct2_1,
@@ -263,7 +334,7 @@ export function SimuladorEscalafonCatedra() {
         esComputable,
       };
     });
-  }, [dataRaw, multiplier, factores, customRules]);
+  }, [dataRaw, horasPromedio, tarifasActivas, tarifasCustom, customRules]);
 
   // ---------------------------------------------------------------------------
   // CONSOLIDACIONES SEGÚN UNIDAD DE ANÁLISIS (Modos A, B, C)
@@ -634,19 +705,40 @@ export function SimuladorEscalafonCatedra() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 rounded-2xl bg-surface-container/80 border border-white/10 backdrop-blur-md">
         <div>
           <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
-            Multiplicador Cátedra
+            Horas Promedio Semestre
           </label>
           <div className="flex items-center gap-2">
             <input
               type="number"
               min={1}
-              max={300}
-              value={multiplier}
-              onChange={(e) => setMultiplier(parseFloat(e.target.value) || 1)}
+              max={150}
+              value={horasPromedio}
+              onChange={(e) => setHorasPromedio(parseFloat(e.target.value) || 1)}
               className="w-full bg-surface-container-high border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-mono font-bold focus:outline-none focus:border-primary-container"
             />
-            <span className="text-xs text-slate-400">×</span>
+            <span className="text-xs text-primary-container font-bold">h/semestre</span>
           </div>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">4 h/sem × 16 semanas = 64 horas</span>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
+            Vigencia de Tarifas
+          </label>
+          <select
+            value={vigencia}
+            onChange={(e) => {
+              const v = e.target.value as '2026' | '2025' | '2024';
+              setVigencia(v);
+              setTarifasCustom(TARIFAS_POR_VIGENCIA[v]);
+            }}
+            className="w-full bg-surface-container-high border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-primary-container"
+          >
+            <option value="2026">Vigencia 2026 (Activa: $59.810 - $83.734)</option>
+            <option value="2025">Vigencia 2025 ($55.895 - $78.253)</option>
+            <option value="2024">Vigencia 2024 ($52.238 - $73.133)</option>
+          </select>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Punto D1279: $23.924 COP (2026)</span>
         </div>
 
         <div>
@@ -662,28 +754,21 @@ export function SimuladorEscalafonCatedra() {
             <option value="B">Modo B: Por Docente Único (Cédula)</option>
             <option value="C">Modo C: Por Docente y Programa</option>
           </select>
-        </div>
-
-        <div>
-          <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
-            Base de Datos Activa
-          </label>
-          <div className="text-xs text-slate-300 truncate py-2 px-3 bg-white/5 border border-white/10 rounded-xl" title={nombreArchivo}>
-            📁 {nombreArchivo}
-          </div>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">542 registros computables</span>
         </div>
 
         <div className="flex items-end">
           <button
             onClick={() => {
-              setMultiplier(DEFAULT_MULTIPLIER);
-              setFactores(DEFAULT_FACTORES_PUNTOS);
+              setHorasPromedio(DEFAULT_HORAS_PROMEDIO);
+              setVigencia('2026');
+              setTarifasCustom(TARIFAS_POR_VIGENCIA['2026']);
               setModoAnalisis('A');
             }}
-            className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 flex items-center justify-center gap-2 cursor-pointer transition-all"
+            className="w-full py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
             <RefreshCw size={13} />
-            <span>Restablecer Factores</span>
+            <span>Restablecer (64h - 2026)</span>
           </button>
         </div>
       </div>
@@ -1139,6 +1224,58 @@ export function SimuladorEscalafonCatedra() {
       {/* ======================================================================= */}
       {subTab === 'parametros' && (
         <div className="space-y-6">
+          {/* Tabla Oficial Artículo 1 Acuerdo 015 de 2009 (Imagen de Referencia Institucional) */}
+          <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 shadow-xl backdrop-blur-md space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span className="text-primary-container text-lg">🎗️</span>
+                  Artículo 1: Asignación de Puntos por Hora de Clase en Pregrado
+                </h3>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Estatuto oficial de liquidación de cátedra. Estos valores por categoría se multiplican por <strong>{horasPromedio} horas promedio</strong> dictadas en el semestre.
+                </p>
+              </div>
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-primary-container/20 text-primary-container border border-primary-container/30">
+                Punto D1279: $ 23.924 COP
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-white/5 text-slate-300 uppercase tracking-wider font-semibold border-b border-white/10">
+                  <tr>
+                    <th className="p-3">Categoría en Escalafón</th>
+                    <th className="p-3 text-center">Puntos por Hora</th>
+                    <th className="p-3">Equivalencia para Docentes Externos (Parágrafo 1)</th>
+                    <th className="p-3 text-right">Tarifa Horaria 2024</th>
+                    <th className="p-3 text-right">Tarifa Horaria 2025</th>
+                    <th className="p-3 text-right text-primary-container">Tarifa Horaria 2026</th>
+                    <th className="p-3 text-right font-bold text-white">Costo Total Semestre ({horasPromedio}h)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {ESCALA_ARTICULO_1.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-white/5 transition-colors">
+                      <td className="p-3 font-bold text-white flex items-center gap-2">
+                        <CheckCircle2 size={14} className="text-primary-container flex-shrink-0" />
+                        <span>{item.categoria}</span>
+                      </td>
+                      <td className="p-3 text-center font-mono font-bold text-primary-container">{item.puntos.toFixed(2)} pts</td>
+                      <td className="p-3 text-slate-300">{item.equivalencia}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">{formatCOP(item.tarifa2024)}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">{formatCOP(item.tarifa2025)}</td>
+                      <td className="p-3 text-right font-mono font-bold text-emerald-400">{formatCOP(item.tarifa2026)}</td>
+                      <td className="p-3 text-right font-mono font-black text-white bg-white/5">
+                        {formatCOP(item.tarifa2026 * horasPromedio)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Factores de Puntos */}
             <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 shadow-xl backdrop-blur-md space-y-4">
