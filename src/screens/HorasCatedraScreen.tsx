@@ -47,6 +47,7 @@ import {
   Tooltip as RechartsTooltip,
   Legend
 } from 'recharts';
+import { SimuladorEscalafonCatedra } from '../components/SimuladorEscalafonCatedra';
 
 // --- Formateadores oficiales ---
 function formatCurrency(value: number) {
@@ -279,7 +280,7 @@ const QUIZ_QUESTIONS = [
 ];
 
 export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => void }) {
-  const [activeTab, setActiveTab] = useState<'ejecucion' | 'normativa' | 'simulador' | 'control' | 'informe'>('ejecucion');
+  const [activeTab, setActiveTab] = useState<'ejecucion' | 'normativa' | 'escalafon' | 'simulador' | 'control' | 'informe'>('ejecucion');
 
   // Estados de PDF y Previsualización
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
@@ -594,6 +595,18 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
           >
             <Scale size={16} />
             <span>Marco Legal & C-006-96</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('escalafon')}
+            className={`flex items-center gap-2 px-4 py-3 rounded-t-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === 'escalafon'
+                ? 'bg-white/10 text-primary-container border-b-2 border-primary-container'
+                : 'text-on-surface-variant hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Sparkles size={16} className="text-primary-container" />
+            <span>Simulador de Escalafón (Acuerdo 015)</span>
           </button>
 
           <button
@@ -1130,10 +1143,40 @@ export function HorasCatedraScreen({ onNavigate }: { onNavigate: (s: string) => 
       )}
 
       {/* ========================================================================= */}
+      {/* PESTAÑA: SIMULADOR DE ESCALAFÓN DOCENTE (ACUERDO 015 DE 2009)             */}
+      {/* ========================================================================= */}
+      {activeTab === 'escalafon' && <SimuladorEscalafonCatedra />}
+
+      {/* ========================================================================= */}
       {/* PESTAÑA 3: SIMULADOR & COMPARADOR DE MODELOS FINANCIEROS */}
       {/* ========================================================================= */}
       {activeTab === 'simulador' && (
         <div className="space-y-6">
+          {/* Banner de Acceso Rápido al Simulador Macroeconómico de Escalafón */}
+          <div className="rounded-3xl bg-gradient-to-r from-primary-container/20 via-surface-container to-surface-container-high border border-primary-container/40 p-6 shadow-xl backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-primary-container text-black font-bold">
+                <Sparkles size={24} />
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-white">
+                  Simulador Macroeconómico de Escalafón Docente (Acuerdo 015 de 2009)
+                </h4>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Evalúe los tres escenarios (Conservador, Progresivo y Personalizado) para los 552 docentes de cátedra con desagregación por facultad y programas.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('escalafon')}
+              className="px-5 py-2.5 rounded-xl bg-primary-container text-black font-extrabold text-xs hover:bg-yellow-400 transition-all shadow-lg flex items-center gap-2 whitespace-nowrap cursor-pointer"
+            >
+              <span>Abrir Simulador de Escalafón</span>
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
           {/* Selector de Modelos de Cálculo (Diapositivas / Comparador Secuencial) */}
           <div className="rounded-3xl bg-surface-container/60 border border-white/10 p-6 md:p-8 shadow-xl backdrop-blur-md space-y-6">
             <div>
