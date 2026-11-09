@@ -1016,13 +1016,13 @@ export const R10_PROJECTION_6PCT_DATA = {
     },
     {
       subRecurso: 'R10.5',
-      denominacion: 'Aportes Nación – Política de Gratuidad (Base)',
-      base2026: 11208316954,
-      proyeccion2027: 0,
-      incremento: 0,
-      pct: 0.0,
-      indexado: true,
-      nota: 'Proyección 2027: $ 0. Política gubernamental indexada a la base permanente Art. 86 (R10.0).'
+      denominacion: 'Aportes Nación – Política de Gratuidad (Giro en 12-avas MinHacienda)',
+      base2026: 49844177233,
+      proyeccion2027: 52834827867,
+      incremento: 2990650634,
+      pct: 6.0,
+      indexado: false,
+      nota: 'Por determinaciones del MEN, para la vigencia 2027 los giros van a ser enviados a través del Ministerio de Hacienda dentro de las 12-avas que se envían a la universidad mensualmente ($ 4.402,9M/mes), consolidándose bajo el Recurso 10.5.'
     },
     {
       subRecurso: 'R10.1',
@@ -1788,12 +1788,12 @@ export const R14_HISTORICAL_SERIES: R14HistoricalRecord[] = [
     vigencia: 2027,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
     concepto: 'Política de Gratuidad "Puedo Estudiar" (Proyectado)',
-    recurso: '14-Fondo Solidario de Educación - Gratuidad',
+    recurso: '10.5-Aportes Nación - Gratuidad',
     totalRecaudo: 52834827867,
     variacionAnualCOP: 2990650634,
     variacionAnualPct: 6.00,
     tipo: 'proyeccion',
-    notaNormativa: 'Proyección institucional con parámetro macroeconómico oficial aprobado (+6,0%)'
+    notaNormativa: 'Por determinación del MEN, giros 2027 enviados a través de MinHacienda dentro de las 12-avas mensuales ($4.402,9M/mes) bajo Recurso 10.5 (antes R14).'
   }
 ];
 
@@ -1869,18 +1869,20 @@ export const R14_FORECAST_MODELS: R14ForecastModel[] = [
 export function exportR14CSV(selectedModelId: 'macro' | 'linear' | 'holt' | 'optimista' | 'arima' = 'macro'): void {
   const model = R14_FORECAST_MODELS.find(m => m.id === selectedModelId) || R14_FORECAST_MODELS[0];
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += `PROYECCION RECURSO 14 - POLITICA DE GRATUIDAD (LEY 2307 DE 2023) - VIGENCIA 2027\n`;
+  csvContent += `PROYECCION RECURSO 10.5 (ANTES R14) - POLITICA DE GRATUIDAD (LEY 2307 DE 2023) - VIGENCIA 2027\n`;
   csvContent += `Entidad:;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA (UPTC)\n`;
+  csvContent += `Nota Institucional MEN:;Por determinaciones del MEN, para la vigencia 2027 los giros seran enviados a traves del Ministerio de Hacienda dentro de las 12-avas que se envian mensualmente a la universidad.\n`;
   csvContent += `Modelo Seleccionado:;${model.name}\n`;
   csvContent += `Base Recaudo 2026 (COP):;${R14_BASE_2026}\n`;
   csvContent += `Tasa de Crecimiento Proyectada:;+${model.variacionPct.toFixed(2)}%\n`;
   csvContent += `Proyeccion 2027 (COP):;${model.projected2027}\n`;
-  csvContent += `Incremento Nominal (COP):;+${model.incrementoNominal}\n\n`;
+  csvContent += `Incremento Nominal (COP):;+${model.incrementoNominal}\n`;
+  csvContent += `Giro Mensual Estimado (12-avas MinHacienda COP):;$ ${Math.round(model.projected2027 / 12).toLocaleString('es-CO')}\n\n`;
 
   csvContent += `MODELOS DE PROYECCION EVALUADOS 2027\n`;
-  csvContent += `Modelo;Formula;Proyeccion 2027 (COP);Proyeccion ($M);Incremento (COP);Variacion (%);Ajuste R2;Criterio\n`;
+  csvContent += `Modelo;Formula;Proyeccion 2027 (COP);Proyeccion ($M);Incremento (COP);Variacion (%);Giro Mensual (12-avas);Ajuste R2;Criterio\n`;
   for (const m of R14_FORECAST_MODELS) {
-    csvContent += `"${m.name}";"${m.formula}";"${m.projected2027}";"${(m.projected2027 / 1e6).toFixed(2)}";"+${m.incrementoNominal}";"+${m.variacionPct.toFixed(2)}%";"${m.r2 ? m.r2.toFixed(2) + '%' : 'N/A'}";"${m.interpretation}"\n`;
+    csvContent += `"${m.name}";"${m.formula}";"${m.projected2027}";"${(m.projected2027 / 1e6).toFixed(2)}";"+${m.incrementoNominal}";"+${m.variacionPct.toFixed(2)}%";"$ ${(m.projected2027 / 12 / 1e6).toFixed(2)}M/mes";"${m.r2 ? m.r2.toFixed(2) + '%' : 'N/A'}";"${m.interpretation}"\n`;
   }
   csvContent += `\n`;
 
@@ -1897,7 +1899,7 @@ export function exportR14CSV(selectedModelId: 'macro' | 'linear' | 'holt' | 'opt
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `Proyeccion_Recurso_14_Politica_Gratuidad_2027.csv`);
+  link.setAttribute('download', `Proyeccion_Recurso_10.5_Politica_Gratuidad_2027.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -4170,16 +4172,16 @@ export const OFFICIAL_BALANCE_GENERAL_CATALOG: OfficialConceptDefinition[] = [
     id: 'c4_r14_gratuidad',
     order: 4,
     unidad: '01 - ADMINISTRATIVA Y FINANCIERA',
-    concepto: 'Politica Gratuidad',
+    concepto: 'Politica Gratuidad (R10.5 - MinHacienda)',
     codigoConcepto: '1.1.02.06.006.06.02',
-    recurso: '14-Matriculas FSE',
+    recurso: '10.5-Aportes Nacion Gratuidad',
     grupo: 'nacion',
     recaudo2024: 37090700264,
     recaudo2025: 36210311946,
     base2026: 49844177233,
     defaultModelId: 'macro',
     models: [
-      { id: 'macro', name: 'Macro +6,0% (Piso Oficial Aprobado)', value: 52834827867, variationPct: 6.00 },
+      { id: 'macro', name: 'Macro +6,0% (Doceavas MinHacienda - R10.5)', value: 52834827867, variationPct: 6.00 },
       { id: 'linear', name: 'Regresión Lineal OLS (R²=94,7%)', value: 54459255459, variationPct: 9.26 },
       { id: 'holt', name: 'Suavizamiento Holt', value: 53801597430, variationPct: 7.94 },
       { id: 'optimista', name: 'Escenario Expansión (+13%)', value: 56323920274, variationPct: 13.00 },

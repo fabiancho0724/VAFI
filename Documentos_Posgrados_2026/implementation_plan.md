@@ -1,0 +1,122 @@
+# Plan de Implementación y Diagnóstico Comparativo: Nuevo Documento Técnico de Posgrados UPTC 2026 (Versión 2 - 43 páginas)
+
+**Documento Evaluado:** Documento Técnico - Proyecto de Acuerdo de Reglamentación Administrativa y Financiera de los Programas de Posgrado de la UPTC (Segunda Versión recibida - 43 páginas)  
+**Instancia Evaluadora:** Oficina de Inteligencia Técnica, Financiera, Económica, Presupuestal y Normativa (Panel de 10 Especialistas)  
+**Vigencia:** 2026
+
+---
+
+## 1. Identificación y Balance de Cambios entre la Versión 1 (42 págs.) y la Versión 2 (43 págs.)
+
+La mesa técnica institucional de la UPTC ha realizado una serie de modificaciones sobre el documento técnico preliminar. Tras una lectura minuciosa de las 43 páginas de la nueva versión, el equipo multiagente identifica los siguientes cambios específicos incorporados por los autores:
+
+### 1.1. Cambios Positivos e Incorporaciones Nuevas:
+1. **Actualización de la Portada Institucional (pág. 1):**
+   - Dirección de Planeación: Se incluye a Jorge Enrique Romero como *Director 2026-2* y a Patricia Carolina Barreto como *Directora 2023 - 2026-1*.
+   - Vicerrectoría Administrativa y Financiera: Se consigna a Patricia Carolina Barreto como *Vicerrectora 2026-2* y a Luis Ángel Lara González como *Vicerrector 2023 - 2026-1*. Se mantiene a Fabian Leonardo Cely Cely como contratista asesor.
+2. **Corrección Notacional en la Fórmula del IAEP (pág. 19):**
+   - Se corrigió la ecuación: ahora expresa formalmente `IAEP = w_IPC × IPC + w_ICES × ICES + w_SMLMV × SMLMV` (en lugar de `w_EDU × EDU_ponderado`).
+3. **Formalización Conceptual de los 15 Créditos (págs. 24 y 26):**
+   - Se aclara expresamente que el tope de 15 créditos académicos es un **límite metodológico y prudencial para la simulación financiera**, y no una restricción académica impuesta al estudiante.
+4. **Sustentación de la Imputación de 4 Créditos en Terminación Académica (pág. 27):**
+   - Se documenta que el 15% de los registros históricos corresponden a estudiantes en terminación académica sin asignaturas ordinarias inscritas, justificando la imputación de 4 créditos para estimar el recaudo de derechos de grado y evaluación.
+5. **Ampliación de Excepciones en Tesis Doctoral (pág. 23):**
+   - Se extiende la tarifa reducida del 50% del VCAP no solo a la elaboración de tesis con director/codirector, sino también a **pasantías o estancias académicas**.
+6. **Nueva Parametrización de Simulación Monte Carlo (págs. 30–31):**
+   - Se reemplazó la figura anterior por un nuevo estudio con **20.000 iteraciones**:
+     - Meta anual: $41.000 millones. Mediana simulada: $42.644 millones (+$1.644 millones de holgura).
+     - Desviación estándar anual: $3.223 millones. Probabilidad de no alcanzar la meta: 30,8%.
+     - Detalle semestral: 2027-1 (mediana $21.198M, riesgo 46,4%) y 2027-2 (mediana $21.499M, riesgo 19,0% tras incremento del 6,31% en el crédito).
+     - Población proyectada anual estimada: 7.143 estudiantes.
+7. **Intento de Corrección en la Tabla 2 de Flujos Descontados (pág. 35):**
+   - Los autores ajustaron los flujos descontados de los años 2028, 2029 y 2030 ($7.391M, $7.036M y $6.758M) para intentar acercar la suma al VAN reportado de $29.019.583.582.
+
+---
+
+## 2. Diagnóstico Crítico: Errores Residuales y Nuevas Fallas Detectadas en la Versión 2
+
+A pesar de los avances introducidos por la mesa técnica, la auditoría del panel de 10 expertos detecta que **persisten problemas metodológicos de fondo y se han introducido nuevos errores de edición y formato**:
+
+```
++-------------------------------------------------------------------------------+
+| BALANCE DE CALIDAD DE LA VERSIÓN 2 (43 PÁGS):                                 |
+|                                                                               |
+| [NOVEDADES POSITIVAS] : 7 mejoras técnicas y aclaraciones relevantes          |
+| [ERRORES PERSISTENTES]: 5 fallas de cálculo, costeo y gobernanza              |
+| [NUEVOS FALLOS EDICIÓN]: 3 errores tipográficos graves y marcadores rotos     |
++-------------------------------------------------------------------------------+
+```
+
+### 2.1. Errores de Formato y Presentación (Nuevos en Versión 2):
+1. **Ruptura tipográfica y texto vertical roto al pie de la página 7:**
+   - Al final de la página 7 aparece el texto desalineado y roto:
+     `F`  
+     `i`  
+     `g`  
+     `u`  
+     `r`  
+     `a`  
+     `4`  
+     `.`  
+     `M`  
+     `a`  
+     Esto evidencia un fallo de maquetación en Microsoft Word que demerita la calidad institucional del documento.
+2. **Persistencia de Enlaces Rotos en la Tabla de Contenido (pág. 3):**
+   - En la página 3, la Tabla de Contenido sigue mostrando:
+     `Proyección financiera a cinco años y análisis de riesgos .................... ¡Error! Marcador no definido.`
+     `9. Conclusiones .............................................................. ¡Error! Marcador no definido.`
+     `Figura 4. Maestrías en Boyacá ............................................... ¡Error! Marcador no definido.`
+3. **Erratas en el nuevo texto de la página 20:**
+   - En la página 20, en el párrafo agregado sobre excepciones académicas, se escribe:  
+     *"Sin embargo, en situaciones académicas **especias** previstas en los artículos 9 y 10 del acuerdo por el cual se establece la reglamentación administrativa y financiera de los programas de posgrado de la **Uptc** **no se aplica a esta regla**..."*  
+     Presenta un error ortográfico ("especias" por "especiales"), un error de estilo ("Uptc" en minúscula) y un fallo de concordancia gramatical ("no se aplica a esta regla").
+
+### 2.2. Fallas Metodológicas y Financieras Persistentes:
+1. **Persistencia del Error Metodológico en el Escenario Pesimista (pág. 34):**
+   - La Tabla 1 sigue aplicando un incremento ciego de +10% a todos los egresos en el escenario pesimista, mostrando un déficit artificial de -$6.397 millones y un VAN negativo de -$5.283 millones. Se mantiene la violación del modelo de costeo ABC (la deducción central debe caer 15% y los costos variables deben contraerse con la demanda).
+2. **Persistencia de la Discrepancia Numérica en el VAN (Tabla 1 vs Tabla 2):**
+   - Aunque los autores recalcularon la Tabla 2 (pág. 35) llegando a una suma de **$29.019.531.303**, esta suma sigue teniendo una discrepancia de **$52.279 pesos** frente al VAN de la Tabla 1 y del texto (**$29.019.583.582**). Esto ocurre porque siguen utilizando flujos nominales redondeados a centenas de miles ($8.459.300.000) y factores de descuento truncados a 6 decimales.
+3. **Persistencia del "Ratio DSCR" para fondos sin deuda (pág. 39, Fig. 22):**
+   - La Figura 22 mantiene la columna rotulada como "Ratio DSCR: 1,43x", término bancario incorrecto que debe sustituirse por la Razón de Cobertura de Costos Operacionales y Deducciones Centrales (RCCO).
+4. **Alerta de Sostenibilidad en Especializaciones (-20,46% en ingresos):**
+   - El documento sigue sin incorporar un mecanismo de transición o gradualidad para amortiguar la pérdida de $5.109 millones en las especializaciones, que proveen el 62,4% de los ingresos del Fondo R31.
+5. **Vacío del Baremo Objetivo para el VCAP (pág. 17):**
+   - La fórmula `VCAP = VBCI × (0.2 CP + 0.2 C + 0.3 E + 0.3 P)` sigue sin contar con una rúbrica cuantitativa de 1 a 5, manteniendo el riesgo de asignación discrecional de precios.
+
+---
+
+## 3. Plan de Acción y Productos a Generar
+
+Para validar, auditar y elevar la Versión 2 al máximo estándar institucional, el equipo multiagente ejecutará las siguientes acciones:
+
+```mermaid
+flowchart TD
+    A[Nuevo Documento v2: 43 Págs] --> B[Auditoría Comparativa v1 vs v2]
+    B --> C[Corrección de Nuevos Errores Tipográficos y Tabla de Contenido]
+    B --> D[Integración de Datos Nuevos de Monte Carlo: 20.000 ciclos]
+    B --> E[Recálculo ABC y Reconciliación al Peso del VAN]
+    B --> F[Actualización de Baremos y Gradualidad]
+    C & D & E & F --> G[Generación de los 7 Productos Actualizados en Word, HTML y MD]
+```
+
+### Entregables Comprometidos (Actualizados sobre la Versión 2):
+1. **PRODUCTO 1:** Diagnóstico Ejecutivo Integral (Versión 2).
+2. **PRODUCTO 2:** Matriz Exhaustiva de Hallazgos Comparativa (Detallando lo corregido por la UPTC, lo persistente y los nuevos fallos de edición).
+3. **PRODUCTO 3:** Matriz de Recomendaciones Técnicas Actualizada.
+4. **PRODUCTO 4:** Documento Técnico Reconstruido Definitivo (Versión 2 consolidada: incorpora las 20.000 iteraciones de Monte Carlo, los 15 créditos metodológicos, la nueva portada y pasantías doctorales, cuadrando matemáticamente las tablas y depurando al 100% el texto).
+5. **PRODUCTO 5:** Informe de Validación Financiera Actualizado.
+6. **PRODUCTO 6:** Matriz de Trazabilidad Evolutiva (v1 vs v2 vs Versión Reconstruida).
+7. **PRODUCTO 7:** Dictamen Final Colegiado Actualizado.
+8. **Archivos de Salida:** Generación en los tres formatos oficiales (`.docx` para Word, `.html` para ver y exportar a PDF, y `.md`).
+
+---
+
+## 4. Preguntas Abiertas para Decisión del Usuario
+
+> **IMPORTANTE:**
+> **Adopción de Nuevas Autoridades en Portada:**  
+> En la portada de la Versión 2 figura Jorge Enrique Romero como Director de Planeación (2026-2) y Patricia Carolina Barreto como Vicerrectora Administrativa y Financiera (2026-2). ¿Confirmamos la adopción de esta estructura directiva para la versión oficial final?
+
+> **NOTA INSTITUCIONAL:**
+> **Integración del Análisis Semestral de Monte Carlo (2027-1 y 2027-2):**  
+> La nueva versión incluye el desglose semestral con riesgo del 46,4% en 2027-1 y del 19,0% en 2027-2 (por aumento de 6,31% en el crédito). ¿Procedemos a incorporarlo formalmente en el Capítulo 8 del Documento Técnico Reconstruido y en el Informe Financiero?

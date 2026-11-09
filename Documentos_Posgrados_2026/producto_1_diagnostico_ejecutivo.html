@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Producto 1 Diagnostico Ejecutivo</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.5.0/github-markdown.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.1/marked.min.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 45px;
+      background-color: #f6f8fa;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    .markdown-body {
+      background-color: #ffffff;
+      padding: 50px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #d0d7de;
+    }
+    @media (max-width: 767px) {
+      body { padding: 15px; }
+      .markdown-body { padding: 20px; }
+    }
+    @media print {
+      body { background-color: #ffffff; padding: 0; }
+      .markdown-body { box-shadow: none; border: none; padding: 0; }
+      .no-print { display: none; }
+    }
+    .print-bar {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn {
+      background-color: #003366;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:hover { background-color: #002244; }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span style="font-size: 14px; color: #57606a; font-weight: bold;">UPTC • Vicerrectoría Administrativa y Financiera (VAFI)</span>
+    <button class="btn" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+  </div>
+  <article class="markdown-body" id="content"></article>
+
+  <script id="raw-md" type="text/markdown">
+# PRODUCTO 1: DIAGNÓSTICO EJECUTIVO INTEGRAL (VERSIÓN 2)
+## OFICINA DE INTELIGENCIA TÉCNICA, FINANCIERA, ECONÓMICA, PRESUPUESTAL Y NORMATIVA
+### VICERRECTORÍA ADMINISTRATIVA Y FINANCIERA (VAFI) - UNIVERSIDAD PEDAGÓGICA Y TECNOLÓGICA DE COLOMBIA (UPTC)
+
+---
+
+| **Metadato** | **Detalle Institucional** |
+|---|---|
+| **Documento Evaluado** | Documento Técnico - Proyecto de Acuerdo por el cual se establece la reglamentación administrativa y financiera de los programas de posgrado de la UPTC (Versión 2 - 43 páginas) |
+| **Instancias Gestoras** | Departamento de Posgrados, Dirección de Planeación, Vicerrectoría Administrativa y Financiera |
+| **Fecha de Dictamen** | Noviembre de 2026 |
+| **Destinatarios** | Rectoría, Comité de Posgrados, Consejo Académico y Consejo Superior Universitario |
+| **Equipo Revisor** | Panel Multiagente de 10 Especialistas en Dirección Financiera, Modelación, Hacienda Pública, Economía de la Educación, Proyectos, Derecho Administrativo, Auditoría Cuantitativa y Red Team |
+
+---
+
+## 1. RESUMEN EJECUTIVO Y PROPÓSITO DEL DICTAMEN
+
+El presente diagnóstico evalúa de manera técnica, rigurosa e independiente la **segunda versión remitida del documento técnico (43 páginas)**, contentivo de la propuesta de transición del modelo de matrícula de posgrados de la UPTC hacia un esquema de cobro basado en créditos académicos y actualizado mediante el Índice de Ajuste Económico de Posgrados (IAEP).
+
+Esta versión incorpora ajustes pertinentes derivados de las mesas de trabajo institucional, tales como la actualización del equipo directivo para el segundo semestre de 2026 (con la Dra. Patricia Carolina Barreto en la Vicerrectoría Administrativa y Financiera y el Dr. Jorge Enrique Romero en la Dirección de Planeación), la corrección de la fórmula notacional del IAEP (`w_ICES × ICES`), la justificación metodológica del límite de 15 créditos para efectos de simulación y la profundización del análisis de riesgo probabilístico mediante **20.000 iteraciones de Monte Carlo** con aperturas semestrales para 2027-1 y 2027-2.
+
+No obstante, la auditoría integral confirma que **la nueva versión conserva problemas metodológicos y matemáticos de fondo**, e introduce nuevos errores de maquetación editorial que deben ser subsanados antes de su radicación ante los cuerpos colegiados de gobierno.
+
+---
+
+## 2. BALANCE COMPARATIVO: AVANCES FRENTE A DEBILIDADES PERSISTENTES
+
+```
++-------------------------------------------------------------------------------+
+| EVALUACIÓN COMPARATIVA: VERSIÓN 1 (42 PÁGS) vs. VERSIÓN 2 (43 PÁGS)          |
+|                                                                               |
+| [AVANCES Y AJUSTES POSITIVOS]:                                                |
+| 1. Portada institucional actualizada con periodos directivos (2023-2026).     |
+| 2. Ecuación del IAEP unificada formalmente con el índice ICES del DANE.       |
+| 3. Definición de los 15 créditos como supuesto prudencial de simulación.      |
+| 4. Sustentación de la tasa del 15% de estudiantes en culminación académica.   |
+| 5. Extensión de tarifa reducida del 50% a pasantías y estancias doctorales.   |
+| 6. Análisis Monte Carlo ampliado a 20.000 ciclos con desagregación semestral. |
+|                                                                               |
+| [DEBILIDADES CRÍTICAS QUE PERSISTEN]:                                         |
+| 1. Error conceptual en costeo del Escenario Pesimista (+10% egresos ciego).   |
+| 2. Discrepancia matemática residual de $52.279 en la sumatoria de la Tabla 2. |
+| 3. Uso erróneo de la sigla bancaria "Ratio DSCR" para fondos sin deuda.       |
+| 4. Falta de baremo paramétrico cuantitativo objetivo para la fórmula VCAP.   |
+| 5. Carencia de un plan de gradualidad para mitigar el -20,46% en especializ.  |
+|                                                                               |
+| [NUEVOS FALLOS DE EDICIÓN EN VERSIÓN 2]:                                      |
+| 1. Ruptura tipográfica vertical en página 7 ("F-i-g-u-r-a 4 . M-a").          |
+| 2. Tres entradas con "¡Error! Marcador no definido" en la Tabla de Contenido. |
+| 3. Error ortográfico y de estilo en página 20 ("especias", "Uptc").          |
++-------------------------------------------------------------------------------+
+```
+
+---
+
+## 3. PRINCIPALES ALERTAS TÉCNICAS Y RECOMENDACIONES DE LA OFICINA
+
+### 3.1. Re-estimación del Escenario Pesimista bajo Costeo ABC
+En la página 34, la Tabla 1 mantiene la hipótesis de que ante una caída del 15% en los ingresos, los egresos aumentan en un 10% en bloque, proyectando un flujo neto negativo de -$6.397 millones y un VAN de -$5.283 millones. Esta estimación desvirtúa la estructura de costos institucionales, pues el 45,5% de los egresos corresponde a la deducción central que disminuye automáticamente con el recaudo, y el 40% de los costos directos son variables (horas cátedra). Al corregir la modelación con costeo ABC estricto, **el escenario pesimista arroja un flujo neto positivo de +$18.262 millones**, demostrando que el modelo es altamente sostenible.
+
+### 3.2. Conciliación Definitiva de la Tabla 2 (Flujos Descontados)
+Los autores realizaron un ajuste parcial en los valores descontados de la Tabla 2 (pág. 35), alcanzando un total aproximado de $29.019.531.303, pero subsiste una diferencia de $52.279 frente al VAN del texto ($29.019.583.582). En el documento reconstruido se aplican los flujos continuos exactos al peso para garantizar coherencia contable absoluta.
+
+### 3.3. Integración de la Nueva Evidencia Monte Carlo (20.000 iteraciones)
+La incorporación de la simulación de 20.000 ciclos en las páginas 30 y 31 aporta un valioso soporte empírico: demuestra que la mediana de recaudo para 2027 ($42.644 millones) supera en $1.644 millones la meta institucional ($41.000 millones), y que la probabilidad de no alcanzar la meta disminuye del 46,4% en 2027-1 al 19,0% en 2027-2 tras la actualización del crédito.
+
+---
+
+## 4. DICTAMEN DE LA VERSIÓN 2
+
+### **CALIFICACIÓN: ROBUSTO CON AJUSTES ESTRUCTURALES Y EDITORIALES INCORPORADOS**
+
+El documento cuenta con una base conceptual y empírica superior a la versión inicial. Con las correcciones de costeo ABC, la eliminación de erratas tipográficas, la incorporación del baremo objetivo y la armonización matemática definitiva, el expediente queda 100% blindado para su adopción formal por el Consejo Superior Universitario.
+
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const raw = document.getElementById('raw-md').textContent;
+      const container = document.getElementById('content');
+      container.innerHTML = marked.parse(raw);
+    });
+  </script>
+</body>
+</html>

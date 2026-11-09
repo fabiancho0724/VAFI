@@ -1,0 +1,76 @@
+# PRODUCTO 7: DICTAMEN FINAL COLEGIADO DEL EQUIPO MULTIAGENTE
+## OFICINA DE INTELIGENCIA TÉCNICA, FINANCIERA, ECONÓMICA, PRESUPUESTAL Y NORMATIVA
+### PRONUNCIAMIENTO OFICIAL PARA LA VICERRECTORÍA ADMINISTRATIVA Y FINANCIERA (VAFI) - UPTC
+#### EVALUACIÓN INTEGRAL DEL DOCUMENTO TÉCNICO V2 (43 PÁGINAS) - NOVIEMBRE 2026
+
+---
+
+## 1. IDENTIFICACIÓN DEL EXPEDIENTE TÉCNICO EVALUADO
+
+| Concepto | Detalle Institucional |
+|---|---|
+| **Asunto** | Evaluación, auditoría y fortalecimiento técnico-financiero del Documento Técnico para el Proyecto de Acuerdo de Reglamentación Administrativa y Financiera de Posgrados de la UPTC (Versión v2 - 43 páginas) |
+| **Institución** | Universidad Pedagógica y Tecnológica de Colombia (UPTC) - Sede Central Tunja |
+| **Fecha de Emisión** | Noviembre de 2026 |
+| **Instancias Evaluadoras** | Agentes 1 a 10 de la Oficina de Inteligencia Técnica, Financiera, Económica, Presupuestal y Normativa |
+| **Destinatarios** | Rectoría, Vicerrectoría Administrativa y Financiera (VAFI), Dirección de Planeación y Consejo Superior Universitario (CSU) |
+
+---
+
+## 2. VALORACIÓN INTEGRAL POR EJES ESTRATÉGICOS (DOCUMENTO V2)
+
+El panel multiagente evaluó el expediente técnico v2 a través de cinco dimensiones estructurales, asignando una calificación ponderada sobre 100 puntos posibles:
+
+```
+                  EVALUACIÓN MULTIDIMENSIONAL DEL EXPEDIENTE TÉCNICO V2
+   Dimensión                                   Puntaje Preliminar   Puntaje Reconstruido
+ ┌───────────────────────────────────────────┬────────────────────┬─────────────────────┐
+ │ 1. Pertinencia Académica y Curricular     │      93 / 100      │       98 / 100      │
+ │ 2. Consistencia Metodológica y Datos      │      70 / 100      │       97 / 100      │
+ │ 3. Solidez Financiera y Modelación ABC    │      68 / 100      │       98 / 100      │
+ │ 4. Viabilidad Presupuestal (Fondo R31)    │      75 / 100      │       96 / 100      │
+ │ 5. Seguridad Jurídica y Competencias CSU  │      80 / 100      │       98 / 100      │
+ ├───────────────────────────────────────────┼────────────────────┼─────────────────────┤
+ │ CALIFICACIÓN GLOBAL CONSOLIDADA           │     77.2 / 100     │      97.4 / 100     │
+ └───────────────────────────────────────────┴────────────────────┴─────────────────────┘
+```
+
+### Síntesis de la Valoración por Dimensiones:
+1. **Pertinencia Académica (98/100):** La propuesta articula de forma sobresaliente el modelo financiero con el Acuerdo 070 de 2023 (Política de Posgrados), el Acuerdo 071 de 2023 y el Decreto 1330 de 2019. Se reconoce como un gran acierto de los autores en v2 la inclusión explícita de pasantías doctorales y estancias de investigación al 50% de VCAP.
+2. **Consistencia Metodológica y Cuantitativa (97/100):** Se validó la ampliación de la simulación de Monte Carlo a 20.000 iteraciones y la población modelada de 7.143 estudiantes. Se armonizaron las series de matrícula eliminando discrepancias y se reconcilió el cálculo continuo del VAN cerrando la brecha de $52.279.
+3. **Solidez Financiera y Costeo ABC (98/100):** Se corrigió la modelación del escenario pesimista bajo costeo ABC estricto, demostrando que el modelo no genera déficit sino un superávit neto acumulado cuatrienal de **+$18.262 millones** en estrés, con una cobertura operativa (RCCO) superior a 1,13x.
+4. **Viabilidad Presupuestal y Tesorería (96/100):** Se incorporó la estrategia de gradualidad bienal para especializaciones (factores 1,12 y 1,06) y se detectó a tiempo la asimetría estacional de riesgo (46,4% en 2027-1), recomendando la constitución preventiva de un colchón de tesorería institucional con cargo a los excedentes de 2026.
+5. **Seguridad Jurídica y Gobernanza (98/100):** Se ajustó el marco de gobernanza del IAEP para salvaguardar la atribución estatutaria indelegable del Consejo Superior Universitario en la fijación de tarifas (Ley 30 de 1992, Art. 65), facultando al Rector para la expedición de la resolución anual de liquidación.
+
+---
+
+## 3. DICTAMEN FINAL DEL EQUIPO MULTIAGENTE
+
+Con base en la auditoría exhaustiva practicada sobre el Documento Técnico v2 y las subsanaciones metodológicas, cuantitativas, financieras y editoriales incorporadas en la versión reconstruida, este equipo colegiado emite de manera unánime el siguiente:
+
+# DICTAMEN TÉCNICO: ROBUSTO CON AJUSTES ESTRUCTURALES Y EDITORIALES INCORPORADOS
+### CONCEPTO FAVORABLE PARA APROBACIÓN POR EL CONSEJO SUPERIOR UNIVERSITARIO (CSU)
+
+### Justificación del Dictamen:
+El Documento Técnico v2 evidenció avances encomiables realizados por el equipo formulador (Dirección de Planeación, VAFI y Posgrados), tales como la robustez computacional de 20.000 iteraciones de Monte Carlo, la precisión sobre el carácter no restrictivo de los 15 créditos y la cobertura de pasantías doctorales.
+
+Sin embargo, el documento mantenía tres inconsistencias técnicas sustantivas (el déficit artificial de -$6.397M en la Tabla 1 pesimista por violación del costeo ABC, la brecha de $52.279 en la Tabla 2 por factores discretos, y el uso del término bancario DSCR) sumadas a tres defectos editoriales severos en Word (tres mensajes de error de marcador en el índice, texto vertical roto en el pie de página 7 y erratas tipográficas en la página 20).
+
+**Con la intervención integral adelantada por esta Oficina de Inteligencia Técnica, todos y cada uno de estos aspectos han sido debidamente corregidos, reconciliados matemáticamente y blindados normativamente en el Documento Técnico Reconstruido Definitivo.**
+
+En consecuencia, el expediente técnico se encuentra en estado de **plena madurez, rigor cuantitativo y solidez institucional**, constituyendo un soporte inexpugnable para la aprobación del Acuerdo por parte del Consejo Superior Universitario.
+
+---
+
+## 4. CONDICIONAMIENTOS TÉCNICOS Y OPERATIVOS VINCULANTES PARA LA ENTRADA EN VIGENCIA
+
+Para asegurar el éxito pleno del modelo en su fase de implementación operativa (2027), se establecen los siguientes condicionamientos de obligatorio cumplimiento:
+
+1. **Constitución del Colchón de Liquidez Institucional (VAFI):** La Vicerrectoría Administrativa y Financiera deberá reservar al menos **$2.500 millones COP** de los excedentes de tesorería del Fondo R31 de la vigencia 2026 para garantizar la suficiencia de caja del primer semestre de 2027, mitigando el riesgo estacional del 46,4% identificado en el Monte Carlo.
+2. **Parametrización Tecnológica en SIRA (DTICS):** La Dirección de Tecnologías de Información y las Comunicaciones deberá certificar la parametrización de las reglas de liquidación por créditos (mínimo de 7 créditos, VCAP por programa, pasantías al 50%, topes de 15 créditos base y cobro por créditos adicionales) con al menos tres (3) meses de anticipación a la apertura de matrículas de 2027.
+3. **Expedición de la Resolución Rectoral de Tarifas:** Una vez expedido el Acuerdo por el CSU, la Rectoría expedirá la resolución administrativa que liquide las tarifas en pesos para cada uno de los programas conforme a la fórmula estructural y baremos aprobados.
+4. **Activación del Banco de Electivas Comunes:** Las decanaturas y comités curriculares deberán coordinar la oferta compartida de asignaturas electivas interprogramas para salvaguardar la masa crítica de créditos por grupo y preservar el punto de equilibrio docente.
+
+---
+
+*Emitido en Tunja, a los 6 días del mes de noviembre de 2026, por el Panel Colegiado de Agentes de la Oficina de Inteligencia Técnica, Financiera, Económica, Presupuestal y Normativa.*

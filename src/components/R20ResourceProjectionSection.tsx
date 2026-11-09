@@ -1237,7 +1237,7 @@ export function R20ResourceProjectionSection() {
             }`}
           >
             <GraduationCap size={15} />
-            <span>Recurso 14 (Política Gratuidad)</span>
+            <span>Recurso 10.5 (Gratuidad - Doceavas MinHacienda)</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-black/20 text-white font-bold">
               $52.835M (+6,0%)
             </span>
@@ -4130,22 +4130,33 @@ export function R20ResourceProjectionSection() {
                   <div>
                     <div className="flex flex-wrap items-center gap-2.5">
                       <span className="text-xs font-mono uppercase tracking-wider font-bold text-teal-300 bg-teal-500/20 px-3 py-1 rounded-full border border-teal-500/30">
-                        Transferencia Nacional FSE • Ley 2307 de 2023
+                        Aportes Nación (Recurso 10.5) • 12-avas Mensuales MinHacienda
                       </span>
                       <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
-                        Serie Histórica desde 2021 (n = 6 vigencias)
+                        Serie Histórica (2021–2026 R14 FSE → 2027 R10.5)
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
                         <TrendingUp size={13} /> Referencia Macroeconómica: +6,0%
                       </span>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight mt-2">
-                      Recurso 14: Política de Gratuidad en Matrícula
+                      Recurso 10.5: Política de Gratuidad en Matrícula (Doceavas MinHacienda)
                     </h3>
                     <p className="text-xs md:text-sm text-on-surface-variant max-w-3xl mt-1 leading-relaxed">
-                      Recurso creado en 2021 mediante el Fondo Solidario para la Educación (Decreto 1667/2021) y formalizado con fuerza de ley permanente mediante la <strong className="text-white">Ley 2307 de 2023 ("Puedo Estudiar")</strong>. Financia el 100% de la matrícula neta de los estudiantes de pregrado de la UPTC.
-                      Con un recaudo base en 2026 de <strong className="text-teal-300">$ 49.844.177.233 COP</strong>, se evalúa el piso prudente de indexación macroeconómica (+6,0% = <strong className="text-emerald-300">$ 52.835M</strong>) frente a los modelos de tendencia histórica OLS (<strong className="text-sky-300">$ 54.459M</strong>, R²=94,7%) y suavizamiento Holt (<strong className="text-purple-300">$ 53.802M</strong>).
+                      Financia el 100% de la matrícula neta de los estudiantes de pregrado de la UPTC conforme a la <strong className="text-white">Ley 2307 de 2023 ("Puedo Estudiar")</strong>. Con un recaudo base en 2026 de <strong className="text-teal-300">$ 49.844.177.233 COP</strong>, la proyección con parámetro macroeconómico oficial (+6,0%) asciende a <strong className="text-emerald-300">$ 52.834.827.867 COP</strong> ($52.835M).
                     </p>
+
+                    {/* ALERTA NORMATIVA: DETERMINACIÓN DEL MINISTERIO DE EDUCACIÓN NACIONAL */}
+                    <div className="mt-3.5 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-start gap-3">
+                      <Landmark className="text-amber-400 shrink-0 mt-0.5" size={17} />
+                      <div className="text-xs text-amber-100/90 leading-relaxed">
+                        <strong className="text-amber-300 font-bold block mb-0.5">
+                          🏛️ DETERMINACIÓN DEL MINISTERIO DE EDUCACIÓN NACIONAL (VIGENCIA 2027):
+                        </strong>
+                        Por determinaciones del Ministerio de Educación Nacional, para la vigencia 2027 los giros van a ser enviados a través del <strong>Ministerio de Hacienda</strong> dentro de las <strong>doceavas (12-avas)</strong> que se envían a la universidad mensualmente.
+                        Por este motivo, estas proyecciones se consolidan oficialmente bajo el <strong>Recurso 10.5 (Aportes Nación)</strong> en reemplazo de la antigua figura del Fondo Solidario FSE (R14), garantizando un flujo regular mensual estimado de <strong className="text-emerald-300">{formatCurrencyShortCOP(r14ActiveModel.projected2027 / 12)} / mes</strong> ({formatCurrencyCOP(Math.round(r14ActiveModel.projected2027 / 12))}).
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -4155,7 +4166,7 @@ export function R20ResourceProjectionSection() {
                     className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-teal-500 hover:bg-teal-400 text-black font-bold text-xs shadow-lg shadow-teal-500/20 transition-all hover:scale-[1.02] cursor-pointer"
                   >
                     <Download size={15} />
-                    <span>Descargar Certificado R14 (CSV)</span>
+                    <span>Descargar Certificado R10.5 (CSV)</span>
                   </button>
                   <div className="flex items-center gap-2 text-right">
                     <span className="text-[11px] font-mono text-on-surface-variant">
@@ -4170,7 +4181,7 @@ export function R20ResourceProjectionSection() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <span className="text-xs font-semibold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles size={14} className="text-teal-400" />
-                    SELECCIONAR MODELO DE PROYECCIÓN R14 PARA 2027:
+                    SELECCIONAR MODELO DE PROYECCIÓN R10.5 (GRATUIDAD) PARA 2027:
                   </span>
                   <span className="text-[11px] font-mono text-on-surface-variant">
                     Modelo Activo: <strong className="text-white">{r14ActiveModel.name}</strong>
@@ -4220,11 +4231,11 @@ export function R20ResourceProjectionSection() {
 
               {/* TARJETAS KPI DE IMPACTO */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                {/* KPI 1: Proyección 2027 R14 */}
+                {/* KPI 1: Proyección 2027 R10.5 */}
                 <div className="p-5 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-teal-300 uppercase tracking-wider">
-                      Proyección 2027 (R14)
+                      Proyección 2027 (R10.5)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-teal-500/20 text-teal-200 px-2 py-0.5 rounded border border-teal-500/30">
                       {r14ActiveModel.tag}
@@ -4292,27 +4303,27 @@ export function R20ResourceProjectionSection() {
                   </div>
                 </div>
 
-                {/* KPI 4: CAGR Histórico 2021-2026 */}
-                <div className="p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex flex-col justify-between">
+                {/* KPI 4: Giro Mensual en 12-avas MinHacienda */}
+                <div className="p-5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-semibold text-sky-300 uppercase tracking-wider">
-                      Crecimiento Histórico (CAGR)
+                    <span className="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider">
+                      Giro Mensual en 12-avas
                     </span>
-                    <span className="text-[10px] font-mono font-bold bg-sky-500/20 text-sky-200 px-2 py-0.5 rounded border border-sky-500/30">
-                      2021–2026
+                    <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded border border-cyan-500/30">
+                      MinHacienda
                     </span>
                   </div>
                   <div>
-                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-sky-300 block">
-                      +29,64%
+                    <span className="text-2xl md:text-3xl font-mono font-extrabold text-cyan-300 block">
+                      {formatCurrencyShortCOP(r14ActiveModel.projected2027 / 12)} / mes
                     </span>
-                    <span className="text-[11px] font-mono text-sky-200/90 block mt-0.5">
-                      Tasa Anual Compuesta (5 años)
+                    <span className="text-[11px] font-mono text-cyan-200/90 block mt-0.5">
+                      {formatCurrencyCOP(Math.round(r14ActiveModel.projected2027 / 12))}
                     </span>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-sky-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
-                    <span>Multiplicador de Expansión</span>
-                    <strong className="text-sky-200">3,66× desde 2021</strong>
+                  <div className="mt-3 pt-3 border-t border-cyan-500/20 text-[10px] text-on-surface-variant flex items-center justify-between">
+                    <span>Flujo Mensualizado</span>
+                    <strong className="text-cyan-200">12 cuotas regulares</strong>
                   </div>
                 </div>
               </div>
@@ -4480,10 +4491,10 @@ export function R20ResourceProjectionSection() {
               <div>
                 <h4 className="text-lg font-display text-white font-bold flex items-center gap-2">
                   <Table size={18} className="text-teal-400" />
-                  Tabla: Histórico y Proyección Recurso 14 — Política de Gratuidad (2021–2027)
+                  Tabla: Histórico y Proyección Recurso 10.5 (antes R14) — Política de Gratuidad (2021–2027)
                 </h4>
                 <p className="text-xs text-on-surface-variant mt-0.5">
-                  Registro cronológico oficial desde la vigencia inaugural de gratuidad hasta la proyección 2027.
+                  Registro cronológico oficial desde la vigencia inaugural de gratuidad (FSE / R14) hasta la proyección 2027 en doceavas de MinHacienda (R10.5).
                 </p>
               </div>
               <button
@@ -4491,7 +4502,7 @@ export function R20ResourceProjectionSection() {
                 className="flex items-center gap-1.5 text-xs text-teal-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
               >
                 <Download size={14} />
-                <span>Exportar Tabla CSV</span>
+                <span>Exportar R10.5 (CSV)</span>
               </button>
             </div>
 
@@ -8781,6 +8792,16 @@ export function R20ResourceProjectionSection() {
                   >
                     <Award size={15} className="text-black" />
                     <span>Documento Técnico Oficial (PDF)</span>
+                  </a>
+
+                  <a
+                    href="/Documento_Tecnico_Proyeccion_Presupuestal_UPTC_2027.docx"
+                    download="Documento_Tecnico_Proyeccion_Presupuestal_UPTC_2027.docx"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white text-xs font-bold shadow-lg shadow-blue-950/40 transition-all active:scale-95 cursor-pointer border border-blue-400/30"
+                    title="Descargar Documento Técnico Institucional Completo en formato Microsoft Word (.docx)"
+                  >
+                    <FileText size={15} className="text-blue-200" />
+                    <span>Documento Word (.docx)</span>
                   </a>
                 </div>
               </div>
