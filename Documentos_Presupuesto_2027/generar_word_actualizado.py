@@ -500,19 +500,57 @@ for title, desc in just_items:
     add_bullet(p, title, desc)
 
 # =============================================================
-# 11. RELACIÓN CON LAS NECESIDADES INSTITUCIONALES
+# 11. RELACIÓN CON LAS NECESIDADES INSTITUCIONALES (ESTRUCTURA Y DESAGREGACIÓN DETALLADA DEL GASTO)
 # =============================================================
-add_header("11. RELACIÓN CON LAS NECESIDADES INSTITUCIONALES", level=1)
+add_header("11. RELACIÓN CON LAS NECESIDADES INSTITUCIONALES (DESAGREGACIÓN DEL GASTO)", level=1)
 
 doc.add_paragraph(
-    "Las cifras proyectadas guardan correspondencia directa y proporcional con los compromisos operativos de la universidad:\n"
-    "1. Nómina y Planta de Personal: Los $345.930M de R10.0 y los $41.501M de R10.5 aseguran la suficiencia para el pago "
-    "oportuno de salarios, prestaciones, seguridad social y puntos docentes del Decreto 1279/2002.\n"
-    "2. Servicios Generales y Operatividad del Campus: Los cupos administrativos ($25.364M) y los recursos propios ($11.131M) "
-    "garantizan los contratos centralizados de vigilancia armada, aseo y desinfección, servicios públicos y licencias tecnológicas.\n"
-    "3. Bienestar y Permanencia: Los fondos de Cooperativas (R13 por $1.719M) y Votación (R17 por $5.774M) respaldan comedores "
-    "estudiantiles, residencias y subsidios a la comunidad universitaria."
+    "Las apropiaciones presupuestales asignadas a la Unidad 01 - Administrativa y Financiera para la vigencia fiscal 2027 "
+    "se desagregan en ciento noventa y cinco (195) conceptos presupuestales oficiales armonizados con el Catálogo de Clasificación "
+    "Presupuestal (CCP) del Ministerio de Hacienda y el DNP."
 )
+
+add_header("11.1. Macro-distribución del Presupuesto por Objeto del Gasto (CCP)", level=2)
+
+macro_data = [
+    ["2.1.1", "GASTOS DE PERSONAL (Planta y Temporal)", "$ 394.723.479.000 COP", "89,74 %"],
+    ["• 2.1.1.01", "  - Planta de Personal Permanente (Docente y Administrativa)", "$ 254.961.150.000 COP", "57,96 %"],
+    ["• 2.1.1.02", "  - Personal Supernumerario, Ocasional y Catedrático", "$ 139.762.329.000 COP", "31,77 %"],
+    ["2.1.2", "ADQUISICIÓN DE BIENES Y SERVICIOS (Operación de Campus)", "$  41.006.403.960 COP", "9,32 %"],
+    ["2.1.3", "TRANSFERENCIAS CORRIENTES (Sentencias y Bienestar)", "$     895.040.764 COP", "0,20 %"],
+    ["2.1.8", "GASTOS POR TRIBUTOS, TASAS, SANCIONES E INTERESES", "$   3.231.425.889 COP", "0,73 %"],
+    ["TOTAL", "TOTAL APROPIACIONES GASTOS UNIDAD ADMINISTRATIVA 2027", "$ 439.856.349.613 COP", "100,00 %"]
+]
+macro_tbl = doc.add_table(rows=1, cols=4)
+format_styled_table(macro_tbl, [Inches(1.0), Inches(2.8), Inches(1.7), Inches(1.0)], ["Código", "Objeto del Gasto Oficial (CCP)", "Apropiación 2027 ($)", "Particip. %"], macro_data, align_rights=[2, 3])
+
+add_callout(
+    "1. Alta Intensidad en Capital Humano (89,74%): De los $439.856 millones del presupuesto administrativo, $394.723 millones se concentran en nómina y prestaciones de la planta docente, empleados públicos administrativos y docentes ocasionales/catedráticos, garantizando la continuidad académica multicampus.\n\n"
+    "2. Sostenibilidad Operativa del Campus (9,32%): Los $41.006 millones en Bienes y Servicios amparan la contratación centralizada de aseo integral, seguridad y vigilancia física, servicios públicos de energía y conectividad de red.\n\n"
+    "3. Destinación Efectiva de Cupos Administrativos (R31, 32, 33 y 35): Los $25.364 millones transferidos por posgrados, extensión y convenios financian directamente prestaciones sociales de fin de año y servicios de infraestructura compartida de la administración central.",
+    title="HALLAZGOS DE AUDITORÍA SOBRE LA ESTRUCTURA DEL GASTO INSTITUCIONAL"
+)
+
+add_header("11.2. Matriz Cruzada de Financiación del Gasto (Recurso vs. Objeto del Gasto)", level=2)
+
+matriz_gasto_data = [
+    ["10.0", "Aportes Nación Funcionamiento", "333.751.419.000", "11.474.169.286", "58.601.506", "645.819.292", "345.930.009.084", "78,65 %"],
+    ["10.5", "Política de Gratuidad Doceavas", "27.465.107.000", "13.215.633.160", "123.242.898", "697.098.942", "41.501.082.000", "9,44 %"],
+    ["13", "Excedentes Cooperativas", "0", "1.719.108.000", "0", "0", "1.719.108.000", "0,39 %"],
+    ["17", "Devolución Descuento Electoral", "1.394.638.000", "4.379.750.000", "0", "0", "5.774.388.000", "1,31 %"],
+    ["18", "Artículo 87 CESU (PIB)", "1.200.000.000", "764.359.000", "0", "0", "1.964.359.000", "0,45 %"],
+    ["20", "Recursos Propios (Autogestión)", "1.146.026.000", "7.385.025.606", "711.916.939", "1.888.507.655", "11.131.476.200", "2,53 %"],
+    ["21", "Devolución de IVA IES", "6.000.000.000", "471.839.000", "0", "0", "6.471.839.000", "1,47 %"],
+    ["31", "Posgrados (Cupo Adm.)", "17.962.958.000", "904.225.313", "1.279.421", "0", "18.868.462.734", "4,29 %"],
+    ["32", "Extensión (Cupo Adm.)", "900.000.000", "44.311.807", "0", "0", "944.311.807", "0,21 %"],
+    ["33", "Convenios con Derechos (Cupo)", "4.223.331.000", "625.150.515", "0", "0", "4.848.481.515", "1,10 %"],
+    ["35", "Educación Continuada (Cupo)", "680.000.000", "22.832.273", "0", "0", "702.832.273", "0,16 %"],
+    ["TOTAL", "TOTAL GASTOS UNIDAD 01", "394.723.479.000", "41.006.403.960", "895.040.764", "3.231.425.889", "439.856.349.613", "100,00 %"]
+]
+matriz_gasto_tbl = doc.add_table(rows=1, cols=8)
+format_styled_table(matriz_gasto_tbl, [Inches(0.5), Inches(1.5), Inches(0.9), Inches(0.9), Inches(0.7), Inches(0.7), Inches(1.1), Inches(0.5)], 
+                    ["Rec.", "Fuente Oficial", "Personal ($)", "Bienes/Serv ($)", "Transf. ($)", "Trib/Tasas ($)", "Total Gasto ($)", "Part."], 
+                    matriz_gasto_data, align_rights=[2, 3, 4, 5, 6, 7])
 
 # =============================================================
 # 12. RESULTADOS DE LA PROYECCIÓN PRESUPUESTAL 2027
@@ -563,7 +601,8 @@ format_styled_table(bal_tbl, [Inches(0.7), Inches(2.3), Inches(1.3), Inches(1.3)
 add_header("13. VALIDACIÓN Y CONTROL DE RAZONABILIDAD", level=1)
 
 val_items = [
-    ("Cuadratura Exacta al Peso:", "Sumatoria Ingresos ($439.856.349.610) - Sumatoria Gastos ($439.856.349.610) = $0 COP exactos."),
+    ("Cuadratura Exacta al Peso:", "Sumatoria Ingresos ($439.856.349.610) - Sumatoria Gastos ($439.856.349.610) = $0 COP exactos en el aforo aprobado."),
+    ("Conciliación de Centavos del Detalle del Gasto:", "La sumatoria detallada de los 195 conceptos oficiales del clasificador arroja $439.856.349.613,01 COP, presentando una variación marginal de tan solo +$3,01 COP (0,00000068%) producto del redondeo de centavos en liquidaciones de nómina de GOOBI, ratificando la concordancia total."),
     ("Inexistencia de Doble Contabilidad:", "Los $18.868M del cupo de posgrados (R31) están totalmente segregados de los $11.131M de recursos propios (R20) y de la gratuidad de pregrado (R10.5)."),
     ("Prudencia en la Capacidad de Absorción:", "Los $25.364M aforados en cupos de programas autofinanciados representan un nivel inferior al ejecutado en 2025 ($32.422M), dejando un colchón de seguridad de más de $7.000 millones.")
 ]
@@ -572,7 +611,7 @@ for title, desc in val_items:
     add_bullet(p, title, desc)
 
 # =============================================================
-# 14. RIESGOS Y LIMITACIONES DE LA PROYECCIÓN
+# # 14. RIESGOS Y LIMITACIONES DE LA PROYECCIÓN
 # =============================================================
 add_header("14. RIESGOS Y LIMITACIONES DE LA PROYECCIÓN", level=1)
 

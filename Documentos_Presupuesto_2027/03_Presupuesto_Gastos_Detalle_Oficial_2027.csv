@@ -1,0 +1,196 @@
+Unidad;Codigo_Concepto;Concepto;Recurso;Total_COP
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.01.01;Sueldo básico administrativos;10.0 - Aportes Nacion - Funcionamiento;34977243000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.01.02;Sueldo básico docentes;10.0 - Aportes Nacion - Funcionamiento;42281687000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.01.03;Sueldo básico trabajadores oficiales;10.0 - Aportes Nacion - Funcionamiento;7033437000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.02;Horas extras, dominicales, festivos y recargos;10.0 - Aportes Nacion - Funcionamiento;1913535000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.03;Gastos de representación;10.0 - Aportes Nacion - Funcionamiento;31115255000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.04.01;Subsidio de alimentación administrativos;10.0 - Aportes Nacion - Funcionamiento;431504000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.04.02;Subsidio de alimentación trabajadores oficiales;10.0 - Aportes Nacion - Funcionamiento;340179000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.05.01;Auxilio de transporte administrativos;10.0 - Aportes Nacion - Funcionamiento;1441615000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.05.02;Auxilio de transporte trabajadores oficiales;10.0 - Aportes Nacion - Funcionamiento;383630000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.06.01;Prima de servicio administrativos;10.0 - Aportes Nacion - Funcionamiento;3923419000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.06.02;Prima de servicio docentes;10.0 - Aportes Nacion - Funcionamiento;8898576000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.06.03;Prima de servicio trabajadores oficiales;10.0 - Aportes Nacion - Funcionamiento;783282000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.07.01;Bonificación por servicios prestados administrativos;10.0 - Aportes Nacion - Funcionamiento;1555787000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.07.02;Bonificación por servicios prestados docentes;10.0 - Aportes Nacion - Funcionamiento;2799190000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.07.03;Bonificación por servicios prestados trabajadores oficiales;10.0 - Aportes Nacion - Funcionamiento;506103000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.01;Prima de navidad administrativos;10.0 - Aportes Nacion - Funcionamiento;1478908761
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.02;Prima de navidad docentes;10.0 - Aportes Nacion - Funcionamiento;2241569965
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.03;Prima de navidad trabajadores oficiales;10.0 - Aportes Nacion - Funcionamiento;716745204
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.01;Prima de vacaciones administrativos;10.0 - Aportes Nacion - Funcionamiento;1021926690
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.02;Prima de vacaciones docentes;10.0 - Aportes Nacion - Funcionamiento;1377827894
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.03;Prima de vacaciones trabajadores oficiales;10.0 - Aportes Nacion - Funcionamiento;858871486
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.09;Prima técnica salarial;10.0 - Aportes Nacion - Funcionamiento;708442000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.10;Viáticos de los funcionarios en comisión;10.0 - Aportes Nacion - Funcionamiento;131352000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.002.12.02.02;Beneficios a los empleados a largo plazo trabajadores oficiales;10.0 - Aportes Nacion - Funcionamiento;1296487000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.001;Aportes a la seguridad social en pensiones;10.0 - Aportes Nacion - Funcionamiento;15611393000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.002;Aportes a la seguridad social en salud;10.0 - Aportes Nacion - Funcionamiento;11066518000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.003;Aportes de cesantías ;10.0 - Aportes Nacion - Funcionamiento;12524083000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.004;Aportes a cajas de compensación familiar;10.0 - Aportes Nacion - Funcionamiento;5780860000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.005;Aportes generales al sistema de riesgos laborales;10.0 - Aportes Nacion - Funcionamiento;1090512000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.006;Aportes al ICBF;10.0 - Aportes Nacion - Funcionamiento;4382215000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.03.001.01.01;Vacaciones administrativos;10.0 - Aportes Nacion - Funcionamiento;135725000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.03.001.01.02;Vacaciones docentes;10.0 - Aportes Nacion - Funcionamiento;251270000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.03.001.01.03;Vacaciones trabajadores oficiales;10.0 - Aportes Nacion - Funcionamiento;139319000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.03.001.03.01;Bonificación especial de recreación administrativos;10.0 - Aportes Nacion - Funcionamiento;25772000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.03.009;Prima técnica no salarial;10.0 - Aportes Nacion - Funcionamiento;479375000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.03.090;Bonificación por productividad académica;10.0 - Aportes Nacion - Funcionamiento;145978000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.01.01;Sueldo básico supernumerarios;10.0 - Aportes Nacion - Funcionamiento;1179051000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.01.02;Sueldo básico docentes ocasionales;10.0 - Aportes Nacion - Funcionamiento;80897681000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.01.03;Sueldo básico docentes catédraticos;10.0 - Aportes Nacion - Funcionamiento;8752395000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.04;Subsidio de alimentación;10.0 - Aportes Nacion - Funcionamiento;35491000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.05;Auxilio de transporte;10.0 - Aportes Nacion - Funcionamiento;75881000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.06.01;Prima de servicio supernumerarios;10.0 - Aportes Nacion - Funcionamiento;112452000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.06.02;Prima de servicio docentes ocasionales;10.0 - Aportes Nacion - Funcionamiento;2146524000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.07;Bonificación por servicios prestados;10.0 - Aportes Nacion - Funcionamiento;36569000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.08.01.01;Prima de navidad supernumerarios;10.0 - Aportes Nacion - Funcionamiento;27831000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.08.01.02;Prima de navidad docentes ocasionales;10.0 - Aportes Nacion - Funcionamiento;787249000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.08.01.03;Prima de navidad docentes catedráticos;10.0 - Aportes Nacion - Funcionamiento;263071000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.08.02.01;Prima de vacaciones supernumerarios;10.0 - Aportes Nacion - Funcionamiento;22300000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.08.02.02;Prima de vacaciones docentes ocasionales;10.0 - Aportes Nacion - Funcionamiento;1014908000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.001;Aportes a la seguridad social en pensiones;10.0 - Aportes Nacion - Funcionamiento;11397599000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.002;Aportes a la seguridad social en salud;10.0 - Aportes Nacion - Funcionamiento;9107387000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.003;Aportes de cesantías ;10.0 - Aportes Nacion - Funcionamiento;8554166000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.004;Aportes a cajas de compensación familiar;10.0 - Aportes Nacion - Funcionamiento;4134413000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.005;Aportes generales al sistema de riesgos laborales;10.0 - Aportes Nacion - Funcionamiento;1185446000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.006;Aportes al ICBF;10.0 - Aportes Nacion - Funcionamiento;3101208000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.03.001.01.01;Vacaciones supernumerarios;10.0 - Aportes Nacion - Funcionamiento;16731000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.03.001.01.02;Vacaciones docentes ocasionales;10.0 - Aportes Nacion - Funcionamiento;638672000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.03.001.03;Bonificación especial de recreación;10.0 - Aportes Nacion - Funcionamiento;16743000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.03.090;Bonificación por productividad académica;10.0 - Aportes Nacion - Funcionamiento;398058000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.001;Minerales; electricidad, gas y agua;10.0 - Aportes Nacion - Funcionamiento;94068717
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.002;Productos alimenticios, bebidas y tabaco; textiles, prendas de vestir y productos de cuero;10.0 - Aportes Nacion - Funcionamiento;81774009
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.003;Otros bienes transportables (excepto productos metálicos, maquinaria y equipo);10.0 - Aportes Nacion - Funcionamiento;109208739
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.004;Productos metálicos, maquinaria y equipo;10.0 - Aportes Nacion - Funcionamiento;772487209
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.006.00;Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua;10.0 - Aportes Nacion - Funcionamiento;2378231307
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.007;Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing;10.0 - Aportes Nacion - Funcionamiento;378767309
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.008;Servicios prestados a las empresas y servicios de producción ;10.0 - Aportes Nacion - Funcionamiento;6845716988
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.009.00;Servicios para la comunidad, sociales y personales;10.0 - Aportes Nacion - Funcionamiento;760415496
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.010;Viáticos de los funcionarios en comisión;10.0 - Aportes Nacion - Funcionamiento;53499512
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.03.03.001;Membresías internacionales;10.0 - Aportes Nacion - Funcionamiento;1909242
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.04.05.001;Membresías nacionales;10.0 - Aportes Nacion - Funcionamiento;24194862
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.02.011;Devolución de Dotación;10.0 - Aportes Nacion - Funcionamiento;238578
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.02.012.02;Auxilios funerarios a cargo de la entidad;10.0 - Aportes Nacion - Funcionamiento;510733
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.02.030;Auxilio sindical (no de pensiones);10.0 - Aportes Nacion - Funcionamiento;22503673
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.02.097;Auxilios Médicos;10.0 - Aportes Nacion - Funcionamiento;1039883
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.03.013;Afiliación Riesgos Laborales contratistas Grado IV y V;10.0 - Aportes Nacion - Funcionamiento;8204535
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.01.51;Impuesto sobre vehículos automotores;10.0 - Aportes Nacion - Funcionamiento;897344
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.01.52;Impuesto predial unificado;10.0 - Aportes Nacion - Funcionamiento;617058287
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.03;Tasas y derechos administrativos;10.0 - Aportes Nacion - Funcionamiento;27863661
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.01.01;Sueldo básico administrativos;10.5 - Aportes Nación - Política de gratuidad;5249062000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.02;Horas extras, dominicales, festivos y recargos;10.5 - Aportes Nación - Política de gratuidad;243070000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.03;Gastos de representación;10.5 - Aportes Nación - Política de gratuidad;7772426000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.06.03;Prima de servicio trabajadores oficiales;10.5 - Aportes Nación - Política de gratuidad;26635000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.07.03;Bonificación por servicios prestados trabajadores oficiales;10.5 - Aportes Nación - Política de gratuidad;353469000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.001;Aportes a la seguridad social en pensiones;10.5 - Aportes Nación - Política de gratuidad;2829253000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.002;Aportes a la seguridad social en salud;10.5 - Aportes Nación - Política de gratuidad;2422616000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.003;Aportes de cesantías ;10.5 - Aportes Nación - Política de gratuidad;2676347000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.004;Aportes a cajas de compensación familiar;10.5 - Aportes Nación - Política de gratuidad;1264028000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.005;Aportes generales al sistema de riesgos laborales;10.5 - Aportes Nación - Política de gratuidad;230084000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.006;Aportes al ICBF;10.5 - Aportes Nación - Política de gratuidad;847253000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.01.03;Sueldo básico docentes catédraticos;10.5 - Aportes Nación - Política de gratuidad;227557000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.001;Aportes a la seguridad social en pensiones;10.5 - Aportes Nación - Política de gratuidad;809713000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.002;Aportes a la seguridad social en salud;10.5 - Aportes Nación - Política de gratuidad;203331000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.003;Aportes de cesantías ;10.5 - Aportes Nación - Política de gratuidad;1253402000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.004;Aportes a cajas de compensación familiar;10.5 - Aportes Nación - Política de gratuidad;603895000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.006;Aportes al ICBF;10.5 - Aportes Nación - Política de gratuidad;452966000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.002;Productos alimenticios, bebidas y tabaco; textiles, prendas de vestir y productos de cuero;10.5 - Aportes Nación - Política de gratuidad;933435929
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.003;Otros bienes transportables (excepto productos metálicos, maquinaria y equipo);10.5 - Aportes Nación - Política de gratuidad;55126597
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.006.00;Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua;10.5 - Aportes Nación - Política de gratuidad;7710390510
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.007;Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing;10.5 - Aportes Nación - Política de gratuidad;1891444797
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.008;Servicios prestados a las empresas y servicios de producción ;10.5 - Aportes Nación - Política de gratuidad;2625235327
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.04.05.002;Distintas a membresías;10.5 - Aportes Nación - Política de gratuidad;22245052
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.06.03;Beneficios educativos a la comunidad universitaria;10.5 - Aportes Nación - Política de gratuidad;53115827
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.02.011;Devolución de Dotación;10.5 - Aportes Nación - Política de gratuidad;47731913
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.02.094;Auxilios Salud Visual;10.5 - Aportes Nación - Política de gratuidad;150106
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.01.14;Gravamen a los movimientos financieros;10.5 - Aportes Nación - Política de gratuidad;129676147
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.01.52;Impuesto predial unificado;10.5 - Aportes Nación - Política de gratuidad;567422795
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.006.00;Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua;13 - Cooperativas;1518842118
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.007;Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing;13 - Cooperativas;173019263
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.008;Servicios prestados a las empresas y servicios de producción ;13 - Cooperativas;27246619
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.01.01;Sueldo básico administrativos;17 - Devolucion descuento electoral;141784000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.03;Gastos de representación;17 - Devolucion descuento electoral;890901000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.04.01;Subsidio de alimentación administrativos;17 - Devolucion descuento electoral;17014000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.04.02;Subsidio de alimentación trabajadores oficiales;17 - Devolucion descuento electoral;17014000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.05.01;Auxilio de transporte administrativos;17 - Devolucion descuento electoral;45371000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.05.02;Auxilio de transporte trabajadores oficiales;17 - Devolucion descuento electoral;9358000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.07.03;Bonificación por servicios prestados trabajadores oficiales;17 - Devolucion descuento electoral;5671000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.10;Viáticos de los funcionarios en comisión;17 - Devolucion descuento electoral;48894000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.01.01;Sueldo básico supernumerarios;17 - Devolucion descuento electoral;8468000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.01.03;Sueldo básico docentes catédraticos;17 - Devolucion descuento electoral;19398000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.05;Auxilio de transporte;17 - Devolucion descuento electoral;3386000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.01.001.08.02.02;Prima de vacaciones docentes ocasionales;17 - Devolucion descuento electoral;2743000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.001;Aportes a la seguridad social en pensiones;17 - Devolucion descuento electoral;172967000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.03.090;Bonificación por productividad académica;17 - Devolucion descuento electoral;11669000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.006.00;Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua;17 - Devolucion descuento electoral;4379750000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.006.00;Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua;18-Articulo 87 CESU;764359000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.01;Prima de navidad administrativos;18-Articulo 87 CESU;400000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.02;Prima de navidad docentes;18-Articulo 87 CESU;600000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.03;Prima de navidad trabajadores oficiales;18-Articulo 87 CESU;200000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.03;Gastos de representación;20 - Propios;1121371000.00
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.05.01;Auxilio de transporte administrativos;20 - Propios;10554000.00
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.002.12.02.01;Beneficios a los empleados a largo plazo administrativos;20 - Propios;4293000.00
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.03.090;Bonificación por productividad académica;20 - Propios;9808000.00
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.001;Minerales; electricidad, gas y agua;20 - Propios;202264627.81
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.002;Productos alimenticios, bebidas y tabaco; textiles, prendas de vestir y productos de cuero;20 - Propios;50182304.11
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.003;Otros bienes transportables (excepto productos metálicos, maquinaria y equipo);20 - Propios;195717313.11
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.004;Productos metálicos, maquinaria y equipo;20 - Propios;169663193.59
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.006.00;Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua;20 - Propios;5619646367.46
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.007;Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing;20 - Propios;27655682.76
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.008;Servicios prestados a las empresas y servicios de producción ;20 - Propios;975783687.33
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.009.00;Servicios para la comunidad, sociales y personales;20 - Propios;25202336.69
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.010;Viáticos de los funcionarios en comisión;20 - Propios;118910093.26
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.04.05.002;Distintas a membresías;20 - Propios;5626003.84
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.06.03;Beneficios educativos a la comunidad universitaria;20 - Propios;71763673.96
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.02.010.01;Incapacidades (no de pensiones);20 - Propios;54211417.91
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.02.011;Devolución de Dotación;20 - Propios;2826631.06
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.07.02.030;Auxilio sindical (no de pensiones);20 - Propios;54227520.98
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.08.02;Apoyo socieconómico a estudiantes;20 - Propios;23261691.22
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.13.01.001;Sentencias;20 - Propios;500000000.00
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.01.14;Gravamen a los movimientos financieros;20 - Propios;57962525.19
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.01.52;Impuesto predial unificado;20 - Propios;926929572.73
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.01.53;Impuesto de registro;20 - Propios;415794.06
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.03;Tasas y derechos administrativos;20 - Propios;2629359.54
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.04.01;Cuota de fiscalización y auditaje;20 - Propios;900000000.00
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.8.06;Gastos por tributos, tasas, contribuciones, multas, sanciones e intereses de mora;20 - Propios;570403.40
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.01;Prima de navidad administrativos;21 - Devolucion IVA;2000000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.02;Prima de navidad docentes;21 - Devolucion IVA;3000000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.03;Prima de navidad trabajadores oficiales;21 - Devolucion IVA;1000000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.006.00;Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua;21 - Devolucion IVA;471839000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.01.01;Sueldo básico administrativos;31 - Posgrados;3550094000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.01.02;Sueldo básico docentes;31 - Posgrados;4291475000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.03;Gastos de representación;31 - Posgrados;3158113000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.06.02;Prima de servicio docentes;31 - Posgrados;903181000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.001;Aportes a la seguridad social en pensiones;31 - Posgrados;1584514000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.002;Aportes a la seguridad social en salud;31 - Posgrados;1123221000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.02.003;Aportes de cesantías ;31 - Posgrados;1271160000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.001;Aportes a la seguridad social en pensiones;31 - Posgrados;1156825000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.02.02.002;Aportes a la seguridad social en salud;31 - Posgrados;924375000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.001;Minerales; electricidad, gas y agua;31 - Posgrados;306950449
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.002;Productos alimenticios, bebidas y tabaco; textiles, prendas de vestir y productos de cuero;31 - Posgrados;266087419
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.003;Otros bienes transportables (excepto productos metálicos, maquinaria y equipo);31 - Posgrados;28024698
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.004;Productos metálicos, maquinaria y equipo;31 - Posgrados;166778214
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.008;Servicios prestados a las empresas y servicios de producción ;31 - Posgrados;125226761
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.009.00;Servicios para la comunidad, sociales y personales;31 - Posgrados;11157772
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.3.06.03;Beneficios educativos a la comunidad universitaria;31 - Posgrados;1279421
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.01;Prima de navidad administrativos;32 - Extension;60000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.02;Prima de navidad docentes;32 - Extension;90000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.03;Prima de navidad trabajadores oficiales;32 - Extension;30000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.01;Prima de vacaciones administrativos;32 - Extension;240000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.02;Prima de vacaciones docentes;32 - Extension;270000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.03;Prima de vacaciones trabajadores oficiales;32 - Extension;210000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.001;Minerales; electricidad, gas y agua;32 - Extension;44311807
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.01;Prima de navidad administrativos;33 - Convenios con derechos;281555000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.02;Prima de navidad docentes;33 - Convenios con derechos;422333000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.03;Prima de navidad trabajadores oficiales;33 - Convenios con derechos;140778000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.01;Prima de vacaciones administrativos;33 - Convenios con derechos;1126222000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.02;Prima de vacaciones docentes;33 - Convenios con derechos;1266999000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.03;Prima de vacaciones trabajadores oficiales;33 - Convenios con derechos;985444000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.02.006.00;Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua;33 - Convenios con derechos;625150515
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.01;Prima de navidad administrativos;35 - Educacion continuada;45333000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.02;Prima de navidad docentes;35 - Educacion continuada;68000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.01.03;Prima de navidad trabajadores oficiales;35 - Educacion continuada;22667000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.01;Prima de vacaciones administrativos;35 - Educacion continuada;181333000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.02;Prima de vacaciones docentes;35 - Educacion continuada;204000000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.1.01.01.001.08.02.03;Prima de vacaciones trabajadores oficiales;35 - Educacion continuada;158667000
+01 - ADMINISTRATIVA Y FINANCIERA;2.1.2.02.01.001;Minerales; electricidad, gas y agua;35 - Educacion continuada;22832273
