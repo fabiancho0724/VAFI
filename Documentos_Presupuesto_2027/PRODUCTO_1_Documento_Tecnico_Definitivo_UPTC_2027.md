@@ -81,18 +81,25 @@ Para garantizar la máxima confiabilidad técnica, la totalidad de los datos ana
 
 ## 5. ANTECEDENTES Y EVOLUCIÓN HISTÓRICA DE CADA RECURSO
 
-### 5.1. Recurso 10.0: Aportes de la Nación - Funcionamiento
-* **Identificación Presupuestal:** Código `1.1.02.06.006.01.01`. Fuente: Giros de la Nación con Situación de Fondos. Naturaleza: Transferencia corriente de destinación obligatoria orientada a financiar la nómina docente y administrativa y los gastos mínimos irreductibles de operación conforme al Artículo 86 de la Ley 30 de 1992 y la Ley 2568 de 2026.
+### 5.1. Recurso 10.0: Aportes de la Nación - Funcionamiento (Artículo 86 Ley 30 de 1992, Reforma Ley 2568 de 2026 y Asignación PGN 2027)
+* **Identificación Presupuestal:** Código `1.1.02.06.006.01.01`. Fuente: Giros de la Nación con Situación de Fondos. Naturaleza: Transferencia corriente de destinación obligatoria orientada a financiar la nómina docente y administrativa y los gastos mínimos irreductibles de operación.
+* **Fundamentación Normativa del Artículo 86 de la Ley 30 de 1992 y sus Reformas Estructurales:**
+  * *Régimen Original (Ley 30 de 1992):* El Artículo 86 consagró el mandato constitucional de garantizar que los presupuestos de las universidades oficiales reciban anualmente aportes del Presupuesto General de la Nación que representen, en pesos constantes, una suma no inferior a la transferida en el año inmediatamente anterior, tomando como referencia inicial el Índice de Precios al Consumidor (IPC).
+  * *La Brecha Histórica Estructural:* Durante más de tres décadas, la indexación exclusiva por IPC resultó deficitaria e insuficiente para cubrir el costo real del servicio público educativo, dado que los salarios docentes crecen por encima de la inflación general debido al régimen de puntos del Decreto 1279 de 2002 (producción académica, títulos y escalafón), así como por la devaluación que encarece el licenciamiento de software, las bases de datos científicas internacionales y los insumos de investigación.
+  * *La Reforma Estructural de la Ley 2568 de 2026:* Mediante la **Ley 2568 de 2026**, el Congreso de la República aprobó la reforma estructural a los Artículos 86 y 87 de la Ley 30 de 1992, estableciendo de manera imperativa que el **piso legal irreductible de ajuste de los aportes de la Nación será el Índice de Costos de la Educación Superior (ICES)** elaborado por el DANE, cerrando la brecha estructural de financiamiento e incorporando de manera definitiva los recursos base para nivelaciones y formalización de plantas.
+* **Asignación en el Proyecto de Presupuesto General de la Nación (PGN 2027):**
+  * Conforme al **Proyecto de Ley del Presupuesto General de la Nación para la vigencia fiscal 2027** radicado por el Ministerio de Hacienda y Crédito Público y las asignaciones del Ministerio de Educación Nacional, la partida oficial definitiva para la **Unidad 01 - Administrativa y Financiera de la UPTC** quedó fijada en **$345.930.009.082 COP**.
+  * Este aforo representa el **78,65%** del presupuesto de la administración central, garantizando la cobertura de los doce (12) meses de sueldo básico y factores salariales de la nómina docente de carrera, empleados públicos administrativos y trabajadores oficiales.
 * **Comportamiento Histórico (2016–2027):**  
-  La serie histórica de transferencias corrientes de la Nación para funcionamiento evidencia un crecimiento continuo:
+  La serie histórica de transferencias corrientes de la Nación para funcionamiento evidencia un crecimiento continuo y sostenido:
   * 2016: $127.302 millones de pesos
   * 2018: $151.440 millones de pesos
   * 2020: $177.100 millones de pesos
   * 2022: $204.530 millones de pesos
   * 2024: $252.310 millones de pesos
   * 2025: $274.240 millones de pesos
-  * 2026: $364.009 millones de pesos (base agregada que incluía nivelaciones extraordinarias y bolsas transversales)
-  * **2027 (Aprobado Unidad Administrativa):** **$345.930.009.082 COP**, representando el 78,65% del presupuesto general de la administración central.
+  * 2026: $364.009 millones de pesos (base agregada que incluía nivelaciones extraordinarias y bolsas transversales del sector)
+  * **2027 (Aprobado PGN / Unidad Administrativa):** **$345.930.009.082 COP**, consolidando la base propia y regular de funcionamiento de la administración central.
 
 ![Evolución Histórica de Aportes de la Nación Recurso 10.0](grafica_1_historico_aportes_nacion.png)
 *Figura 1: Evolución de las transferencias de la Nación para funcionamiento (2016–2027) en miles de millones de COP.*
@@ -118,9 +125,9 @@ Para garantizar la máxima confiabilidad técnica, la totalidad de los datos ana
 * **Identificación Presupuestal:** Código `1.1.02.06.006.02`. Beneficio consagrado en el Artículo 92 de la Ley 30 de 1992 y Art. 481 del Estatuto Tributario.
 * **Valor Proyectado:** Se proyecta en **$6.471.839.000 COP**, amparado en el volumen de solicitudes de compensación tributaria radicadas ante la DIAN por compras y contratos gravados institucionales.
 
-### 5.7. TRATAMIENTO ESPECIAL DE LOS RECURSOS 31, 32, 33 Y 35 (CUPOS ADMINISTRATIVOS: APLICACIÓN DEL ACUERDO 007 DE 2022 DEL CONSEJO SUPERIOR)
+### 5.7. TRATAMIENTO ESPECIAL DE LA SERIE DE RECURSOS 30 (31, 32, 33 Y 35): EL ACUERDO 007 DE 2022 DEL CONSEJO SUPERIOR COMO PARÁMETRO NORMATIVO RECTOR
 
-En estricto cumplimiento de la Instrucción Maestra y con fundamento en el **Acuerdo 007 de 2022 (Febrero 23)** expedido por el Honorable Consejo Superior Universitario (*"Por el cual se unifica la reglamentación de los servicios de extensión universitaria de la Universidad Pedagógica y Tecnológica de Colombia"*), este apartado desarrolla la fundamentación técnica, jurídica y presupuestal de los recursos derivados de programas autofinanciados asignados a la Unidad Administrativa:
+En estricto cumplimiento de la Instrucción Maestra y con fundamento vinculante en el **Acuerdo 007 de 2022 (Febrero 23)** expedido por el Honorable Consejo Superior Universitario (*"Por el cual se unifica la reglamentación de los servicios de extensión universitaria de la Universidad Pedagógica y Tecnológica de Colombia"*), este apartado desarrolla la fundamentación técnica, jurídica y presupuestal de los recursos derivados de programas autofinanciados que conforman la **Serie de Recursos 30** asignados a la Unidad Administrativa:
 
 ![Estructura de Cupos Asignados a la Administración](grafica_5_cupos_administrativos.png)
 *Figura 2: Distribución de los recursos por cupos institucionales asignados a la administración central ($25.364M).*
@@ -136,18 +143,18 @@ En estricto cumplimiento de la Instrucción Maestra y con fundamento en el **Acu
 │ **33**  │ CONVENIOS CON DERECHOS       │ $  4.848.481.515 COP   │   1,10 %    │ Cupo central    │
 │ **35**  │ EDUCACIÓN CONTINUADA         │ $    702.832.273 COP   │   0,16 %    │ Retención adm.  │
 ├─────────┼──────────────────────────────┼────────────────────────┼─────────────┼─────────────────┤
-│ TOTAL   │ CUPOS ASIGNADOS A LA ADMÓN.  │ $ 25.364.088.328 COP   │   5,77 %    │ Soporte Central │
+│ TOTAL   │ SERIE DE RECURSOS 30 (VAFI)  │ $ 25.364.088.328 COP   │   5,77 %    │ Soporte Central │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Fundamentación Técnica y Jurídica de los Cupos Administrativos (Acuerdo 007 de 2022):
+#### Fundamentación Técnica y Jurídica de la Serie de Recursos 30 (Acuerdo 007 de 2022 CSU):
 1. **Identificación Individual y Marco Positivo:**
    * **Recurso 31 (Posgrados - $18.868.462.733 COP):** Cupo reglamentario transferido a la administración central por concepto de matrículas de programas de especialización, maestría y doctorado, fijado mediante acuerdos de costos del Consejo Superior para soportar plataformas, bibliotecas y servicios transversales.
    * **Recurso 32 (Extensión - $944.311.807 COP):** Regulado por los **Artículos 12, 23 y 24 del Acuerdo 007 de 2022**. Toda prestación de Servicios Académicos Remunerados (SAR: consultoría, interventoría, asistencia técnica, peritazgos y pruebas de laboratorio) causa derechos institucionales del **25% sobre los costos directos** (Art. 24). De este recaudo, el **Artículo 24 Parágrafo 2 literal a) asigna de forma imperativa el 70% a la Vicerrectoría Administrativa y Financiera (VAFI)** para financiar la administración central.
    * **Recurso 33 (Convenios con Derechos - $4.848.481.515 COP):** Amparado en los **Artículos 11, 14, 23 y 24 del Acuerdo 007 de 2022**, que regulan la suscripción, supervisión y liquidación de convenios y contratos interadministrativos con contraprestación económica. Aplica la deducción institucional central transferida a la VAFI para cubrir los costos indirectos de gestión, pólizas, supervisión y apoyo financiero.
    * **Recurso 35 (Educación Continuada - $702.832.273 COP):** Respaldado de manera específica en el **Parágrafo del Artículo 12 del Acuerdo 007 de 2022**, el cual dispone textualmente: *"La Educación Continuada se regulará por lo dispuesto en el Acuerdo 034 de 2017; no obstante, el 25% de los costos directos por este concepto y su distribución se realizará conforme a lo establecido en el Parágrafo 2° del Artículo 24 del presente Acuerdo"*. En consecuencia, el **70% del recaudo institucional del 25% es transferido a la Vicerrectoría Administrativa y Financiera**.
 2. **Naturaleza del Cupo Administrativo:**  
-   Los valores presupuestados **no corresponden al recaudo bruto total de cada programa ni a proyecciones discrecionales o arbitrarias**. Representan formalmente los **cupos de retención institucional asignados a la Unidad Administrativa**, reglamentados positivamente por el Consejo Superior Universitario en el Acuerdo 007 de 2022 y las resoluciones de costeo académico.
+   Los valores presupuestados en los Recursos 30 **no corresponden al recaudo bruto total de cada programa ni a proyecciones discrecionales o arbitrarias**. Representan formalmente los **cupos de retención institucional asignados a la Unidad Administrativa**, reglamentados positivamente por el Consejo Superior Universitario en el Acuerdo 007 de 2022 y las resoluciones de costeo académico.
 3. **Relación entre Cupos y Sostenimiento de Costos Indirectos (Art. 23 Acuerdo 007/2022):**  
    El Artículo 23 define con precisión que el presupuesto de extensión se conforma por *costos directos*, *costos indirectos* y *transferencias a la Universidad*. La porción del 70% del derecho del 25% que percibe la VAFI financia la infraestructura común indispensable:
    * Sostenimiento y licenciamiento de plataformas virtuales de aprendizaje (Moodle, SGA, sistemas de admisión y registro).
@@ -169,15 +176,16 @@ En estricto cumplimiento de la Instrucción Maestra y con fundamento en el **Acu
 | Nivel Normativo | Disposición Legal | Ámbito de Aplicación | Implicación Directa en el Presupuesto UPTC 2027 |
 |---|---|---|---|
 | **Constitucional** | Artículos 69, 352 y 353 C.P. | Autonomía Universitaria y Régimen Presupuestal Orgánico. | Faculta al Consejo Superior para fijar y aprobar su presupuesto de rentas y gastos conforme al Estatuto Orgánico. |
-| **Legal** | Artículo 86 Ley 30 de 1992 | Aportes del PGN para funcionamiento de universidades estatales. | Obligación del Estado de transferir aportes indexados; piso presupuestal irreductible en términos reales. |
-| **Legal** | Ley 2568 de 2026 | Reforma a los Arts. 86 y 87 de la Ley 30 de 1992. | **Piso vinculante ICES DANE**: Los aportes crecen como mínimo con el ICES, cerrando la brecha estructural de costos universitarios. |
+| **Legal** | Artículo 86 Ley 30 de 1992 | Aportes del PGN para funcionamiento de universidades estatales. | Obligación del Estado de transferir aportes indexados; principio de irreductibilidad en términos reales. |
+| **Legal** | Ley 2568 de 2026 | Reforma Estructural a los Arts. 86 y 87 de la Ley 30 de 1992. | **Piso vinculante ICES DANE**: Los aportes crecen como mínimo con el ICES, cerrando la brecha vegetativa de costos universitarios (Decreto 1279). |
+| **Legal** | Proyecto de Ley Presupuesto General de la Nación (PGN 2027) | Asignación de Apropiaciones del Gobierno Nacional (MinHacienda / MEN). | Fija el techo presupuestal oficial para funcionamiento (R10.0: $345.930M), Gratuidad (R10.5: $41.501M), Votación (R17: $5.774M) y Art. 87 CESU (R18: $1.964M). |
 | **Legal** | Ley 2307 de 2023 / Decreto 2271 de 2023 | Gratuidad en Matrícula de Educación Superior. | Transfiere el costo de la matrícula de pregrado a la Nación; se formaliza su programación en doceavas mensuales. |
 | **Legal** | Artículo 142 Ley 1819 de 2016 (Art. 19-4 E.T.) | Excedentes Financieros de Cooperativas. | Destinación exclusiva del 20% del excedente cooperativo a cupos y fomento de permanencia estudiantil. |
 | **Legal** | Leyes 403 de 1997 y 815 de 2003 | Descuento Electoral por Votación. | Reembolso del 10% del descuento en matrícula a favor de los estudiantes sufragantes certificados. |
 | **Legal** | Artículo 92 Ley 30 / Art. 481 Estatuto Tributario | Beneficios Tributarios de IVA a IES estatales. | Derecho a la compensación y devolución de IVA pagado en adquisición de bienes y servicios institucionales. |
 | **Jurisprudencial** | Sentencias Unificación Consejo de Estado | Garantías Laborales y Prestacionales Docentes. | Obligación de presupuestar prestaciones sociales completas (cesantías, primas y vacaciones) para docentes ocasionales y catedráticos. |
-| **Reglamentario** | Acuerdo 007 de 2022 CSU UPTC | Estatuto Unificado de Extensión (Arts. 12, 23 y 24). | Retención obligatoria del 25% sobre costos directos de proyectos y educación continuada. **Asignación perentoria del 70% a la Vicerrectoría Administrativa y Financiera (VAFI)**. |
-| **Reglamentario** | Estatuto Presupuestal y Acuerdos de Posgrados CSU | Normativa interna de posgrados y convenios. | Reglamentación de cupos administrativos (20%-35%) sobre posgrados (R31) y convenios con derechos (R33). |
+| **Reglamentario** | **Acuerdo 007 de 2022 CSU UPTC** | **Estatuto Unificado de Extensión — Parámetro Normativo Rector para la Serie de Recursos 30 (31, 32, 33 y 35).** | **Arts. 11, 12, 14, 23 y 24**: Retención institucional del 25% sobre costos directos de proyectos y educación continuada. **Asignación perentoria del 70% a la Vicerrectoría Administrativa y Financiera (VAFI)**. |
+| **Reglamentario** | Estatuto Presupuestal y Acuerdos de Posgrados CSU | Normativa interna de posgrados y convenios. | Reglamentación de cupos administrativos sobre posgrados (R31) y convenios con derechos (R33). |
 
 ### 6.2. Supuestos Macroeconómicos del Marco Fiscal de Mediano Plazo (MFMP)
 
@@ -193,15 +201,17 @@ La formulación presupuestal incorpora los parámetros macrofiscales oficiales f
 
 ### 6.3. Decisiones Presupuestales Institucionales Basadas en Políticas Públicas
 
-1. **Adopción de la Programación en Doceavas de Gratuidad (Ley 2307 de 2023):**  
-   Ante la directriz vinculante de MinHacienda, la UPTC estructuró la ejecución de Gratuidad (R10.5) en doce cuotas mensuales de **$3.458.423.500 COP**, eliminando la necesidad de endeudamiento de tesorería a corto plazo y asegurando liquidez continua para pagar la nómina académica de pregrado.
-2. **Aplicación del Mandato de Indexación por ICES (Ley 2568 de 2026):**  
-   La universidad incorporó en el Recurso 10.0 el ajuste correspondiente al costo real del servicio educativo superior, absorbiendo el impacto financiero vegetativo de los puntos docentes del Decreto 1279 de 2002.
-3. **Formalización Plena del Gasto Prestacional Docente (Doctrina Consejo de Estado):**  
+1. **Alineación con el Proyecto de Presupuesto General de la Nación (PGN 2027):**  
+   La UPTC incorporó como techo presupuestal soberano las apropiaciones del PGN 2027 radicadas por el Gobierno Nacional, consolidando **$345.930.009.082 COP** en Aportes Nación Funcionamiento (R10.0), asegurando una base presupuestal sólida y verificable en los sistemas oficiales del Ministerio de Hacienda (SIIF Nación).
+2. **Aplicación del Mandato de Indexación por ICES (Artículo 86 Ley 30 y Reforma Ley 2568 de 2026):**  
+   En estricto cumplimiento del mandato de la Ley 2568 de 2026, la universidad adoptó el ICES como deflactor legal mínimo de los recursos nacionales, garantizando que el incremento presupuestal absorba el impacto financiero vegetativo de los puntos docentes del Decreto 1279 de 2002 y prevenga el déficit en nómina.
+3. **Adopción de la Programación en Doceavas de Gratuidad (Ley 2307 de 2023):**  
+   Ante la directriz vinculante de MinHacienda, la UPTC estructuró la ejecución de Gratuidad (R10.5) en doce cuotas mensuales de **$3.458.423.500 COP** ($41.501M total), eliminando descalces de liquidez y garantizando la cobertura de matrícula cero para más de 28.000 estudiantes de pregrado.
+4. **Formalización Plena del Gasto Prestacional Docente (Doctrina Consejo de Estado):**  
    En acatamiento a las sentencias de unificación de la Sección Segunda del Consejo de Estado, la UPTC asignó **$139.762 millones de pesos** para garantizar el pago de cesantías, primas de navidad, primas de servicios y vacaciones a los docentes ocasionales y catedráticos, blindando jurídicamente a la institución contra demandas laborales.
-4. **Directiva Presidencial de Austeridad del Gasto Público:**  
+5. **Directiva Presidencial de Austeridad del Gasto Público:**  
    Se aplicaron topes estrictos a los gastos en comisiones de viáticos ($53M en R10.0 y $118M en R20), publicidad suntuaria y papelería física mediante la consolidación del Sistema de Gestión Documental Electrónico de Archivo (SGDEA).
-5. **Decisión Reglamentaria de Cupos Administrativos (Acuerdo 007 de 2022 del CSU):**  
+6. **Parámetro Normativo Rector de la Serie de Recursos 30 (Acuerdo 007 de 2022 del CSU):**  
    En cumplimiento riguroso de los Artículos 12, 23 y 24 del Acuerdo 007 de 2022 del Consejo Superior Universitario, la UPTC determinó los aforos de los Recursos 32 (Extensión - $944.311.807 COP) y 35 (Educación Continuada - $702.832.273 COP) aplicando la fórmula legal que asigna el **70% del derecho del 25% a la Vicerrectoría Administrativa y Financiera (VAFI)**. Junto con el cupo de Posgrados ($18.868.462.733 COP en R31) y Convenios con Derechos ($4.848.481.515 COP en R33), se consolidan **$25.364.088.328 COP** que garantizan la sostenibilidad financiera de los servicios centrales y el mantenimiento físico de los campus universitarios.
 
 ---
@@ -276,17 +286,19 @@ Esta deducción asegura de manera autosostenible los fondos necesarios para que 
 
 ---
 
-## 8. PARÁMETROS Y SUPUESTOS TÉCNICOS
+## 8. PARÁMETROS Y SUPUESTOS TÉCNICOS Y NORMATIVOS
 
-| Parámetro / Supuesto | Valor Adoptado | Fuente Oficial | Justificación Técnica | Impacto en el Presupuesto |
+| Parámetro / Supuesto Normativo | Valor Adoptado | Fuente Oficial / Fundamento | Justificación Técnica y Presupuestal | Impacto en el Presupuesto |
 |---|:---:|---|---|---|
-| **Asignación R10.0 Funcionamiento** | $345.930,0M | PGN / Asignación VAFI | Techo legal asignado a la Unidad Administrativa para nómina central. | Rige el 78,65% del presupuesto administrativo. |
-| **Flujo Doceavas Gratuidad R10.5** | $3.458,4M/mes | Ley 2307 / MinHacienda | Giro mensual regular en 12 pagos ($41.501M total). | Elimina riesgo de liquidez en pregrado. |
-| **Cupo Administrativo Posgrados R31** | $18.868,5M | Sistema Financiero GOOBI | Deducción institucional histórica sobre programas de posgrado. | Financia servicios centrales y plataformas. |
-| **Cupo Administrativo Convenios R33** | $4.848,5M | Ejecución Contratos UPTC | Retención central en convenios interadministrativos. | Apoya gastos operativos institucionales. |
-| **Cupos Extensión y Ed. Cont. (32 y 35)**| $1.647,1M | Acuerdos Reglamentarios | Deducciones reglamentarias de extensión y educación continua. | Apoyo a supervisión y dirección académica. |
-| **Compensación IVA DIAN R21** | $6.471,8M | Certificaciones Contables | Resoluciones efectivas de devolución proyectadas por la DIAN. | Financia compras y bienes gravados. |
-| **Autogestión Depurada R20** | $11.131,5M | Tesorería UPTC | Recaudo de derechos pecuniarios netos sin posgrados. | Operación ordinaria de la administración. |
+| **Asignación Presupuesto General de la Nación (PGN 2027 - R10.0)** | $345.930,0M | Proyecto de Ley PGN 2027 / MinHacienda | Techo legal soberano aforado a la Unidad Administrativa para nómina y operación regular. | Rige el 78,65% del presupuesto general. |
+| **Piso Legal Indexatorio (Reforma Art. 86 Ley 30 — Ley 2568/2026)** | 6,0% – 6,5% (ICES) | DANE / Ley 2568 de 2026 | Mandato vinculante de ajuste presupuestal mínimo por costos de la educación superior (Decreto 1279). | Previene descalces vegetativos salariales. |
+| **Flujo Doceavas Gratuidad (R10.5)** | $3.458,4M/mes ($41.501,1M) | Ley 2307 / Dec. 2271 / PGN 2027 | Giro mensual regular en 12 pagos regulares programados en el PAC por MinHacienda. | Elimina riesgos de iliquidez en pregrado. |
+| **Parámetro Rector Serie 30: Cupo Posgrados (R31)** | $18.868,5M | Acuerdos Costos CSU / Sistema GOOBI | Deducción central reglamentaria sobre matrículas de especialización, maestría y doctorado. | Financia plataformas y servicios comunes. |
+| **Parámetro Rector Serie 30: Cupo Extensión (R32)** | $944,3M | Arts. 12, 23 y 24 Acuerdo 007/2022 CSU | Retención del 25% sobre costos directos SAR; 70% asignado por mandato legal a la VAFI. | Cubre costos indirectos y supervisión. |
+| **Parámetro Rector Serie 30: Cupo Convenios (R33)** | $4.848,5M | Arts. 11, 14, 23 y 24 Acuerdo 007/2022 CSU | Deducción institucional central sobre convenios interadministrativos con contraprestación. | Apoya la operación técnica y campus. |
+| **Parámetro Rector Serie 30: Cupo Ed. Continuada (R35)** | $702,8M | Parágrafo Art. 12 y Art. 24 Ac. 007/2022 | Retención del 25% sobre costos directos de diplomados y cursos; 70% asignado a la VAFI. | Sostenimiento de plataformas y logística. |
+| **Compensación IVA DIAN (R21)** | $6.471,8M | Art. 92 Ley 30/92 / DIAN | Devolución acumulada y ordinaria de IVA en adquisiciones gravadas institucionales. | Financia bienes y compras gravadas. |
+| **Autogestión Depurada (R20)** | $11.131,5M | Tesorería UPTC / Estatuto | Recaudo de derechos pecuniarios netos sin posgrados ni gratuidad de pregrado. | Operación ordinaria administrativa. |
 
 ---
 
@@ -467,18 +479,18 @@ A continuación se presenta la matriz oficial definitiva que vincula de manera s
 
 | Recurso | Fuente Oficial Primaria | Modelo / Metodología | Parámetro Clave | Fundamento Legal | Proyección 2027 ($ COP) | Grado Certeza |
 |---|---|---|---|---|---:|:---:|
-| **10.0** | SIIF / MinHacienda | Indexación PGN / ICES | Base aprobada VAFI | Art. 86 Ley 30/92 | 345.930.009.082 | Muy Alto |
-| **10.5** | MinHacienda Doceavas | Macro / Per Cápita | 12 cuotas regulares | Ley 2307 / Dec. 2271 | 41.501.082.000 | Muy Alto |
-| **13** | DIAN / Cooperativas | Liquidación DIAN | 20% Excedentes | Art. 142 Ley 1819 | 1.719.108.000 | Alto |
-| **17** | MinHacienda Electoral | Censo Sufragantes | 10% Matrícula | Leyes 403 / 815 | 5.774.388.000 | Alto |
-| **18** | CESU / PGN | Fórmula CESU | Calidad y Gestión | Art. 87 Ley 30/92 | 1.964.359.000 | Alto |
-| **20** | Tesorería UPTC | Autogestión Central | Derechos y Servicios | Art. 65 Ley 30/92 | 11.131.476.200 | Alto |
-| **21** | DIAN / Contabilidad | Compensación IVA | Resoluciones trámite | Art. 92 Ley 30/92 | 6.471.839.000 | Alto |
-| **31** | GOOBI / Posgrados | Cupo Administración | Deducción Posgrados | Acuerdos Costos CSU | 18.868.462.733 | Alto |
-| **32** | GOOBI / Extensión | Algoritmo 70% de 25% | Retención SAR Art. 24 | Acuerdo 007/2022 CSU | 944.311.807 | Alto |
-| **33** | GOOBI / Convenios | Cupo Administración | Deducción Convenios | Ac. 007/22 y Estatuto | 4.848.481.515 | Alto |
-| **35** | GOOBI / Ed. Continua| Algoritmo 70% de 25% | Retención Ed. Cont. Art. 12 | Acuerdo 007/2022 CSU | 702.832.273 | Alto |
-| **TOTAL** | **11 RECURSOS OFICIALES** | **MODELO INSTITUCIONAL** | **EQUILIBRIO TOTAL** | **ESTATUTO PRESUPUESTAL** | **439.856.349.610** | **PLENO** |
+| **10.0** | SIIF / MinHacienda | Indexación PGN / ICES | Techo PGN / Base VAFI | Art. 86 Ley 30/92, Ley 2568/26 y PGN 2027 | 345.930.009.082 | Muy Alto |
+| **10.5** | MinHacienda Doceavas | Macro / Per Cápita | 12 cuotas regulares | Ley 2307/23, Dec. 2271 y PGN 2027 | 41.501.082.000 | Muy Alto |
+| **13** | DIAN / Cooperativas | Liquidación DIAN | 20% Excedentes | Art. 142 Ley 1819/16 | 1.719.108.000 | Alto |
+| **17** | MinHacienda Electoral | Censo Sufragantes | 10% Matrícula | Leyes 403/97, 815/03 y PGN 2027 | 5.774.388.000 | Alto |
+| **18** | CESU / PGN | Fórmula CESU | Calidad y Gestión | Art. 87 Ley 30/92, Ley 2568 y PGN 2027 | 1.964.359.000 | Alto |
+| **20** | Tesorería UPTC | Autogestión Central | Derechos y Servicios | Art. 65 Ley 30/92 y Estatuto | 11.131.476.200 | Alto |
+| **21** | DIAN / Contabilidad | Compensación IVA | Resoluciones trámite | Art. 92 Ley 30/92 y Art. 481 E.T. | 6.471.839.000 | Alto |
+| **31** | GOOBI / Posgrados | Cupo Administración | Deducción Posgrados | Acuerdo 007/2022 y Ac. Costos CSU | 18.868.462.733 | Alto |
+| **32** | GOOBI / Extensión | Algoritmo 70% de 25% | Retención SAR Art. 24 | Acuerdo 007/2022 CSU (Arts. 12, 23, 24) | 944.311.807 | Alto |
+| **33** | GOOBI / Convenios | Cupo Administración | Deducción Convenios | Acuerdo 007/2022 CSU (Arts. 11, 14, 23) | 4.848.481.515 | Alto |
+| **35** | GOOBI / Ed. Continua| Algoritmo 70% de 25% | Retención Ed. Cont. Art. 12 | Acuerdo 007/2022 CSU (Par. Art. 12, Art. 24)| 702.832.273 | Alto |
+| **TOTAL** | **11 RECURSOS OFICIALES** | **MODELO INSTITUCIONAL** | **EQUILIBRIO TOTAL** | **ESTATUTO PRESUPUESTAL Y LEY 30** | **439.856.349.610** | **PLENO** |
 
 ---
 

@@ -395,21 +395,26 @@ format_styled_table(fuentes_tbl, [Inches(1.5), Inches(1.1), Inches(1.7), Inches(
 # =============================================================
 add_header("5. ANTECEDENTES Y EVOLUCIÓN HISTÓRICA DE CADA RECURSO", level=1)
 
-add_header("5.1. Recurso 10.0: Aportes de la Nación - Funcionamiento", level=2)
+add_header("5.1. Recurso 10.0: Aportes de la Nación - Funcionamiento (Art. 86 Ley 30, Ley 2568 y PGN 2027)", level=2)
 doc.add_paragraph(
     "Identificación Presupuestal: Código 1.1.02.06.006.01.01. Fuente: Giros de la Nación con Situación de Fondos. "
     "Naturaleza: Transferencia corriente de destinación obligatoria orientada a financiar la nómina docente y administrativa "
     "y los gastos mínimos irreductibles de operación conforme al Artículo 86 de la Ley 30 de 1992 y la Ley 2568 de 2026.\n\n"
+    "Fundamentación Normativa del Artículo 86 y sus Reformas Estructurales:\n"
+    "• Régimen Original (Ley 30 de 1992): Consagró la obligación del Estado de transferir aportes que en pesos constantes no fueran inferiores "
+    "a los del año anterior, atados inicialmente al IPC.\n"
+    "• Brecha Histórica Estructural: La indexación por IPC generó desfinanciamiento crónico al no reconocer el crecimiento vegetativo de los "
+    "salarios docentes por el Decreto 1279 de 2002 (puntos por títulos y producción académica), ni el impacto de la devaluación sobre compras tecnológicas.\n"
+    "• Reforma Estructural de la Ley 2568 de 2026: Sustituyó la regla del IPC por el Índice de Costos de la Educación Superior (ICES) del DANE "
+    "como piso legal vinculante e irreductible, asegurando el cierre definitivo de la brecha presupuestal de funcionamiento.\n\n"
+    "Asignación en el Proyecto de Presupuesto General de la Nación (PGN 2027):\n"
+    "El Proyecto de Ley del PGN 2027 radicado por MinHacienda asignó oficialmente a la Unidad 01 de la UPTC la suma de $345.930.009.082 COP, "
+    "equivalente al 78,65% del presupuesto general administrativo, garantizando la cobertura integral de la planta de personal.\n\n"
     "Comportamiento Histórico (2016–2027):\n"
-    "La serie histórica de transferencias corrientes de la Nación para funcionamiento evidencia un crecimiento continuo:\n"
-    "• 2016: $127.302 millones de pesos\n"
-    "• 2018: $151.440 millones de pesos\n"
-    "• 2020: $177.100 millones de pesos\n"
-    "• 2022: $204.530 millones de pesos\n"
-    "• 2024: $252.310 millones de pesos\n"
-    "• 2025: $274.240 millones de pesos\n"
-    "• 2026: $364.009 millones de pesos (base agregada que incluía nivelaciones extraordinarias y bolsas transversales)\n"
-    "• 2027 (Aprobado Unidad Administrativa): $345.930.009.082 COP, representando el 78,65% del presupuesto general de la administración central."
+    "• 2016: $127.302 millones  |  2018: $151.440 millones  |  2020: $177.100 millones\n"
+    "• 2022: $204.530 millones  |  2024: $252.310 millones  |  2025: $274.240 millones\n"
+    "• 2026: $364.009 millones (base agregada con nivelaciones del sector)\n"
+    "• 2027 (Aprobado PGN / Unidad 01): $345.930.009.082 COP (base regular definitiva de funcionamiento)."
 )
 
 # Insertar Gráfica 1
@@ -455,11 +460,11 @@ doc.add_paragraph(
 )
 
 # 5.7 Cupos Administrativos
-add_header("5.7. TRATAMIENTO ESPECIAL DE LOS RECURSOS 31, 32, 33 Y 35 (CUPOS ADMINISTRATIVOS: ACUERDO 007 DE 2022 CSU)", level=2)
+add_header("5.7. TRATAMIENTO ESPECIAL DE LA SERIE DE RECURSOS 30 (31, 32, 33 Y 35): EL ACUERDO 007 DE 2022 COMO PARÁMETRO NORMATIVO RECTOR", level=2)
 doc.add_paragraph(
     "En estricto cumplimiento de la Instrucción Maestra y con fundamento vinculante en el Acuerdo 007 de 2022 (Febrero 23) "
     "del Consejo Superior Universitario ('Por el cual se unifica la reglamentación de los servicios de extensión universitaria de la UPTC'), "
-    "este apartado desarrolla la fundamentación técnica, jurídica y presupuestal de los recursos autofinanciados asignados a la administración central:"
+    "este apartado desarrolla la fundamentación técnica, jurídica y presupuestal de los recursos autofinanciados que conforman la Serie de Recursos 30 asignados a la administración central:"
 )
 
 # Insertar Gráfica 5
@@ -470,7 +475,7 @@ cupos_data = [
     ["32", "EXTENSIÓN", "$ 944.311.807 COP", "0,21 %", "Retención SAR 25% (Art. 24 Ac. 007/2022) con 70% a favor de la VAFI."],
     ["33", "CONVENIOS CON DERECHOS", "$ 4.848.481.515 COP", "1,10 %", "Cupo central en convenios con contraprestación (Arts. 11, 14, 23 Ac. 007/2022)."],
     ["35", "EDUCACIÓN CONTINUADA", "$ 702.832.273 COP", "0,16 %", "Retención 25% (Art. 12 Par. Ac. 007/2022) con 70% a favor de la VAFI."],
-    ["TOTAL", "CUPOS ASIGNADOS A LA ADMINISTRACIÓN", "$ 25.364.088.328 COP", "5,77 %", "Financiamiento de costos indirectos de administración central y campus."]
+    ["TOTAL", "SERIE DE RECURSOS 30 (VAFI)", "$ 25.364.088.328 COP", "5,77 %", "Financiamiento de costos indirectos de administración central y campus."]
 ]
 cupos_tbl = doc.add_table(rows=1, cols=5)
 format_styled_table(cupos_tbl, [Inches(0.6), Inches(1.8), Inches(1.6), Inches(0.9), Inches(1.6)], ["Recurso", "Denominación Oficial", "Valor Asignado 2027", "Particip. %", "Origen / Criterio Institucional"], cupos_data, align_rights=[2, 3])
@@ -632,13 +637,15 @@ add_formula_box(
 add_header("8. PARÁMETROS Y SUPUESTOS TÉCNICOS", level=1)
 
 param_data = [
-    ["Asignación R10.0 Funcionamiento", "$345.930,0M", "PGN / Asignación VAFI", "Techo legal asignado a la Unidad Administrativa para nómina central.", "Rige el 78,65% del presupuesto."],
-    ["Flujo Doceavas Gratuidad R10.5", "$3.458,4M/mes", "Ley 2307 / MinHacienda", "Giro mensual regular en 12 pagos ($41.501M total).", "Elimina descalces de liquidez."],
-    ["Cupo Administrativo Posgrados R31", "$18.868,5M", "Sistema Financiero GOOBI", "Deducción institucional histórica sobre programas de posgrado.", "Financia servicios compartidos y campus."],
-    ["Cupo Administrativo Convenios R33", "$4.848,5M", "Ejecución Contratos UPTC", "Retención central en convenios interadministrativos.", "Apoya gastos operativos institucionales."],
-    ["Cupos Extensión y Ed. Cont. (32 y 35)", "$1.647,1M", "Acuerdos Reglamentarios", "Retenciones institucionales de extensión y educación continua.", "Soporte operativo de plataformas."],
-    ["Compensación IVA DIAN R21", "$6.471,8M", "Certificaciones Contables", "Resoluciones de compensación proyectadas por la DIAN.", "Financia compras gravadas."],
-    ["Autogestión Depurada R20", "$11.131,5M", "Tesorería UPTC", "Recaudo de derechos pecuniarios netos sin posgrados.", "Operación ordinaria administrativa."]
+    ["Asignación PGN 2027 (R10.0)", "$345.930,0M", "Proyecto de Ley PGN 2027 / MinHacienda", "Techo legal soberano aforado a la Unidad Administrativa para nómina y operación regular.", "Rige el 78,65% del presupuesto general."],
+    ["Piso Legal Indexatorio (Ley 2568/2026)", "6,0% – 6,5% (ICES)", "DANE / Reforma Art. 86 Ley 30", "Mandato vinculante de ajuste presupuestal mínimo por costos de la educación superior (Decreto 1279).", "Previene descalces vegetativos salariales."],
+    ["Flujo Doceavas Gratuidad (R10.5)", "$3.458,4M/mes", "Ley 2307 / Dec. 2271 / PGN 2027", "Giro mensual regular en 12 pagos programados en el PAC por MinHacienda ($41.501,1M total).", "Elimina descalces de liquidez en pregrado."],
+    ["Parámetro Rector Serie 30: Posgrados (R31)", "$18.868,5M", "Acuerdos Costos CSU / GOOBI", "Deducción central reglamentaria sobre matrículas de especialización, maestría y doctorado.", "Financia plataformas y servicios comunes."],
+    ["Parámetro Rector Serie 30: Extensión (R32)", "$944,3M", "Arts. 12, 23 y 24 Acuerdo 007/2022 CSU", "Retención del 25% sobre costos directos SAR; 70% asignado por mandato legal a la VAFI.", "Cubre costos indirectos y supervisión."],
+    ["Parámetro Rector Serie 30: Convenios (R33)", "$4.848,5M", "Arts. 11, 14, 23 y 24 Acuerdo 007/2022 CSU", "Deducción institucional central sobre convenios interadministrativos con contraprestación.", "Apoya la operación técnica y campus."],
+    ["Parámetro Rector Serie 30: Ed. Continuada (R35)", "$702,8M", "Parágrafo Art. 12 y Art. 24 Ac. 007/2022", "Retención del 25% sobre costos directos de diplomados y cursos; 70% asignado a la VAFI.", "Sostenimiento de plataformas y logística."],
+    ["Compensación IVA DIAN (R21)", "$6.471,8M", "Art. 92 Ley 30/92 / DIAN", "Devolución acumulada y ordinaria de IVA en adquisiciones gravadas institucionales.", "Financia bienes y compras gravadas."],
+    ["Autogestión Depurada (R20)", "$11.131,5M", "Tesorería UPTC / Estatuto", "Recaudo de derechos pecuniarios netos sin posgrados ni gratuidad de pregrado.", "Operación ordinaria administrativa."]
 ]
 param_tbl = doc.add_table(rows=1, cols=5)
 format_styled_table(param_tbl, [Inches(1.8), Inches(1.1), Inches(1.2), Inches(1.2), Inches(1.2)], ["Parámetro / Supuesto", "Valor", "Fuente Oficial", "Justificación Técnica", "Impacto Presupuestal"], param_data, align_rights=[1])
@@ -869,18 +876,18 @@ for title, desc in conc_items:
 add_header("16. MATRIZ FINAL DE TRAZABILIDAD INTEGRAL", level=1)
 
 traz_data = [
-    ["10.0", "SIIF / MinHacienda", "Indexación PGN / ICES", "Asignación neta VAFI", "Art. 86 Ley 30/92", "345.930.009.082", "Muy Alto"],
-    ["10.5", "MinHacienda Doceavas", "Per Cápita / PAC", "12 cuotas regulares", "Ley 2307 / Dec. 2271", "41.501.082.000", "Muy Alto"],
-    ["13", "DIAN / Cooperativas", "Liquidación DIAN", "20% Excedentes", "Art. 142 Ley 1819", "1.719.108.000", "Alto"],
-    ["17", "MinHacienda Electoral", "Censo Sufragantes", "10% Matrícula", "Leyes 403 / 815", "5.774.388.000", "Alto"],
-    ["18", "CESU / PGN", "Fórmula CESU", "Calidad y Acreditación", "Art. 87 Ley 30/92", "1.964.359.000", "Alto"],
-    ["20", "Tesorería UPTC", "Autogestión Central", "Derechos Pecuniarios", "Art. 65 Ley 30/92", "11.131.476.200", "Alto"],
-    ["21", "DIAN / Contabilidad", "Compensación IVA", "Resoluciones DIAN", "Art. 92 Ley 30/92", "6.471.839.000", "Alto"],
-    ["31", "GOOBI / Posgrados", "Cupo Administración", "Deducción Posgrados", "Acuerdos Costos CSU", "18.868.462.733", "Alto"],
-    ["32", "GOOBI / Extensión", "Algoritmo 70% de 25%", "Retención SAR Art. 24", "Acuerdo 007/2022 CSU", "944.311.807", "Alto"],
-    ["33", "GOOBI / Convenios", "Cupo Administración", "Deducción Convenios", "Ac. 007/22 y Estatuto", "4.848.481.515", "Alto"],
-    ["35", "GOOBI / Ed. Continua", "Algoritmo 70% de 25%", "Retención Ed. Cont. Art. 12", "Acuerdo 007/2022 CSU", "702.832.273", "Alto"],
-    ["TOTAL", "11 FUENTES OFICIALES", "MODELO INSTITUCIONAL", "EQUILIBRIO TOTAL", "ESTATUTO PRESUPUESTAL", "439.856.349.610", "PLENO"]
+    ["10.0", "SIIF / MinHacienda", "Indexación PGN / ICES", "Techo PGN / Base VAFI", "Art. 86 Ley 30/92, Ley 2568/26 y PGN 2027", "345.930.009.082", "Muy Alto"],
+    ["10.5", "MinHacienda Doceavas", "Per Cápita / PAC", "12 cuotas regulares", "Ley 2307/23, Dec. 2271 y PGN 2027", "41.501.082.000", "Muy Alto"],
+    ["13", "DIAN / Cooperativas", "Liquidación DIAN", "20% Excedentes", "Art. 142 Ley 1819/16", "1.719.108.000", "Alto"],
+    ["17", "MinHacienda Electoral", "Censo Sufragantes", "10% Matrícula", "Leyes 403/97, 815/03 y PGN 2027", "5.774.388.000", "Alto"],
+    ["18", "CESU / PGN", "Fórmula CESU", "Calidad y Gestión", "Art. 87 Ley 30/92, Ley 2568 y PGN 2027", "1.964.359.000", "Alto"],
+    ["20", "Tesorería UPTC", "Autogestión Central", "Derechos y Servicios", "Art. 65 Ley 30/92 y Estatuto", "11.131.476.200", "Alto"],
+    ["21", "DIAN / Contabilidad", "Compensación IVA", "Resoluciones trámite", "Art. 92 Ley 30/92 y Art. 481 E.T.", "6.471.839.000", "Alto"],
+    ["31", "GOOBI / Posgrados", "Cupo Administración", "Deducción Posgrados", "Acuerdo 007/2022 y Ac. Costos CSU", "18.868.462.733", "Alto"],
+    ["32", "GOOBI / Extensión", "Algoritmo 70% de 25%", "Retención SAR Art. 24", "Acuerdo 007/2022 CSU (Arts. 12, 23, 24)", "944.311.807", "Alto"],
+    ["33", "GOOBI / Convenios", "Cupo Administración", "Deducción Convenios", "Acuerdo 007/2022 CSU (Arts. 11, 14, 23)", "4.848.481.515", "Alto"],
+    ["35", "GOOBI / Ed. Continua", "Algoritmo 70% de 25%", "Retención Ed. Cont. Art. 12", "Acuerdo 007/2022 CSU (Par. Art. 12, Art. 24)", "702.832.273", "Alto"],
+    ["TOTAL", "11 FUENTES OFICIALES", "MODELO INSTITUCIONAL", "EQUILIBRIO TOTAL", "ESTATUTO PRESUPUESTAL Y LEY 30", "439.856.349.610", "PLENO"]
 ]
 traz_tbl = doc.add_table(rows=1, cols=7)
 format_styled_table(traz_tbl, [Inches(0.6), Inches(1.1), Inches(1.1), Inches(1.1), Inches(1.1), Inches(1.1), Inches(0.4)], ["Rec.", "Fuente", "Modelo", "Parámetro", "Fundamento", "Valor ($ COP)", "Certeza"], traz_data, align_rights=[5])
