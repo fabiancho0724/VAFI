@@ -98,7 +98,7 @@ export default function App() {
         {currentScreen === 'nomina' && <NominaScreen onNavigate={handleNavigate} />}
         {currentScreen === 'posgrados' && <PosgradosScreen onNavigate={handleNavigate} />}
         {currentScreen === 'catedra' && <HorasCatedraScreen onNavigate={handleNavigate} />}
-        {currentScreen === 'assistant' && <AssistantScreen />}
+        {currentScreen === 'assistant' && <AssistantScreen onNavigate={handleNavigate} />}
       </Layout>
     </ErrorBoundary>
   );

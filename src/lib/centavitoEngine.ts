@@ -148,6 +148,61 @@ export function executeCentavitoLocalReasoning(prompt: string, mode: CentavitoMo
   const q = cleanText(prompt);
 
   // =========================================================================
+  // 0. TEMA: PROYECCIONES 2027 Y RECURSO 10.5 (GRATUIDAD EN 12-AVAS MINHACIENDA)
+  // =========================================================================
+  if (
+    q.includes('2027') || 
+    q.includes('proyeccion 2027') || 
+    (q.includes('gratuidad') && (q.includes('doceava') || q.includes('12-avas') || q.includes('minhacienda') || q.includes('10.5') || q.includes('r10.5')))
+  ) {
+    const chartJson = JSON.stringify({
+      type: 'bar',
+      data: [
+        { name: 'Base 2026 (R14 FSE)', value: 49844 },
+        { name: 'ARIMA (1,1,1)', value: 52792 },
+        { name: 'Proy Oficial 2027 (+6%)', value: 52835 }
+      ]
+    });
+
+    return {
+      modeUsed: 'cierre',
+      topicTitle: 'Proyección Oficial 2027: Recurso 10.5 (Gratuidad en 12-avas MinHacienda)',
+      chartJson,
+      text: `Para la **vigencia fiscal 2027**, la Política de Gratuidad en Matrícula se proyecta oficialmente en **$ 52.834.827.867 COP** (+6,00% frente a 2026), clasificada bajo el **Recurso 10.5 (Aportes Nación)**.
+
+🏛️ **Determinación del Ministerio de Educación Nacional (MEN):**
+Por disposición del MEN, a partir de 2027 los giros de Gratuidad se enviarán a través del **Ministerio de Hacienda y Crédito Público (MinHacienda)** dentro de las **doceavas (12-avas) mensuales** que se giran a la universidad:
+* **Giro Mensual Estimado en Doceavas:** **$ 4.402.902.322 COP / mes**.
+* **Base 2026:** $ 49.844.177.233 COP (antiguo R14 FSE).
+* **Incremento 2027 (+6%):** +$ 2.990.650.634 COP.
+* **Modelo Econométrico ARIMA (1,1,1):** $ 52.792.185.210 COP (+5,91%).`,
+      suggestedFollowUps: [
+        '¿Cuánto sumarán las doceavas de funcionamiento de R10 en 2027?',
+        '¿Cómo impacta el giro de Gratuidad en 12-avas el flujo de caja?',
+        'Ver balance general de los 19 conceptos 2027'
+      ]
+    };
+  }
+
+  // =========================================================================
+  // 0.1 TEMA: DOCENTES DE CÁTEDRA (Simulador y Escalafón Acuerdo 015 de 2009)
+  // =========================================================================
+  if (q.includes('catedra') || q.includes('escalafon') || q.includes('horas catedra')) {
+    return {
+      modeUsed: 'escenario',
+      topicTitle: 'Docentes de Cátedra y Simulación de Escalafón',
+      text: `El aplicativo cuenta con el **Simulador Interactivo de Docentes de Cátedra** (corte al 30 de noviembre), que evalúa las implicaciones financieras del **Acuerdo No. 015 de 2009**.
+
+Permite cuantificar el costo y diferencias ante escenarios de reclasificación de categorías (Auxiliar, Asistente, Asociado, Titular), analizando el impacto presupuestal por facultad, programa y sede, con validación de factores salariales y prestaciones proporcionales.`,
+      suggestedFollowUps: [
+        'Abrir Simulador de Cátedra',
+        '¿Cuál es el costo estimado con aumento del 4%?',
+        '¿Qué facultad tiene mayor costo en docentes de cátedra?'
+      ]
+    };
+  }
+
+  // =========================================================================
   // 1. TEMA: POSGRADOS (Ingresos, Matrículas, Programas, Regla 40%)
   // =========================================================================
   if (
