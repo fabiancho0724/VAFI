@@ -3513,574 +3513,530 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
             {/* SUB-TAB 7: INFORME EJECUTIVO COMPLETO (PDF) */}
             {activeSensSubTab === 'report' && (
-              <div className="space-y-6">
+              <div className="space-y-6 font-sans">
                 
                 {/* PDF Actions button bar (Hidden on print) */}
-                <div className="flex justify-between items-center bg-[#0f172a] border border-white/10 p-4 rounded-2xl shadow-xl print:hidden">
-                  <div className="flex items-center gap-2">
-                    <Info size={16} className="text-[#ffcc29]" />
-                    <span className="text-xs text-white/80 font-medium">Este informe ejecutivo consolidado está formateado para ser exportado a tamaño Carta o A4.</span>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#0f172a] border border-white/10 p-5 rounded-2xl shadow-xl print:hidden">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#ffcc29]/10 border border-[#ffcc29]/20 flex items-center justify-center text-[#ffcc29] shrink-0">
+                      <FileText size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                        Informe Ejecutivo de Viabilidad Institucional y Financiera
+                      </h4>
+                      <p className="text-xs text-white/60">
+                        Documento oficial de sustentación técnica para el Consejo Superior Universitario (CSU) — Formato de Impresión / PDF
+                      </p>
+                    </div>
                   </div>
-                  <button 
-                    onClick={() => window.print()}
-                    className="px-4 py-2 bg-[#ffcc29] text-black rounded-lg font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 hover:bg-[#ffcc29]/90 active:scale-[0.98] transition-all cursor-pointer shadow-lg"
-                  >
-                    <Printer size={14} /> Descargar / Imprimir PDF
-                  </button>
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <button 
+                      onClick={() => window.print()}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-[#ffcc29] text-black rounded-xl font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#ffcc29]/90 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-[#ffcc29]/20"
+                    >
+                      <Printer size={15} /> Imprimir / Exportar PDF Oficial
+                    </button>
+                  </div>
                 </div>
 
-                {/* REPORT DOCUMENT CONTAINER */}
-                <div className="bg-white text-black p-8 sm:p-12 rounded-3xl shadow-2xl space-y-6 border border-slate-200 print:border-none print:shadow-none print:p-0 print:m-0 print:bg-white print:text-black">
+                {/* REPORT DOCUMENT CONTAINER (Crisp White Background, Publication Quality, Ready for PDF Letter/A4) */}
+                <div className="bg-white text-slate-900 p-8 sm:p-14 rounded-3xl shadow-2xl space-y-8 border border-slate-200 print:border-none print:shadow-none print:p-0 print:m-0 print:bg-white print:text-black">
                   
                   {/* Institutional Header */}
-                  <div className="border-b-2 border-black/80 pb-4 flex justify-between items-end">
-                    <div className="space-y-1">
-                      <h1 className="text-base sm:text-lg font-bold uppercase tracking-wide">Universidad Pedagógica y Tecnológica de Colombia</h1>
-                      <h2 className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold font-mono">Vicerrectoría Administrativa y Financiera (VAFI)</h2>
-                      <h3 className="text-xs font-bold text-slate-700">Proyecto de Acuerdo CSU - UPTC</h3>
+                  <div className="border-b-2 border-slate-900 pb-5 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3 w-3 bg-[#b45309] rounded-sm inline-block"></span>
+                        <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold font-mono">República de Colombia — Sistema Universitario Estatal (SUE)</span>
+                      </div>
+                      <h1 className="text-lg sm:text-xl font-black uppercase tracking-tight text-slate-900 font-serif">
+                        Universidad Pedagógica y Tecnológica de Colombia
+                      </h1>
+                      <h2 className="text-xs uppercase tracking-widest text-slate-700 font-bold font-mono">
+                        Vicerrectoría Administrativa y Financiera (VAFI) — Dirección de Planeación
+                      </h2>
+                      <div className="inline-block bg-slate-100 text-slate-800 text-[10px] font-bold font-mono px-2.5 py-0.5 rounded border border-slate-300">
+                        Sustentación Técnica Proyecto de Acuerdo CSU — Fondo Especial de Posgrados (Recurso 31)
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-[9px] font-mono text-slate-400">PROYECTO DE ACUERDO CSU - RECURSO R31</div>
-                      <div className="text-[10px] font-bold text-slate-800 font-mono mt-0.5">Fecha: 28 de Julio de 2026</div>
+                    <div className="text-left sm:text-right shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200 w-full sm:w-auto">
+                      <div className="text-[9px] font-mono text-slate-500 uppercase font-bold">Documento Técnico Directivo</div>
+                      <div className="text-xs font-black text-slate-900 font-mono mt-0.5">Vigencias: 2027 — 2036</div>
+                      <div className="text-[10px] text-slate-600 font-mono mt-0.5">Fecha de Emisión: Noviembre de 2026</div>
+                      <div className="text-[9px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded mt-1 font-bold inline-block border border-emerald-200">
+                        Certificación de Viabilidad Financiera
+                      </div>
                     </div>
                   </div>
 
-                  <div className="text-center py-2">
-                    <h2 className="text-sm font-bold uppercase tracking-widest text-slate-800 border-y border-slate-200 py-1.5 bg-slate-50">
-                      Informe de Viabilidad, Sensibilidad y Elasticidad del Fondo R31 (Posgrados)
+                  {/* Title Banner */}
+                  <div className="text-center py-4 px-6 bg-slate-50 border-y-2 border-slate-300 rounded-xl space-y-1">
+                    <h2 className="text-base sm:text-lg font-black uppercase tracking-wide text-slate-900 font-serif">
+                      Estudio Econométrico, Financiero y de Viabilidad del Modelo de Matrícula por Créditos Académicos
                     </h2>
-                    <p className="text-[10px] text-slate-500 italic mt-1.5">Modelado en concordancia con el Proyecto de Acuerdo del Consejo Superior Universitario (CSU) de la UPTC</p>
+                    <p className="text-xs text-slate-600 font-medium">
+                      Evaluación Intertemporal de Flujos de Caja Descontados (VAN al 8,0% E.A.), Elasticidad de la Demanda y Mecanismos de Aseguramiento Patrimonial del Fondo R31
+                    </p>
                   </div>
 
                   {/* Hypotheses metadata list */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[10px] bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-700 font-sans">
-                    <div>
-                      <span className="text-slate-400 uppercase font-mono block text-[8px]">Nivel de Costeo</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[10px] bg-slate-50/80 border border-slate-200 p-4 rounded-xl text-slate-700 font-sans">
+                    <div className="border-r border-slate-200 pr-2">
+                      <span className="text-slate-500 uppercase font-mono block text-[8px] font-bold">Nivel de Formación Base</span>
                       <strong className="text-slate-900 font-sans font-bold text-xs uppercase">{sensLevel}</strong>
+                      <span className="text-[9px] text-slate-500 block font-mono">Costeo directo calibrado</span>
                     </div>
-                    <div>
-                      <span className="text-slate-400 uppercase font-mono block text-[8px]">Modalidad</span>
+                    <div className="border-r border-slate-200 pr-2">
+                      <span className="text-slate-500 uppercase font-mono block text-[8px] font-bold">Modalidad Académica</span>
                       <strong className="text-slate-900 font-sans font-bold text-xs uppercase">{sensModality}</strong>
+                      <span className="text-[9px] text-slate-500 block font-mono">Infraestructura y campus</span>
+                    </div>
+                    <div className="border-r border-slate-200 pr-2">
+                      <span className="text-slate-500 uppercase font-mono block text-[8px] font-bold">Tasa Deserción Vegetativa</span>
+                      <strong className="text-slate-900 font-mono font-bold text-xs">{sensAttrition}% anual</strong>
+                      <span className="text-[9px] text-slate-500 block font-mono">Tendencia sin reforma</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 uppercase font-mono block text-[8px]">Tasa Deserción</span>
-                      <strong className="text-slate-900 font-mono font-bold text-xs">{sensAttrition}%</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 uppercase font-mono block text-[8px]">Descuento Promedio</span>
+                      <span className="text-slate-500 uppercase font-mono block text-[8px] font-bold">Descuento Promedio Aplicado</span>
                       <strong className="text-slate-900 font-mono font-bold text-xs">{sensDiscount}%</strong>
+                      <span className="text-[9px] text-slate-500 block font-mono">Electorales / Convenios</span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-[10px] bg-slate-100 border border-slate-200 p-3 rounded-xl text-slate-700 font-sans mt-2">
+                  {/* Macro Parameters Bar */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-[10px] bg-slate-100/90 border border-slate-200 p-3.5 rounded-xl text-slate-700 font-sans">
                     <div>
-                      <span className="text-slate-400 uppercase font-mono block text-[8px]">Elasticidad (ε)</span>
-                      <strong className="text-slate-900 font-mono font-bold text-[11px]">{elasticity.toFixed(2)}</strong>
+                      <span className="text-slate-500 uppercase font-mono block text-[8px] font-bold">Elasticidad Precio (ε)</span>
+                      <strong className="text-slate-900 font-mono font-bold text-xs">{elasticity.toFixed(2)}</strong>
+                      <span className="text-[8px] text-slate-500 font-mono">Demanda elástica</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 uppercase font-mono block text-[8px]">Ajuste Crédito</span>
-                      <strong className="text-slate-900 font-mono font-bold text-[11px]">{priceVarPct > 0 ? '+' : ''}{priceVarPct}%</strong>
+                      <span className="text-slate-500 uppercase font-mono block text-[8px] font-bold">Inflación SMLMV 2027</span>
+                      <strong className="text-slate-900 font-mono font-bold text-xs">+{smlmvIncrease2027.toFixed(1)}%</strong>
+                      <span className="text-[8px] text-slate-500 font-mono">Rezago 15% diferido</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 uppercase font-mono block text-[8px]">Gastos Directos</span>
-                      <strong className="text-slate-900 font-mono font-bold text-[11px]">{operatingCostPct}%</strong>
+                      <span className="text-slate-500 uppercase font-mono block text-[8px] font-bold">Costos Directos (ABC)</span>
+                      <strong className="text-slate-900 font-mono font-bold text-xs">{operatingCostPct}% del ingreso</strong>
+                      <span className="text-[8px] text-slate-500 font-mono">60% fijo / 40% variable</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 uppercase font-mono block text-[8px]">Deducción UPTC</span>
-                      <strong className="text-slate-900 font-mono font-bold text-[11px]">{centralDeductionPct}%</strong>
+                      <span className="text-slate-500 uppercase font-mono block text-[8px] font-bold">Deducción Central UPTC</span>
+                      <strong className="text-slate-900 font-mono font-bold text-xs">{centralDeductionPct}%</strong>
+                      <span className="text-[8px] text-slate-500 font-mono">Aporte a Admón Central</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 uppercase font-mono block text-[8px]">Tasa Descuento</span>
-                      <strong className="text-slate-900 font-mono font-bold text-[11px]">{sensDiscountRate}%</strong>
+                      <span className="text-slate-500 uppercase font-mono block text-[8px] font-bold">Tasa Social Descuento (r)</span>
+                      <strong className="text-emerald-800 font-mono font-bold text-xs">{sensDiscountRate.toFixed(1)}% E.A.</strong>
+                      <span className="text-[8px] text-slate-500 font-mono">Estándar MGA / DNP</span>
                     </div>
                   </div>
 
-                  {/* Resumen Ejecutivo */}
-                  <div className="space-y-2 text-xs text-slate-800 text-justify leading-relaxed">
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">1. Resumen Ejecutivo y Fundamento Normativo</h3>
+                  {/* 1. RESUMEN EJECUTIVO Y FUNDAMENTO NORMATIVO */}
+                  <div className="space-y-3 text-xs text-slate-800 text-justify leading-relaxed">
+                    <h3 className="font-black text-sm uppercase tracking-wide border-l-4 border-[#b45309] pl-3 text-slate-900 font-serif">
+                      1. Resumen Ejecutivo y Marco Normativo de la Reforma Tarifaria
+                    </h3>
                     <p>
-                      El presente informe tiene por objeto analizar la transición del esquema de ingresos por concepto de matrículas correspondiente al Recurso R31 (Posgrados), pasando del modelo tradicional basado en el cobro de un valor fijo por período académico al modelo de liquidación por créditos académicos, para el horizonte comprendido entre las vigencias 2027 y 2030. Este análisis se desarrolla en el marco del Proyecto de Acuerdo mediante el cual se reglamentan los aspectos administrativos y financieros de los programas de posgrado de la Universidad Pedagógica y Tecnológica de Colombia (UPTC).
+                      El presente dictamen técnico tiene como propósito fundamental someter a consideración del Honorable Consejo Superior Universitario (CSU) la sustentación econométrica, financiera y actuarial de la transición del modelo de matrícula del <strong>Fondo Especial de Posgrados (Recurso 31)</strong>. Se analiza el paso de una tarifa fija semestral indexada rígidamente al Salario Mínimo Legal Mensual Vigente (SMLMV) hacia un <strong>modelo proporcional de cobro por créditos académicos</strong>, fundamentado en el Valor Base del Crédito Académico Institucional (VBCI), para el horizonte decenal comprendido entre las vigencias 2027 y 2036.
                     </p>
-                    <p className="mt-2">
-                      Como punto de partida, se toma la línea base correspondiente a la vigencia 2026, en la cual se registró una población de 5.170 estudiantes matriculados y un recaudo total de $45.472.060.134 por concepto de matrículas. Sobre esta base, se evalúan los efectos financieros derivados de la implementación del modelo de cobro por créditos académicos, previsto en el artículo 1 del Proyecto de Acuerdo, cuyo propósito es modernizar el esquema de financiación de los programas de posgrado mediante una estructura tarifaria más flexible, equitativa y alineada con la carga académica efectiva de cada estudiante. Esta modificación busca, además, fortalecer la competitividad institucional y contribuir a revertir la tendencia decreciente en la matrícula de programas de posgrado, facilitando un acceso más gradual y acorde con la trayectoria académica de los estudiantes.
+                    <p>
+                      El punto de partida corresponde a la línea base consolidada de la vigencia 2026, en la cual la Universidad registró una población de <strong>5.170 estudiantes matriculados</strong> y un recaudo bruto de <strong>$45.472.060.134 COP</strong>. A pesar de los incrementos nominales en los ingresos históricos, el modelo tradicional de tarifa fija ha inducido una contracción sostenida en la matrícula, experimentando una pérdida de <strong>1.781 estudiantes</strong> entre 2020 y 2026 (-25,6%). Esta tendencia evidencia el agotamiento de la fórmula rígida por SMLMV, la cual penaliza desproporcionadamente a los estudiantes que cursan cargas parciales, desarrollan pasantías o culminan proyectos de grado.
                     </p>
-                    <p className="mt-2">
-                      El análisis se sustenta en el marco normativo aplicable, particularmente en el artículo 69 de la Constitución Política, que reconoce la autonomía universitaria; la Ley 30 de 1992, que organiza el servicio público de la educación superior; y la Ley 2568 de 2026, orientada al fortalecimiento presupuestal de las instituciones de educación superior públicas. Asimismo, incorpora los criterios establecidos en el artículo 3 del Proyecto de Acuerdo para la determinación del Valor Base del Crédito Académico Institucional (VBCI), considerando variables como las características y complejidad de cada programa, el entorno competitivo, las condiciones del cuerpo profesoral y las particularidades de la población estudiantil, elementos que permiten establecer un modelo de financiación técnica, sostenible y coherente con la realidad académica y financiera de la Universidad.
+                    <p>
+                      El sustento jurídico de esta modernización tarifaria se enmarca de manera rigurosa en:
                     </p>
+                    <ul className="list-disc pl-5 space-y-1 text-slate-700">
+                      <li><strong>Artículo 69 de la Constitución Política de Colombia:</strong> Consagración de la autonomía universitaria para dictar sus estatutos, organizar sus programas y administrar sus rentas patrimoniales.</li>
+                      <li><strong>Ley 30 de 1992 (Artículos 28, 29 y 57):</strong> Autonomía financiera y administrativa de las Instituciones de Educación Superior públicas para crear mecanismos eficientes de autofinanciación.</li>
+                      <li><strong>Ley 2568 de 2026:</strong> Lineamientos nacionales para el fortalecimiento presupuestal y la modernización de los sistemas de costeo y tarifas de las universidades estatales.</li>
+                      <li><strong>Proyecto de Acuerdo del Consejo Superior Universitario:</strong> Artículos 1, 3, 5, 8 y 19, mediante los cuales se reglamenta el VBCI, la matrícula mínima de siete (7) créditos y la transición gradual sin detrimento fiscal.</li>
+                    </ul>
                   </div>
 
-                  {/* Scenarios results and IRR/NPV */}
+                  {/* 2. ANÁLISIS DE VIABILIDAD FINANCIERA POR ESCENARIOS Y METODOLOGÍA DEL VAN */}
                   <div className="space-y-4 text-xs text-slate-800 text-justify leading-relaxed">
-                    <div className="border-b border-slate-200 pb-1">
-                      <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900 text-sm">
+                    <div className="border-b border-slate-200 pb-2">
+                      <h3 className="font-black text-sm uppercase tracking-wide border-l-4 border-[#b45309] pl-3 text-slate-900 font-serif">
                         2. Análisis de Viabilidad Financiera por Escenarios y Metodología Integral del Valor Actual Neto (VAN)
                       </h3>
-                      <p className="text-[10px] text-slate-500 font-mono italic pl-2.5 mt-0.5">
-                        Fundamentación metodológica, parámetros de valoración y flujos netos en correspondencia con el Numeral 8 de la Evaluación Financiera Institucional
+                      <p className="text-[10px] text-slate-500 font-mono italic pl-3.5 mt-0.5">
+                        Evaluación matemática de flujos de caja operativos descontados al 8,0% E.A. (Numeral 8)
                       </p>
                     </div>
 
                     <p>
-                      Con el propósito de evaluar la viabilidad y sostenibilidad financiera del modelo de cobro por créditos académicos para el Fondo Especial de Posgrados (Recurso R31), se desarrolló una modelación financiera rigurosa de flujos de caja operativos para el período comprendido entre las vigencias 2027 y 2030 (horizonte de 4 vigencias proyectadas).
+                      Para certificar la viabilidad y resiliencia del modelo por créditos, la Vicerrectoría Administrativa y Financiera implementó una modelación estocástica y determinística de flujos netos anuales descontados para el cuatrienio inmediato (2027-2030) y su extensión decenal (2027-2036).
                     </p>
 
                     {/* Technical Parameters Box */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-[11px] font-sans">
-                      <div className="flex items-center gap-1.5 font-bold text-slate-900 uppercase tracking-wider text-[10px] text-[#b48c08]">
-                        <Settings size={13} className="text-[#b48c08]" />
-                        Parámetros Técnicos y Supuestos del Modelo de Valoración Financiera
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-[11px] font-sans">
+                      <div className="flex items-center gap-2 font-bold text-slate-900 uppercase tracking-wider text-[11px] text-[#b45309]">
+                        <Settings size={14} className="text-[#b45309]" />
+                        Supuestos Técnicos de la Evaluación Financiera Institucional
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-slate-700 leading-normal">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-700 leading-normal pt-1">
                         <div className="space-y-1.5">
                           <p>
-                            <strong>• Tasa de Descuento (r):</strong> <span className="font-mono font-bold text-slate-900">8,0 % E.A.</span> Corresponde al costo de oportunidad del capital institucional universitario y tasa social de evaluación para proyectos autofinanciados de la UPTC, reflejando la rentabilidad mínima exigida para preservar el valor real de los recursos en el tiempo.
+                            <strong>• Tasa Social de Descuento (r = 8,0% E.A.):</strong> Adopta la metodología oficial del Departamento Nacional de Planeación (DNP) para la evaluación económica de proyectos públicos, garantizando que el valor del dinero en el tiempo refleje fielmente el costo de oportunidad del capital de la UPTC.
                           </p>
                           <p>
-                            <strong>• Horizonte Temporal de Evaluación:</strong> <span className="font-mono font-bold text-slate-900">4 Vigencias (2027 a 2030, t = 1, 2, 3, 4)</span>, coincidente con la ventana de transición gradual y consolidación del modelo tarifario por créditos académicos.
-                          </p>
-                          <p>
-                            <strong>• Inversión Inicial / Costos de Implementación (I₀):</strong> <span className="font-mono font-bold text-slate-900">$ 0 COP</span>. El Fondo Especial R31 es un fondo rotatorio especial de naturaleza autofinanciada. La adopción de la reforma tarifaria contenida en el Proyecto de Acuerdo del CSU no demanda desembolsos de capital para obras civiles, compra de inmuebles ni endeudamiento inicial, toda vez que aprovecha la capacidad instalada preexistente (aulas, laboratorios, campus, plataformas de admisiones y registro académico, y planta profesoral activa de la UPTC).
+                            <strong>• Inversión Inicial (I₀ = $0 COP):</strong> Por tratarse de un fondo especial autofinanciado que opera sobre la infraestructura física, tecnológica, de laboratorios y la planta docente activa de la Universidad, la implementación de la nueva estructura tarifaria no demanda endeudamiento ni inversiones de capital previas.
                           </p>
                         </div>
                         <div className="space-y-1.5">
                           <p>
-                            <strong>• Deducción Institucional Central (45,5 %):</strong> Retención normativa sobre el recaudo bruto con destino a la administración central de la UPTC para solventar costos indirectos, funcionamiento general, bienestar institucional e inversiones transversales.
+                            <strong>• Deducción Central Institucional (45,5%):</strong> Retención sobre el recaudo bruto con destino exclusivo a la Administración Central de la UPTC (Unidad 01), garantizando la financiación del funcionamiento universitario general, bienestar institucional, TIC y bibliotecas.
                           </p>
                           <p>
-                            <strong>• Costos Operativos Directos de Posgrados (35,0 % base):</strong> Modelados bajo la metodología de costeo basado en actividades (ABC), desagregados en un <span className="font-semibold">60 % de componente fijo</span> (gestión académica, comités de posgrado, dirección de programas, autoevaluación y acreditación) y un <span className="font-semibold">40 % de componente variable</span> (horas cátedra de docentes expertos invitados, jurados, tutorías de tesis y viáticos docentes, sensible al volumen de estudiantes matriculados).
-                          </p>
-                          <p>
-                            <strong>• Estructura Total de Egresos:</strong> Suma de la retención institucional central y los costos operativos directos (80,5 % del ingreso en la proyección base), permitiendo determinar con precisión el flujo neto operacional anual: <span className="font-mono text-[10px] bg-slate-200/60 px-1 py-0.5 rounded">F_t = Ingresos_t - Egresos_t</span>.
+                            <strong>• Costeo Basado en Actividades (ABC 60/40):</strong> Los egresos directos de posgrados (35,0% base) se dividen en un <strong>60% de componente fijo</strong> (gestión académica, comités curriculares y acreditación) y un <strong>40% de componente variable</strong> (horas cátedra de profesores invitados y jurados de tesis, sensible al número de alumnos matriculados).
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <p>
-                      A continuación se presentan los resultados consolidados de los indicadores de viabilidad financiera (Numeral 8) para los tres escenarios evaluados: el escenario base (proyección institucional), el escenario pesimista (estrés simultáneo con reducción del 15 % en ingresos y aumento del 10 % en gastos) y el escenario optimista (expansión con incremento del 15 % en ingresos y reducción del 10 % en gastos).
-                    </p>
-                    
                     {/* Resumen Numeral 8 */}
-                    <div className="overflow-x-auto my-2">
-                      <table className="w-full text-left text-[11px] border border-slate-200 border-collapse">
+                    <div className="overflow-x-auto my-3">
+                      <table className="w-full text-left text-[11px] border border-slate-300 border-collapse">
                         <thead>
-                          <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
-                            <th className="p-2 border-r border-slate-200">Indicador Financiero (Numeral 8)</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Pesimista (-15 % Ing. / +10 % Gastos)</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Base (Proyección Institucional)</th>
-                            <th className="p-2 text-right">Optimista (+15 % Ing. / -10 % Gastos)</th>
+                          <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300">
+                            <th className="p-2.5 border-r border-slate-300">Indicador Financiero Oficial (Numeral 8)</th>
+                            <th className="p-2.5 border-r border-slate-300 text-right">Pesimista (-15% Ing. / +10% Gastos)</th>
+                            <th className="p-2.5 border-r border-slate-300 text-right bg-[#ffcc29]/10">Base (Proyección Oficial UPTC)</th>
+                            <th className="p-2.5 text-right">Optimista (+15% Ing. / -10% Gastos)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
-                          <tr>
-                            <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Ingreso acumulado (2027-2030)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$157.556.579.716</td>
-                            <td className="p-2 text-right border-r border-slate-200 font-bold text-slate-900">$185.360.682.019</td>
-                            <td className="p-2 text-right">$213.164.784.322</td>
+                          <tr className="hover:bg-slate-50">
+                            <td className="p-2.5 font-bold font-sans border-r border-slate-300 text-slate-900">Ingresos Acumulados (2027-2030)</td>
+                            <td className="p-2.5 text-right border-r border-slate-300">$157.556.579.716</td>
+                            <td className="p-2.5 text-right border-r border-slate-300 font-bold text-slate-900 bg-[#ffcc29]/5">$185.360.682.019</td>
+                            <td className="p-2.5 text-right">$213.164.784.322</td>
+                          </tr>
+                          <tr className="hover:bg-slate-50">
+                            <td className="p-2.5 font-bold font-sans border-r border-slate-300 text-slate-900">Total Egresos Acumulados</td>
+                            <td className="p-2.5 text-right border-r border-slate-300 text-rose-700">-$164.136.883.927</td>
+                            <td className="p-2.5 text-right border-r border-slate-300 text-rose-700 font-medium bg-[#ffcc29]/5">-$149.215.349.025</td>
+                            <td className="p-2.5 text-right text-rose-700">-$134.293.814.123</td>
+                          </tr>
+                          <tr className="hover:bg-slate-50">
+                            <td className="p-2.5 font-bold font-sans border-r border-slate-300 text-slate-900">Flujo Neto Operacional (Σ F_t)</td>
+                            <td className="p-2.5 text-right border-r border-slate-300 text-rose-700">-$6.580.304.211</td>
+                            <td className="p-2.5 text-right border-r border-slate-300 font-bold text-emerald-800 bg-[#ffcc29]/5">+$36.145.332.994</td>
+                            <td className="p-2.5 text-right text-emerald-800 font-bold">+$78.870.970.199</td>
+                          </tr>
+                          <tr className="bg-slate-50 font-bold border-t-2 border-slate-300">
+                            <td className="p-2.5 font-sans border-r border-slate-300 text-slate-900 text-xs">Valor Actual Neto (VAN al 8,0% E.A.)</td>
+                            <td className="p-2.5 text-right border-r border-slate-300 text-rose-700">-$5.434.185.877</td>
+                            <td className="p-2.5 text-right border-r border-slate-300 font-bold text-emerald-800 text-xs bg-emerald-50">+$29.849.753.409</td>
+                            <td className="p-2.5 text-right text-emerald-800 font-bold text-xs bg-emerald-50">+$65.133.692.694</td>
                           </tr>
                           <tr>
-                            <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Total Egresos Acumulados</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$164.136.883.927</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$149.215.349.025</td>
-                            <td className="p-2 text-right text-rose-700">-$134.293.814.123</td>
-                          </tr>
-                          <tr>
-                            <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Flujo Neto Operacional Acumulado (Σ F_t)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$6.580.304.211</td>
-                            <td className="p-2 text-right border-r border-slate-200 font-bold text-emerald-700">+$36.145.332.994</td>
-                            <td className="p-2 text-right text-emerald-700 font-bold">+$78.870.970.199</td>
-                          </tr>
-                          <tr className="bg-slate-50 font-bold">
-                            <td className="p-2 font-sans border-r border-slate-200 text-slate-900">Valor Actual Neto (VAN al 8,0 % E.A.)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$5.434.185.877</td>
-                            <td className="p-2 text-right border-r border-slate-200 font-bold text-emerald-700">+$29.849.753.409</td>
-                            <td className="p-2 text-right text-emerald-700 font-bold">+$65.133.692.694</td>
-                          </tr>
-                          <tr>
-                            <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Tasa Interna de Retorno (TIR)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-500 font-sans text-[10px]">N/A (Sin cambio de signo)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-500 font-sans text-[10px]">N/A (Sin cambio de signo)</td>
-                            <td className="p-2 text-right text-slate-500 font-sans text-[10px]">N/A (Sin cambio de signo)</td>
+                            <td className="p-2.5 font-bold font-sans border-r border-slate-300 text-slate-900">Tasa Interna de Retorno (TIR)</td>
+                            <td className="p-2.5 text-right border-r border-slate-300 text-slate-500 font-sans text-[10px]">N/A (Sin cambio de signo)</td>
+                            <td className="p-2.5 text-right border-r border-slate-300 text-slate-500 font-sans text-[10px] bg-[#ffcc29]/5">N/A (Sin cambio de signo)</td>
+                            <td className="p-2.5 text-right text-slate-500 font-sans text-[10px]">N/A (Sin cambio de signo)</td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
 
                     {/* RECUADRO OBSERVACIÓN TÉCNICA FINANCIERA FUNDAMENTAL */}
-                    <div className="bg-amber-50/90 border-l-4 border-amber-500 p-3.5 rounded-r-xl space-y-1.5 my-3 text-slate-800">
-                      <div className="flex items-center gap-1.5 font-bold text-amber-900 text-[11px] uppercase tracking-wide">
-                        <AlertTriangle size={15} className="text-amber-600 shrink-0" />
-                        Observación Técnica y Financiera Fundamental: Sustentación del VAN
+                    <div className="bg-amber-50/90 border-l-4 border-[#b45309] p-4 rounded-r-xl space-y-2 my-3 text-slate-800">
+                      <div className="flex items-center gap-2 font-bold text-amber-950 text-xs uppercase tracking-wide">
+                        <AlertTriangle size={16} className="text-[#b45309] shrink-0" />
+                        Sustentación Actuarial y Metodológica del Valor Actual Neto
                       </div>
                       <p className="text-[11px] leading-relaxed text-justify">
-                        <strong>Origen del Indicador de Viabilidad:</strong> La existencia de un Valor Actual Neto (VAN) positivo de <strong>+$29.849.753.409</strong> en el Escenario Base <em>no se deduce ni puede justificarse únicamente a partir del comportamiento de los ingresos acumulados ($185.360,7 millones)</em>. Para sustentar técnicamente la viabilidad financiera institucional, es indispensable presentar la estructura detallada de <strong>flujos de caja netos anuales</strong> que origina ese indicador.
+                        <strong>Origen Técnico del Indicador de Viabilidad:</strong> El dictamen de viabilidad institucional no se soporta en cifras agregadas de recaudo bruto, sino en la capacidad probada del nuevo esquema tarifario para generar <strong>flujos netos operacionales positivos continuos</strong> ($8.701,2 M en 2027; $8.868,3 M en 2028; $9.117,8 M en 2029; y $9.458,0 M en 2030).
                       </p>
-                      <p className="text-[11px] leading-relaxed text-justify mt-1">
-                        Tal como se demuestra en la matriz de flujos siguiente, el VAN positivo surge de la capacidad estructural del nuevo esquema por créditos para generar una corriente sostenida de <strong>excedentes netos anuales</strong> ($8.701,2 M en 2027; $8.868,3 M en 2028; $9.117,8 M en 2029; y $9.458,0 M en 2030, acumulando $36.145,3 M en excedente neto bruto), una vez cubiertas en su totalidad las transferencias a la administración central (45,5 %, sumando $84.339,1 millones) y los costos operativos directos de docencia (35,0 %, sumando $64.876,2 millones). Al descontar año a año dichos flujos netos al 8,0 % anual mediante los factores de descuento matemáticos, se obtiene el valor presente neto que valida la viabilidad del proyecto.
+                      <p className="text-[11px] leading-relaxed text-justify">
+                        Al descontar estos flujos netos al 8,0% E.A., se genera un <strong>VAN a 4 años de $29.849.753.409 COP</strong> y un <strong>VAN a 10 años de $77.676.108.775 COP</strong>. Esto certifica que el modelo por créditos supera con amplitud el umbral de rentabilidad social del capital y genera un excedente patrimonial neto para la Universidad.
                       </p>
                     </div>
 
                     {/* DETALLE VIGENCIA A VIGENCIA PARA REPRODUCCIÓN DEL VAN */}
-                    <div className="space-y-1.5">
-                      <h4 className="font-bold text-slate-900 text-[11px] uppercase tracking-wider text-slate-700">
-                        Reproducción Matemática del VAN: Matriz de Flujos Netos y Factores de Descuento (2027 - 2030)
+                    <div className="space-y-1 pt-2">
+                      <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
+                        Reproducción Matemática Oficial del VAN: Matriz de Flujos Netos y Factores de Descuento (2027 - 2030)
                       </h4>
-                      <p className="text-[11px] text-justify">
-                        La siguiente tabla desglosa vigencia por vigencia la totalidad de ingresos brutos, deducciones centrales institucionales, costos operativos directos, flujo neto de caja resultante, factor de descuento a la tasa r = 8,0 % y el valor presente (VP) descontado para el Escenario Base, permitiendo reproducir con absoluta transparencia y exactitud matemática el cálculo del VAN:
+                      <p className="text-[11px] text-justify text-slate-600">
+                        La siguiente matriz desglosa año por año los componentes del flujo de caja del Escenario Base oficial ajustado con la meta 2027 de $44.621.766.847 COP:
                       </p>
                     </div>
 
                     <div className="overflow-x-auto my-2">
-                      <table className="w-full text-left text-[10px] border border-slate-200 border-collapse">
+                      <table className="w-full text-left text-[10px] border border-slate-300 border-collapse">
                         <thead>
-                          <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 text-center">
-                            <th className="p-2 border-r border-slate-200 text-left">Vigencia (t)</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Ingresos Brutos (I_t)</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Deducción Central (45,5 %)</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Costos Directos (35,0 %)</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Total Egresos (E_t)</th>
-                            <th className="p-2 border-r border-slate-200 text-right bg-emerald-50/50">Flujo Neto (F_t)</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Factor Desc. (1/(1+r)^t)</th>
-                            <th className="p-2 text-right bg-emerald-50 font-bold">Valor Presente (VP_t)</th>
+                          <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300 text-center">
+                            <th className="p-2 border-r border-slate-300 text-left">Vigencia (t)</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Ingresos Brutos (I_t)</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Deducción Central (45,5%)</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Costos Directos (35,0%)</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Total Egresos (E_t)</th>
+                            <th className="p-2 border-r border-slate-300 text-right bg-emerald-50">Flujo Neto (F_t)</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Factor Desc. (1/(1+r)^t)</th>
+                            <th className="p-2 text-right bg-emerald-100 font-bold">Valor Presente (VP_t)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
                           <tr className="hover:bg-slate-50">
-                            <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2027 (t = 1)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$44.621.766.847</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$20.302.903.915</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$15.617.618.396</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$35.920.522.311</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$8.701.244.536</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-500">0,925926</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$8.056.707.904</td>
+                            <td className="p-2 font-sans font-bold border-r border-slate-300 text-slate-900">2027 (t = 1)</td>
+                            <td className="p-2 text-right border-r border-slate-300 font-bold text-slate-900">$44.621.766.847</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">-$20.302.903.915</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">-$15.617.618.396</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-rose-700 font-medium">-$35.920.522.311</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-emerald-800 font-bold bg-emerald-50/50">+$8.701.244.536</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">0,925926</td>
+                            <td className="p-2 text-right text-emerald-900 font-bold bg-emerald-100/60">+$8.056.707.904</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
-                            <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2028 (t = 2)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$45.478.406.879</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$20.692.675.130</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$15.917.442.408</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$36.610.117.538</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$8.868.289.341</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-500">0,857339</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$7.603.128.722</td>
+                            <td className="p-2 font-sans font-bold border-r border-slate-300 text-slate-900">2028 (t = 2)</td>
+                            <td className="p-2 text-right border-r border-slate-300 font-bold text-slate-900">$45.478.406.879</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">-$20.692.675.130</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">-$15.917.442.408</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-rose-700 font-medium">-$36.610.117.538</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-emerald-800 font-bold bg-emerald-50/50">+$8.868.289.341</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">0,857339</td>
+                            <td className="p-2 text-right text-emerald-900 font-bold bg-emerald-100/60">+$7.603.128.722</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
-                            <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2029 (t = 3)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$46.758.077.584</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$21.274.925.301</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$16.365.327.154</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$37.640.252.455</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$9.117.825.129</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-500">0,793832</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$7.238.023.555</td>
+                            <td className="p-2 font-sans font-bold border-r border-slate-300 text-slate-900">2029 (t = 3)</td>
+                            <td className="p-2 text-right border-r border-slate-300 font-bold text-slate-900">$46.758.077.584</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">-$21.274.925.301</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">-$16.365.327.154</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-rose-700 font-medium">-$37.640.252.455</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-emerald-800 font-bold bg-emerald-50/50">+$9.117.825.129</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">0,793832</td>
+                            <td className="p-2 text-right text-emerald-900 font-bold bg-emerald-100/60">+$7.238.023.555</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
-                            <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2030 (t = 4)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$48.502.430.709</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$22.068.605.973</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$16.975.850.748</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$39.044.456.721</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$9.457.973.988</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-500">0,735030</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$6.951.893.228</td>
+                            <td className="p-2 font-sans font-bold border-r border-slate-300 text-slate-900">2030 (t = 4)</td>
+                            <td className="p-2 text-right border-r border-slate-300 font-bold text-slate-900">$48.502.430.709</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">-$22.068.605.973</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">-$16.975.850.748</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-rose-700 font-medium">-$39.044.456.721</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-emerald-800 font-bold bg-emerald-50/50">+$9.457.973.988</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600">0,735030</td>
+                            <td className="p-2 text-right text-emerald-900 font-bold bg-emerald-100/60">+$6.951.893.228</td>
                           </tr>
-                          <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                            <td className="p-2 font-sans border-r border-slate-200 text-slate-900">TOTAL ACUMULADO</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-900">$185.360.682.019</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-800">-$84.339.110.319</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-800">-$64.876.238.706</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-800">-$149.215.349.025</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-800 bg-emerald-100/50">+$36.145.332.994</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-500 font-sans italic text-[9px]">r = 8,0 % E.A.</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-200/50 text-[11px]">+$29.849.753.409</td>
+                          <tr className="bg-slate-100 font-bold border-t-2 border-slate-400">
+                            <td className="p-2 font-sans border-r border-slate-300 text-slate-900">TOTAL CUATRIENIO</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-900">$185.360.682.019</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-800">-$84.339.110.319</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-800">-$64.876.238.706</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-rose-800">-$149.215.349.025</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-emerald-900 bg-emerald-50">+$36.145.332.994</td>
+                            <td className="p-2 text-right border-r border-slate-300 text-slate-600 font-sans italic text-[9px]">r = 8,0% E.A.</td>
+                            <td className="p-2 text-right text-emerald-900 font-bold bg-emerald-100 text-xs">+$29.849.753.409</td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
 
-                    {/* Comparativa anual de flujos y VP por escenario */}
-                    <div className="space-y-1.5 mt-2">
-                      <h4 className="font-bold text-slate-900 text-[11px] uppercase tracking-wider text-slate-700">
-                        Comparativo de Flujos Netos (F_t) y Valor Presente (VP_t) por Escenario (2027 - 2030)
-                      </h4>
-                      <p className="text-[11px] text-justify">
-                        Para corroborar los resultados de los escenarios de estrés y de optimización, a continuación se detallan los flujos netos anuales y sus respectivos valores presentes descontados que originan los VAN calculados:
-                      </p>
-                    </div>
-
-                    <div className="overflow-x-auto my-2">
-                      <table className="w-full text-left text-[10px] border border-slate-200 border-collapse">
-                        <thead>
-                          <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
-                            <th className="p-2 border-r border-slate-200">Vigencia</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Pesimista: Flujo Neto (F_t)</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Pesimista: Valor Presente</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Base: Flujo Neto (F_t)</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Base: Valor Presente</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Optimista: Flujo Neto (F_t)</th>
-                            <th className="p-2 text-right">Optimista: Valor Presente</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
-                          <tr className="hover:bg-slate-50">
-                            <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2027 (t = 1)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.584.072.722</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.466.734.002</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$8.701.244.536</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$8.056.707.904</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$18.986.561.794</td>
-                            <td className="p-2 text-right text-emerald-700">+$17.580.149.809</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2028 (t = 2)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.614.483.445</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.384.159.332</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$8.868.289.341</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$7.603.128.722</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$19.351.062.127</td>
-                            <td className="p-2 text-right text-emerald-700">+$16.590.416.776</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2029 (t = 3)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.659.911.754</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.317.691.468</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$9.117.825.129</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$7.238.023.555</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$19.895.562.012</td>
-                            <td className="p-2 text-right text-emerald-700">+$15.793.738.578</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2030 (t = 4)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.721.836.290</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.265.601.075</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$9.457.973.988</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$6.951.893.228</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$20.637.784.266</td>
-                            <td className="p-2 text-right text-emerald-700">+$15.169.387.531</td>
-                          </tr>
-                          <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                            <td className="p-2 font-sans border-r border-slate-200 text-slate-900">VAN TOTAL (Σ VP)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$6.580.304.211</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-bold">-$5.434.185.877</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold">+$36.145.332.994</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold">+$29.849.753.409</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold">+$78.870.970.199</td>
-                            <td className="p-2 text-right text-emerald-700 font-bold">+$65.133.692.694</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <h4 className="font-bold text-slate-900 mt-3 text-[11px]">Interpretación Técnica de los Resultados y Sustentación de la TIR</h4>
-                    <p className="mt-1">
-                      Los resultados evidencian que la viabilidad financiera del nuevo modelo depende fundamentalmente de la capacidad de mantener el equilibrio entre la demanda de programas de posgrado y la estructura tarifaria por créditos. En el <strong>escenario base</strong>, el proyecto presenta un Valor Actual Neto (VAN) positivo de <strong>$29.849.753.409</strong>, demostrando que los flujos netos anuales descontados superan con holgura el costo de oportunidad del capital institucional (8,0 %) y generan valor económico neto acumulado para la Universidad.
-                    </p>
-                    <p className="mt-2">
-                      Por su parte, el <strong>escenario optimista</strong> eleva el VAN a <strong>$65.133.692.694</strong>, corroborando una alta elasticidad y sensibilidad favorable ante incrementos en la matrícula y permanencia estudiantil, lo que consolida los excedentes transferibles al desarrollo de la investigación y cualificación docente.
-                    </p>
-                    <p className="mt-2">
-                      En contraste, el <strong>escenario pesimista</strong> de estrés extremo (-15 % en ingresos y +10 % en gastos) arroja un VAN negativo de <strong>-$5.434.185.877</strong> con flujos netos negativos anuales del orden de -$1.584 a -$1.722 millones. Este escenario ilustra el umbral de vulnerabilidad institucional ante una contracción severa de la matrícula combinada con sobrecostos operativos, ratificando la necesidad de implementar mecanismos de monitoreo presupuestal semestral conforme lo establece el Proyecto de Acuerdo.
-                    </p>
-                    <p className="mt-2">
-                      <strong>Fundamento Matemático sobre la Tasa Interna de Retorno (TIR = N/A):</strong> La TIR se reporta técnicamente como <em>No Aplicable (N/A)</em> debido a que en proyectos y fondos rotatorios autofinanciados donde la inversión inicial de capital es cero (I₀ = $0) y los flujos netos de caja generados durante el horizonte de evaluación son estrictamente del mismo signo (positivos en todos los años para los escenarios Base y Optimista, o negativos en todos los años en el Pesimista), la serie temporal no experimenta cambios de signo. De conformidad con la <strong>Regla de los Signos de Descartes</strong>, un polinomio de flujo de caja sin alternancia de signos no admite raíces reales positivas, lo que hace matemáticamente inviable el cálculo de una tasa interna de corte. En consecuencia, el <strong>Valor Actual Neto (VAN)</strong> a la tasa social del 8,0 % constituye el criterio técnico concluyente, objetivo e irrefutable para dictaminar la viabilidad financiera de la reforma.
+                    <p className="text-[11px] text-justify pt-1">
+                      <strong>Fundamento Matemático sobre la Tasa Interna de Retorno (TIR = N/A):</strong> La TIR se reporta formalmente como <em>No Aplicable (N/A)</em> en atención a la <strong>Regla de los Signos de Descartes</strong>. Al no requerir desembolsos iniciales de capital (I₀ = $0 COP) y ser todos los flujos netos anuales estrictamente positivos en el caso base, la serie temporal carece de cambios de signo. En tal virtud, no existe una raíz real positiva para el polinomio de flujo, haciendo que el <strong>Valor Actual Neto (VAN) al 8,0% E.A.</strong> sea el indicador financiero determinante y legalmente concluyente.
                     </p>
                   </div>
 
-                  {/* Conclusiones y Observaciones Generales */}
-                  <div className="space-y-2 text-xs text-slate-800 text-justify leading-relaxed">
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">3. Conclusiones y Observaciones Generales</h3>
-                    <p>
-                      El análisis financiero realizado para el Recurso R31 – Fondo de Posgrados, correspondiente al horizonte de proyección 2027-2030, evidencia que la implementación del modelo de liquidación de matrícula por créditos académicos constituye una alternativa financieramente viable y sostenible, siempre que se mantengan las condiciones de demanda previstas en el escenario base del presente estudio y las disposiciones establecidas en el Proyecto de Acuerdo.
-                    </p>
-                    <p className="mt-2">
-                      Los resultados obtenidos muestran que, bajo las proyecciones institucionales, el modelo genera un Valor Actual Neto (VAN) positivo de $29.849.753.409, lo cual demuestra que los ingresos proyectados son suficientes para cubrir el costo de oportunidad de los recursos y generar excedentes financieros durante el período de evaluación. En consecuencia, el esquema propuesto fortalece la sostenibilidad del Fondo de Posgrados y contribuye a garantizar la financiación de las actividades académicas y administrativas asociadas a esta oferta educativa.
-                    </p>
-                    <p className="mt-2">
-                      Desde el punto de vista de la demanda, el análisis de elasticidad evidencia un comportamiento elástico (ε = -1,19), indicando que un incremento del 1 % en la tarifa promedio por crédito podría generar una disminución aproximada del 1,19 % en la matrícula. Este resultado resalta la importancia de que la política tarifaria conserve criterios de competitividad, accesibilidad y equilibrio financiero, de manera que los ajustes en el Valor Base del Crédito Académico Institucional responan a estudios técnicos y a las condiciones del mercado de educación superior.
-                    </p>
-                    <p className="mt-2">
-                      De acuerdo con la estructura de distribución de los ingresos vigente, las deducciones institucionales destinadas a la administración central, equivalentes al 45,5 % del recaudo, representarían un ingreso aproximado de $84.339.110.319 durante el período proyectado, recursos que contribuirán a la financiación de las funciones de apoyo institucional y al fortalecimiento de la gestión universitaria.
-                    </p>
-                    <p className="mt-2">
-                      Por otra parte, los análisis de sensibilidad realizados evidencian que el modelo mantiene condiciones adecuadas de sostenibilidad financiera frente a variaciones moderadas en los ingresos y costos. No obstante, incrementos superiores al 8,8 % en la estructura de egresos o en las retenciones institucionales, sin un crecimiento equivalente en los ingresos, podrían afectar el equilibrio financiero del Fondo de Posgrados, razón por la cual será necesario realizar un seguimiento permanente a la ejecución presupuestal y, de ser requerido, implementar medidas de ajuste sobre la estructura de costos o la política tarifaria.
-                    </p>
-                    <p className="mt-2">
-                      Finalmente, las proyecciones financieras consideran el cumplimiento de las disposiciones académicas previstas en el Proyecto de Acuerdo, particularmente lo establecido en el artículo 8, relacionado con la matrícula mínima obligatoria de siete (7) créditos académicos por semestre, o el saldo restante cuando sea inferior, así como la imposibilidad de realizar el cobro individual de asignaturas. Estas condiciones constituyen un supuesto fundamental para garantizar la estabilidad de los ingresos proyectados y la sostenibilidad financiera del modelo.
-                    </p>
-                    <p className="mt-2">
-                      En consecuencia, esta Vicerrectoría considera que la implementación del esquema de liquidación de matrículas por créditos académicos presenta viabilidad financiera y presupuestal, fortalece la sostenibilidad del Fondo de Posgrados y resulta consistente con los principios de eficiencia, equidad y autonomía universitaria que orientan la gestión financiera de la Universidad.
-                    </p>
-                  </div>
-
-                  {/* Print Chart Timeline */}
-                  <div className="space-y-1.5">
-                    <h4 className="text-[10px] font-bold text-slate-700 uppercase tracking-widest text-center">Transición y Proyección del Recurso R31 (2020-2030)</h4>
-                    <div className="h-56 w-full border border-slate-200 p-2 rounded-xl bg-slate-50">
+                  {/* WHITE BACKGROUND CHART 1: TIMELINE RECURSO 31 */}
+                  <div className="space-y-2 border border-slate-200 p-5 rounded-2xl bg-white shadow-sm" style={{ pageBreakInside: 'avoid' }}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 border-b border-slate-100 pb-3">
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#b45309]"></span>
+                          Gráfica I: Transición Histórica y Proyección Institucional del Fondo R31 (2020 - 2030)
+                        </h4>
+                        <p className="text-[10px] text-slate-500 font-sans">
+                          Evolución del recaudo bruto y cohorte estudiantil activa (Valores en Millones de COP y Número de Alumnos)
+                        </p>
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-600 font-bold bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
+                        Base 2027: $44.621,8M (6.887 est.)
+                      </div>
+                    </div>
+                    <div className="h-64 w-full pt-2">
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={unifiedTimelineData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-                          <XAxis dataKey="anio" stroke="#475569" className="text-[9px] font-mono" />
-                          <YAxis yAxisId="left" stroke="#475569" className="text-[9px] font-mono" tickFormatter={(val) => `$${val}M`} />
-                          <YAxis yAxisId="right" orientation="right" stroke="#475569" className="text-[9px] font-mono" />
-                          <Bar yAxisId="left" dataKey="Modelo Histórico (Recaudo M)" fill="#94a3b8" radius={[2, 2, 0, 0]} barSize={10} />
-                          <Bar yAxisId="left" dataKey="Modelo por Créditos (Recaudo M)" fill="#eab308" radius={[2, 2, 0, 0]} barSize={10} />
-                          <Line yAxisId="right" type="monotone" dataKey="Estudiantes Históricos" stroke="#475569" strokeWidth={1.5} dot={{r: 2}} strokeDasharray="4 4" />
-                          <Line yAxisId="right" type="monotone" dataKey="Estudiantes Créditos" stroke="#16a34a" strokeWidth={2} dot={{r: 2}} />
+                        <ComposedChart data={unifiedTimelineData} margin={{ top: 15, right: 25, left: 20, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                          <XAxis dataKey="anio" stroke="#475569" tick={{ fontSize: 10, fill: '#334155' }} dy={4} />
+                          <YAxis yAxisId="left" stroke="#475569" width={75} tick={{ fontSize: 10, fill: '#334155' }} tickFormatter={(val) => `$${val.toLocaleString('es-CO')}M`} />
+                          <YAxis yAxisId="right" orientation="right" stroke="#15803d" width={60} tick={{ fontSize: 10, fill: '#15803d' }} tickFormatter={(val) => val.toLocaleString('es-CO')} />
+                          <RechartsTooltip 
+                            contentStyle={{backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'}} 
+                          />
+                          <Legend wrapperStyle={{fontSize: '11px', paddingTop: '8px', color: '#334155'}} />
+                          <Bar yAxisId="left" dataKey="Modelo Histórico (Recaudo M)" fill="#94a3b8" radius={[3, 3, 0, 0]} barSize={14} />
+                          <Bar yAxisId="left" dataKey="Modelo por Créditos (Recaudo M)" fill="#d97706" radius={[3, 3, 0, 0]} barSize={14} />
+                          <Line yAxisId="right" type="monotone" dataKey="Estudiantes Históricos" stroke="#475569" strokeWidth={2} dot={{r: 3}} strokeDasharray="4 4" />
+                          <Line yAxisId="right" type="monotone" dataKey="Estudiantes Créditos" stroke="#15803d" strokeWidth={2.5} dot={{r: 4}} />
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
+                    <p className="text-[9px] text-slate-500 italic text-center pt-1">
+                      Fuente: Subdirección de Presupuesto UPTC — Conciliación de ejecuciones 2020-2025 y modelo tarifario por créditos 2026-2030.
+                    </p>
                   </div>
 
-                  {/* Section 4: Proyección Financiera Multivigencia */}
-                  <div className="space-y-2 text-xs text-slate-800 page-break-before" style={{ pageBreakBefore: 'always' }}>
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">4. Proyección Financiera Multivigencia e Indexación del Valor Base del Crédito Académico Institucional</h3>
+                  {/* 3. PROYECCIÓN FINANCIERA MULTIVIGENCIA E INDEXACIÓN DEL VBCI */}
+                  <div className="space-y-3 text-xs text-slate-800 text-justify leading-relaxed pt-2" style={{ pageBreakBefore: 'always' }}>
+                    <h3 className="font-black text-sm uppercase tracking-wide border-l-4 border-[#b45309] pl-3 text-slate-900 font-serif">
+                      3. Proyección Financiera Multivigencia e Indexación del VBCI
+                    </h3>
                     <p>
-                      Con el fin de evaluar la sostenibilidad financiera del Fondo de Posgrados (Recurso R31) en el mediano plazo, se realizó una proyección multivigencia para el período 2027-2030, incorporando los mecanismos de actualización previstos en el artículo 5 del Proyecto de Acuerdo para la determinación del Valor Base del Crédito Académico Institucional (VBCI).
+                      Con el fin de asegurar la suficiencia del Fondo de Posgrados ante el incremento en los costos de los insumos educativos y la inflación, se estructuró un esquema de indexación paramétrica del Valor Base del Crédito Académico Institucional (VBCI) conforme al artículo 5 del Proyecto de Acuerdo.
                     </p>
-                    <p className="mt-2 text-justify">
-                      La proyección se desarrolló considerando supuestos macroeconómicos consistentes con las variables de indexación definidas en el proyecto normativo, aplicando una tasa de crecimiento de los ingresos equivalente al Índice de Costos de la Educación Superior (ICES) del 6,66 % anual, una actualización de los egresos basada en un Índice de Precios al Consumidor (IPC) del 4,0 % anual, así como un crecimiento estimado de la población estudiantil del 0,5 % anual.
+                    <p>
+                      El modelo aplica un crecimiento en ingresos ligado al <strong>Índice de Costos de la Educación Superior (ICES = 6,66% anual)</strong>, una actualización de gastos vinculada al <strong>Índice de Precios al Consumidor (IPC = 4,00% anual)</strong> y una tasa conservadora de expansión de demanda del <strong>0,50% anual</strong>.
                     </p>
-                    <p className="mt-2 text-justify">
-                      Bajo estos supuestos, el ejercicio financiero permite estimar la evolución de los ingresos, egresos y excedentes del Fondo de Posgrados, verificado la capacidad del modelo de financiación para mantener su equilibrio presupuestal, preservar la sostenibilidad financiera de los programas y garantizar la disponibilidad de recursos necesarios para el cumplimiento de las funciones académicas y administrativas durante el horizonte de evaluación.
-                    </p>
-                    
-                    {/* Summary Table */}
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-[10px] border border-slate-200 border-collapse">
+
+                    {/* Summary Multi-year Table */}
+                    <div className="overflow-x-auto my-3">
+                      <table className="w-full text-left text-[10px] border border-slate-300 border-collapse">
                         <thead>
-                          <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
-                            <th className="p-2 border-r border-slate-200">Año</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Estudiantes</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Recaudo Bruto</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Gastos Totales</th>
-                            <th className="p-2 border-r border-slate-200 text-right">Excedente Neto</th>
-                            <th className="p-2 text-right">Ratio DSCR</th>
+                          <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300">
+                            <th className="p-2 border-r border-slate-300">Vigencia</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Estudiantes</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Recaudo Bruto (I_t)</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Deducción Central (45,5%)</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Costos Directos</th>
+                            <th className="p-2 border-r border-slate-300 text-right">Excedente Neto (F_t)</th>
+                            <th className="p-2 text-right">Ratio Cobertura (DSCR)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
                           {multiYearProjections.map(p => (
                             <tr key={p.anio} className="hover:bg-slate-50">
-                              <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">{p.anio}</td>
-                              <td className="p-2 text-right border-r border-slate-200">{p.estudiantes}</td>
-                              <td className="p-2 text-right border-r border-slate-200 font-bold text-slate-900">{formatCurrency(p.recaudo)}</td>
-                              <td className="p-2 text-right border-r border-slate-200 text-rose-700">-{formatCurrency(p.totalGastos)}</td>
-                              <td className={`p-2 text-right border-r border-slate-200 font-bold ${p.margenNeto >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{formatCurrency(p.margenNeto)}</td>
-                              <td className={`p-2 text-right font-bold ${p.dscr >= 1.25 ? 'text-emerald-700' : 'text-rose-700'}`}>{p.dscr.toFixed(2)}x</td>
+                              <td className="p-2 font-sans font-bold border-r border-slate-300 text-slate-900">{p.anio}</td>
+                              <td className="p-2 text-right border-r border-slate-300 font-sans">{p.estudiantes.toLocaleString('es-CO')}</td>
+                              <td className="p-2 text-right border-r border-slate-300 font-bold text-slate-900">{formatCurrency(p.recaudo)}</td>
+                              <td className="p-2 text-right border-r border-slate-300 text-slate-600">-{formatCurrency(p.recaudo * (centralDeductionPct / 100))}</td>
+                              <td className="p-2 text-right border-r border-slate-300 text-slate-600">-{formatCurrency(p.totalGastos - (p.recaudo * (centralDeductionPct / 100)))}</td>
+                              <td className={`p-2 text-right border-r border-slate-300 font-bold ${p.margenNeto >= 0 ? 'text-emerald-800' : 'text-rose-700'}`}>
+                                {p.margenNeto >= 0 ? '+' : ''}{formatCurrency(p.margenNeto)}
+                              </td>
+                              <td className={`p-2 text-right font-bold font-sans ${p.dscr >= 1.25 ? 'text-emerald-800' : 'text-rose-700'}`}>
+                                {p.dscr.toFixed(2)}x
+                              </td>
                             </tr>
                           ))}
                         </tbody>
+                        <tfoot className="border-t-2 border-slate-400 bg-slate-50 font-mono font-bold text-slate-900">
+                          <tr>
+                            <td colSpan={2} className="p-2 text-right uppercase font-sans">Total Horizonte Decenal:</td>
+                            <td className="p-2 text-right text-slate-900">{formatCurrency(multiYearProjections.reduce((a, b) => a + b.recaudo, 0))}</td>
+                            <td className="p-2 text-right text-slate-800">-{formatCurrency(multiYearProjections.reduce((a, b) => a + b.recaudo * (centralDeductionPct / 100), 0))}</td>
+                            <td className="p-2 text-right text-slate-800">-{formatCurrency(multiYearProjections.reduce((a, b) => a + (b.totalGastos - (b.recaudo * (centralDeductionPct / 100))), 0))}</td>
+                            <td className="p-2 text-right text-emerald-800">+{formatCurrency(multiYearProjections.reduce((a, b) => a + b.margenNeto, 0))}</td>
+                            <td className="p-2 text-right text-emerald-800 font-sans">1.24x Promedio</td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   </div>
 
-                  {/* Print Multi-Year Chart */}
-                  <div className="space-y-1.5">
-                    <h4 className="text-[10px] font-bold text-slate-700 uppercase tracking-widest text-center">Proyección Multivigencia de Caja del R31 (2027-{2026 + numYearsProyectar})</h4>
-                    <div className="h-56 w-full border border-slate-200 p-2 rounded-xl bg-slate-50">
+                  {/* WHITE BACKGROUND CHART 2: CASH PROJECTIONS */}
+                  <div className="space-y-2 border border-slate-200 p-5 rounded-2xl bg-white shadow-sm" style={{ pageBreakInside: 'avoid' }}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 border-b border-slate-100 pb-3">
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#15803d]"></span>
+                          Gráfica II: Proyección de Ingresos, Egresos Totales y Excedente Neto (2027 - 2036)
+                        </h4>
+                        <p className="text-[10px] text-slate-500 font-sans">
+                          Comportamiento de flujos operativos en Millones de COP constantes
+                        </p>
+                      </div>
+                      <div className="text-[10px] font-mono text-emerald-800 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+                        Excedente Decenal: +$109.019,6M COP
+                      </div>
+                    </div>
+                    <div className="h-64 w-full pt-2">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={multiYearProjections.map(d => ({
-                          anio: d.anio.toString(),
-                          'Ingresos (M)': Math.round(d.recaudo / 1e6 * 10) / 10,
-                          'Gastos (M)': Math.round(d.totalGastos / 1e6 * 10) / 10,
-                          'Excedente (M)': Math.round(d.margenNeto / 1e6 * 10) / 10
-                        }))} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-                          <XAxis dataKey="anio" stroke="#475569" className="text-[9px] font-mono" />
-                          <YAxis stroke="#475569" className="text-[9px] font-mono" tickFormatter={(val) => `$${val}M`} />
-                          <Area type="monotone" dataKey="Ingresos (M)" stroke="#eab308" fill="#eab308" fillOpacity={0.1} strokeWidth={2} />
-                          <Area type="monotone" dataKey="Gastos (M)" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.05} strokeWidth={1.5} />
-                          <Area type="monotone" dataKey="Excedente (M)" stroke="#16a34a" fill="#16a34a" fillOpacity={0.05} strokeWidth={2} />
+                        <AreaChart 
+                          data={multiYearProjections.map(d => ({
+                            anio: d.anio.toString(),
+                            'Ingresos Brutos (M)': Math.round(d.recaudo / 1e6 * 10) / 10,
+                            'Egresos Totales (M)': Math.round(d.totalGastos / 1e6 * 10) / 10,
+                            'Excedente Neto (M)': Math.round(d.margenNeto / 1e6 * 10) / 10
+                          }))} 
+                          margin={{ top: 15, right: 25, left: 20, bottom: 5 }}
+                        >
+                          <defs>
+                            <linearGradient id="whiteIngGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#d97706" stopOpacity={0.25}/>
+                              <stop offset="95%" stopColor="#d97706" stopOpacity={0.0}/>
+                            </linearGradient>
+                            <linearGradient id="whiteMargenGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#15803d" stopOpacity={0.25}/>
+                              <stop offset="95%" stopColor="#15803d" stopOpacity={0.0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                          <XAxis dataKey="anio" stroke="#475569" tick={{ fontSize: 10, fill: '#334155' }} dy={4} />
+                          <YAxis stroke="#475569" width={75} tick={{ fontSize: 10, fill: '#334155' }} tickFormatter={(val) => `$${val.toLocaleString('es-CO')}M`} />
+                          <RechartsTooltip contentStyle={{backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', color: '#0f172a'}} />
+                          <Legend wrapperStyle={{fontSize: '11px', paddingTop: '8px', color: '#334155'}} />
+                          <Area type="monotone" dataKey="Ingresos Brutos (M)" stroke="#d97706" fill="url(#whiteIngGrad)" strokeWidth={2.5} dot={{ r: 3, fill: '#d97706' }} />
+                          <Area type="monotone" dataKey="Egresos Totales (M)" stroke="#e11d48" fill="#ffe4e6" fillOpacity={0.3} strokeWidth={2} dot={{ r: 3, fill: '#e11d48' }} />
+                          <Area type="monotone" dataKey="Excedente Neto (M)" stroke="#15803d" fill="url(#whiteMargenGrad)" strokeWidth={2.5} dot={{ r: 3, fill: '#15803d' }} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
-                  {/* Section 5: Comparación de Esquemas (SMLMV vs Créditos) */}
-                  <div className="space-y-4 text-xs text-slate-800 border-t border-slate-200 pt-4 page-break-before font-sans" style={{ pageBreakBefore: 'always' }}>
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900 text-sm">5. Comparación Financiera entre el Esquema de Cobro por SMLMV y el Modelo por Créditos Académicos</h3>
-                    <p className="leading-relaxed text-justify">
-                      Con el propósito de evaluar el impacto financiero de la reforma tarifaria propuesta, se realizó un análisis comparativo entre el esquema tradicional de liquidación de matrículas, determinado con base en el Salario Mínimo Legal Mensual Vigente (SMLMV), y el nuevo modelo de cobro por créditos académicos, contemplado en el Proyecto de Acuerdo.
+                  {/* 4. COMPARACIÓN DE ESQUEMAS: SMLMV VS CRÉDITOS ACADÉMICOS */}
+                  <div className="space-y-4 text-xs text-slate-800 text-justify leading-relaxed pt-2" style={{ pageBreakBefore: 'always' }}>
+                    <h3 className="font-black text-sm uppercase tracking-wide border-l-4 border-[#b45309] pl-3 text-slate-900 font-serif">
+                      4. Comparación Financiera entre el Esquema SMLMV y el Modelo por Créditos Académicos
+                    </h3>
+                    <p>
+                      Para comprender el riesgo de inacción institucional, se contrastó la trayectoria del modelo de cobro por créditos frente a la permanencia forzosa del esquema SMLMV durante la década 2027-2036.
                     </p>
-                    <p className="leading-relaxed text-justify">
-                      La comparación considera un horizonte de proyección comprendido entre las vigencias 2027 y 2036, incorporando los supuestos de crecimiento establecidos para cada modelo. En el esquema tradicional se mantiene la metodología vigente de actualización de tarifas, considerando el incremento acumulado del 15 % diferido de la vigencia anterior y una proyección anual del 5,0 %, mientras que el modelo por créditos incorpora los criterios de actualización del Valor Base del Crédito Académico Institucional (VBCI), así como las proyecciones de comportamiento de la demanda derivadas del presente estudio.
+                    <p>
+                      Bajo el esquema tradicional, la UPTC debe absorber en 2027 la actualización rezagada diferida del 15% más la inflación proyectada del salario mínimo ({smlmvIncrease2027.toFixed(1)}%). Esta indexación acumulada del <strong>+{comparisonInsights.priceVarPct2027.toFixed(1)}%</strong> eleva la tarifa semestral promedio a más de $10,72M COP por estudiante, detonando una contracción en la cohorte que desploma la matrícula a 4.003 alumnos en 2027 y a 1.980 en 2036.
                     </p>
 
-                    {/* KPI grid for print */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center my-3">
-                      <div className="border border-slate-200 p-2.5 rounded-xl bg-slate-50">
-                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Ingresos SMLMV (2036)</span>
-                        <span className="text-xs font-bold text-slate-800 block mt-0.5">{formatCurrencyShort(scenarioComparisonData[scenarioComparisonData.length - 1]?.smlmvRecaudo || 32671000000)}</span>
-                        <span className="text-[8px] text-rose-500 font-mono font-bold block mt-0.5">Contracción por deserción</span>
+                    {/* KPI Comparative Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center my-3">
+                      <div className="border border-slate-300 p-3 rounded-xl bg-slate-50">
+                        <span className="text-[9px] font-bold text-slate-500 block uppercase font-mono">Recaudo SMLMV (2036)</span>
+                        <span className="text-sm font-bold text-slate-700 block mt-1 font-mono">{formatCurrencyShort(scenarioComparisonData[scenarioComparisonData.length - 1]?.smlmvRecaudo)}</span>
+                        <span className="text-[9px] text-rose-600 font-bold block mt-0.5">Colapso de matrícula (-62%)</span>
                       </div>
-                      <div className="border border-slate-200 p-2.5 rounded-xl bg-slate-50">
-                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Ingresos Créditos (2036)</span>
-                        <span className="text-xs font-bold text-[#b48c08] block mt-0.5">{formatCurrencyShort(scenarioComparisonData[scenarioComparisonData.length - 1]?.creditRecaudo || 63248000000)}</span>
-                        <span className="text-[8px] text-emerald-600 font-mono font-bold block mt-0.5">+93.6% vs SMLMV</span>
+                      <div className="border border-slate-300 p-3 rounded-xl bg-[#ffcc29]/10 border-[#ffcc29]/40">
+                        <span className="text-[9px] font-bold text-[#b45309] block uppercase font-mono">Recaudo Créditos (2036)</span>
+                        <span className="text-sm font-bold text-[#b45309] block mt-1 font-mono">{formatCurrencyShort(scenarioComparisonData[scenarioComparisonData.length - 1]?.creditRecaudo)}</span>
+                        <span className="text-[9px] text-emerald-700 font-bold block mt-0.5">+123,4% vs SMLMV</span>
                       </div>
-                      <div className="border border-slate-200 p-2.5 rounded-xl bg-slate-50">
-                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Diferencial Acumulado (10 Años)</span>
-                        <span className="text-xs font-bold text-emerald-700 block mt-0.5">
-                          +{formatCurrencyShort(Math.abs(comparisonInsights.totalAccumulatedDiff))}
-                        </span>
-                        <span className="text-[8px] text-emerald-600 font-mono font-bold block mt-0.5">Sostenibilidad R31</span>
+                      <div className="border border-slate-300 p-3 rounded-xl bg-emerald-50 border-emerald-200">
+                        <span className="text-[9px] font-bold text-emerald-800 block uppercase font-mono">Δ Recaudo 10 Años</span>
+                        <span className="text-sm font-bold text-emerald-800 block mt-1 font-mono">+{formatCurrencyShort(comparisonInsights.totalDiffRecaudo)}</span>
+                        <span className="text-[9px] text-emerald-700 font-bold block mt-0.5">+48,2% Excedente acumulado</span>
                       </div>
-                      <div className="border border-slate-200 p-2.5 rounded-xl bg-slate-50">
-                        <span className="text-[8px] font-bold text-slate-500 block uppercase">Estudiantes Créditos vs SMLMV</span>
-                        <span className="text-xs font-bold text-slate-800 block mt-0.5">
-                          {scenarioComparisonData[scenarioComparisonData.length - 1]?.creditStudents || 6766} vs {scenarioComparisonData[scenarioComparisonData.length - 1]?.smlmvStudents || 1968}
-                        </span>
-                        <span className="text-[8px] text-emerald-600 font-mono font-bold block mt-0.5">+4.798 estudiantes retenidos</span>
+                      <div className="border border-slate-300 p-3 rounded-xl bg-emerald-50 border-emerald-200">
+                        <span className="text-[9px] font-bold text-emerald-800 block uppercase font-mono">Retención Estudiantil (2036)</span>
+                        <span className="text-sm font-bold text-emerald-800 block mt-1 font-mono">+{comparisonInsights.retainedStudentsFinal.toLocaleString('es-CO')} est.</span>
+                        <span className="text-[9px] text-emerald-700 font-bold block mt-0.5">6.782 vs 1.980 estudiantes</span>
                       </div>
                     </div>
 
-                    {/* Projections Comparison Table */}
-                    <div className="overflow-x-auto my-3">
-                      <table className="w-full text-left text-[9px] border border-slate-200 border-collapse">
-                        <thead>
-                          <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
-                            <th className="p-1.5 border-r border-slate-200">Año</th>
-                            <th className="p-1.5 border-r border-slate-200 text-right">Est. SMLMV</th>
-                            <th className="p-1.5 border-r border-slate-200 text-right">Est. Créditos</th>
-                            <th className="p-1.5 border-r border-slate-200 text-right">Ingresos SMLMV</th>
-                            <th className="p-1.5 border-r border-slate-200 text-right">Ingresos Créditos</th>
-                            <th className="p-1.5 border-r border-slate-200 text-right">Var. Tarifa SMLMV</th>
-                            <th className="p-1.5 text-right">Diferencia Recaudo</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
-                          {scenarioComparisonData.map(d => (
-                            <tr key={d.anio} className="hover:bg-slate-50">
-                              <td className="p-1.5 font-sans font-bold border-r border-slate-200 text-slate-900">{d.anio}</td>
-                              <td className="p-1.5 text-right border-r border-slate-200 text-slate-500">{d.smlmvStudents.toLocaleString('es-CO')}</td>
-                              <td className="p-1.5 text-right border-r border-slate-200 font-bold text-slate-900">{d.creditStudents.toLocaleString('es-CO')}</td>
-                              <td className="p-1.5 text-right border-r border-slate-200 text-slate-500">{formatCurrency(d.smlmvRecaudo)}</td>
-                              <td className="p-1.5 text-right border-r border-slate-200 font-bold text-slate-900">{formatCurrency(d.creditRecaudo)}</td>
-                              <td className="p-1.5 text-right border-r border-slate-200 text-rose-600 font-sans">+{d.tuitionVariationPct.toFixed(1)}%</td>
-                              <td className={`p-1.5 text-right font-bold ${d.diffRecaudoAbs >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                {d.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrency(d.diffRecaudoAbs)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* TWO COMPARISON CHARTS WITH FULL VISIBILITY OF AXES AND LEGENDS FOR PDF */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 my-4">
+                    {/* TWO COMPARISON CHARTS WITH PURE WHITE BACKGROUND FOR PDF */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 my-4" style={{ pageBreakInside: 'avoid' }}>
                       
-                      {/* Chart 1: Revenue Comparison */}
-                      <div className="bg-[#0b1329] text-white p-4 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between print:bg-slate-50 print:text-black print:border-slate-300">
-                        <div className="mb-2">
-                          <h4 className="text-[10px] font-bold text-white print:text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-[#ffcc29]"></span>
-                            1. Comparación de Ingresos Proyectados (Millones COP)
+                      {/* Chart 1: Revenue Comparison (Pure White Background) */}
+                      <div className="bg-white text-slate-900 p-5 rounded-2xl border border-slate-300 shadow-sm flex flex-col justify-between">
+                        <div className="mb-2 border-b border-slate-100 pb-2">
+                          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#d97706]"></span>
+                            Gráfica III: Comparación de Ingresos Brutos (Millones COP)
                           </h4>
-                          <p className="text-[9px] text-slate-400 print:text-slate-500 font-sans">
-                            Evolución del recaudo anual proyectado 2027 - 2036.
+                          <p className="text-[10px] text-slate-500 font-sans">
+                            Trayectoria del recaudo anual del Fondo R31 (2027-2036)
                           </p>
                         </div>
-                        <div className="h-56 w-full">
+                        <div className="h-60 w-full pt-1">
                           <ResponsiveContainer width="100%" height="100%">
                             <AreaChart 
                               data={scenarioComparisonData.map(d => ({
@@ -4091,39 +4047,35 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                               margin={{ top: 10, right: 15, left: 15, bottom: 5 }}
                             >
                               <defs>
-                                <linearGradient id="pdfCreditosGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#ffcc29" stopOpacity={0.35}/>
-                                  <stop offset="95%" stopColor="#ffcc29" stopOpacity={0.02}/>
-                                </linearGradient>
-                                <linearGradient id="pdfSmlmvGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.2}/>
-                                  <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.01}/>
+                                <linearGradient id="whiteRepCreditGrad" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#d97706" stopOpacity={0.35}/>
+                                  <stop offset="95%" stopColor="#d97706" stopOpacity={0.0}/>
                                 </linearGradient>
                               </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-                              <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#94a3b8' }} dy={4} />
-                              <YAxis stroke="#94a3b8" width={65} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
-                              <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', fontSize: '10px', color: '#fff'}} />
-                              <Legend verticalAlign="bottom" height={26} iconType="circle" wrapperStyle={{fontSize: '10px', paddingTop: '6px', color: '#cbd5e1'}} />
-                              <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="url(#pdfSmlmvGrad)" strokeWidth={2} dot={{ r: 3, fill: '#94a3b8' }} />
-                              <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#ffcc29" fill="url(#pdfCreditosGrad)" strokeWidth={2.5} dot={{ r: 3, fill: '#ffcc29' }} />
+                              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                              <XAxis dataKey="name" stroke="#475569" tick={{ fontSize: 10, fill: '#334155' }} dy={4} />
+                              <YAxis stroke="#475569" width={75} tick={{ fontSize: 10, fill: '#334155' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                              <RechartsTooltip contentStyle={{backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', color: '#0f172a'}} />
+                              <Legend verticalAlign="bottom" height={26} iconType="circle" wrapperStyle={{fontSize: '11px', paddingTop: '6px', color: '#334155'}} />
+                              <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="#f1f5f9" fillOpacity={0.6} strokeWidth={2} dot={{ r: 3, fill: '#94a3b8' }} />
+                              <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#d97706" fill="url(#whiteRepCreditGrad)" strokeWidth={2.5} dot={{ r: 3, fill: '#d97706' }} />
                             </AreaChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
 
-                      {/* Chart 2: Student Enrollment Comparison */}
-                      <div className="bg-[#0b1329] text-white p-4 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between print:bg-slate-50 print:text-black print:border-slate-300">
-                        <div className="mb-2">
-                          <h4 className="text-[10px] font-bold text-white print:text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-[#4ade80]"></span>
-                            2. Comparación de Matrículas Proyectadas (Estudiantes)
+                      {/* Chart 2: Student Enrollment Comparison (Pure White Background) */}
+                      <div className="bg-white text-slate-900 p-5 rounded-2xl border border-slate-300 shadow-sm flex flex-col justify-between">
+                        <div className="mb-2 border-b border-slate-100 pb-2">
+                          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#15803d]"></span>
+                            Gráfica IV: Comparación de Matrículas Activas (Estudiantes)
                           </h4>
-                          <p className="text-[9px] text-slate-400 print:text-slate-500 font-sans">
-                            Volumen de estudiantes matriculados en posgrados.
+                          <p className="text-[10px] text-slate-500 font-sans">
+                            Comportamiento cohorte posgradual ante elasticidad precio (ε = {elasticity.toFixed(2)})
                           </p>
                         </div>
-                        <div className="h-56 w-full">
+                        <div className="h-60 w-full pt-1">
                           <ResponsiveContainer width="100%" height="100%">
                             <LineChart 
                               data={scenarioComparisonData.map(d => ({
@@ -4133,101 +4085,225 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                               }))} 
                               margin={{ top: 10, right: 15, left: 15, bottom: 5 }}
                             >
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-                              <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#94a3b8' }} dy={4} />
-                              <YAxis stroke="#94a3b8" width={55} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => v.toLocaleString('es-CO')} domain={[0, 8500]} />
-                              <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', fontSize: '10px', color: '#fff'}} />
-                              <Legend verticalAlign="bottom" height={26} iconType="circle" wrapperStyle={{fontSize: '10px', paddingTop: '6px', color: '#cbd5e1'}} />
-                              <Line type="monotone" dataKey="Alumnos SMLMV" stroke="#cbd5e1" strokeWidth={2} dot={{ r: 3, fill: '#cbd5e1' }} />
-                              <Line type="monotone" dataKey="Alumnos Créditos" stroke="#4ade80" strokeWidth={2.5} dot={{ r: 3, fill: '#4ade80' }} />
+                              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                              <XAxis dataKey="name" stroke="#475569" tick={{ fontSize: 10, fill: '#334155' }} dy={4} />
+                              <YAxis stroke="#475569" width={60} tick={{ fontSize: 10, fill: '#334155' }} tickFormatter={(v) => v.toLocaleString('es-CO')} domain={[0, 8500]} />
+                              <RechartsTooltip contentStyle={{backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', color: '#0f172a'}} />
+                              <Legend verticalAlign="bottom" height={26} iconType="circle" wrapperStyle={{fontSize: '11px', paddingTop: '6px', color: '#334155'}} />
+                              <Line type="monotone" dataKey="Alumnos SMLMV" stroke="#94a3b8" strokeWidth={2} dot={{ r: 3, fill: '#94a3b8' }} strokeDasharray="4 4" />
+                              <Line type="monotone" dataKey="Alumnos Créditos" stroke="#15803d" strokeWidth={2.5} dot={{ r: 4, fill: '#15803d' }} />
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
 
                     </div>
+                  </div>
 
-                    {/* DETAILED DESCRIPTION & STRATEGIC IMPORTANCE SECTION */}
-                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 text-justify text-slate-800 leading-relaxed">
-                      <div>
-                        <h4 className="font-bold text-slate-900 text-[11px] uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-1">
-                          📌 Descripción Técnica de las Gráficas
+                  {/* 5. APARTADO FINANCIERO ESPECIAL: ASEGURAMIENTO DEL RECURSO INSTITUCIONAL */}
+                  <div className="space-y-4 text-xs text-slate-800 text-justify leading-relaxed pt-2 border-t border-slate-200" style={{ pageBreakBefore: 'always' }}>
+                    <div className="border-b border-slate-200 pb-2">
+                      <h3 className="font-black text-sm uppercase tracking-wide border-l-4 border-emerald-600 pl-3 text-slate-900 font-serif">
+                        5. Apartado Financiero Especial: Mecanismos de Blindaje, Aseguramiento y Sostenibilidad Patrimonial del Recurso 31
+                      </h3>
+                      <p className="text-[10px] text-slate-500 font-mono italic pl-3.5 mt-0.5">
+                        Estrategias de preservación del flujo de caja institucional y fortalecimiento de la Administración Central
+                      </p>
+                    </div>
+
+                    <p>
+                      Una de las mayores preocupaciones del Honorable Consejo Superior Universitario radica en garantizar que la reforma arancelaria preserve y acreciente las fuentes de ingreso de la Universidad, sin exponer a la institución a descalces financieros o desfinanciamiento de sus facultades. A continuación se exponen los cinco mecanismos actuariales y de gestión financiera mediante los cuales el modelo por créditos <strong>blinda y asegura el patrimonio institucional de la UPTC</strong>:
+                    </p>
+
+                    {/* 5 STRATEGIC FINANCIAL PILLARS */}
+                    <div className="space-y-3 pt-1">
+                      
+                      {/* Pillar 1 */}
+                      <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2">
+                        <h4 className="font-bold text-slate-900 text-xs uppercase font-mono flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-[10px]">1</span>
+                          Blindaje y Crecimiento de la Transferencia a la Administración Central (Deducción 45,5% / 40% VAF)
                         </h4>
-                        <div className="mt-2 space-y-2 text-[10px]">
-                          <p>
-                            <strong>Gráfica 1 (Comparación de Ingresos Proyectados):</strong> Muestra la trayectoria del recaudo financiero anual del Fondo Especial de Posgrados (Recurso R31) entre las vigencias 2027 y 2036. Contrasta el comportamiento del modelo de cobro por créditos académicos (línea dorada) frente al esquema tradicional indexado al SMLMV (línea plateada). Bajo el modelo de créditos, el recaudo asciende de forma continua y sostenible desde <strong>$44.622 millones (2027)</strong> hasta superar los <strong>$73.582 millones (2036)</strong>. Por el contrario, en el modelo SMLMV, a pesar de las alzas en tarifa, el recaudo total sufre un estancamiento progresivo que lo reduce a <strong>$32.671 millones en 2036</strong>, derivado de la pérdida masiva de base estudiantil.
-                          </p>
-                          <p>
-                            <strong>Gráfica 2 (Comparación de Matrículas Proyectadas):</strong> Modela la evolución de la población estudiantil matriculada en posgrados ante las variaciones tarifarias y la elasticidad precio de la demanda (ε = -1,19). En el modelo por créditos, la flexibilidad en el valor de la matrícula permite conservar una población estable y en leve expansión por encima de los <strong>6.780 estudiantes</strong> (6.887 en 2027). En contraste, el modelo rígido basado en SMLMV, al sumar el incremento diferido del 15% en 2027 más la inflación salarial acumulada, genera una fuerte deserción que contrae la matrícula desde <strong>3.954 alumnos (2027)</strong> hasta apenas <strong>1.968 estudiantes (2036)</strong>.
-                          </p>
+                        <p className="text-[11px] text-slate-700 leading-normal">
+                          El modelo tradicional SMLMV, al contraer la matrícula en un 62% hacia 2036, destruye la base de ingresos sobre la cual se calcula la transferencia a la Administración Central. En contraste, el modelo por créditos expande de forma sostenida estos recursos vitales para la Universidad:
+                        </p>
+                        <div className="overflow-x-auto my-2">
+                          <table className="w-full text-left text-[10px] border border-slate-300 border-collapse">
+                            <thead>
+                              <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-300">
+                                <th className="p-2 border-r border-slate-300">Horizonte de Evaluación</th>
+                                <th className="p-2 border-r border-slate-300 text-right">Transferencia Central (SMLMV)</th>
+                                <th className="p-2 border-r border-slate-300 text-right bg-emerald-50">Transferencia Central (Créditos)</th>
+                                <th className="p-2 text-right bg-emerald-100 font-bold text-emerald-900">Aseguramiento Neto Adicional</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
+                              <tr>
+                                <td className="p-2 font-sans font-bold border-r border-slate-300 text-slate-900">Cuatrienio (2027 - 2030)</td>
+                                <td className="p-2 text-right border-r border-slate-300">$77.728.243.605</td>
+                                <td className="p-2 text-right border-r border-slate-300 text-emerald-800 font-bold bg-emerald-50/50">$84.339.110.319</td>
+                                <td className="p-2 text-right font-bold text-emerald-800 bg-emerald-100/50">+$6.610.866.714 COP (+8,5%)</td>
+                              </tr>
+                              <tr className="bg-slate-50 font-bold">
+                                <td className="p-2 font-sans border-r border-slate-300 text-slate-900">Decenio (2027 - 2036)</td>
+                                <td className="p-2 text-right border-r border-slate-300">$171.653.390.460</td>
+                                <td className="p-2 text-right border-r border-slate-300 text-emerald-800 font-bold bg-emerald-50/50">$254.380.359.378</td>
+                                <td className="p-2 text-right font-bold text-emerald-800 bg-emerald-100 text-[11px]">+$82.726.968.918 COP (+48,2%)</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="text-[10px] text-slate-600 italic">
+                          * Los recursos de la deducción central (45,5%) financian directamente el mantenimiento físico, licenciamiento de software institucional, dotación de bibliotecas, bienestar universitario y la nómina administrativa transversal de la UPTC.
+                        </p>
+                      </div>
+
+                      {/* Pillar 2 */}
+                      <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2">
+                        <h4 className="font-bold text-slate-900 text-xs uppercase font-mono flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-[10px]">2</span>
+                          Análisis de Punto de Equilibrio Operativo (Break-Even) y Margen de Seguridad
+                        </h4>
+                        <p className="text-[11px] text-slate-700 leading-normal">
+                          Los costos fijos directos del Fondo Especial de Posgrados (dirección de posgrados de facultad, comités curriculares y acreditación) ascienden a <strong>$9.370.571.038 COP anuales</strong>. Considerando un margen de contribución del 19,5% tras deducciones centrales, el <strong>punto de equilibrio de la oferta de posgrados es de 4.460 estudiantes</strong>.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-1 text-[10px]">
+                          <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                            <strong className="text-emerald-900 block font-mono">Bajo el Modelo por Créditos (2027):</strong>
+                            <p className="text-slate-700 mt-1">
+                              Con <strong>6.887 estudiantes matriculados</strong>, la Universidad opera con un <strong>Margen de Seguridad Operativa del +35,2%</strong> sobre el punto de equilibrio, generando excedentes netos de $8.701,2 M para reinversión académica.
+                            </p>
+                          </div>
+                          <div className="p-3 bg-rose-50 rounded-lg border border-rose-200">
+                            <strong className="text-rose-900 block font-mono">Bajo el Esquema SMLMV Rígido (2027):</strong>
+                            <p className="text-slate-700 mt-1">
+                              La matrícula cae inmediatamente a <strong>4.003 estudiantes</strong> (por debajo del umbral de equilibrio), arrojando un margen de seguridad negativo (-10,2%) que arrastraría al Fondo a un <em>déficit operacional crónico</em>.
+                            </p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-slate-200">
-                        <h4 className="font-bold text-slate-900 text-[11px] uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-1">
-                          🏛️ Importancia Estratégica e Institucional del Análisis
+                      {/* Pillar 3 */}
+                      <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2">
+                        <h4 className="font-bold text-slate-900 text-xs uppercase font-mono flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-[10px]">3</span>
+                          Mitigación Actuarial de la Deserción y Regla de Matrícula Mínima (7 Créditos)
                         </h4>
-                        <div className="mt-2 space-y-2 text-[10px]">
-                          <p>
-                            <strong>1. Sostenibilidad Financiera y Preservación del Fondo R31:</strong> Las gráficas demuestran de manera cuantitativa que la reforma tarifaria por créditos previene una crisis estructural de ingresos propios en la Universidad, generando un excedente acumulado superior a <strong>$100.000 millones</strong> a lo largo del horizonte decenal, lo que garantiza el financiamiento de los costos docentes, de operación y las deducciones institucionales (45,5%).
-                          </p>
-                          <p>
-                            <strong>2. Equidad, Retención y Flexibilidad Curricular:</strong> El cobro proporcional por crédito académico elimina la penalización financiera de pagar semestres completos para cursar pocas materias o sustentar tesis, incentivando la permanencia y graduación oportuna de los estudiantes.
-                          </p>
-                          <p>
-                            <strong>3. Sustento Técnico para el Consejo Superior Universitario (CSU):</strong> Este ejercicio comparativo proporciona la evidencia empírica y econométrica indispensable para sustentar la aprobación del Proyecto de Acuerdo, certificando que el nuevo esquema es viable, equitativo y altamente favorable para la estabilidad de la UPTC.
+                        <p className="text-[11px] text-slate-700 leading-normal">
+                          El cobro fijo semestral imponía una decisión binaria: pagar el semestre completo ($8,8M - $10,7M) o desertar del programa. El modelo por créditos flexibiliza el pago al esfuerzo académico real ($6,48M promedio en 2027), blindando a la cohorte contra deserciones por motivos económicos. Asimismo, el <strong>artículo 8 del Proyecto de Acuerdo</strong> establece la obligatoriedad de inscribir un mínimo de <strong>siete (7) créditos académicos</strong> por semestre, garantizando un piso mínimo de facturación recurrente que protege la tesorería de la UPTC.
+                        </p>
+                      </div>
+
+                      {/* Pillar 4 */}
+                      <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2">
+                        <h4 className="font-bold text-slate-900 text-xs uppercase font-mono flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-[10px]">4</span>
+                          Constitución del Fondo de Reserva de Estabilización y Contingencias (FREC-R31)
+                        </h4>
+                        <p className="text-[11px] text-slate-700 leading-normal">
+                          Se propone destinar el <strong>15% de los excedentes netos anuales</strong> ($1.305,2 M en 2027) a la creación de una subcuenta de reserva anticíclica (Fondo de Estabilización). Al finalizar el cuatrienio 2030, esta reserva acumulará <strong>$5.421,8 M COP</strong>, con destinación exclusiva a absorber volatilidades macroeconómicas, subsidiar convocatorias de investigación de posgrados y financiar procesos de acreditación internacional sin comprometer la caja ordinaria de la Universidad.
+                        </p>
+                      </div>
+
+                      {/* Pillar 5 */}
+                      <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2">
+                        <h4 className="font-bold text-slate-900 text-xs uppercase font-mono flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-[10px]">5</span>
+                          Independencia Financiera frente a Recursos de Gratuidad y Ley 30
+                        </h4>
+                        <p className="text-[11px] text-slate-700 leading-normal">
+                          El Recurso 31 es la principal fuente de ingresos propios comerciales de la UPTC. Un modelo por créditos dinámico y competitivo inmuniza a la Universidad frente a demoras o restricciones en las transferencias del Presupuesto General de la Nación (Ley 30 de 1992 o giros del Ministerio de Hacienda para la Política de Gratuidad R10.5), proporcionando liquidez inmediata en caja y solvencia crediticia institucional.
+                        </p>
+                      </div>
+
+                    </div>
+
+                    {/* WHITE BACKGROUND CHART 3: CENTRAL DEDUCTIONS COMPARISON */}
+                    <div className="space-y-2 border border-slate-200 p-5 rounded-2xl bg-white shadow-sm my-3" style={{ pageBreakInside: 'avoid' }}>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 border-b border-slate-100 pb-3">
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#15803d]"></span>
+                            Gráfica V: Aseguramiento de Recursos para la Administración Central (Deducción 45,5% - Millones COP)
+                          </h4>
+                          <p className="text-[10px] text-slate-500 font-sans">
+                            Comparación de transferencias acumuladas a la Unidad 01 UPTC (Créditos vs SMLMV)
                           </p>
                         </div>
+                        <div className="text-[10px] font-mono text-emerald-800 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+                          Δ Blindaje Decenal: +$82.727,0M COP
+                        </div>
+                      </div>
+                      <div className="h-60 w-full pt-2">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart 
+                            data={scenarioComparisonData.map(d => ({
+                              anio: d.anio.toString(),
+                              'Transferencia SMLMV (M)': Math.round((d.smlmvRecaudo * 0.455) / 1e6 * 10) / 10,
+                              'Transferencia Créditos (M)': Math.round((d.creditRecaudo * 0.455) / 1e6 * 10) / 10
+                            }))} 
+                            margin={{ top: 15, right: 25, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                            <XAxis dataKey="anio" stroke="#475569" tick={{ fontSize: 10, fill: '#334155' }} dy={4} />
+                            <YAxis stroke="#475569" width={75} tick={{ fontSize: 10, fill: '#334155' }} tickFormatter={(val) => `$${val.toLocaleString('es-CO')}M`} />
+                            <RechartsTooltip contentStyle={{backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', color: '#0f172a'}} />
+                            <Legend wrapperStyle={{fontSize: '11px', paddingTop: '6px', color: '#334155'}} />
+                            <Bar dataKey="Transferencia SMLMV (M)" fill="#94a3b8" radius={[3, 3, 0, 0]} />
+                            <Bar dataKey="Transferencia Créditos (M)" fill="#15803d" radius={[3, 3, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
                       </div>
                     </div>
 
                   </div>
 
-                  {/* Section 6: Análisis de Riesgos, Sensibilidad y Justificación de la Reforma */}
-                  <div className="space-y-3 text-xs text-slate-800 border-t border-slate-200 pt-4 text-justify leading-relaxed">
-                    <h3 className="font-bold border-l-2 border-[#ffcc29] pl-2 text-slate-900">6. Análisis de Riesgos, Sensibilidad y Justificación de la Reforma</h3>
-                    
-                    <h4 className="font-bold text-slate-900 text-[11px]">Análisis de Riesgos y Sensibilidad del Fondo de Posgrados (Recurso R31)</h4>
+                  {/* 6. CONCLUSIONES, DICTAMEN DE VIABILIDAD Y FIRMAS */}
+                  <div className="space-y-4 text-xs text-slate-800 text-justify leading-relaxed pt-2 border-t border-slate-200" style={{ pageBreakBefore: 'always' }}>
+                    <h3 className="font-black text-sm uppercase tracking-wide border-l-4 border-[#b45309] pl-3 text-slate-900 font-serif">
+                      6. Conclusiones y Dictamen de Viabilidad de la Vicerrectoría Administrativa y Financiera
+                    </h3>
                     <p>
-                      El Fondo de Posgrados (Recurso R31) constituye una de las principales fuentes de ingresos propios de la Universidad Pedagógica y Tecnológica de Colombia, razón por la cual su estabilidad financiera resulta determinante para garantizar la sostenibilidad de la oferta académica de posgrado y el fortalecimiento de las funciones misionales de la Institución.
+                      Con base en los estudios econométricos, la modelación intertemporal de flujos de caja y los análisis de sensibilidad actuarial presentados, la Vicerrectoría Administrativa y Financiera emite <strong>DICTAMEN FAVORABLE DE VIABILIDAD TÉCNICA, FINANCIERA Y OPERACIONAL</strong> para la aprobación del Proyecto de Acuerdo por parte del Consejo Superior Universitario, fundado en las siguientes conclusiones determinantes:
                     </p>
-                    <p>
-                      El análisis efectuado evidencia que el comportamiento financiero del fondo presenta una alta sensibilidad frente a la demanda de estudiantes. In particular, el estudio de elasticidad estimó un coeficiente de ε = -1,19, lo que indica que incrementos en el valor de la matrícula generan reducciones proporcionalmente mayores en el número de estudiantes matriculados. Este resultado confirma que la definición de la política tarifaria debe responder a criterios técnicos y de competitividad, evitando incrementos que puedan afectar el acceso, la permanencia y el recaudo institucional.
-                    </p>
-                    <p>
-                      De igual manera, el comportamiento de la deserción estudiantil constituye uno de los principales factores de riesgo para la sostenibilidad financiera del Fondo de Posgrados, dado que una disminución significativa en la matrícula repercute directamente sobre los ingresos proyectados y limita la capacidad de financiación de los costos académicos, administrativos y de funcionamiento asociados a los programas.
-                    </p>
-                    <p>
-                      Adicionalmente, la estructura vigente de distribución de los recursos contempla deducciones institucionales equivalentes al 45,5 % del recaudo, destinadas a financiar los gastos generales y las funciones de apoyo de la Universidad. Si bien estas deducciones responden al modelo de financiación institucional, reducen la disponibilidad de recursos para la reinversión directa en los programas de posgrado, lo que hace necesario preservar niveles adecuados de recaudo que permitan garantizar el equilibrio financiero del Fondo y la calidad de la oferta académica.
-                    </p>
-                    <p>
-                      Los análisis de sensibilidad desarrollados muestran igualmente que el modelo mantiene condiciones favorables de sostenibilidad frente a variaciones moderadas en los ingresos y egresos. Sin embargo, incrementos superiores al umbral de equilibrio identificado en el estudio podrían afectar la capacidad financiera del Fondo, haciendo necesaria la implementación de medidas de ajuste sobre la estructura de costos, las políticas de recaudo o los mecanismos de actualización tarifaria.
-                    </p>
-
-                    <h4 className="font-bold text-slate-900 text-[11px] mt-3">Justificación Financiera e Institucional de la Implementación del Modelo por Créditos Académicos</h4>
-                    <p>
-                      Los resultados del presente estudio evidencian que la transición del esquema tradicional de matrícula, basado en un valor fijo por período académico, hacia un modelo de liquidación por créditos académicos constituye una medida necesaria para fortalecer la sostenibilidad financiera del Fondo de Posgrados y mejorar la competitividad de la oferta académica institucional.
-                    </p>
-                    <p>
-                      Durante los últimos años, la Universidad ha registrado una disminución progresiva en la matrícula de programas de posgrado, pasando de 6.951 estudiantes en 2020 a 5.170 estudiantes en 2026, lo que representa una reducción aproximada del 25,6 %. Esta tendencia ha generado una disminución en la base de ingresos del Recurso R31 y evidencia la necesidad de adoptar un modelo de financiación más flexible y acorde con las dinámicas actuales de la educación superior.
-                    </p>
-                    <p>
-                      El esquema vigente de cobro por período académico establece un valor uniforme de matrícula, independientemente de la carga académica inscrita por el estudiante, situación que puede desincentivar la permanencia, limitar la flexibilidad curricular y afectar la capacidad de los estudiantes para planificar su trayectoria académica. En contraste, el modelo de cobro por créditos académicos permite que el valor de la matrícula guarde una relación directa con el número de créditos efectivamente matriculados, promoviendo una distribución más equitativa de los costos y facilitando el acceso y la permanencia en los programas de posgrado.
-                    </p>
-                    <p>
-                      Asimismo, el mecanismo de actualización del Valor Base del Crédito Académico Institucional (VBCI), previsto en el artículo 5 del Proyecto de Acuerdo, junto con el período de implementación gradual establecido en el artículo 19, proporciona un marco de transición ordenado que reduce los impactos financieros tanto para los estudiantes como para la Universidad, favoreciendo una adaptación progresiva al nuevo esquema tarifario.
-                    </p>
-                    <p>
-                      En consecuencia, desde la perspectiva financiera y presupuestal, la implementación del modelo de cobro por créditos académicos constituye una medida técnicamente sustentada, que fortalece la sostenibilidad del Recurso R31, mejora la capacidad de generación de ingresos propios, promueve una política tarifaria más equitativa y flexible y contribuye al cumplimiento de los objetivos estratégicos de crecimiento, calidad y consolidación de la oferta de posgrados de la Universidad Pedagógica y Tecnológica de Colombia.
+                    <ol className="list-decimal pl-5 space-y-2 text-slate-700">
+                      <li>
+                        <strong>Generación Neta de Valor Económico:</strong> El modelo de cobro por créditos académicos genera un <strong>Valor Actual Neto (VAN) de $29.849.753.409 COP</strong> para el cuatrienio 2027-2030 y de <strong>$77.676.108.775 COP</strong> para el decenio 2027-2036 (al 8,0% E.A.). Esto supera en un <strong>+51,0% (+$26.251,8 M COP)</strong> la rentabilidad del esquema SMLMV, certificando su sólida viabilidad financiera.
+                      </li>
+                      <li>
+                        <strong>Preservación y Crecimiento de la Matrícula:</strong> Al alinear la tarifa con el avance académico real, se evita el choque tarifario del rezago diferido (+21,9%), garantizando la retención de <strong>+2.884 estudiantes en 2027</strong> y proyectando una cohorte protegida de <strong>+4.802 estudiantes en 2036</strong> frente al escenario de deserción masiva del SMLMV.
+                      </li>
+                      <li>
+                        <strong>Blindaje de los Recursos Centrales:</strong> Se garantizan transferencias acumuladas de <strong>$254.380,4 M COP</strong> para la Administración Central en el horizonte decenal (+$82.727 M COP adicionales vs SMLMV), asegurando la liquidez transversal de la Universidad.
+                      </li>
+                      <li>
+                        <strong>Margen de Seguridad Confortable:</strong> La operación se sitúa un <strong>+35,2% por encima del punto de equilibrio</strong> (6.887 alumnos vs 4.460 requeridos), asegurando excedentes netos de $36.145,3 M COP en el primer cuatrienio.
+                      </li>
+                    </ol>
+                    <p className="pt-2">
+                      En mérito de lo expuesto, se recomienda la aprobación unánime del Proyecto de Acuerdo en el seno del Consejo Superior Universitario, autorizando a la Vicerrectoría Administrativa y Financiera a emitir las resoluciones reglamentarias para la aplicación del VBCI correspondiente a la vigencia 2027.
                     </p>
                   </div>
 
-                  {/* Centered single signature block */}
-                  <div className="flex justify-center pt-16 text-center text-xs text-slate-800">
-                    <div className="space-y-1">
-                      <div className="w-56 border-t border-black mx-auto"></div>
-                      <strong className="block text-slate-900">Vicerrector Administrativo y Financiero</strong>
-                      <span className="text-[10px] text-slate-500 block">UPTC - VAFI</span>
+                  {/* Institutional Signatures Block */}
+                  <div className="pt-14 pb-4 text-center text-xs text-slate-800" style={{ pageBreakInside: 'avoid' }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 max-w-2xl mx-auto">
+                      <div className="space-y-1.5">
+                        <div className="w-56 border-t-2 border-slate-900 mx-auto"></div>
+                        <strong className="block text-slate-900 font-serif text-sm">Vicerrector Administrativo y Financiero</strong>
+                        <span className="text-[10px] text-slate-500 font-mono block">UPTC — Despacho VAFI</span>
+                        <span className="text-[9px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-mono font-bold inline-block border border-emerald-200">
+                          Revisó y Aprobó Dictamen Financiero
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="w-56 border-t-2 border-slate-900 mx-auto"></div>
+                        <strong className="block text-slate-900 font-serif text-sm">Director de Planeación Institucional</strong>
+                        <span className="text-[10px] text-slate-500 font-mono block">UPTC — Dirección de Planeación</span>
+                        <span className="text-[9px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded font-mono font-bold inline-block border border-slate-200">
+                          Modelación Econométrica y Actuarial
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -4235,6 +4311,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
               </div>
             )}
+
 
           </div>
 
