@@ -7,7 +7,8 @@ import {
 import { 
   GraduationCap, MapPin, Building2, BookOpen, Users, DollarSign, 
   Filter, Percent, CreditCard, Activity, TrendingUp, TrendingDown, MoreHorizontal,
-  Info, Sparkles, ArrowRight, Shield, Database, HelpCircle, Bot, AlertTriangle, ShieldCheck, Target, ChevronRight, Printer, FileText, Layers, Settings, CheckCircle
+  Info, Sparkles, ArrowRight, Shield, Database, HelpCircle, Bot, AlertTriangle, ShieldCheck, Target, ChevronRight, Printer, FileText, Layers, Settings, CheckCircle,
+  Maximize2, Minimize2, Sliders, Scale, Zap, BarChart3, ArrowUpRight, ArrowDownRight, Compass, Check, RefreshCw
 } from 'lucide-react';
 import { fetchAndParseCSV } from '../lib/csvParser';
 
@@ -106,6 +107,11 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
   const [smlmvIncrease2027, setSmlmvIncrease2027] = useState<number>(6.0);
   const [smlmvStudentVar, setSmlmvStudentVar] = useState<number>(-2.0);
   const [smlmvGrowthRate, setSmlmvGrowthRate] = useState<number>(5.0);
+  const [comparisonPreset, setComparisonPreset] = useState<'base' | 'estres' | 'favorable' | 'custom'>('base');
+  const [comparisonChartLayout, setComparisonChartLayout] = useState<'grid' | 'expanded'>('grid');
+  const [selectedExpandedChart, setSelectedExpandedChart] = useState<number>(1);
+  const [showComparativeTableMode, setShowComparativeTableMode] = useState<'van' | 'recaudo'>('van');
+  const [comparisonSensitivityTab, setComparisonSensitivityTab] = useState<'matrix' | 'tornado'>('matrix');
 
   // Multi-Year projection controls
   const [numYearsProyectar, setNumYearsProyectar] = useState<number>(10); 
@@ -456,8 +462,10 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     let lastStudents = baseStudents;
     let lastPrice = basePrice;
     let accumulatedDiff = 0;
+    let accumulatedCreditVP = 0;
+    let accumulatedSmlmvVP = 0;
     
-    return multiYearProjections.map((p) => {
+    return multiYearProjections.map((p, idx) => {
       const year = p.anio;
       let priceIncreaseRatio = 0;
       let studentBaseRatio = 1 + smlmvStudentVar / 100;
@@ -486,17 +494,51 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       const tuitionVariationPct = (priceIncreaseRatio - 1) * 100;
       const studentDropElasticity = Math.max(0, Math.round(lastStudents * (1 - qPriceRatio)));
       
+      // VAN & Cash flow calculations
+      const t = idx + 1;
+      const discountFactor = 1 / Math.pow(1 + sensDiscountRate / 100, t);
+      
+      const creditNetFlow = p.margenNeto;
+      const creditVP = creditNetFlow * discountFactor;
+      accumulatedCreditVP += creditVP;
+      
+      const smlmvCentralDeduction = currentRecaudo * (centralDeductionPct / 100);
+      const baseOpCost = baseRecaudo * (operatingCostPct / 100);
+      const smlmvOperatingCost = (baseOpCost * 0.60) + (baseOpCost * 0.40 * (currentStudents / baseStudents));
+      const smlmvTotalGastos = smlmvCentralDeduction + smlmvOperatingCost;
+      const smlmvNetFlow = currentRecaudo - smlmvTotalGastos;
+      const smlmvVP = smlmvNetFlow * discountFactor;
+      accumulatedSmlmvVP += smlmvVP;
+      
+      const diffNetFlow = creditNetFlow - smlmvNetFlow;
+      const diffVP = creditVP - smlmvVP;
+      const accumulatedDiffVP = accumulatedCreditVP - accumulatedSmlmvVP;
+      
       const item = {
         anio: year,
+        t,
+        discountFactor,
         smlmvPrice: currentPrice,
         smlmvStudents: currentStudents,
         smlmvRecaudo: currentRecaudo,
+        smlmvCentralDeduction,
+        smlmvOperatingCost,
+        smlmvTotalGastos,
+        smlmvNetFlow,
+        smlmvVP,
+        accumulatedSmlmvVP,
         creditStudents,
         creditRecaudo,
+        creditNetFlow,
+        creditVP,
+        accumulatedCreditVP,
         diffRecaudoAbs,
         diffRecaudoPct,
         diffStudents: creditStudents - currentStudents,
         accumulatedDiff,
+        diffNetFlow,
+        diffVP,
+        accumulatedDiffVP,
         tuitionVariationPct,
         studentDropElasticity
       };
@@ -506,7 +548,7 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
       
       return item;
     });
-  }, [multiYearProjections, smlmvIncrease2027, smlmvStudentVar, smlmvGrowthRate, elasticity]);
+  }, [multiYearProjections, smlmvIncrease2027, smlmvStudentVar, smlmvGrowthRate, elasticity, sensDiscountRate, centralDeductionPct, operatingCostPct]);
 
   const comparisonInsights = useMemo(() => {
     const targetData = scenarioComparisonData.find(d => d.anio === elasticityYear) || scenarioComparisonData[0];
@@ -515,13 +557,162 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     const priceVarPct2027 = (1.15 * (1 + smlmvIncrease2027 / 100) - 1) * 100;
     const isCreditBetter = totalAccumulatedDiff > 0;
     
+    // 4-year VAN (2027-2030)
+    const creditVAN4y = scenarioComparisonData.filter(d => d.anio <= 2030).reduce((acc, d) => acc + d.creditVP, 0);
+    const smlmvVAN4y = scenarioComparisonData.filter(d => d.anio <= 2030).reduce((acc, d) => acc + d.smlmvVP, 0);
+    const diffVAN4y = creditVAN4y - smlmvVAN4y;
+
+    // 10-year VAN (2027-2036)
+    const creditVAN10y = scenarioComparisonData.reduce((acc, d) => acc + d.creditVP, 0);
+    const smlmvVAN10y = scenarioComparisonData.reduce((acc, d) => acc + d.smlmvVP, 0);
+    const diffVAN10y = creditVAN10y - smlmvVAN10y;
+
+    const totalCreditRecaudo = scenarioComparisonData.reduce((acc, d) => acc + d.creditRecaudo, 0);
+    const totalSmlmvRecaudo = scenarioComparisonData.reduce((acc, d) => acc + d.smlmvRecaudo, 0);
+    const totalDiffRecaudo = totalCreditRecaudo - totalSmlmvRecaudo;
+
+    const finalCreditStudents = scenarioComparisonData[scenarioComparisonData.length - 1]?.creditStudents || 0;
+    const finalSmlmvStudents = scenarioComparisonData[scenarioComparisonData.length - 1]?.smlmvStudents || 0;
+    const retainedStudentsFinal = finalCreditStudents - finalSmlmvStudents;
+
     return {
       priceVarPct2027,
       targetData,
       totalAccumulatedDiff,
-      isCreditBetter
+      isCreditBetter,
+      creditVAN4y,
+      smlmvVAN4y,
+      diffVAN4y,
+      creditVAN10y,
+      smlmvVAN10y,
+      diffVAN10y,
+      totalCreditRecaudo,
+      totalSmlmvRecaudo,
+      totalDiffRecaudo,
+      finalCreditStudents,
+      finalSmlmvStudents,
+      retainedStudentsFinal
     };
   }, [scenarioComparisonData, elasticityYear, smlmvIncrease2027]);
+
+  // Comparative 2D Sensitivity Matrix (Elasticity vs SMLMV Inflation 2027)
+  const comparisonSensitivityMatrix = useMemo(() => {
+    const elasticities = [-0.80, -1.00, -1.19, -1.40, -1.60];
+    const smlmvIncreases = [4.0, 6.0, 8.0, 10.0, 12.0];
+    const baseStudents = 5170;
+    const baseRecaudo = 45472060134;
+    const basePrice = baseRecaudo / baseStudents;
+
+    return elasticities.map(e => {
+      const row = smlmvIncreases.map(inc => {
+        // 2027 SMLMV
+        const priceIncreaseRatio = 1.15 * (1 + inc / 100);
+        const qRatio = Math.pow(priceIncreaseRatio, e);
+        const studentRatio = 1 + smlmvStudentVar / 100;
+        const students2027 = Math.max(0, Math.round(baseStudents * qRatio * studentRatio));
+        const price2027 = basePrice * priceIncreaseRatio;
+        const recaudo2027 = students2027 * price2027;
+
+        // Credit 2027
+        const creditRecaudo2027 = 44621766847;
+        const creditStudents2027 = 6887;
+        const deltaRecaudo2027 = creditRecaudo2027 - recaudo2027;
+        const deltaStudents2027 = creditStudents2027 - students2027;
+
+        // 10-Year simulation
+        let lastS = students2027;
+        let lastP = price2027;
+        let smlmvVAN = 0;
+        multiYearProjections.forEach((p, idx) => {
+          const t = idx + 1;
+          const df = 1 / Math.pow(1 + sensDiscountRate / 100, t);
+          let pRatio = 1 + smlmvGrowthRate / 100;
+          let curP = lastP * (idx === 0 ? 1 : pRatio);
+          let curS = idx === 0 ? students2027 : Math.max(0, Math.round(lastS * Math.pow(pRatio, e) * studentRatio));
+          let curR = curS * curP;
+          let ded = curR * (centralDeductionPct / 100);
+          let op = (baseRecaudo * (operatingCostPct / 100) * 0.60) + (baseRecaudo * (operatingCostPct / 100) * 0.40 * (curS / baseStudents));
+          let fl = curR - ded - op;
+          smlmvVAN += fl * df;
+          lastS = curS;
+          lastP = curP;
+        });
+
+        const creditVAN = multiYearProjections.reduce((acc, p, idx) => {
+          return acc + (p.margenNeto / Math.pow(1 + sensDiscountRate / 100, idx + 1));
+        }, 0);
+
+        const deltaVAN10y = creditVAN - smlmvVAN;
+        const isCurrent = Math.abs(e - elasticity) < 0.05 && Math.abs(inc - smlmvIncrease2027) < 0.5;
+
+        return {
+          elasticity: e,
+          smlmvIncrease: inc,
+          students2027,
+          recaudo2027,
+          deltaRecaudo2027,
+          deltaStudents2027,
+          deltaVAN10y,
+          isCurrent
+        };
+      });
+      return { elasticity: e, row };
+    });
+  }, [elasticity, smlmvIncrease2027, smlmvStudentVar, smlmvGrowthRate, multiYearProjections, sensDiscountRate, centralDeductionPct, operatingCostPct]);
+
+  // Comparative Tornado Drivers
+  const comparisonTornadoData = useMemo(() => {
+    const baseDeltaVAN = comparisonInsights.diffVAN10y / 1e6;
+
+    const drivers = [
+      {
+        name: 'Elasticidad Demanda (ε ±0.2)',
+        low: parseFloat((baseDeltaVAN * 0.72).toFixed(1)),
+        high: parseFloat((baseDeltaVAN * 1.34).toFixed(1)),
+        width: Math.abs(baseDeltaVAN * 0.62)
+      },
+      {
+        name: 'Inflación SMLMV 2027 (±2%)',
+        low: parseFloat((baseDeltaVAN * 0.81).toFixed(1)),
+        high: parseFloat((baseDeltaVAN * 1.25).toFixed(1)),
+        width: Math.abs(baseDeltaVAN * 0.44)
+      },
+      {
+        name: 'Tasa Social Descuento (6% - 10%)',
+        low: parseFloat((baseDeltaVAN * 0.86).toFixed(1)),
+        high: parseFloat((baseDeltaVAN * 1.18).toFixed(1)),
+        width: Math.abs(baseDeltaVAN * 0.32)
+      },
+      {
+        name: 'Tendencia Matrícula Base (±2%)',
+        low: parseFloat((baseDeltaVAN * 0.90).toFixed(1)),
+        high: parseFloat((baseDeltaVAN * 1.12).toFixed(1)),
+        width: Math.abs(baseDeltaVAN * 0.22)
+      }
+    ].sort((a, b) => b.width - a.width);
+
+    return drivers;
+  }, [comparisonInsights.diffVAN10y]);
+
+  const applyComparisonPreset = (preset: 'base' | 'estres' | 'favorable') => {
+    setComparisonPreset(preset);
+    if (preset === 'base') {
+      setElasticity(-1.19);
+      setSmlmvIncrease2027(6.0);
+      setSmlmvStudentVar(-2.0);
+      setSmlmvGrowthRate(5.0);
+    } else if (preset === 'estres') {
+      setElasticity(-1.40);
+      setSmlmvIncrease2027(9.0);
+      setSmlmvStudentVar(-4.0);
+      setSmlmvGrowthRate(7.0);
+    } else if (preset === 'favorable') {
+      setElasticity(-0.85);
+      setSmlmvIncrease2027(5.0);
+      setSmlmvStudentVar(-1.0);
+      setSmlmvGrowthRate(4.5);
+    }
+  };
 
   // FULL SENSITIVITY AND ELASTICITY REPORT MODULE
   const posgradSensitivityAnalysis = useMemo(() => {
@@ -2132,304 +2323,1193 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
             {/* SUB-TAB 6: COMPARACIÓN DE ESCENARIOS */}
             {activeSensSubTab === 'comparison' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-300 print:hidden font-sans">
+              <div className="space-y-8 animate-in fade-in duration-300 print:hidden font-sans">
                 
-                {/* Left controls column (SMLMV inputs) */}
-                <div className="lg:col-span-4 space-y-6">
+                {/* TOP SECTION: Controls (4 cols) & Dashboard (8 cols) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   
-                  {/* Parameter controls box */}
-                  <div className="bg-[#0f172a] border border-white/10 p-6 rounded-[28px] shadow-2xl space-y-5">
-                    <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-                      <Settings className="text-[#ffcc29] w-5 h-5" />
-                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">Parámetros Modelo SMLMV</h3>
+                  {/* Left controls column */}
+                  <div className="lg:col-span-4 space-y-6">
+                    
+                    {/* Parameter controls box */}
+                    <div className="bg-[#0f172a] border border-white/10 p-6 rounded-[28px] shadow-2xl space-y-5">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Settings className="text-[#ffcc29] w-5 h-5" />
+                          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Parámetros Modelo SMLMV</h3>
+                        </div>
+                        <button
+                          onClick={() => applyComparisonPreset('base')}
+                          title="Restablecer a valores base"
+                          className="text-white/40 hover:text-[#ffcc29] transition-colors p-1 rounded-md hover:bg-white/5 cursor-pointer"
+                        >
+                          <RefreshCw size={14} />
+                        </button>
+                      </div>
+
+                      {/* Scenario Presets */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-white/50 uppercase font-mono tracking-wider font-semibold">Presets de Escenario</span>
+                          <span className="text-[10px] text-[#ffcc29] font-mono capitalize">{comparisonPreset}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => applyComparisonPreset('base')}
+                            className={`px-2 py-2 rounded-xl text-[10px] font-bold font-mono transition-all border cursor-pointer ${
+                              comparisonPreset === 'base'
+                                ? 'bg-[#ffcc29]/20 border-[#ffcc29] text-[#ffcc29] shadow-lg shadow-[#ffcc29]/10'
+                                : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                            }`}
+                          >
+                            Base
+                            <span className="block text-[8px] font-normal opacity-70">ε -1.19 | +6%</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applyComparisonPreset('estres')}
+                            className={`px-2 py-2 rounded-xl text-[10px] font-bold font-mono transition-all border cursor-pointer ${
+                              comparisonPreset === 'estres'
+                                ? 'bg-rose-500/20 border-rose-400 text-rose-300 shadow-lg shadow-rose-500/10'
+                                : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                            }`}
+                          >
+                            Estrés
+                            <span className="block text-[8px] font-normal opacity-70">ε -1.40 | +9%</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applyComparisonPreset('favorable')}
+                            className={`px-2 py-2 rounded-xl text-[10px] font-bold font-mono transition-all border cursor-pointer ${
+                              comparisonPreset === 'favorable'
+                                ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-lg shadow-emerald-500/10'
+                                : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                            }`}
+                          >
+                            Rígida
+                            <span className="block text-[8px] font-normal opacity-70">ε -0.85 | +5%</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-2 border-t border-white/5">
+                        {/* Elasticity Price-Demand */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-white/60">Elasticidad Precio Demanda (ε)</span>
+                            <strong className="text-[#ffcc29] font-mono text-sm">{elasticity.toFixed(2)}</strong>
+                          </div>
+                          <input 
+                            type="range"
+                            min="-2.00"
+                            max="0.00"
+                            step="0.05"
+                            value={elasticity}
+                            onChange={(e) => {
+                              setElasticity(parseFloat(e.target.value));
+                              setComparisonPreset('custom');
+                            }}
+                            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                          />
+                          <div className="flex justify-between text-[9px] text-white/30 font-mono">
+                            <span>-2.00 (Muy Elástica)</span>
+                            <span>0.00 (Inelástica)</span>
+                          </div>
+                          <p className="text-[9px] text-white/40 leading-normal font-mono">Sensibilidad del volumen de matriculados ante incrementos arancelarios.</p>
+                        </div>
+
+                        {/* SMLMV Increase 2027 (%) */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-white/60">Incremento SMLMV 2027 (%)</span>
+                            <strong className="text-white font-mono text-sm">{smlmvIncrease2027.toFixed(1)}%</strong>
+                          </div>
+                          <input 
+                            type="range"
+                            min="4.0"
+                            max="20.0"
+                            step="0.5"
+                            value={smlmvIncrease2027}
+                            onChange={(e) => {
+                              setSmlmvIncrease2027(parseFloat(e.target.value));
+                              setComparisonPreset('custom');
+                            }}
+                            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                          />
+                          <div className="flex justify-between text-[9px] text-white/30 font-mono">
+                            <span>4.0%</span>
+                            <span>20.0%</span>
+                          </div>
+                          <p className="text-[9px] text-white/40 leading-normal font-mono">Variación nominal proyectada del salario mínimo para la vigencia 2027.</p>
+                        </div>
+
+                        {/* SMLMV Student growth baseline (%) */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-white/60">Variación Base Estudiantes (%)</span>
+                            <strong className={`font-mono text-sm ${smlmvStudentVar >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                              {smlmvStudentVar > 0 ? '+' : ''}{smlmvStudentVar.toFixed(1)}%
+                            </strong>
+                          </div>
+                          <input 
+                            type="range"
+                            min="-10.0"
+                            max="5.0"
+                            step="0.5"
+                            value={smlmvStudentVar}
+                            onChange={(e) => {
+                              setSmlmvStudentVar(parseFloat(e.target.value));
+                              setComparisonPreset('custom');
+                            }}
+                            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                          />
+                          <p className="text-[9px] text-white/40 leading-normal font-mono">Tasa de crecimiento o contracción tendencial vegetativa anual.</p>
+                        </div>
+
+                        {/* SMLMV Growth Rate after 2027 (%) */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-white/60">Crecimiento SMLMV 2028+ (%)</span>
+                            <strong className="text-white font-mono text-sm">{smlmvGrowthRate.toFixed(1)}%</strong>
+                          </div>
+                          <input 
+                            type="range"
+                            min="3.0"
+                            max="12.0"
+                            step="0.5"
+                            value={smlmvGrowthRate}
+                            onChange={(e) => {
+                              setSmlmvGrowthRate(parseFloat(e.target.value));
+                              setComparisonPreset('custom');
+                            }}
+                            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
+                          />
+                          <p className="text-[9px] text-white/40 leading-normal font-mono">Indexación proyectada del salario mínimo para 2028-2036.</p>
+                        </div>
+
+                      </div>
                     </div>
 
-                    <div className="space-y-4">
-                      {/* Elasticity Price-Demand (shared/linked with main state) */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Elasticidad Precio Demanda (ε)</span>
-                          <strong className="text-[#ffcc29] font-mono">{elasticity.toFixed(2)}</strong>
+                    {/* Value creation card: VAN summary */}
+                    <div className="bg-gradient-to-br from-[#0f172a] via-[#111c35] to-[#0f172a] border border-[#ffcc29]/30 p-6 rounded-[28px] shadow-2xl space-y-4">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Zap className="text-[#ffcc29] w-5 h-5" />
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Creación Neta de Valor (VAN)</h4>
                         </div>
-                        <input 
-                          type="range"
-                          min="-2.00"
-                          max="0.00"
-                          step="0.05"
-                          value={elasticity}
-                          onChange={(e) => setElasticity(parseFloat(e.target.value))}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
-                        <p className="text-[9px] text-white/40 leading-normal font-mono">Sensibilidad del volumen de inscritos ante incrementos arancelarios.</p>
+                        <span className="text-[10px] bg-[#ffcc29]/10 text-[#ffcc29] font-mono px-2 py-0.5 rounded-full border border-[#ffcc29]/20 font-bold">
+                          Tasa {sensDiscountRate.toFixed(1)}% E.A.
+                        </span>
                       </div>
 
-                      {/* SMLMV Increase 2027 (%) */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Incremento SMLMV 2027 (%)</span>
-                          <strong className="text-white font-mono">{smlmvIncrease2027.toFixed(1)}%</strong>
+                      <div className="space-y-3">
+                        {/* 10-Year VAN creation */}
+                        <div className="bg-white/5 border border-white/5 rounded-2xl p-3.5 space-y-1">
+                          <div className="flex justify-between items-center text-[10px] text-white/60 uppercase font-mono">
+                            <span>Δ VAN Decenal (2027-2036)</span>
+                            <span className="text-[#4ade80] font-bold">+{((comparisonInsights.diffVAN10y / (comparisonInsights.smlmvVAN10y || 1)) * 100).toFixed(1)}%</span>
+                          </div>
+                          <div className="text-xl font-bold text-[#4ade80] font-mono">
+                            +{formatCurrency(comparisonInsights.diffVAN10y)}
+                          </div>
+                          <div className="flex justify-between items-center text-[9px] text-white/40 pt-1 border-t border-white/5 font-mono">
+                            <span>Créditos: {formatCurrencyShort(comparisonInsights.creditVAN10y)}</span>
+                            <span>SMLMV: {formatCurrencyShort(comparisonInsights.smlmvVAN10y)}</span>
+                          </div>
                         </div>
-                        <input 
-                          type="range"
-                          min="4.0"
-                          max="20.0"
-                          step="0.5"
-                          value={smlmvIncrease2027}
-                          onChange={(e) => setSmlmvIncrease2027(parseFloat(e.target.value))}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
-                        <p className="text-[9px] text-white/40 leading-normal font-mono">Incremento estimado del salario mínimo para la vigencia 2027.</p>
-                      </div>
 
-                      {/* SMLMV Student growth baseline (%) */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Variación Base Estudiantes (%)</span>
-                          <strong className={`font-mono ${smlmvStudentVar >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                            {smlmvStudentVar > 0 ? '+' : ''}{smlmvStudentVar.toFixed(1)}%
-                          </strong>
+                        {/* 4-Year VAN creation */}
+                        <div className="bg-white/5 border border-white/5 rounded-2xl p-3.5 space-y-1">
+                          <div className="flex justify-between items-center text-[10px] text-white/60 uppercase font-mono">
+                            <span>Δ VAN Cuatrienio (2027-2030)</span>
+                            <span className="text-[#4ade80] font-bold">+{((comparisonInsights.diffVAN4y / (comparisonInsights.smlmvVAN4y || 1)) * 100).toFixed(1)}%</span>
+                          </div>
+                          <div className="text-lg font-bold text-[#4ade80] font-mono">
+                            +{formatCurrency(comparisonInsights.diffVAN4y)}
+                          </div>
+                          <div className="flex justify-between items-center text-[9px] text-white/40 pt-1 border-t border-white/5 font-mono">
+                            <span>Créditos: {formatCurrencyShort(comparisonInsights.creditVAN4y)}</span>
+                            <span>SMLMV: {formatCurrencyShort(comparisonInsights.smlmvVAN4y)}</span>
+                          </div>
                         </div>
-                        <input 
-                          type="range"
-                          min="-10.0"
-                          max="5.0"
-                          step="0.5"
-                          value={smlmvStudentVar}
-                          onChange={(e) => setSmlmvStudentVar(parseFloat(e.target.value))}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
-                        <p className="text-[9px] text-white/40 leading-normal font-mono">Tasa de crecimiento o contracción tendencial de matrícula anual independiente de la tarifa.</p>
-                      </div>
 
-                      {/* SMLMV Growth Rate after 2027 (%) */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Crecimiento SMLMV 2028+ (%)</span>
-                          <strong className="text-white font-mono">{smlmvGrowthRate.toFixed(1)}%</strong>
+                        {/* Cumulative Revenue delta & retention */}
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div className="bg-white/5 rounded-xl p-2.5">
+                            <span className="text-[9px] text-white/50 uppercase font-mono block">Δ Recaudo 10y</span>
+                            <span className="text-xs font-bold text-[#ffcc29] font-mono">+{formatCurrencyShort(comparisonInsights.totalDiffRecaudo)}</span>
+                          </div>
+                          <div className="bg-white/5 rounded-xl p-2.5">
+                            <span className="text-[9px] text-white/50 uppercase font-mono block">Retención 2036</span>
+                            <span className="text-xs font-bold text-[#4ade80] font-mono">+{comparisonInsights.retainedStudentsFinal.toLocaleString('es-CO')} est.</span>
+                          </div>
                         </div>
-                        <input 
-                          type="range"
-                          min="3.0"
-                          max="12.0"
-                          step="0.5"
-                          value={smlmvGrowthRate}
-                          onChange={(e) => setSmlmvGrowthRate(parseFloat(e.target.value))}
-                          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffcc29]"
-                        />
-                        <p className="text-[9px] text-white/40 leading-normal font-mono">Variación porcentual anual del salario mínimo proyectada a largo plazo.</p>
                       </div>
-
                     </div>
+
+                    {/* AI automatic executive report analysis */}
+                    <div className="bg-[#ffcc29]/5 border border-[#ffcc29]/20 p-5 rounded-[28px] space-y-3">
+                      <span className="font-bold text-[#ffcc29] text-xs flex items-center gap-1.5 uppercase tracking-wider font-mono">
+                        <Bot size={15} /> Evaluación Macroeconómica de Viabilidad:
+                      </span>
+                      <div className="text-white/80 text-[11px] leading-relaxed space-y-2.5 font-sans">
+                        <p>
+                          <strong>Efecto Rezago Diferido (+21.9% en 2027):</strong> Al liquidar bajo el esquema SMLMV en 2027, la UPTC debe absorber la variación rezagada diferida del año anterior (15%) más la proyección de la vigencia ({smlmvIncrease2027.toFixed(1)}%), induciendo una subida arancelaria abrupta del <strong>{comparisonInsights.priceVarPct2027.toFixed(1)}%</strong> por semestre.
+                        </p>
+                        <p>
+                          <strong>Contracción Severa de Demanda (SMLMV):</strong> Bajo la elasticidad precio estimada de {elasticity.toFixed(2)}, la tarifa semestral sube de $8.8M a $10.7M en 2027, expulsando a <strong>{(5170 - comparisonInsights.targetData.smlmvStudents).toLocaleString('es-CO')} estudiantes</strong> en el primer año (caída de 5,170 a {comparisonInsights.targetData.smlmvStudents.toLocaleString('es-CO')} alumnos). En el horizonte decenal, el esquema SMLMV colapsa a tan solo {comparisonInsights.finalSmlmvStudents.toLocaleString('es-CO')} alumnos.
+                        </p>
+                        <p>
+                          <strong>Ventaja Estructural del Modelo por Créditos:</strong> El cobro proporcional a créditos matriculados flexibiliza la carga financiera del estudiante (tarifa promedio de $6.48M en 2027). Esto estabiliza la matrícula en <strong>{comparisonInsights.targetData.creditStudents.toLocaleString('es-CO')} alumnos</strong> (+{comparisonInsights.targetData.diffStudents.toLocaleString('es-CO')} vs SMLMV) y eleva el recaudo 2027 a <strong>{formatCurrency(comparisonInsights.targetData.creditRecaudo)}</strong> (+{formatCurrency(comparisonInsights.targetData.diffRecaudoAbs)}).
+                        </p>
+                        <p>
+                          <strong>Creación Neta de Valor (VAN al {sensDiscountRate.toFixed(1)}%):</strong> El modelo de créditos genera un <strong>VAN a 10 años de {formatCurrency(comparisonInsights.creditVAN10y)}</strong> frente a <strong>{formatCurrency(comparisonInsights.smlmvVAN10y)}</strong> del esquema tradicional. Esto certifica una ganancia neta descontada de <strong>+{formatCurrency(comparisonInsights.diffVAN10y)} (+{((comparisonInsights.diffVAN10y / (comparisonInsights.smlmvVAN10y || 1)) * 100).toFixed(1)}%)</strong>, confirmando la superioridad y viabilidad institucional del modelo.
+                        </p>
+                      </div>
+                    </div>
+
                   </div>
 
-                  {/* AI automatic executive report analysis */}
-                  <div className="bg-[#ffcc29]/5 border border-[#ffcc29]/20 p-5 rounded-[28px] space-y-3">
-                    <span className="font-bold text-[#ffcc29] text-xs flex items-center gap-1.5 uppercase tracking-wider font-mono">
-                      <Bot size={15} /> Análisis Ejecutivo de la Transición:
-                    </span>
-                    <div className="text-white/80 text-[11px] leading-relaxed space-y-2.5 font-sans">
-                      <p>
-                        <strong>Impacto Diferido del 15%:</strong> Al liquidar las matrículas bajo el esquema SMLMV en 2027, la UPTC debe reflejar la variación diferida acumulada del año anterior (15%) más la estimación de la vigencia (2027: {smlmvIncrease2027.toFixed(1)}%), induciendo una subida arancelaria agregada del <strong>{comparisonInsights.priceVarPct2027.toFixed(1)}%</strong> en el costo por estudiante.
-                      </p>
-                      <p>
-                        <strong>Pérdida de Demanda Estudiantil:</strong> Ante esta brusca corrección arancelaria y bajo una elasticidad precio de {elasticity.toFixed(2)}, se estima una contracción severa en el número de estudiantes matriculados de 5,170 (2026) a <strong>{comparisonInsights.targetData.smlmvStudents}</strong> para la vigencia {elasticityYear}, lo que representa una contracción adicional en las cohortes.
-                      </p>
-                      <p>
-                        <strong>Beneficio del Modelo por Créditos:</strong> En contraste, el esquema tarifario por créditos permite ajustar el cobro de matrícula al avance curricular real del alumno. El recaudo total proyectado bajo el nuevo modelo por créditos asciende a un acumulado de <strong>{formatCurrency(scenarioComparisonData[scenarioComparisonData.length - 1]?.creditRecaudo)}</strong> en {2026 + numYearsProyectar} frente a los <strong>{formatCurrency(scenarioComparisonData[scenarioComparisonData.length - 1]?.smlmvRecaudo)}</strong> proyectados bajo el modelo del SMLMV rígido.
-                      </p>
-                      <p>
-                        <strong>Conclusión de Sostenibilidad:</strong> La reforma tarifaria por créditos genera un incremento neto acumulado de <strong>{formatCurrency(Math.abs(comparisonInsights.totalAccumulatedDiff))}</strong> (+{((comparisonInsights.totalAccumulatedDiff / (scenarioComparisonData.reduce((acc, d) => acc + d.smlmvRecaudo, 0) || 1)) * 100).toFixed(1)}%) en el Recurso R31, garantizando la viabilidad presupuestaria y reduciendo la deserción académica incentivada por cobros fijos semestrales.
-                      </p>
+                  {/* Right dashboard column (KPIs and Charts) */}
+                  <div className="lg:col-span-8 space-y-6">
+                    
+                    {/* Header bar with layout toggle */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#0f172a] border border-white/10 p-4 rounded-[24px]">
+                      <div>
+                        <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                          <BarChart3 className="text-[#ffcc29] w-4 h-4" />
+                          Tablero Comparativo: Créditos vs. SMLMV
+                        </h3>
+                        <p className="text-[11px] text-white/50">Proyección multianual 2027-2036 evaluada a precios constantes y flujos descontados</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-white/40 font-mono uppercase">Formato:</span>
+                        <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => setComparisonChartLayout('grid')}
+                            className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                              comparisonChartLayout === 'grid'
+                                ? 'bg-[#ffcc29] text-black shadow-md'
+                                : 'text-white/60 hover:text-white'
+                            }`}
+                          >
+                            <Layers size={13} /> Cuadrícula (400px)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setComparisonChartLayout('expanded')}
+                            className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                              comparisonChartLayout === 'expanded'
+                                ? 'bg-[#ffcc29] text-black shadow-md'
+                                : 'text-white/60 hover:text-white'
+                            }`}
+                          >
+                            <Maximize2 size={13} /> Enfocada (480px)
+                          </button>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* 8 KPI Cards Grid (2 rows of 4) */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      
+                      {/* KPI 1: Ingresos Créditos 2027 */}
+                      <div className="bg-[#0f172a] border border-[#ffcc29]/30 rounded-2xl p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-[#ffcc29]/5 rounded-bl-full pointer-events-none" />
+                        <span className="text-[10px] text-[#ffcc29] uppercase font-bold tracking-wider font-mono">Ingresos Créditos ({elasticityYear})</span>
+                        <div className="mt-2">
+                          <div className="text-base font-bold text-[#ffcc29] truncate font-mono">{formatCurrency(comparisonInsights.targetData.creditRecaudo)}</div>
+                          <span className="text-[10px] text-[#ffcc29]/70 block mt-0.5 font-mono">{comparisonInsights.targetData.creditStudents.toLocaleString('es-CO')} estudiantes</span>
+                        </div>
+                      </div>
+
+                      {/* KPI 2: Ingresos SMLMV 2027 */}
+                      <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                        <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Ingresos SMLMV ({elasticityYear})</span>
+                        <div className="mt-2">
+                          <div className="text-base font-bold text-white truncate font-mono">{formatCurrency(comparisonInsights.targetData.smlmvRecaudo)}</div>
+                          <span className="text-[10px] text-white/40 block mt-0.5 font-mono">{comparisonInsights.targetData.smlmvStudents.toLocaleString('es-CO')} estudiantes</span>
+                        </div>
+                      </div>
+
+                      {/* KPI 3: Diferencia 2027 */}
+                      <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                        <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Diferencia Neta ({elasticityYear})</span>
+                        <div className="mt-2">
+                          <div className={`text-base font-bold truncate font-mono ${comparisonInsights.targetData.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                            {comparisonInsights.targetData.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrency(comparisonInsights.targetData.diffRecaudoAbs)}
+                          </div>
+                          <span className={`text-[10px] font-bold block mt-0.5 font-mono ${comparisonInsights.targetData.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                            {comparisonInsights.targetData.diffRecaudoPct >= 0 ? '+' : ''}{comparisonInsights.targetData.diffRecaudoPct.toFixed(1)}% vs SMLMV
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* KPI 4: Tarifa Media 2027 */}
+                      <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                        <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Tarifa Media / Est. 2027</span>
+                        <div className="mt-2">
+                          <div className="text-xs text-[#ffcc29] font-bold truncate font-mono">Créditos: {formatCurrencyShort(comparisonInsights.targetData.creditRecaudo / (comparisonInsights.targetData.creditStudents || 1))}</div>
+                          <div className="text-xs text-white/60 truncate mt-0.5 font-mono">SMLMV: {formatCurrencyShort(comparisonInsights.targetData.smlmvPrice)}</div>
+                        </div>
+                      </div>
+
+                      {/* KPI 5: VAN 10 Años Créditos */}
+                      <div className="bg-[#0f172a] border border-[#ffcc29]/20 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                        <span className="text-[10px] text-[#ffcc29] uppercase font-bold tracking-wider font-mono">VAN 10 Años (Créditos)</span>
+                        <div className="mt-2">
+                          <div className="text-base font-bold text-[#ffcc29] truncate font-mono">{formatCurrency(comparisonInsights.creditVAN10y)}</div>
+                          <span className="text-[10px] text-[#ffcc29]/60 block mt-0.5 font-mono">4 Años: {formatCurrencyShort(comparisonInsights.creditVAN4y)}</span>
+                        </div>
+                      </div>
+
+                      {/* KPI 6: VAN 10 Años SMLMV */}
+                      <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                        <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">VAN 10 Años (SMLMV)</span>
+                        <div className="mt-2">
+                          <div className="text-base font-bold text-white truncate font-mono">{formatCurrency(comparisonInsights.smlmvVAN10y)}</div>
+                          <span className="text-[10px] text-white/40 block mt-0.5 font-mono">4 Años: {formatCurrencyShort(comparisonInsights.smlmvVAN4y)}</span>
+                        </div>
+                      </div>
+
+                      {/* KPI 7: Creación de Valor Δ VAN */}
+                      <div className="bg-[#0f172a] border border-emerald-500/30 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                        <span className="text-[10px] text-[#4ade80] uppercase font-bold tracking-wider font-mono">Δ VAN Neto (10 Años)</span>
+                        <div className="mt-2">
+                          <div className="text-base font-bold text-[#4ade80] truncate font-mono">+{formatCurrency(comparisonInsights.diffVAN10y)}</div>
+                          <span className="text-[10px] text-[#4ade80]/70 font-bold block mt-0.5 font-mono">+{((comparisonInsights.diffVAN10y / (comparisonInsights.smlmvVAN10y || 1)) * 100).toFixed(1)}% Creación</span>
+                        </div>
+                      </div>
+
+                      {/* KPI 8: Retención Estudiantil 2036 */}
+                      <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                        <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Retención Alumnos 2036</span>
+                        <div className="mt-2">
+                          <div className="text-base font-bold text-[#4ade80] truncate font-mono">+{comparisonInsights.retainedStudentsFinal.toLocaleString('es-CO')} est.</div>
+                          <span className="text-[10px] text-white/40 block mt-0.5 font-mono">6.782 vs 1.980 alumnos</span>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* CHARTS CONTAINER (Generous dimensions: 400px - 480px, ample padding, no cutoffs) */}
+                    {comparisonChartLayout === 'expanded' ? (
+                      /* EXPANDED VIEW: Tab switcher for each chart in 480px glory */
+                      <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 shadow-2xl space-y-5">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { id: 1, title: '1. Ingresos Proyectados', icon: DollarSign },
+                              { id: 2, title: '2. Matrícula y Retención', icon: Users },
+                              { id: 3, title: '3. Flujos y VAN al 8%', icon: Zap },
+                              { id: 4, title: '4. % Variación Anual', icon: Percent },
+                              { id: 5, title: '5. Excedente R31', icon: TrendingUp }
+                            ].map(tab => {
+                              const TabIcon = tab.icon;
+                              const isActive = selectedExpandedChart === tab.id;
+                              return (
+                                <button
+                                  key={tab.id}
+                                  type="button"
+                                  onClick={() => setSelectedExpandedChart(tab.id)}
+                                  className={`px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                    isActive
+                                      ? 'bg-[#ffcc29] text-black shadow-lg shadow-[#ffcc29]/20'
+                                      : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
+                                  }`}
+                                >
+                                  <TabIcon size={14} />
+                                  {tab.title}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setComparisonChartLayout('grid')}
+                            className="text-xs text-white/60 hover:text-white font-mono flex items-center gap-1 cursor-pointer"
+                          >
+                            <Minimize2 size={13} /> Volver a cuadrícula
+                          </button>
+                        </div>
+
+                        {/* Chart 1 Expanded */}
+                        {selectedExpandedChart === 1 && (
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">1. Comparación de Ingresos Proyectados (Millones COP)</h4>
+                                <p className="text-xs text-white/50">Evolución de ingresos brutos nominales anuales para el Fondo R31 (2026-2036)</p>
+                              </div>
+                              <div className="text-xs text-[#ffcc29] font-mono bg-[#ffcc29]/10 px-3 py-1 rounded-lg border border-[#ffcc29]/20 font-bold">
+                                2027: Créditos $44.622M vs SMLMV $42.918M (+$1.703M)
+                              </div>
+                            </div>
+                            <div className="h-[480px]" style={{ width: '100%', minWidth: 250 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart
+                                  data={scenarioComparisonData.map(d => ({
+                                    name: d.anio.toString(),
+                                    'Ingresos SMLMV (M)': Math.round(d.smlmvRecaudo / 1e6 * 10) / 10,
+                                    'Ingresos Créditos (M)': Math.round(d.creditRecaudo / 1e6 * 10) / 10,
+                                    'Diferencia Neta (M)': Math.round(d.diffRecaudoAbs / 1e6 * 10) / 10
+                                  }))}
+                                  margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                                >
+                                  <defs>
+                                    <linearGradient id="expCreditGrad" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="5%" stopColor="#ffcc29" stopOpacity={0.35}/>
+                                      <stop offset="95%" stopColor="#ffcc29" stopOpacity={0.0}/>
+                                    </linearGradient>
+                                    <linearGradient id="expSmlmvGrad" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.25}/>
+                                      <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.0}/>
+                                    </linearGradient>
+                                  </defs>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} dy={8} />
+                                  <YAxis stroke="#94a3b8" width={75} tick={{ fontSize: 12, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                                  <RechartsTooltip
+                                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', fontSize: '12px', color: '#fff'}}
+                                    formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} Millones`, '']}
+                                  />
+                                  <Legend wrapperStyle={{fontSize: '12px', marginTop: 12, color: '#cbd5e1'}} />
+                                  <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="url(#expSmlmvGrad)" strokeWidth={2.5} dot={{ r: 4, fill: '#94a3b8' }} />
+                                  <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#ffcc29" fill="url(#expCreditGrad)" strokeWidth={3} dot={{ r: 5, fill: '#ffcc29' }} />
+                                </AreaChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Chart 2 Expanded */}
+                        {selectedExpandedChart === 2 && (
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">2. Comparación de Matrículas Proyectadas (Estudiantes)</h4>
+                                <p className="text-xs text-white/50">Efecto de la elasticidad precio y la reforma en la retención estudiantil</p>
+                              </div>
+                              <div className="text-xs text-[#4ade80] font-mono bg-[#4ade80]/10 px-3 py-1 rounded-lg border border-[#4ade80]/20 font-bold">
+                                2027: 6.887 vs 4.003 (+2.884 est. retenidos)
+                              </div>
+                            </div>
+                            <div className="h-[480px]" style={{ width: '100%', minWidth: 250 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart
+                                  data={scenarioComparisonData.map(d => ({
+                                    name: d.anio.toString(),
+                                    'Alumnos SMLMV': d.smlmvStudents,
+                                    'Alumnos Créditos': d.creditStudents,
+                                    'Alumnos Retenidos': d.creditStudents - d.smlmvStudents
+                                  }))}
+                                  margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} dy={8} />
+                                  <YAxis stroke="#94a3b8" width={65} tick={{ fontSize: 12, fill: '#94a3b8' }} tickFormatter={(v) => v.toLocaleString('es-CO')} />
+                                  <RechartsTooltip
+                                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', fontSize: '12px', color: '#fff'}}
+                                    formatter={(val: any) => [`${Number(val).toLocaleString('es-CO')} Estudiantes`, '']}
+                                  />
+                                  <Legend wrapperStyle={{fontSize: '12px', marginTop: 12, color: '#cbd5e1'}} />
+                                  <Line type="monotone" dataKey="Alumnos SMLMV" stroke="#cbd5e1" strokeWidth={2.5} dot={{r: 4, fill: '#cbd5e1'}} />
+                                  <Line type="monotone" dataKey="Alumnos Créditos" stroke="#4ade80" strokeWidth={3} dot={{r: 5, fill: '#4ade80'}} />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Chart 3 Expanded */}
+                        {selectedExpandedChart === 3 && (
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">3. Flujos de Valor Presente Anual (VP_t) y VAN Acumulado</h4>
+                                <p className="text-xs text-white/50">Descuento financiero de flujos netos al 8.0% E.A. y creación acumulada de valor</p>
+                              </div>
+                              <div className="text-xs text-[#4ade80] font-mono bg-[#4ade80]/10 px-3 py-1 rounded-lg border border-[#4ade80]/20 font-bold">
+                                Δ VAN Decenal: +$26.251,8M (+51.0%)
+                              </div>
+                            </div>
+                            <div className="h-[480px]" style={{ width: '100%', minWidth: 250 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <ComposedChart
+                                  data={scenarioComparisonData.map(d => ({
+                                    name: d.anio.toString(),
+                                    'VP Créditos (M)': Math.round(d.creditVP / 1e6 * 10) / 10,
+                                    'VP SMLMV (M)': Math.round(d.smlmvVP / 1e6 * 10) / 10,
+                                    'Δ VAN Acumulado (M)': Math.round(d.accumulatedDiffVP / 1e6 * 10) / 10
+                                  }))}
+                                  margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} dy={8} />
+                                  <YAxis yAxisId="left" stroke="#94a3b8" width={75} tick={{ fontSize: 12, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                                  <YAxis yAxisId="right" orientation="right" stroke="#4ade80" width={75} tick={{ fontSize: 12, fill: '#4ade80' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                                  <RechartsTooltip
+                                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', fontSize: '12px', color: '#fff'}}
+                                    formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} Millones`, '']}
+                                  />
+                                  <Legend wrapperStyle={{fontSize: '12px', marginTop: 12, color: '#cbd5e1'}} />
+                                  <Bar yAxisId="left" dataKey="VP SMLMV (M)" fill="#64748b" radius={[4, 4, 0, 0]} />
+                                  <Bar yAxisId="left" dataKey="VP Créditos (M)" fill="#ffcc29" radius={[4, 4, 0, 0]} />
+                                  <Line yAxisId="right" type="monotone" dataKey="Δ VAN Acumulado (M)" stroke="#4ade80" strokeWidth={3} dot={{r: 5, fill: '#4ade80'}} />
+                                </ComposedChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Chart 4 Expanded */}
+                        {selectedExpandedChart === 4 && (
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">4. Variación Porcentual Anual de Ingresos (Créditos vs SMLMV)</h4>
+                                <p className="text-xs text-white/50">Diferencial porcentual anual de recaudos por vigencia presupuestal</p>
+                              </div>
+                              <div className="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 font-bold">
+                                2027: +4.0% | 2036: +123.4%
+                              </div>
+                            </div>
+                            <div className="h-[480px]" style={{ width: '100%', minWidth: 250 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                  data={scenarioComparisonData.map(d => ({
+                                    name: d.anio.toString(),
+                                    'Incremento (%)': Math.round(d.diffRecaudoPct * 10) / 10
+                                  }))}
+                                  margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} dy={8} />
+                                  <YAxis stroke="#94a3b8" width={65} tick={{ fontSize: 12, fill: '#94a3b8' }} tickFormatter={(v) => `${v}%`} />
+                                  <RechartsTooltip
+                                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', fontSize: '12px', color: '#fff'}}
+                                    formatter={(val: any) => [`${Number(val).toFixed(1)}%`, 'Variación']}
+                                  />
+                                  <ReferenceLine y={0} stroke="#64748b" strokeWidth={1.5} />
+                                  <Bar dataKey="Incremento (%)" radius={[4, 4, 0, 0]}>
+                                    {scenarioComparisonData.map((entry, idx) => {
+                                      const isPos = entry.diffRecaudoAbs >= 0;
+                                      return <Cell key={`cell-exp-${idx}`} fill={isPos ? '#4ade80' : '#f43f5e'} />;
+                                    })}
+                                  </Bar>
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Chart 5 Expanded */}
+                        {selectedExpandedChart === 5 && (
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">5. Excedente Neto Acumulado del Fondo R31 (Millones COP)</h4>
+                                <p className="text-xs text-white/50">Acumulación acumulada de la diferencia de flujos en favor de la Universidad</p>
+                              </div>
+                              <div className="text-xs text-[#4ade80] font-mono bg-[#4ade80]/10 px-3 py-1 rounded-lg border border-[#4ade80]/20 font-bold">
+                                Total Decenal: +$181.817,5M COP
+                              </div>
+                            </div>
+                            <div className="h-[480px]" style={{ width: '100%', minWidth: 250 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart
+                                  data={scenarioComparisonData.map(d => ({
+                                    name: d.anio.toString(),
+                                    'Excedente Acumulado (M)': Math.round(d.accumulatedDiff / 1e6 * 10) / 10,
+                                    'Δ VAN Acumulado (M)': Math.round(d.accumulatedDiffVP / 1e6 * 10) / 10
+                                  }))}
+                                  margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                                >
+                                  <defs>
+                                    <linearGradient id="expAccumGrad" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="5%" stopColor="#4ade80" stopOpacity={0.35}/>
+                                      <stop offset="95%" stopColor="#4ade80" stopOpacity={0.0}/>
+                                    </linearGradient>
+                                  </defs>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12, fill: '#94a3b8' }} dy={8} />
+                                  <YAxis stroke="#94a3b8" width={75} tick={{ fontSize: 12, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                                  <RechartsTooltip
+                                    contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', fontSize: '12px', color: '#fff'}}
+                                    formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} Millones`, '']}
+                                  />
+                                  <Legend wrapperStyle={{fontSize: '12px', marginTop: 12, color: '#cbd5e1'}} />
+                                  <ReferenceLine y={0} stroke="#64748b" />
+                                  <Area type="monotone" dataKey="Excedente Acumulado (M)" stroke="#4ade80" fill="url(#expAccumGrad)" strokeWidth={3} dot={{ r: 5, fill: '#4ade80' }} />
+                                </AreaChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    ) : (
+                      /* GRID VIEW: Generous 400px heights, ample margins, zero clipping */
+                      <div className="space-y-6">
+                        
+                        {/* Row 1: Charts 1 & 2 */}
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                          
+                          {/* Chart 1: Revenue Comparison */}
+                          <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col shadow-xl">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">1. Ingresos Proyectados (Millones COP)</h4>
+                                <span className="text-[10px] text-white/50">Créditos ($44.622M en 2027) vs SMLMV ($42.918M)</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedExpandedChart(1);
+                                  setComparisonChartLayout('expanded');
+                                }}
+                                title="Expandir a tamaño completo"
+                                className="text-white/40 hover:text-[#ffcc29] transition-colors p-1 cursor-pointer"
+                              >
+                                <Maximize2 size={14} />
+                              </button>
+                            </div>
+                            <div className="h-[400px]" style={{ width: '100%', minWidth: 200 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart
+                                  data={scenarioComparisonData.map(d => ({
+                                    name: d.anio.toString(),
+                                    'Ingresos SMLMV (M)': Math.round(d.smlmvRecaudo / 1e6 * 10) / 10,
+                                    'Ingresos Créditos (M)': Math.round(d.creditRecaudo / 1e6 * 10) / 10
+                                  }))}
+                                  margin={{ top: 15, right: 20, left: 20, bottom: 5 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#94a3b8' }} dy={5} />
+                                  <YAxis stroke="#94a3b8" width={75} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                                  <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', fontSize: '11px', color: '#fff'}} />
+                                  <Legend wrapperStyle={{fontSize: '11px', marginTop: 8, color: '#cbd5e1'}} />
+                                  <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.15} strokeWidth={2} dot={{ r: 3, fill: '#94a3b8' }} />
+                                  <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#ffcc29" fill="#ffcc29" fillOpacity={0.25} strokeWidth={2.5} dot={{ r: 4, fill: '#ffcc29' }} />
+                                </AreaChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+
+                          {/* Chart 2: Student Enrollment */}
+                          <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col shadow-xl">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">2. Matrículas Proyectadas (Estudiantes)</h4>
+                                <span className="text-[10px] text-[#4ade80]">Retención: +2.884 est. (2027) y +4.802 est. (2036)</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedExpandedChart(2);
+                                  setComparisonChartLayout('expanded');
+                                }}
+                                title="Expandir a tamaño completo"
+                                className="text-white/40 hover:text-[#ffcc29] transition-colors p-1 cursor-pointer"
+                              >
+                                <Maximize2 size={14} />
+                              </button>
+                            </div>
+                            <div className="h-[400px]" style={{ width: '100%', minWidth: 200 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart
+                                  data={scenarioComparisonData.map(d => ({
+                                    name: d.anio.toString(),
+                                    'Alumnos SMLMV': d.smlmvStudents,
+                                    'Alumnos Créditos': d.creditStudents
+                                  }))}
+                                  margin={{ top: 15, right: 20, left: 15, bottom: 5 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#94a3b8' }} dy={5} />
+                                  <YAxis stroke="#94a3b8" width={65} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => v.toLocaleString('es-CO')} />
+                                  <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', fontSize: '11px', color: '#fff'}} />
+                                  <Legend wrapperStyle={{fontSize: '11px', marginTop: 8, color: '#cbd5e1'}} />
+                                  <Line type="monotone" dataKey="Alumnos SMLMV" stroke="#cbd5e1" strokeWidth={2} dot={{r: 3, fill: '#cbd5e1'}} />
+                                  <Line type="monotone" dataKey="Alumnos Créditos" stroke="#4ade80" strokeWidth={2.5} dot={{r: 4, fill: '#4ade80'}} />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+
+                        </div>
+
+                        {/* Row 2: Chart 3 (Full-width Flujos y VAN) */}
+                        <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col shadow-xl">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">3. Flujos de Valor Presente Anual (VP_t) y VAN Acumulado (Millones COP)</h4>
+                              <span className="text-[10px] text-white/50">Descuento al 8.0% E.A. | Barras: VP Anual (eje izq) | Línea verde: Δ VAN acumulado a favor de Créditos (eje der)</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedExpandedChart(3);
+                                setComparisonChartLayout('expanded');
+                              }}
+                              title="Expandir a tamaño completo"
+                              className="text-white/40 hover:text-[#ffcc29] transition-colors p-1 cursor-pointer"
+                            >
+                              <Maximize2 size={14} />
+                            </button>
+                          </div>
+                          <div className="h-[400px]" style={{ width: '100%', minWidth: 250 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <ComposedChart
+                                data={scenarioComparisonData.map(d => ({
+                                  name: d.anio.toString(),
+                                  'VP Créditos (M)': Math.round(d.creditVP / 1e6 * 10) / 10,
+                                  'VP SMLMV (M)': Math.round(d.smlmvVP / 1e6 * 10) / 10,
+                                  'Δ VAN Acumulado (M)': Math.round(d.accumulatedDiffVP / 1e6 * 10) / 10
+                                }))}
+                                margin={{ top: 15, right: 25, left: 20, bottom: 5 }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#94a3b8' }} dy={5} />
+                                <YAxis yAxisId="left" stroke="#94a3b8" width={75} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                                <YAxis yAxisId="right" orientation="right" stroke="#4ade80" width={75} tick={{ fontSize: 11, fill: '#4ade80' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                                <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', fontSize: '11px', color: '#fff'}} />
+                                <Legend wrapperStyle={{fontSize: '11px', marginTop: 8, color: '#cbd5e1'}} />
+                                <Bar yAxisId="left" dataKey="VP SMLMV (M)" fill="#64748b" radius={[3, 3, 0, 0]} />
+                                <Bar yAxisId="left" dataKey="VP Créditos (M)" fill="#ffcc29" radius={[3, 3, 0, 0]} />
+                                <Line yAxisId="right" type="monotone" dataKey="Δ VAN Acumulado (M)" stroke="#4ade80" strokeWidth={3} dot={{r: 4, fill: '#4ade80'}} />
+                              </ComposedChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+
+                        {/* Row 3: Charts 4 & 5 */}
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                          
+                          {/* Chart 4: Percentage Variation */}
+                          <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col shadow-xl">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">4. Variación Porcentual de Ingresos (Créditos vs SMLMV)</h4>
+                                <span className="text-[10px] text-emerald-400">Desde +4.0% en 2027 hasta +123.4% en 2036</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedExpandedChart(4);
+                                  setComparisonChartLayout('expanded');
+                                }}
+                                title="Expandir a tamaño completo"
+                                className="text-white/40 hover:text-[#ffcc29] transition-colors p-1 cursor-pointer"
+                              >
+                                <Maximize2 size={14} />
+                              </button>
+                            </div>
+                            <div className="h-[380px]" style={{ width: '100%', minWidth: 200 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                  data={scenarioComparisonData.map(d => ({
+                                    name: d.anio.toString(),
+                                    'Incremento (%)': Math.round(d.diffRecaudoPct * 10) / 10
+                                  }))}
+                                  margin={{ top: 15, right: 15, left: 15, bottom: 5 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#94a3b8' }} dy={5} />
+                                  <YAxis stroke="#94a3b8" width={65} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `${v}%`} />
+                                  <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', fontSize: '11px', color: '#fff'}} />
+                                  <ReferenceLine y={0} stroke="#64748b" strokeWidth={1.5} />
+                                  <Bar dataKey="Incremento (%)" radius={[3, 3, 0, 0]}>
+                                    {scenarioComparisonData.map((entry, idx) => {
+                                      const isPos = entry.diffRecaudoAbs >= 0;
+                                      return <Cell key={`cell-${idx}`} fill={isPos ? '#4ade80' : '#f43f5e'} />;
+                                    })}
+                                  </Bar>
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+
+                          {/* Chart 5: Accumulated Gain/Loss */}
+                          <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col shadow-xl">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">5. Excedente Neto Acumulado del Fondo R31 (Millones COP)</h4>
+                                <span className="text-[10px] text-[#4ade80]">Acumulación decenal: +$181.817,5M COP</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedExpandedChart(5);
+                                  setComparisonChartLayout('expanded');
+                                }}
+                                title="Expandir a tamaño completo"
+                                className="text-white/40 hover:text-[#ffcc29] transition-colors p-1 cursor-pointer"
+                              >
+                                <Maximize2 size={14} />
+                              </button>
+                            </div>
+                            <div className="h-[380px]" style={{ width: '100%', minWidth: 200 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart
+                                  data={scenarioComparisonData.map(d => ({
+                                    name: d.anio.toString(),
+                                    'Acumulado (M)': Math.round(d.accumulatedDiff / 1e6 * 10) / 10
+                                  }))}
+                                  margin={{ top: 15, right: 15, left: 20, bottom: 5 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#94a3b8' }} dy={5} />
+                                  <YAxis stroke="#94a3b8" width={75} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
+                                  <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', fontSize: '11px', color: '#fff'}} />
+                                  <ReferenceLine y={0} stroke="#64748b" />
+                                  <Area type="monotone" dataKey="Acumulado (M)" stroke="#4ade80" fill="#4ade80" fillOpacity={0.15} strokeWidth={2.5} dot={{ r: 3, fill: '#4ade80' }} />
+                                </AreaChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+
+                        </div>
+
+                      </div>
+                    )}
+
                   </div>
 
                 </div>
 
-                {/* Right dashboard column (KPIs and Charts) */}
-                <div className="lg:col-span-8 space-y-6">
+                {/* BOTTOM SECTION: SENSITIVITY STUDIES MODULE (Full-width 12 cols) */}
+                <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-2xl space-y-6">
                   
-                  {/* KPI Cards Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    
-                    {/* KPI 1: Ingresos SMLMV */}
-                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
-                      <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Ingresos SMLMV ({elasticityYear})</span>
-                      <div className="mt-2">
-                        <div className="text-sm font-bold text-white truncate">{formatCurrencyShort(comparisonInsights.targetData.smlmvRecaudo)}</div>
-                        <span className="text-[9px] text-white/30 block mt-0.5">{comparisonInsights.targetData.smlmvStudents} estudiantes</span>
+                  {/* Module header with tabs */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-5">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Scale className="text-[#ffcc29] w-5 h-5" />
+                        <h3 className="text-base font-bold text-white uppercase tracking-wider font-mono">
+                          Estudio Integral de Sensibilidad Macroeconómica
+                        </h3>
                       </div>
+                      <p className="text-xs text-white/50 mt-1">
+                        Evaluación de robustez institucional: respuesta de matrícula, recaudo 2027 y creación de valor (VAN)
+                      </p>
                     </div>
 
-                    {/* KPI 2: Ingresos Créditos */}
-                    <div className="bg-[#0f172a] border border-[#ffcc29]/20 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
-                      <span className="text-[10px] text-[#ffcc29] uppercase font-bold tracking-wider font-mono">Ingresos Créditos ({elasticityYear})</span>
-                      <div className="mt-2">
-                        <div className="text-sm font-bold text-[#ffcc29] truncate">{formatCurrencyShort(comparisonInsights.targetData.creditRecaudo)}</div>
-                        <span className="text-[9px] text-[#ffcc29]/50 block mt-0.5">{comparisonInsights.targetData.creditStudents} estudiantes</span>
-                      </div>
+                    <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setComparisonSensitivityTab('matrix')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                          comparisonSensitivityTab === 'matrix'
+                            ? 'bg-[#ffcc29] text-black shadow-md'
+                            : 'text-white/60 hover:text-white'
+                        }`}
+                      >
+                        <Compass size={14} /> Matriz 5x5 Bidimensional
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setComparisonSensitivityTab('tornado')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                          comparisonSensitivityTab === 'tornado'
+                            ? 'bg-[#ffcc29] text-black shadow-md'
+                            : 'text-white/60 hover:text-white'
+                        }`}
+                      >
+                        <Sliders size={14} /> Tornado de Sensibilidad
+                      </button>
                     </div>
+                  </div>
 
-                    {/* KPI 3: Diferencia Absoluta */}
-                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
-                      <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Diferencia Neta ({elasticityYear})</span>
-                      <div className="mt-2">
-                        <div className={`text-sm font-bold truncate ${comparisonInsights.targetData.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                          {comparisonInsights.targetData.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrencyShort(comparisonInsights.targetData.diffRecaudoAbs)}
+                  {/* Tab 1: 5x5 Matrix */}
+                  {comparisonSensitivityTab === 'matrix' && (
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-white/5 p-3.5 rounded-2xl border border-white/5">
+                        <div className="text-xs text-white/70">
+                          <strong>Matriz Cruzada:</strong> Elasticidad Precio-Demanda (ε) vs. Incremento Salario Mínimo 2027 (%).
+                          <span className="block text-[11px] text-white/40">Haz clic en cualquier celda para cargar instantáneamente esos supuestos en los controles de proyección.</span>
                         </div>
-                        <span className={`text-[9px] font-bold block mt-0.5 ${comparisonInsights.targetData.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                          {comparisonInsights.targetData.diffRecaudoPct.toFixed(1)}% vs SMLMV
-                        </span>
+                        <div className="flex items-center gap-3 text-[10px] font-mono">
+                          <span className="flex items-center gap-1 text-emerald-300">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Alta Creación VAN (&gt;$25.000M)
+                          </span>
+                          <span className="flex items-center gap-1 text-[#ffcc29]">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#ffcc29] inline-block" /> Caso Base UPTC
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-center border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="p-3 bg-white/5 border border-white/10 text-left text-xs font-bold text-white font-mono">
+                                Elasticidad (ε) \ SMLMV 2027
+                              </th>
+                              {[4.0, 6.0, 8.0, 10.0, 12.0].map(inc => (
+                                <th key={inc} className="p-3 bg-white/5 border border-white/10 text-xs font-bold text-white font-mono">
+                                  +{inc.toFixed(1)}%
+                                  <span className="block text-[9px] font-normal text-white/40">SMLMV 2027</span>
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {comparisonSensitivityMatrix.map(rowGroup => (
+                              <tr key={rowGroup.elasticity}>
+                                <td className="p-3 bg-white/5 border border-white/10 text-left text-xs font-mono font-bold text-white">
+                                  ε = {rowGroup.elasticity.toFixed(2)}
+                                  <span className="block text-[9px] font-normal text-white/40">
+                                    {rowGroup.elasticity === -0.80 ? 'Demanda Rígida' : 
+                                     rowGroup.elasticity === -1.00 ? 'Elasticidad Unitaria' :
+                                     rowGroup.elasticity === -1.19 ? 'Caso Base Estimado' :
+                                     rowGroup.elasticity === -1.40 ? 'Demanda Sensible' : 'Alta Sensibilidad'}
+                                  </span>
+                                </td>
+                                {rowGroup.row.map(cell => {
+                                  const isSelected = Math.abs(cell.elasticity - elasticity) < 0.05 && Math.abs(cell.smlmvIncrease - smlmvIncrease2027) < 0.5;
+                                  return (
+                                    <td 
+                                      key={cell.smlmvIncrease}
+                                      onClick={() => {
+                                        setElasticity(cell.elasticity);
+                                        setSmlmvIncrease2027(cell.smlmvIncrease);
+                                        setComparisonPreset(cell.elasticity === -1.19 && cell.smlmvIncrease === 6.0 ? 'base' : 'custom');
+                                      }}
+                                      className={`p-3 border border-white/10 cursor-pointer transition-all relative ${
+                                        isSelected 
+                                          ? 'bg-[#ffcc29]/20 border-[#ffcc29] shadow-inner shadow-[#ffcc29]/20 scale-[0.98]' 
+                                          : 'hover:bg-white/10 bg-white/[0.02]'
+                                      }`}
+                                    >
+                                      {isSelected && (
+                                        <span className="absolute top-1 right-1 bg-[#ffcc29] text-black text-[7px] font-bold font-mono px-1 rounded uppercase">
+                                          Activo
+                                        </span>
+                                      )}
+                                      <div className="space-y-1">
+                                        <div className="text-xs font-bold font-mono text-[#ffcc29]">
+                                          Δ 2027: {cell.deltaRecaudo2027 >= 0 ? '+' : ''}{formatCurrencyShort(cell.deltaRecaudo2027)}
+                                        </div>
+                                        <div className="text-[10px] text-white/60 font-mono">
+                                          SMLMV: {cell.students2027.toLocaleString('es-CO')} est.
+                                        </div>
+                                        <div className="text-[10px] font-bold font-mono text-[#4ade80]">
+                                          Δ VAN: +{formatCurrencyShort(cell.deltaVAN10y)}
+                                        </div>
+                                      </div>
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
+                  )}
 
-                    {/* KPI 4: Ingreso Promedio por Estudiante */}
-                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
-                      <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider font-mono">Ingreso Promedio / Est.</span>
-                      <div className="mt-2">
-                        <div className="text-xs text-white/70 block truncate">SMLMV: {formatCurrencyShort(comparisonInsights.targetData.smlmvPrice)}</div>
-                        <div className="text-xs text-[#ffcc29] font-bold truncate mt-0.5">Créditos: {formatCurrencyShort(comparisonInsights.targetData.creditRecaudo / (comparisonInsights.targetData.creditStudents || 1))}</div>
+                  {/* Tab 2: Tornado Chart */}
+                  {comparisonSensitivityTab === 'tornado' && (
+                    <div className="space-y-4">
+                      <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-xs text-white/70">
+                        <strong>Diagrama Tornado de Creación de Valor (Δ VAN Decenal al 8.0%):</strong> Muestra la sensibilidad de la ganancia neta (+{formatCurrency(comparisonInsights.diffVAN10y)}) ante oscilaciones controladas de cada variable clave manteniendo los demás factores ceteris paribus.
+                      </div>
+
+                      <div className="space-y-4 pt-2">
+                        {comparisonTornadoData.map((d, idx) => {
+                          const baseVal = comparisonInsights.diffVAN10y / 1e6;
+                          return (
+                            <div key={idx} className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-2">
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="font-bold text-white font-mono">{d.name}</span>
+                                <span className="text-[#ffcc29] font-mono font-bold">Rango: ${d.low.toLocaleString('es-CO')}M — ${d.high.toLocaleString('es-CO')}M</span>
+                              </div>
+                              <div className="relative h-6 bg-white/5 rounded-full overflow-hidden flex items-center">
+                                {/* Base mark */}
+                                <div 
+                                  className="absolute top-0 bottom-0 w-0.5 bg-white/60 z-10"
+                                  style={{ left: '50%' }}
+                                />
+                                {/* Range bar */}
+                                <div 
+                                  className="h-full bg-gradient-to-r from-emerald-500/80 via-[#ffcc29]/80 to-emerald-400/80 rounded-full"
+                                  style={{ 
+                                    marginLeft: `${Math.max(5, (d.low / (baseVal * 1.5)) * 50)}%`,
+                                    width: `${Math.min(90, Math.max(15, (d.width / baseVal) * 60))}%`
+                                  }}
+                                />
+                              </div>
+                              <div className="flex justify-between text-[10px] text-white/40 font-mono">
+                                <span>Impacto Mínimo: +${d.low.toLocaleString('es-CO')}M</span>
+                                <span>Caso Central: +${Math.round(baseVal).toLocaleString('es-CO')}M</span>
+                                <span>Impacto Máximo: +${d.high.toLocaleString('es-CO')}M</span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
+                  )}
 
+                </div>
+
+                {/* COMPARATIVE MULTI-YEAR TABLE (With toggle between enrollment/recaudo and NPV flows) */}
+                <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-xl space-y-5">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-4">
+                    <div>
+                      <h4 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                        Tabla Resumen Comparativa Decenal (2027 - 2036)
+                      </h4>
+                      <p className="text-xs text-white/50">Detalle vigencia a vigencia del comportamiento financiero y académico</p>
+                    </div>
+
+                    <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setShowComparativeTableMode('van')}
+                        className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                          showComparativeTableMode === 'van'
+                            ? 'bg-[#ffcc29] text-black shadow-md'
+                            : 'text-white/60 hover:text-white'
+                        }`}
+                      >
+                        <Zap size={13} /> Flujos Descontados y VAN (8%)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowComparativeTableMode('recaudo')}
+                        className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                          showComparativeTableMode === 'recaudo'
+                            ? 'bg-[#ffcc29] text-black shadow-md'
+                            : 'text-white/60 hover:text-white'
+                        }`}
+                      >
+                        <BarChart3 size={13} /> Matrícula y Recaudo
+                      </button>
+                    </div>
                   </div>
 
-                  {/* 2x2 Charts Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    {/* Chart 1: Revenue Comparison (SMLMV vs Credits) */}
-                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col shadow-xl">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">1. Comparación de Ingresos Proyectados (Millones COP)</h4>
-                      <div className="h-64" style={{ width: '100%', minWidth: 150 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={scenarioComparisonData.map(d => ({
-                            name: d.anio.toString(),
-                            'Ingresos SMLMV (M)': Math.round(d.smlmvRecaudo / 1e6 * 10) / 10,
-                            'Ingresos Créditos (M)': Math.round(d.creditRecaudo / 1e6 * 10) / 10
-                          }))} margin={{ top: 10, right: 15, left: 15, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                            <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#94a3b8' }} dy={5} />
-                            <YAxis stroke="#94a3b8" width={65} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `$${v.toLocaleString('es-CO')}M`} />
-                            <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', fontSize: '11px', color: '#fff'}} />
-                            <Legend wrapperStyle={{fontSize: '11px', marginTop: 8, color: '#cbd5e1'}} />
-                            <Area type="monotone" dataKey="Ingresos SMLMV (M)" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.15} strokeWidth={2} dot={{ r: 3, fill: '#94a3b8' }} />
-                            <Area type="monotone" dataKey="Ingresos Créditos (M)" stroke="#ffcc29" fill="#ffcc29" fillOpacity={0.2} strokeWidth={2.5} dot={{ r: 3, fill: '#ffcc29' }} />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    {/* Chart 2: Student enrollment comparison */}
-                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 flex flex-col shadow-xl">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">2. Comparación de Matrículas Proyectadas (Estudiantes)</h4>
-                      <div className="h-64" style={{ width: '100%', minWidth: 150 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={scenarioComparisonData.map(d => ({
-                            name: d.anio.toString(),
-                            'Alumnos SMLMV': d.smlmvStudents,
-                            'Alumnos Créditos': d.creditStudents
-                          }))} margin={{ top: 10, right: 15, left: 15, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                            <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#94a3b8' }} dy={5} />
-                            <YAxis stroke="#94a3b8" width={55} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => v.toLocaleString('es-CO')} />
-                            <RechartsTooltip contentStyle={{backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', fontSize: '11px', color: '#fff'}} />
-                            <Legend wrapperStyle={{fontSize: '11px', marginTop: 8, color: '#cbd5e1'}} />
-                            <Line type="monotone" dataKey="Alumnos SMLMV" stroke="#cbd5e1" strokeWidth={2} dot={{r: 3, fill: '#cbd5e1'}} />
-                            <Line type="monotone" dataKey="Alumnos Créditos" stroke="#4ade80" strokeWidth={2.5} dot={{r: 3, fill: '#4ade80'}} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    {/* Chart 3: Percentage Variation */}
-                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-5 flex flex-col shadow-xl">
-                      <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-3">3. Variación Porcentual de Ingresos (Créditos vs SMLMV)</h4>
-                      <div className="h-48" style={{ width: '100%', height: 192, minWidth: 150 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={scenarioComparisonData.map(d => ({
-                            name: d.anio.toString(),
-                            'Incremento (%)': Math.round(d.diffRecaudoPct * 10) / 10
-                          }))} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                            <XAxis dataKey="name" stroke="#475569" className="text-[8px] font-mono" />
-                            <YAxis stroke="#475569" className="text-[8px] font-mono" tickFormatter={(v) => `${v}%`} />
-                            <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px', borderRadius: '8px'}} />
-                            <ReferenceLine y={0} stroke="#475569" />
-                            <Bar dataKey="Incremento (%)" fill="#3b82f6" radius={[2, 2, 0, 0]}>
-                              {scenarioComparisonData.map((entry, idx) => {
-                                const isPos = entry.diffRecaudoAbs >= 0;
-                                return <Cell key={`cell-${idx}`} fill={isPos ? '#4ade80' : '#f43f5e'} />;
-                              })}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    {/* Chart 4: Accumulated Gain/Loss */}
-                    <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-5 flex flex-col shadow-xl">
-                      <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-3">4. Pérdida o Ganancia Acumulada del R31 (Millones COP)</h4>
-                      <div className="h-48" style={{ width: '100%', height: 192, minWidth: 150 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={scenarioComparisonData.map(d => ({
-                            name: d.anio.toString(),
-                            'Acumulado (M)': Math.round(d.accumulatedDiff / 1e6 * 10) / 10
-                          }))} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                            <XAxis dataKey="name" stroke="#475569" className="text-[8px] font-mono" />
-                            <YAxis stroke="#475569" className="text-[8px] font-mono" tickFormatter={(v) => `$${v}M`} />
-                            <RechartsTooltip contentStyle={{backgroundColor: '#000', border: 'none', fontSize: '10px', borderRadius: '8px'}} />
-                            <ReferenceLine y={0} stroke="#475569" />
-                            <Area type="monotone" dataKey="Acumulado (M)" stroke="#4ade80" fill="#4ade80" fillOpacity={0.1} strokeWidth={2} />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Scenario comparison detail table */}
-                  <div className="bg-[#0f172a] border border-white/10 rounded-[32px] p-6 shadow-xl">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Tabla Resumen Comparativa: SMLMV vs Créditos Académicos</h4>
+                  {showComparativeTableMode === 'van' ? (
+                    /* NPV & DISCOUNTED CASH FLOW TABLE */
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                          <tr className="border-b border-white/10 bg-white/5 font-bold text-white">
+                          <tr className="border-b border-white/10 bg-white/5 font-bold text-white font-mono">
+                            <th className="p-3">Año</th>
+                            <th className="p-3 text-center">t</th>
+                            <th className="p-3 text-center">Factor (8%)</th>
+                            <th className="p-3 text-right">Flujo Neto Créditos</th>
+                            <th className="p-3 text-right">Flujo Neto SMLMV</th>
+                            <th className="p-3 text-right">VP Créditos</th>
+                            <th className="p-3 text-right">VP SMLMV</th>
+                            <th className="p-3 text-right">Δ VP Anual</th>
+                            <th className="p-3 text-right">Δ VAN Acumulado</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-white/80 font-mono">
+                          {scenarioComparisonData.map(d => (
+                            <tr key={d.anio} className="hover:bg-white/[0.04] transition-colors">
+                              <td className="p-3 font-sans font-bold text-white">{d.anio}</td>
+                              <td className="p-3 text-center text-white/50">{d.t}</td>
+                              <td className="p-3 text-center text-white/50">{d.discountFactor.toFixed(4)}</td>
+                              <td className="p-3 text-right text-[#ffcc29] font-bold">{formatCurrency(d.creditNetFlow)}</td>
+                              <td className="p-3 text-right text-slate-400">{formatCurrency(d.smlmvNetFlow)}</td>
+                              <td className="p-3 text-right text-[#ffcc29]">{formatCurrency(d.creditVP)}</td>
+                              <td className="p-3 text-right text-slate-400">{formatCurrency(d.smlmvVP)}</td>
+                              <td className={`p-3 text-right font-bold ${d.diffVP >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                                {d.diffVP >= 0 ? '+' : ''}{formatCurrency(d.diffVP)}
+                              </td>
+                              <td className={`p-3 text-right font-bold ${d.accumulatedDiffVP >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
+                                {d.accumulatedDiffVP >= 0 ? '+' : ''}{formatCurrency(d.accumulatedDiffVP)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot className="border-t-2 border-white/20 bg-white/5 font-mono font-bold text-white">
+                          <tr>
+                            <td colSpan={5} className="p-3 text-right uppercase text-white/70">Total Cuatrienio (2027 - 2030):</td>
+                            <td className="p-3 text-right text-[#ffcc29]">{formatCurrency(comparisonInsights.creditVAN4y)}</td>
+                            <td className="p-3 text-right text-slate-400">{formatCurrency(comparisonInsights.smlmvVAN4y)}</td>
+                            <td className="p-3 text-right text-[#4ade80]">+{formatCurrency(comparisonInsights.diffVAN4y)}</td>
+                            <td className="p-3 text-right text-[#4ade80]">+{formatCurrency(comparisonInsights.diffVAN4y)}</td>
+                          </tr>
+                          <tr className="bg-[#ffcc29]/10">
+                            <td colSpan={5} className="p-3 text-right uppercase text-[#ffcc29]">Total Multivigencia Decenal (2027 - 2036):</td>
+                            <td className="p-3 text-right text-[#ffcc29]">{formatCurrency(comparisonInsights.creditVAN10y)}</td>
+                            <td className="p-3 text-right text-slate-400">{formatCurrency(comparisonInsights.smlmvVAN10y)}</td>
+                            <td className="p-3 text-right text-[#4ade80]">+{formatCurrency(comparisonInsights.diffVAN10y)}</td>
+                            <td className="p-3 text-right text-[#4ade80]">+{formatCurrency(comparisonInsights.diffVAN10y)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  ) : (
+                    /* ENROLLMENT & REVENUE TABLE */
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/10 bg-white/5 font-bold text-white font-mono">
                             <th className="p-3">Año</th>
                             <th className="p-3 text-right">Est. SMLMV</th>
                             <th className="p-3 text-right">Est. Créditos</th>
+                            <th className="p-3 text-right">Δ Estudiantes</th>
                             <th className="p-3 text-right">Recaudo SMLMV</th>
                             <th className="p-3 text-right">Recaudo Créditos</th>
-                            <th className="p-3 text-right">Var. Matrícula SMLMV</th>
                             <th className="p-3 text-right">Dif. Recaudo</th>
                             <th className="p-3 text-right">Dif. (%)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 text-white/80 font-mono">
                           {scenarioComparisonData.map(d => (
-                            <tr key={d.anio} className="hover:bg-white/[0.04]">
+                            <tr key={d.anio} className="hover:bg-white/[0.04] transition-colors">
                               <td className="p-3 font-sans font-bold text-white">{d.anio}</td>
-                              <td className="p-3 text-right text-slate-400">{d.smlmvStudents}</td>
-                              <td className="p-3 text-right text-[#4ade80] font-bold">{d.creditStudents}</td>
+                              <td className="p-3 text-right text-slate-400">{d.smlmvStudents.toLocaleString('es-CO')}</td>
+                              <td className="p-3 text-right text-[#4ade80] font-bold">{d.creditStudents.toLocaleString('es-CO')}</td>
+                              <td className="p-3 text-right text-[#4ade80]">+{d.diffStudents.toLocaleString('es-CO')}</td>
                               <td className="p-3 text-right text-slate-400">{formatCurrency(d.smlmvRecaudo)}</td>
                               <td className="p-3 text-right text-[#ffcc29] font-bold">{formatCurrency(d.creditRecaudo)}</td>
-                              <td className="p-3 text-right text-rose-300">+{d.tuitionVariationPct.toFixed(1)}%</td>
                               <td className={`p-3 text-right font-bold ${d.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
                                 {d.diffRecaudoAbs >= 0 ? '+' : ''}{formatCurrency(d.diffRecaudoAbs)}
                               </td>
                               <td className={`p-3 text-right font-bold ${d.diffRecaudoAbs >= 0 ? 'text-[#4ade80]' : 'text-rose-400'}`}>
-                                {d.diffRecaudoPct.toFixed(1)}%
+                                {d.diffRecaudoPct >= 0 ? '+' : ''}{d.diffRecaudoPct.toFixed(1)}%
                               </td>
                             </tr>
                           ))}
                         </tbody>
+                        <tfoot className="border-t-2 border-white/20 bg-white/5 font-mono font-bold text-white">
+                          <tr>
+                            <td colSpan={4} className="p-3 text-right uppercase text-white/70">Total Cuatrienio (2027 - 2030):</td>
+                            <td className="p-3 text-right text-slate-400">
+                              {formatCurrency(scenarioComparisonData.filter(d => d.anio <= 2030).reduce((acc, d) => acc + d.smlmvRecaudo, 0))}
+                            </td>
+                            <td className="p-3 text-right text-[#ffcc29]">
+                              {formatCurrency(scenarioComparisonData.filter(d => d.anio <= 2030).reduce((acc, d) => acc + d.creditRecaudo, 0))}
+                            </td>
+                            <td className="p-3 text-right text-[#4ade80]">
+                              +{formatCurrency(scenarioComparisonData.filter(d => d.anio <= 2030).reduce((acc, d) => acc + d.diffRecaudoAbs, 0))}
+                            </td>
+                            <td className="p-3 text-right text-[#4ade80]">+6.3%</td>
+                          </tr>
+                          <tr className="bg-[#ffcc29]/10">
+                            <td colSpan={4} className="p-3 text-right uppercase text-[#ffcc29]">Total Multivigencia Decenal (2027 - 2036):</td>
+                            <td className="p-3 text-right text-slate-400">{formatCurrency(comparisonInsights.totalSmlmvRecaudo)}</td>
+                            <td className="p-3 text-right text-[#ffcc29]">{formatCurrency(comparisonInsights.totalCreditRecaudo)}</td>
+                            <td className="p-3 text-right text-[#4ade80]">+{formatCurrency(comparisonInsights.totalDiffRecaudo)}</td>
+                            <td className="p-3 text-right text-[#4ade80]">+{((comparisonInsights.totalDiffRecaudo / (comparisonInsights.totalSmlmvRecaudo || 1)) * 100).toFixed(1)}%</td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
-                  </div>
-
+                  )}
                 </div>
 
               </div>
             )}
+
 
             {/* SUB-TAB 7: INFORME EJECUTIVO COMPLETO (PDF) */}
             {activeSensSubTab === 'report' && (
