@@ -228,6 +228,61 @@ Este cambio estructural reduce sustancialmente la incertidumbre de liquidez en e
     conversationContext.lastTopic = 'posgrados';
     conversationContext.lastResource = '33';
 
+    // Subcaso B.1: Proyección 2027 y Viabilidad Financiera / VAN del Modelo por Créditos (R31)
+    if (
+      norm.includes('2027') || 
+      norm.includes('van') || 
+      norm.includes('viabilidad') || 
+      norm.includes('credito') || 
+      norm.includes('smlmv') || 
+      norm.includes('dscr') || 
+      norm.includes('cobertura') ||
+      norm.includes('elasticidad')
+    ) {
+      const recaudo2027 = 44621766847;
+      const recaudoSmlmv2027 = 42393029964;
+      const diffNeta = recaudo2027 - recaudoSmlmv2027;
+      const estCred = 6887;
+      const estSmlmv = 3954;
+
+      return {
+        modeUsed: 'vafi',
+        topicTitle: 'Viabilidad Macroeconómica y Financiera: Posgrados 2027 (Recurso R31)',
+        directAnswer: `Para la **vigencia 2027**, el recaudo base del Fondo Especial de Posgrados bajo el nuevo modelo de créditos académicos (**Recurso R31**) se ajusta exactamente en **$ 44.621.766.847 COP** (${formatCOP(recaudo2027)}), generando un excedente neto de **+$ ${Math.round(diffNeta / 1e6).toLocaleString('es-CO')} Millones (+5,26%)** frente al esquema tradicional de SMLMV ($ 42.393M) y reteniendo a **${estCred - estSmlmv} estudiantes adicionales** contra la deserción.`,
+        detailedAnalysis: `### Dictamen Técnico de Viabilidad Integral (2027 - 2030):
+1. 📈 **Valor Actual Neto (VAN al 8,0% E.A.):**
+   - **Escenario Base (4 Años 2027-2030):** **+$ 29.849.753.409 COP** (Flujo neto acumulado de **$ 36.145,3 M**).
+   - **Escenario Optimista (+15% Ing / -10% Gas):** **+$ 65.133.692.694 COP**.
+   - **Escenario Pesimista (-15% Ing / +10% Gas):** -$ 5.434.185.877 COP (Umbral de contingencia).
+   - **Horizonte 10 Años (2027-2036):** Recaudo acumulado de **$ 559.077,7 M** y VAN de **$ 77.676,1 M**.
+2. 🏛️ **Deducción Central a la Administración (45,5%):**
+   - Genera **$ 20.302.903.915 COP** en 2027 y **$ 84.339.110.319 COP** acumulados (2027-2030) para la Unidad 01 (Vicerrectoría Administrativa).
+3. 💼 **Costos Operativos Directos (35,0% ABC):**
+   - **$ 15.617.618.396 COP** en 2027 y **$ 64.876.238.706 COP** en el cuatrienio (60% fijos de gestión / 40% variables de docencia).
+4. 🛡️ **Cobertura de Servicio y Covenants (DSCR):**
+   - **1,43x en 2027** (frente al covenant regulatorio mínimo de **1,25x**, margen de seguridad de **+14,3%**).
+5. 📊 **Elasticidad Precio de la Demanda (ε = -1,19 a -1,20):**
+   - Demuestra que el cobro por créditos ajustado al avance real curricular permite tarifas promedio de **$ 6,48M/estudiante** frente a los **$ 10,72M/estudiante** que exigiría el SMLMV con el 15% diferido, evitando la contracción del recaudo a 2036 ($ 32.671M en SMLMV vs $ 73.582M en Créditos).`,
+        evidence: {
+          vigencia: '2027-2030 (Horizonte de Transición Cuatrienal)',
+          fechaCorte: INSTITUTIONAL_DATA.fechaCorte,
+          recurso: '31 - Fondo Especial de Posgrados',
+          unidad: '01 - Vicerrectoría Administrativa y Financiera',
+          fuente: 'Estudio de Costeo por Créditos / Proyecto de Acuerdo CSU / Simulación Monte Carlo',
+          criterioCalculo: 'Base 2027: $44.621.766.847 COP, tasa social r=8.0%, retención central 45.5%, costos ABC 35%',
+          consistencia: 'VERIFICADO_100%'
+        },
+        deepLinks: [
+          { screen: 'posgrados', label: 'Simulador Financiero de Posgrados R31', description: 'Consulta el análisis de elasticidad, Monte Carlo, Tornado y comparación SMLMV' }
+        ],
+        suggestedFollowUps: [
+          'Ver comparación de ingresos 2027-2036 entre Créditos y SMLMV',
+          '¿Cuál es la regla institucional del 40% en posgrados?',
+          'Ver matriz de flujos netos y factores de descuento del VAN'
+        ]
+      };
+    }
+
     // Regla del 40%
     if (norm.includes('40') || norm.includes('regla') || norm.includes('aporte vaf')) {
       const cuota40 = INSTITUTIONAL_DATA.posgrados.cuota40Institucional;

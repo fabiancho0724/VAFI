@@ -214,6 +214,32 @@ Permite cuantificar el costo y diferencias ante escenarios de reclasificación d
     q.includes('r33') ||
     (q.includes('cuanto') && q.includes('ingreso') && q.includes('posgrado'))
   ) {
+    // Si el usuario pregunta por la proyección 2027 o viabilidad del modelo por créditos
+    if (q.includes('2027') || q.includes('credito') || q.includes('viabilidad') || q.includes('van') || q.includes('smlmv') || q.includes('dscr')) {
+      return {
+        modeUsed: 'vafi',
+        topicTitle: 'Posgrados 2027: Viabilidad Modelo por Créditos (R31)',
+        text: `Para la **vigencia 2027**, la proyección base del modelo por créditos en Posgrados (**Recurso R31**) se ajusta en **\\$ 44.621.766.847 COP** (6.887 estudiantes).
+
+📊 **Comparación vs Modelo Tradicional SMLMV (2027):**
+* **Créditos Académicos:** **\\$ 44.621,8 Millones** (6.887 estudiantes | Tarifa prom: \\$ 6,48M).
+* **Modelo SMLMV:** **\\$ 42.393,0 Millones** (3.954 estudiantes | Tarifa prom: \\$ 10,72M).
+* **Diferencia Neta:** **+\\$ 2.228,7 Millones (+5,26%)** y **+2.933 estudiantes protegidos** de la deserción.
+
+📈 **Indicadores Macroeconómicos y Financieros (2027-2030):**
+* **VAN (8,0% E.A.):** **+\\$ 29.849.753.409 COP** (Flujos netos acumulados de \\$ 36.145,3M).
+* **Deducción Central (45,5%):** **\\$ 84.339,1 Millones** acumulados para la administración central.
+* **Costos Directos (35,0% ABC):** **\\$ 64.876,2 Millones** en funcionamiento y docencia.
+* **DSCR (Cobertura de Servicio):** **1,43x en 2027** (frente a covenant regulatorio de 1,25x, holgura de +14,3%).
+* **VAN a 10 Años (2027-2036):** **+\\$ 77.676,1 Millones COP** con recaudo a 2036 de \\$ 73.582M.`,
+        suggestedFollowUps: [
+          'Ver comparación de ingresos 2027-2036 entre Créditos y SMLMV',
+          '¿Cuál es la regla institucional del 40% en posgrados?',
+          'Ver desglose de posgrados por facultades'
+        ]
+      };
+    }
+
     // Si el usuario pide explícitamente el desglose por facultades
     if (q.includes('desglose') || q.includes('facultad') || q.includes('facultades') || q.includes('ranking')) {
       const chartJson = JSON.stringify({

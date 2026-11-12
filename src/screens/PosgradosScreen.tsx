@@ -31,10 +31,10 @@ const HISTORICAL_DATA = [
 // Table 2: Projected Base with the new Credit Model (2026 - 2030) from the user
 const PROJECTED_BASE = [
   { anio: 2026, iaepPct: 8.00, fuente: "Politica 2026", estudiantes: 7092, estS1: 3552, estS2: 3540, recaudo: 42925508467 },
-  { anio: 2027, iaepPct: 4.14, fuente: "Proyeccion", estudiantes: 6887, estS1: 3445, estS2: 3442, recaudo: 43380775906 },
-  { anio: 2028, iaepPct: 4.28, fuente: "Proyeccion", estudiantes: 6734, estS1: 3366, estS2: 3369, recaudo: 44213584770 },
-  { anio: 2029, iaepPct: 4.43, fuente: "Proyeccion", estudiantes: 6633, ices: 4.43, estS2: 3321, recaudo: 45457668641 },
-  { anio: 2030, iaepPct: 4.57, fuente: "Proyeccion", estudiantes: 6582, estS1: 3285, estS2: 3297, recaudo: 47153468033 }
+  { anio: 2027, iaepPct: 4.14, fuente: "Proyeccion", estudiantes: 6887, estS1: 3445, estS2: 3442, recaudo: 44621766847 },
+  { anio: 2028, iaepPct: 4.28, fuente: "Proyeccion", estudiantes: 6734, estS1: 3366, estS2: 3369, recaudo: 45478406879 },
+  { anio: 2029, iaepPct: 4.43, fuente: "Proyeccion", estudiantes: 6633, ices: 4.43, estS2: 3321, recaudo: 46758077584 },
+  { anio: 2030, iaepPct: 4.57, fuente: "Proyeccion", estudiantes: 6582, estS1: 3285, estS2: 3297, recaudo: 48502430709 }
 ];
 
 function formatCurrency(value: number) {
@@ -411,8 +411,8 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
     
     const simulated = sensitivityProjections.find(p => p.anio === elasticityYear) || {
       estudiantes: 6887,
-      recaudo: 43380775906,
-      precio: 43380775906 / 6887
+      recaudo: 44621766847,
+      precio: 44621766847 / 6887
     };
 
     const histPrice = historical2026.ingreso / historical2026.estudiantes;
@@ -2594,27 +2594,27 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                         <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
                           <tr>
                             <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Ingreso acumulado (2027-2030)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$153.174.672.748</td>
-                            <td className="p-2 text-right border-r border-slate-200 font-bold text-slate-900">$180.205.497.350</td>
-                            <td className="p-2 text-right">$207.236.321.952</td>
+                            <td className="p-2 text-right border-r border-slate-200">$157.556.579.716</td>
+                            <td className="p-2 text-right border-r border-slate-200 font-bold text-slate-900">$185.360.682.019</td>
+                            <td className="p-2 text-right">$213.164.784.322</td>
                           </tr>
                           <tr>
                             <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Total Egresos Acumulados</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$159.571.967.903</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$145.065.425.367</td>
-                            <td className="p-2 text-right text-rose-700">-$130.558.882.830</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$164.136.883.927</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$149.215.349.025</td>
+                            <td className="p-2 text-right text-rose-700">-$134.293.814.123</td>
                           </tr>
                           <tr>
                             <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Flujo Neto Operacional Acumulado (Σ F_t)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$6.397.295.156</td>
-                            <td className="p-2 text-right border-r border-slate-200 font-bold text-emerald-700">+$35.140.071.983</td>
-                            <td className="p-2 text-right text-emerald-700 font-bold">+$76.677.439.122</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$6.580.304.211</td>
+                            <td className="p-2 text-right border-r border-slate-200 font-bold text-emerald-700">+$36.145.332.994</td>
+                            <td className="p-2 text-right text-emerald-700 font-bold">+$78.870.970.199</td>
                           </tr>
                           <tr className="bg-slate-50 font-bold">
                             <td className="p-2 font-sans border-r border-slate-200 text-slate-900">Valor Actual Neto (VAN al 8,0 % E.A.)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$5.283.052.396</td>
-                            <td className="p-2 text-right border-r border-slate-200 font-bold text-emerald-700">+$29.019.583.582</td>
-                            <td className="p-2 text-right text-emerald-700 font-bold">+$63.322.219.559</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$5.434.185.877</td>
+                            <td className="p-2 text-right border-r border-slate-200 font-bold text-emerald-700">+$29.849.753.409</td>
+                            <td className="p-2 text-right text-emerald-700 font-bold">+$65.133.692.694</td>
                           </tr>
                           <tr>
                             <td className="p-2 font-bold font-sans border-r border-slate-200 text-slate-900">Tasa Interna de Retorno (TIR)</td>
@@ -2633,10 +2633,10 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                         Observación Técnica y Financiera Fundamental: Sustentación del VAN
                       </div>
                       <p className="text-[11px] leading-relaxed text-justify">
-                        <strong>Origen del Indicador de Viabilidad:</strong> La existencia de un Valor Actual Neto (VAN) positivo de <strong>+$29.019.583.582</strong> en el Escenario Base <em>no se deduce ni puede justificarse únicamente a partir del comportamiento de los ingresos acumulados ($180.205,5 millones)</em>. Para sustentar técnicamente la viabilidad financiera institucional, es indispensable presentar la estructura detallada de <strong>flujos de caja netos anuales</strong> que origina ese indicador.
+                        <strong>Origen del Indicador de Viabilidad:</strong> La existencia de un Valor Actual Neto (VAN) positivo de <strong>+$29.849.753.409</strong> en el Escenario Base <em>no se deduce ni puede justificarse únicamente a partir del comportamiento de los ingresos acumulados ($185.360,7 millones)</em>. Para sustentar técnicamente la viabilidad financiera institucional, es indispensable presentar la estructura detallada de <strong>flujos de caja netos anuales</strong> que origina ese indicador.
                       </p>
                       <p className="text-[11px] leading-relaxed text-justify mt-1">
-                        Tal como se demuestra en la matriz de flujos siguiente, el VAN positivo surge de la capacidad estructural del nuevo esquema por créditos para generar una corriente sostenida de <strong>excedentes netos anuales</strong> ($8.459,3 M en 2027; $8.621,6 M en 2028; $8.864,2 M en 2029; y $9.194,9 M en 2030, acumulando $35.140,1 M en excedente neto bruto), una vez cubiertas en su totalidad las transferencias a la administración central (45,5 %, sumando $81.993,5 millones) y los costos operativos directos de docencia (35,0 %, sumando $63.071,9 millones). Al descontar año a año dichos flujos netos al 8,0 % anual mediante los factores de descuento matemáticos, se obtiene el valor presente neto que valida la viabilidad del proyecto.
+                        Tal como se demuestra en la matriz de flujos siguiente, el VAN positivo surge de la capacidad estructural del nuevo esquema por créditos para generar una corriente sostenida de <strong>excedentes netos anuales</strong> ($8.701,2 M en 2027; $8.868,3 M en 2028; $9.117,8 M en 2029; y $9.458,0 M en 2030, acumulando $36.145,3 M en excedente neto bruto), una vez cubiertas en su totalidad las transferencias a la administración central (45,5 %, sumando $84.339,1 millones) y los costos operativos directos de docencia (35,0 %, sumando $64.876,2 millones). Al descontar año a año dichos flujos netos al 8,0 % anual mediante los factores de descuento matemáticos, se obtiene el valor presente neto que valida la viabilidad del proyecto.
                       </p>
                     </div>
 
@@ -2667,53 +2667,53 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                         <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
                           <tr className="hover:bg-slate-50">
                             <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2027 (t = 1)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$43.380.775.906</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$19.738.253.037</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$15.183.271.567</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$34.921.524.604</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$8.459.251.302</td>
+                            <td className="p-2 text-right border-r border-slate-200">$44.621.766.847</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$20.302.903.915</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$15.617.618.396</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$35.920.522.311</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$8.701.244.536</td>
                             <td className="p-2 text-right border-r border-slate-200 text-slate-500">0,925926</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$7.832.640.094</td>
+                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$8.056.707.904</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
                             <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2028 (t = 2)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$44.213.584.770</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$20.117.181.070</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$15.474.754.669</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$35.591.935.740</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$8.621.649.030</td>
+                            <td className="p-2 text-right border-r border-slate-200">$45.478.406.879</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$20.692.675.130</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$15.917.442.408</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$36.610.117.538</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$8.868.289.341</td>
                             <td className="p-2 text-right border-r border-slate-200 text-slate-500">0,857339</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$7.391.674.409</td>
+                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$7.603.128.722</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
                             <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2029 (t = 3)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$45.457.668.641</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$20.683.239.232</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$15.910.184.024</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$36.593.423.256</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$8.864.245.385</td>
+                            <td className="p-2 text-right border-r border-slate-200">$46.758.077.584</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$21.274.925.301</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$16.365.327.154</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$37.640.252.455</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$9.117.825.129</td>
                             <td className="p-2 text-right border-r border-slate-200 text-slate-500">0,793832</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$7.036.723.779</td>
+                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$7.238.023.555</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
                             <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2030 (t = 4)</td>
-                            <td className="p-2 text-right border-r border-slate-200">$47.153.468.033</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$21.454.827.955</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$16.503.713.812</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$37.958.541.767</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$9.194.926.266</td>
+                            <td className="p-2 text-right border-r border-slate-200">$48.502.430.709</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$22.068.605.973</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-600">-$16.975.850.748</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-medium">-$39.044.456.721</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold bg-emerald-50/30">+$9.457.973.988</td>
                             <td className="p-2 text-right border-r border-slate-200 text-slate-500">0,735030</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$6.758.545.300</td>
+                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-50/50">+$6.951.893.228</td>
                           </tr>
                           <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
                             <td className="p-2 font-sans border-r border-slate-200 text-slate-900">TOTAL ACUMULADO</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-900">$180.205.497.350</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-800">-$81.993.501.294</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-slate-800">-$63.071.924.073</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-800">-$145.065.425.367</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-800 bg-emerald-100/50">+$35.140.071.983</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-900">$185.360.682.019</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-800">-$84.339.110.319</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-slate-800">-$64.876.238.706</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-800">-$149.215.349.025</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-800 bg-emerald-100/50">+$36.145.332.994</td>
                             <td className="p-2 text-right border-r border-slate-200 text-slate-500 font-sans italic text-[9px]">r = 8,0 % E.A.</td>
-                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-200/50 text-[11px]">+$29.019.583.582</td>
+                            <td className="p-2 text-right text-emerald-800 font-bold bg-emerald-200/50 text-[11px]">+$29.849.753.409</td>
                           </tr>
                         </tbody>
                       </table>
@@ -2745,48 +2745,48 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                         <tbody className="divide-y divide-slate-200 font-mono text-slate-700">
                           <tr className="hover:bg-slate-50">
                             <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2027 (t = 1)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.540.017.545</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.425.942.171</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$8.459.251.302</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$7.832.640.094</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$18.458.520.148</td>
-                            <td className="p-2 text-right text-emerald-700">+$17.091.222.359</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.584.072.722</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.466.734.002</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$8.701.244.536</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$8.056.707.904</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$18.986.561.794</td>
+                            <td className="p-2 text-right text-emerald-700">+$17.580.149.809</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
                             <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2028 (t = 2)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.569.582.259</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.345.663.803</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$8.621.649.030</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$7.391.674.409</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$18.812.880.320</td>
-                            <td className="p-2 text-right text-emerald-700">+$16.129.012.620</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.614.483.445</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.384.159.332</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$8.868.289.341</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$7.603.128.722</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$19.351.062.127</td>
+                            <td className="p-2 text-right text-emerald-700">+$16.590.416.776</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
                             <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2029 (t = 3)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.613.747.237</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.281.044.585</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$8.864.245.385</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$7.036.723.779</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$19.342.238.007</td>
-                            <td className="p-2 text-right text-emerald-700">+$15.354.492.143</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.659.911.754</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.317.691.468</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$9.117.825.129</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$7.238.023.555</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$19.895.562.012</td>
+                            <td className="p-2 text-right text-emerald-700">+$15.793.738.578</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
                             <td className="p-2 font-sans font-bold border-r border-slate-200 text-slate-900">2030 (t = 4)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.673.948.115</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.230.401.837</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$9.194.926.266</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$6.758.545.300</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$20.063.800.648</td>
-                            <td className="p-2 text-right text-emerald-700">+$14.747.492.437</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.721.836.290</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$1.265.601.075</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$9.457.973.988</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-medium">+$6.951.893.228</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700">+$20.637.784.266</td>
+                            <td className="p-2 text-right text-emerald-700">+$15.169.387.531</td>
                           </tr>
                           <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
                             <td className="p-2 font-sans border-r border-slate-200 text-slate-900">VAN TOTAL (Σ VP)</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$6.397.295.156</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-bold">-$5.283.052.396</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold">+$35.140.071.983</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold">+$29.019.583.582</td>
-                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold">+$76.677.439.122</td>
-                            <td className="p-2 text-right text-emerald-700 font-bold">+$63.322.219.559</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700">-$6.580.304.211</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-rose-700 font-bold">-$5.434.185.877</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold">+$36.145.332.994</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold">+$29.849.753.409</td>
+                            <td className="p-2 text-right border-r border-slate-200 text-emerald-700 font-bold">+$78.870.970.199</td>
+                            <td className="p-2 text-right text-emerald-700 font-bold">+$65.133.692.694</td>
                           </tr>
                         </tbody>
                       </table>
@@ -2794,13 +2794,13 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
 
                     <h4 className="font-bold text-slate-900 mt-3 text-[11px]">Interpretación Técnica de los Resultados y Sustentación de la TIR</h4>
                     <p className="mt-1">
-                      Los resultados evidencian que la viabilidad financiera del nuevo modelo depende fundamentalmente de la capacidad de mantener el equilibrio entre la demanda de programas de posgrado y la estructura tarifaria por créditos. En el <strong>escenario base</strong>, el proyecto presenta un Valor Actual Neto (VAN) positivo de <strong>$29.019.583.582</strong>, demostrando que los flujos netos anuales descontados superan con holgura el costo de oportunidad del capital institucional (8,0 %) y generan valor económico neto acumulado para la Universidad.
+                      Los resultados evidencian que la viabilidad financiera del nuevo modelo depende fundamentalmente de la capacidad de mantener el equilibrio entre la demanda de programas de posgrado y la estructura tarifaria por créditos. En el <strong>escenario base</strong>, el proyecto presenta un Valor Actual Neto (VAN) positivo de <strong>$29.849.753.409</strong>, demostrando que los flujos netos anuales descontados superan con holgura el costo de oportunidad del capital institucional (8,0 %) y generan valor económico neto acumulado para la Universidad.
                     </p>
                     <p className="mt-2">
-                      Por su parte, el <strong>escenario optimista</strong> eleva el VAN a <strong>$63.322.219.559</strong>, corroborando una alta elasticidad y sensibilidad favorable ante incrementos en la matrícula y permanencia estudiantil, lo que consolida los excedentes transferibles al desarrollo de la investigación y cualificación docente.
+                      Por su parte, el <strong>escenario optimista</strong> eleva el VAN a <strong>$65.133.692.694</strong>, corroborando una alta elasticidad y sensibilidad favorable ante incrementos en la matrícula y permanencia estudiantil, lo que consolida los excedentes transferibles al desarrollo de la investigación y cualificación docente.
                     </p>
                     <p className="mt-2">
-                      En contraste, el <strong>escenario pesimista</strong> de estrés extremo (-15 % en ingresos y +10 % en gastos) arroja un VAN negativo de <strong>-$5.283.052.396</strong> con flujos netos negativos anuales del orden de -$1.500 a -$1.670 millones. Este escenario ilustra el umbral de vulnerabilidad institucional ante una contracción severa de la matrícula combinada con sobrecostos operativos, ratificando la necesidad de implementar mecanismos de monitoreo presupuestal semestral conforme lo establece el Proyecto de Acuerdo.
+                      En contraste, el <strong>escenario pesimista</strong> de estrés extremo (-15 % en ingresos y +10 % en gastos) arroja un VAN negativo de <strong>-$5.434.185.877</strong> con flujos netos negativos anuales del orden de -$1.584 a -$1.722 millones. Este escenario ilustra el umbral de vulnerabilidad institucional ante una contracción severa de la matrícula combinada con sobrecostos operativos, ratificando la necesidad de implementar mecanismos de monitoreo presupuestal semestral conforme lo establece el Proyecto de Acuerdo.
                     </p>
                     <p className="mt-2">
                       <strong>Fundamento Matemático sobre la Tasa Interna de Retorno (TIR = N/A):</strong> La TIR se reporta técnicamente como <em>No Aplicable (N/A)</em> debido a que en proyectos y fondos rotatorios autofinanciados donde la inversión inicial de capital es cero (I₀ = $0) y los flujos netos de caja generados durante el horizonte de evaluación son estrictamente del mismo signo (positivos en todos los años para los escenarios Base y Optimista, o negativos en todos los años en el Pesimista), la serie temporal no experimenta cambios de signo. De conformidad con la <strong>Regla de los Signos de Descartes</strong>, un polinomio de flujo de caja sin alternancia de signos no admite raíces reales positivas, lo que hace matemáticamente inviable el cálculo de una tasa interna de corte. En consecuencia, el <strong>Valor Actual Neto (VAN)</strong> a la tasa social del 8,0 % constituye el criterio técnico concluyente, objetivo e irrefutable para dictaminar la viabilidad financiera de la reforma.
@@ -2814,13 +2814,13 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                       El análisis financiero realizado para el Recurso R31 – Fondo de Posgrados, correspondiente al horizonte de proyección 2027-2030, evidencia que la implementación del modelo de liquidación de matrícula por créditos académicos constituye una alternativa financieramente viable y sostenible, siempre que se mantengan las condiciones de demanda previstas en el escenario base del presente estudio y las disposiciones establecidas en el Proyecto de Acuerdo.
                     </p>
                     <p className="mt-2">
-                      Los resultados obtenidos muestran que, bajo las proyecciones institucionales, el modelo genera un Valor Actual Neto (VAN) positivo de $29.019.583.582, lo cual demuestra que los ingresos proyectados son suficientes para cubrir el costo de oportunidad de los recursos y generar excedentes financieros durante el período de evaluación. En consecuencia, el esquema propuesto fortalece la sostenibilidad del Fondo de Posgrados y contribuye a garantizar la financiación de las actividades académicas y administrativas asociadas a esta oferta educativa.
+                      Los resultados obtenidos muestran que, bajo las proyecciones institucionales, el modelo genera un Valor Actual Neto (VAN) positivo de $29.849.753.409, lo cual demuestra que los ingresos proyectados son suficientes para cubrir el costo de oportunidad de los recursos y generar excedentes financieros durante el período de evaluación. En consecuencia, el esquema propuesto fortalece la sostenibilidad del Fondo de Posgrados y contribuye a garantizar la financiación de las actividades académicas y administrativas asociadas a esta oferta educativa.
                     </p>
                     <p className="mt-2">
                       Desde el punto de vista de la demanda, el análisis de elasticidad evidencia un comportamiento elástico (ε = -1,19), indicando que un incremento del 1 % en la tarifa promedio por crédito podría generar una disminución aproximada del 1,19 % en la matrícula. Este resultado resalta la importancia de que la política tarifaria conserve criterios de competitividad, accesibilidad y equilibrio financiero, de manera que los ajustes en el Valor Base del Crédito Académico Institucional responan a estudios técnicos y a las condiciones del mercado de educación superior.
                     </p>
                     <p className="mt-2">
-                      De acuerdo con la estructura de distribución de los ingresos vigente, las deducciones institucionales destinadas a la administración central, equivalentes al 45,5 % del recaudo, representarían un ingreso aproximado de $81.993.501.294 durante el período proyectado, recursos que contribuirán a la financiación de las funciones de apoyo institucional y al fortalecimiento de la gestión universitaria.
+                      De acuerdo con la estructura de distribución de los ingresos vigente, las deducciones institucionales destinadas a la administración central, equivalentes al 45,5 % del recaudo, representarían un ingreso aproximado de $84.339.110.319 durante el período proyectado, recursos que contribuirán a la financiación de las funciones de apoyo institucional y al fortalecimiento de la gestión universitaria.
                     </p>
                     <p className="mt-2">
                       Por otra parte, los análisis de sensibilidad realizados evidencian que el modelo mantiene condiciones adecuadas de sostenibilidad financiera frente a variaciones moderadas en los ingresos y costos. No obstante, incrementos superiores al 8,8 % en la estructura de egresos o en las retenciones institucionales, sin un crecimiento equivalente en los ingresos, podrían afectar el equilibrio financiero del Fondo de Posgrados, razón por la cual será necesario realizar un seguimiento permanente a la ejecución presupuestal y, de ser requerido, implementar medidas de ajuste sobre la estructura de costos o la política tarifaria.
@@ -3075,10 +3075,10 @@ export function PosgradosScreen({ onNavigate }: { onNavigate: (s: string) => voi
                         </h4>
                         <div className="mt-2 space-y-2 text-[10px]">
                           <p>
-                            <strong>Gráfica 1 (Comparación de Ingresos Proyectados):</strong> Muestra la trayectoria del recaudo financiero anual del Fondo Especial de Posgrados (Recurso R31) entre las vigencias 2027 y 2036. Contrasta el comportamiento del modelo de cobro por créditos académicos (línea dorada) frente al esquema tradicional indexado al SMLMV (línea plateada). Bajo el modelo de créditos, el recaudo asciende de forma continua y sostenible desde <strong>$43.380 millones (2027)</strong> hasta superar los <strong>$63.247 millones (2036)</strong>. Por el contrario, en el modelo SMLMV, a pesar de las alzas en tarifa, el recaudo total sufre un estancamiento progresivo que lo reduce a <strong>$32.671 millones en 2036</strong>, derivado de la pérdida masiva de base estudiantil.
+                            <strong>Gráfica 1 (Comparación de Ingresos Proyectados):</strong> Muestra la trayectoria del recaudo financiero anual del Fondo Especial de Posgrados (Recurso R31) entre las vigencias 2027 y 2036. Contrasta el comportamiento del modelo de cobro por créditos académicos (línea dorada) frente al esquema tradicional indexado al SMLMV (línea plateada). Bajo el modelo de créditos, el recaudo asciende de forma continua y sostenible desde <strong>$44.622 millones (2027)</strong> hasta superar los <strong>$73.582 millones (2036)</strong>. Por el contrario, en el modelo SMLMV, a pesar de las alzas en tarifa, el recaudo total sufre un estancamiento progresivo que lo reduce a <strong>$32.671 millones en 2036</strong>, derivado de la pérdida masiva de base estudiantil.
                           </p>
                           <p>
-                            <strong>Gráfica 2 (Comparación de Matrículas Proyectadas):</strong> Modela la evolución de la población estudiantil matriculada en posgrados ante las variaciones tarifarias y la elasticidad precio de la demanda (ε = -1,19). En el modelo por créditos, la flexibilidad en el valor de la matrícula permite conservar una población estable y en leve expansión por encima de los <strong>6.700 estudiantes</strong>. En contraste, el modelo rígido basado en SMLMV, al sumar el incremento diferido del 15% en 2027 más la inflación salarial acumulada, genera una fuerte deserción que contrae la matrícula desde <strong>4.003 alumnos (2027)</strong> hasta apenas <strong>1.968 estudiantes (2036)</strong>.
+                            <strong>Gráfica 2 (Comparación de Matrículas Proyectadas):</strong> Modela la evolución de la población estudiantil matriculada en posgrados ante las variaciones tarifarias y la elasticidad precio de la demanda (ε = -1,19). En el modelo por créditos, la flexibilidad en el valor de la matrícula permite conservar una población estable y en leve expansión por encima de los <strong>6.780 estudiantes</strong> (6.887 en 2027). En contraste, el modelo rígido basado en SMLMV, al sumar el incremento diferido del 15% en 2027 más la inflación salarial acumulada, genera una fuerte deserción que contrae la matrícula desde <strong>3.954 alumnos (2027)</strong> hasta apenas <strong>1.968 estudiantes (2036)</strong>.
                           </p>
                         </div>
                       </div>

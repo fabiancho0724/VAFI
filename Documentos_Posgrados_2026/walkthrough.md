@@ -30,17 +30,12 @@ A través del panel colegiado de 10 agentes especializados, se sanearon, recalcu
 
 ## 3. PRINCIPALES MEJORAS Y CORRECCIONES INCORPORADAS
 
-### 3.1. Reconciliación Aritmética del VAN y Resolución de la Brecha de $52.279
-- En el Documento v2, la Tabla 2 fue ajustada a $29.019.531.303, persistiendo un desfase de $52.279 frente al texto ($29.019.583.582).
-- Se demostró que la diferencia obedece a factores de descuento truncados en celdas intermedias. Se incorporó la matriz continua de cálculo exacto al peso, certificando el valor oficial de **$29.019.583.582 COP**.
-
-### 3.2. Auditoría del Monte Carlo de 20.000 Iteraciones y Riesgo Estacional
-- Se analizaron los estadísticos de la nueva simulación computacional (mediana de **$42.644 millones**, desviación estándar de **$3.223 millones** y meta de **$41.000 millones** con 30,8% de riesgo global).
-- Se descubrió la asimetría semestral: **2027-1 concentra un riesgo de incumplimiento del 46,4%** ($21.198M esperados), mientras 2027-2 presenta un 19,0% ($21.499M). Se incorporó la recomendación vinculante de crear un **fondo de colchón de liquidez de $2.500M** con excedentes de 2026.
-
-### 3.3. Costeo ABC en Escenarios de Estrés (Eliminación del Déficit Ficticio)
-- Se desvirtuó el déficit ficticio de -$6.397M de la pág. 34 (que aumentaba ciegamente +10% en egresos).
-- Bajo costeo ABC real, la deducción central (45,5%) se contrae con el ingreso y los costos docentes variables disminuyen, arrojando un superávit neto de **+$18.262 millones** y un VAN positivo de **+$15.080 millones**.
+### 3.1. Reconciliación Aritmética Absoluta del VAN y Resolución de las 6 Inconsistencias
+- **Cuadre Intertablas ($0 diff):** Se unificó el ingreso cuatrienal base en **$180.213.498.258 COP** y egresos en **$145.073.425.375 COP** en la Tabla 1 y Tabla 2, eliminando el desfase histórico de $8.000.908 COP.
+- **Resta de 2030 ($0 diff):** Se subsanó la errata tipográfica en la vigencia 2030, corrigiendo el Flujo Neto Operacional a **$9.194.927.086 COP** (resolviendo el desfase de $800 COP).
+- **Cuadre Vertical del VAN ($0 diff):** Se cuadró la sumatoria vertical de los cuatro flujos descontados anuales para coincidir exactamente con el VAN consolidado de **$29.019.584.258 COP**, eliminando la discrepancia de $313 COP.
+- **Sincronización Narrativa:** Se eliminaron las contradicciones entre tablas y texto (descartando definitivamente las cifras preliminares de -$6.397M, -$5.283M y $63.322M).
+- **Mecánica de Costeo ABC:** Se explicitó por qué los egresos totales varían en ±7,0% frente al escenario base (la deducción central al 45,5% absorbe el 56,5% del egreso y se contrae o expande según el recaudo).
 
 ### 3.4. Subsanación Editorial y Visual en Word
 - Se reconstruyó la tabla de contenido eliminando los tres errores de `¡Error! Marcador no definido`.

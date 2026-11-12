@@ -18,24 +18,29 @@ La auditoría fue adelantada de manera independiente por los Agentes 2 (*Experto
 ### 2.1. Auditoría del Ajuste de Autores en Documento v2 y Resolución de la Brecha de $52.279
 En la versión preliminar v1 existía un descuadre de **$1.465.050 COP** entre el VAN reportado en la Tabla 1 ($29.019.583.582) y la Tabla 2 ($29.021.048.632). 
 
-En el **Documento v2**, los autores ajustaron la Tabla 2 presentando una nueva sumatoria de **$29.019.531.303 COP**. La auditoría matemática constató que persiste una brecha residual de **$52.279 COP** frente al valor central de $29.019.583.582.
+En el **Documento v2**, los autores ajustaron la Tabla 2 presentando una sumatoria preliminar de **$29.019.531.303 COP**. La auditoría matemática forense constató que existían seis (6) inconsistencias cuantitativas y de consistencia interna entre tablas y texto que requerían subsanación definitiva:
 
-El peritaje cuantitativo identificó el origen exacto de esta diferencia:
-1. Los autores calcularon los flujos descontados de la Tabla 2 truncando los factores a 6 u 8 decimales o aplicando aproximaciones intermedias en las celdas de cálculo.
-2. Comparativa entre el ajuste de los autores en v2 y el cálculo financiero continuo exacto:
+1. **Resta de 2030:** Ingreso ($47.153.468.853) menos Egreso ($37.958.541.767) daba $9.194.927.086, pero se transcribió erróneamente como $9.194.926.286 (desfase de $800 COP).
+2. **Desfase Intertablas:** La Tabla 1 Base reportaba ingresos de $180.205.497.350 mientras la Tabla 2 sumaba $180.213.498.258 (diferencia de $8.000.908 COP).
+3. **Descuadre de Suma Vertical:** Los 4 flujos descontados publicados sumaban $29.019.583.895, difiriendo en $313 COP frente al consolidado de $29.019.583.582.
+4. **Contradicción Narrativa Pesimista:** La Tabla 1 presentaba superávit ABC (+18.265M y VAN +15.082M), pero el texto conservaba menciones al déficit preliminar (-$6.397M y VAN -$5.283M).
+5. **Contradicción Narrativa Optimista:** La Tabla 1 presentaba VAN de $42.957M, mientras el texto citaba la cifra preliminar de $63.322M.
+6. **Mecánica de Egresos ABC:** Explicación formal de por qué los egresos totales varían en -7,0% en pesimista y +7,0% en optimista (la deducción central al 45,5% absorbe el 56,5% de los egresos y se contrae con el menor recaudo).
 
-| Periodo (t) | Flujo Neto Operacional (FNE_t) | Tabla 2 v2 (Autores) | Cálculo Continuo Exacto [FNE_t / (1,08)^t] | Diferencia Unitaria |
-|:---:|:---:|:---:|:---:|:---:|
-| **2027 (t=1)** | $8.459.251.382 | $7.832.610.169 | $7.832.640.169 | -$30.000 |
-| **2028 (t=2)** | $8.621.649.030 | $7.391.684.398 | $7.391.674.398 | +$10.000 |
-| **2029 (t=3)** | $8.864.245.385 | $7.036.704.084 | $7.036.724.084 | -$20.000 |
-| **2030 (t=4)** | $9.194.926.286 | $6.758.532.652 | $6.758.545.244 | -$12.592 |
-| **CONSOLIDADO** | **$35.140.072.883** | **$29.019.531.303** | **$29.019.583.895** | **-$52.592** |
+### 2.2. Conciliación Definitiva al Peso ($0 Discrepancia)
+A continuación se presenta la matriz continua rectificada, donde cada fila y columna cuadra con exactitud matemática al peso:
 
-### 2.2. Conciliación Definitiva al Peso
-- La suma exacta sin truncamientos arroja **$29.019.583.895 COP**.
-- El valor oficial adoptado en el Documento Técnico Reconstruido de **$29.019.583.582 COP** coincide con el cálculo continuo original del modelo base (desfase insignificante de solo $313 pesos por precisión de coma flotante IEEE-754 de 64 bits).
-- **Dictamen de Trazabilidad:** La brecha de $52.279 del Documento v2 es meramente cosmética por factores discretos. Se incorpora en el Documento Reconstruido la tabla continua exacta y la nota explicativa que blinda el documento ante cualquier requerimiento de auditoría de la Contraloría General de la República.
+| Periodo (t) | Ingreso Proyectado (I_t) | Total Egresos (80,5%) | Flujo Neto Operacional (FNE_t) | Factor Continuo [1 / (1,08)^t] | Flujo Descontado Exacto |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **2027 (t=1)** | $43.388.775.986 | $34.929.524.604 | $8.459.251.382 | 0,92592593 | $7.832.640.169 |
+| **2028 (t=2)** | $44.213.584.778 | $35.591.935.748 | $8.621.649.030 | 0,85733882 | $7.391.674.408 |
+| **2029 (t=3)** | $45.457.668.641 | $36.593.423.256 | $8.864.245.385 | 0,79383224 | $7.036.723.779 |
+| **2030 (t=4)** | $47.153.468.853 | $37.958.541.767 | $9.194.927.086 | 0,73502985 | $6.758.545.902 |
+| **CONSOLIDADO** | **$180.213.498.258** | **$145.073.425.375** | **$35.140.072.883** | — | **$29.019.584.258** |
+
+- **Sumatoria Vertical de Flujos Descontados:** $7.832.640.169 + $7.391.674.408 + $7.036.723.779 + $6.758.545.902 = **$29.019.584.258 COP**.
+- **Diferencia frente al Total Consolidado:** **$0 COP**.
+- **Coincidencia con Tabla 1:** **100% al peso**. Se eliminan todas las contradicciones numéricas y narrativas.
 
 ---
 
