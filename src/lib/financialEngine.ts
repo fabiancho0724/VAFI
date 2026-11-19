@@ -5,11 +5,11 @@ export const BUDGET_PAYROLL_2026 = 369650433862; // Master Budget for Payroll ($
 export const PAYROLL_REAL_ENE_JUL = 172115462719.57; // Paid Payroll Ene-Jul ($172.115,5M)
 export const PAYROLL_REMAINING_AGO_DIC = 197534971142.43; // Remaining Payroll Ago-Dic ($197.535,0M)
 
-// GOOBI REAL DATA TO AUGUST 31, 2026 (GOOBI)
-export const GOOBI_REAL_RECAUDO_AGO25 = 446811.0; // $446.811,0M COP (Corte 30/09/2026)
-export const GOOBI_REAL_COMPROMISOS_AGO25 = 384101.2; // $384.101,2M COP
-export const GOOBI_REAL_PAGOS_AGO25 = 321674.7; // $321.674,7M COP
-export const GOOBI_BRECHA_FUNCIONAMIENTO_AGO25 = 62756.6; // $62.756,6M COP
+// GOOBI REAL DATA AL CORTE NOVIEMBRE 2026 (Ejecución real a 31/10/2026)
+export const GOOBI_REAL_RECAUDO_AGO25 = 504783.5; // $504.783,5M COP (Corte 31/10/2026 a hoy)
+export const GOOBI_REAL_COMPROMISOS_AGO25 = 423905.3; // $423.905,3M COP (73,85%)
+export const GOOBI_REAL_PAGOS_AGO25 = 365930.5; // $365.930,5M COP (63,75%)
+export const GOOBI_BRECHA_FUNCIONAMIENTO_AGO25 = 57974.8; // $57.974,8M COP (Compromisos pendientes de giro)
 
 export function getRowUnidad(row: any, year: number): string {
   if (year === 2026) {

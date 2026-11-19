@@ -223,12 +223,12 @@ export function DashboardScreen({ onNavigate }: { onNavigate: (s: string) => voi
         processData(ingresosData, gastosData, nominaData);
       } catch (err: any) {
         console.warn('Network fetch failed, initializing with real GOOBI dataset.', err);
-        setIngresosAforado(551235.0);
-        setIngresosRecaudado(446811.0);
-        setIngresosTotal(446811.0);
-        setGastosComprometido(384101.2);
-        setGastosPagado(321674.7);
-        setGastosTotal(321674.7);
+        setIngresosAforado(574045.2);
+        setIngresosRecaudado(504783.5);
+        setIngresosTotal(504783.5);
+        setGastosComprometido(423905.3);
+        setGastosPagado(365930.5);
+        setGastosTotal(365930.5);
         setDataStage('ready');
       }
     }

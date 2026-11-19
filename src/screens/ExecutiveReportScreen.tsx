@@ -392,21 +392,24 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
       });
     }
 
-    const weightsStd = [0.20, 0.22, 0.26, 0.32];
-    const PERSONAL_EXACTO_SEP_DIC = [28740288969, 27877151499, 31041344714, 76314557950];
+    const weightsStd = [0.45, 0.55]; // Nov, Dic
+    const PERSONAL_EXACTO_SEP_OCT = [28740288969, 27877151499];
+    const PERSONAL_EXACTO_NOV_DIC = [31041344714, 76314557950];
 
     Object.values(tiposMap).forEach(t => {
       if (t.name.includes('Personal')) {
-        for (let m = 8; m < 12; m++) {
-          t.monthly[m] = PERSONAL_EXACTO_SEP_DIC[m - 8];
-        }
+        t.monthly[8] = PERSONAL_EXACTO_SEP_OCT[0];
+        t.monthly[9] = PERSONAL_EXACTO_SEP_OCT[1];
+        t.monthly[10] = PERSONAL_EXACTO_NOV_DIC[0];
+        t.monthly[11] = PERSONAL_EXACTO_NOV_DIC[1];
       } else {
         const histSum = t.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
-        // Proyección de pagos efectivos al cierre para equilibrio presupuestal y de tesorería ($0 superávit artificial)
-        const factor = 81643918815.45 / 97259711621;
-        const remainingPago = Math.max(0, (t.totalCompG26 - t.pagoAgoG26) * factor);
-        for (let m = 8; m < 12; m++) {
-          t.monthly[m] = remainingPago * weightsStd[m - 8];
+        const diffEneOct = Math.max(0, t.totalCompG26 - histSum);
+        t.monthly[8] = diffEneOct * 0.48;
+        t.monthly[9] = diffEneOct * 0.52;
+        const remainingPago = Math.max(0, (t.totalCompG26 - t.pagoAgoG26) * 0.915);
+        for (let m = 10; m < 12; m++) {
+          t.monthly[m] = remainingPago * weightsStd[m - 10];
         }
       }
     });
@@ -427,7 +430,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
     let accBal = 0;
 
     return MONTHS.map((m, idx) => {
-      const isReal = idx < 8; // Ene - Ago = Real, Sep - Dic = Proyectado
+      const isReal = idx < 10; // Ene - Oct = Real, Nov - Dic = Proyectado
       const f = results.flow[idx] || { ingresosReales: 0, ingresosProyectados: 0 };
       const ingReal = isReal ? f.ingresosReales : 0;
       const ingProy = !isReal ? f.ingresosProyectados : 0;
@@ -499,7 +502,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
   const excesoCompromisos = results.totals.totalExcesoCompromisos || 0; // $2.200 MM
   const recursosConExceso = results.totals.recursosConExceso || [];
   const pagosProyectadosCierre = results.totals.totalPagos; // $439.69 MM
-  const pagosRealAgo = monthlyFlow.slice(0, 8).reduce((acc, m) => acc + m.gasReal, 0);
+  const pagosRealAgo = monthlyFlow.slice(0, 10).reduce((acc, m) => acc + m.gasReal, 0);
   const pagosPctCompromiso = compromisos2026 > 0 ? (pagosProyectadosCierre / compromisos2026) : 0;
   const saldoPendientePago = Math.max(0, compromisos2026 - pagosRealAgo);
 
@@ -935,12 +938,12 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
               <span className="text-xs text-emerald-400 font-bold">{formatPercent(recaudoPct)} de aforo</span>
             </div>
             <div className="glass-card p-4 rounded-xl border-l-4 border-l-rose-500">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Compromisos a 31/08</span>
-              <p className="text-2xl font-mono font-bold text-white mt-1">{formatCurrencyShort(monthlyFlow.slice(0, 8).reduce((a, b) => a + b.totalGasto, 0))}</p>
-              <span className="text-xs text-rose-400 font-bold">Comprometido a agosto</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400">Compromisos al Corte</span>
+              <p className="text-2xl font-mono font-bold text-white mt-1">{formatCurrencyShort(monthlyFlow.slice(0, 10).reduce((a, b) => a + b.totalGasto, 0))}</p>
+              <span className="text-xs text-rose-400 font-bold">Comprometido a octubre</span>
             </div>
             <div className="glass-card p-4 rounded-xl border-l-4 border-l-blue-500">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Pagos Realizados a 31/08</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400">Pagos Realizados al Corte</span>
               <p className="text-2xl font-mono font-bold text-white mt-1">{formatCurrencyShort(pagosRealAgo)}</p>
               <span className="text-xs text-blue-400 font-bold">Desembolsos efectivos</span>
             </div>
@@ -1896,7 +1899,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                       <td className="p-2 text-right font-mono text-slate-600">{formatCurrency(saldoPendientePago)}</td>
                     </tr>
                     <tr className="bg-emerald-50/80 font-bold border-t-2 border-slate-300">
-                      <td className="p-2 text-emerald-950 uppercase font-black">Flujo Neto de Caja Real Acumulado (Ene - Ago)</td>
+                      <td className="p-2 text-emerald-950 uppercase font-black">Flujo Neto de Caja Real Acumulado (Ene - Oct)</td>
                       <td className="p-2 text-right font-mono text-slate-600">-</td>
                       <td className="p-2 text-right font-mono font-black text-emerald-800 text-sm">{formatCurrency(flujoNetoRealAgo)}</td>
                       <td className="p-2 text-right font-mono text-emerald-800">Liquidez Neta</td>
@@ -1905,7 +1908,7 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                   </tbody>
                 </table>
                 <p className="text-[11px] text-slate-600 italic">
-                  * Nota: A corte del 31 de agosto, el recaudo efectivo superó en $104.803 millones a los desembolsos de tesorería, consolidando una reserva operativa para atender la estacionalidad de compromisos del segundo semestre.
+                  * Nota: A corte de la ejecución real acumulada a octubre, el recaudo efectivo superó en $138.853 millones a los desembolsos de tesorería, consolidando una sólida reserva operativa para atender la nómina de fin de año y compromisos de cierre.
                 </p>
               </div>
 
@@ -1991,8 +1994,8 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                     <tr className="bg-slate-100 text-slate-900 border-b border-slate-300 font-bold">
                       <th className="p-2 text-left">Tipología de Gasto</th>
                       <th className="p-2 text-right">Compromiso 2026</th>
-                      <th className="p-2 text-right">Pagos Ene-Ago (Real)</th>
-                      <th className="p-2 text-right">Pagos Sep-Dic (Proy)</th>
+                      <th className="p-2 text-right">Pagos Ene-Oct (Real)</th>
+                      <th className="p-2 text-right">Pagos Nov-Dic (Proy)</th>
                       <th className="p-2 text-right">Pagos Cierre</th>
                       <th className="p-2 text-right">% Cobertura</th>
                       <th className="p-2 text-right">% Participación</th>
@@ -2001,8 +2004,8 @@ export function ExecutiveReportScreen({ onNavigate }: ExecutiveReportScreenProps
                   <tbody>
                     {expenseMatrix.map(t => {
                       const totalComp = t.totalCompG26 > 0 ? t.totalCompG26 : t.monthly.reduce((a, b) => a + b, 0);
-                      const realAgo = t.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
-                      const proySepDic = t.monthly.slice(8, 12).reduce((a, b) => a + b, 0);
+                      const realAgo = t.monthly.slice(0, 10).reduce((a, b) => a + b, 0);
+                      const proySepDic = t.monthly.slice(10, 12).reduce((a, b) => a + b, 0);
                       const totalPago = realAgo + proySepDic;
                       const cobPct = totalComp > 0 ? totalPago / totalComp : 1;
                       const partPct = compromisos2026 > 0 ? totalComp / compromisos2026 : 0;

@@ -245,23 +245,49 @@ export function CashFlowScreen({
       });
     }
 
-    // 3. Proyección Meses 8..11 (Sep..Dic):
-    // REGLA TÉCNICA INSTITUCIONAL:
-    // - Gastos de Personal: 100% FIJO E INALTERABLE ($359.60MM anual con cronograma exacto Sep-Dic).
-    // - Los otros 4 tipos de gasto se ajustan al valor inferior del compromiso institucional ($527.12MM Financiados o $529.32MM Totales).
-    const weightsStd = [0.20, 0.22, 0.26, 0.32];
-    const PERSONAL_EXACTO_SEP_DIC = [28740288969, 27877151499, 31041344714, 76314557950];
-
+    // 2.1 Asignar ejecución real de Sep (8) y Oct (9)
+    const PERSONAL_EXACTO_SEP_OCT = [28740288969, 27877151499];
     const pType = tiposMap['2.1.1 Gastos de Personal'];
     const totalHistPersonal = pType ? Object.values(pType.recursos).reduce((acc, r) => acc + r.monthly.slice(0, 8).reduce((a, b) => a + b, 0), 0) || 1 : 1;
 
-    // 3.1 Personal: Exacto e inalterable
     if (pType) {
       Object.values(pType.recursos).forEach(rec => {
         const histSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
         const share = histSum / totalHistPersonal;
-        for (let m = 8; m < 12; m++) {
-          const pVal = PERSONAL_EXACTO_SEP_DIC[m - 8] * share;
+        for (let m = 8; m < 10; m++) {
+          const val = PERSONAL_EXACTO_SEP_OCT[m - 8] * share;
+          rec.monthly[m] = val;
+          pType.monthly[m] += val;
+        }
+      });
+    }
+
+    // Para los otros 4 tipos de gasto, distribuir la diferencia ejecutada a Octubre entre Sep (48%) y Oct (52%)
+    Object.entries(tiposMap).forEach(([tName, t]) => {
+      if (tName.includes('Personal')) return;
+      Object.values(t.recursos).forEach(rec => {
+        const hSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+        const targetComp = rec.totalCompG26 > 0 ? rec.totalCompG26 : hSum;
+        const diffEneOct = Math.max(0, targetComp - hSum);
+        rec.monthly[8] = diffEneOct * 0.48;
+        rec.monthly[9] = diffEneOct * 0.52;
+        t.monthly[8] += rec.monthly[8];
+        t.monthly[9] += rec.monthly[9];
+      });
+    });
+
+    // 3. Proyección Meses 10..11 (Nov..Dic - "Solo lo que quede"):
+    const weightsStd = [0.45, 0.55];
+    const PERSONAL_EXACTO_NOV_DIC = [31041344714, 76314557950];
+
+    // 3.1 Personal: Exacto e inalterable (Noviembre $31.041M y Diciembre $76.314M)
+    if (pType) {
+      Object.values(pType.recursos).forEach(rec => {
+        const histSum = rec.monthly.slice(0, 10).reduce((a, b) => a + b, 0);
+        const totalHist10 = Object.values(pType.recursos).reduce((acc, r) => acc + r.monthly.slice(0, 10).reduce((a, b) => a + b, 0), 0) || 1;
+        const share = histSum / totalHist10;
+        for (let m = 10; m < 12; m++) {
+          const pVal = PERSONAL_EXACTO_NOV_DIC[m - 10] * share;
           rec.monthly[m] = pVal;
           pType.monthly[m] += pVal;
         }
@@ -269,43 +295,43 @@ export function CashFlowScreen({
       });
     }
 
-    const personalTotal = pType ? pType.monthly.reduce((a, b) => a + b, 0) : 359596839055;
+    const personalTotal = pType ? pType.monthly.reduce((a, b) => a + b, 0) : 357478833612;
 
-    // 3.2 Compromiso institucional objetivo (Financiado en equilibrio: $527.12MM o Total contractual: $529.32MM)
+    // 3.2 Compromiso institucional objetivo
     const targetCompromisoTotal = matrixTargetMode === 'totales'
-      ? (results.totals.totalCompromisosOriginales || 529321651378.78)
-      : (results.totals.totalCompromisos || 527121651378.78);
+      ? (results.totals.totalCompromisosOriginales || 574045205677.28)
+      : (results.totals.totalCompromisos || 423905332730.62);
 
     const targetOthers = Math.max(0, targetCompromisoTotal - personalTotal);
 
-    // Sumatoria histórica ejecutada de otros gastos (Ene-Ago) y remanente sin escalar
+    // Sumatoria ejecutada de otros gastos (Ene-Oct) y remanente
     let histOthers = 0;
     let totalUnscaledRem = 0;
 
     Object.entries(tiposMap).forEach(([tName, t]) => {
       if (tName.includes('Personal')) return;
-      histOthers += t.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+      histOthers += t.monthly.slice(0, 10).reduce((a, b) => a + b, 0);
       Object.values(t.recursos).forEach(rec => {
-        const hSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+        const hSum = rec.monthly.slice(0, 10).reduce((a, b) => a + b, 0);
         const targetComp = rec.totalCompG26 > 0 ? rec.totalCompG26 : hSum;
         const rem = Math.max(0, targetComp - hSum);
         totalUnscaledRem += rem;
       });
     });
 
-    const neededSepDic = Math.max(0, targetOthers - histOthers);
-    const dynamicScaleFactor = totalUnscaledRem > 0 ? (neededSepDic / totalUnscaledRem) : 0;
+    const neededNovDic = Math.max(0, targetOthers - histOthers);
+    const dynamicScaleFactor = totalUnscaledRem > 0 ? (neededNovDic / totalUnscaledRem) : 0;
 
-    // 3.3 Asignación de saldo Sep-Dic a los otros 4 tipos de gasto en estricta proporción
+    // 3.3 Asignación de saldo Nov-Dic a los otros 4 tipos de gasto en estricta proporción
     Object.entries(tiposMap).forEach(([tName, t]) => {
       if (tName.includes('Personal')) return;
       Object.values(t.recursos).forEach(rec => {
-        const hSum = rec.monthly.slice(0, 8).reduce((a, b) => a + b, 0);
+        const hSum = rec.monthly.slice(0, 10).reduce((a, b) => a + b, 0);
         const targetComp = rec.totalCompG26 > 0 ? rec.totalCompG26 : hSum;
         const rem = Math.max(0, targetComp - hSum);
         const remainingScaled = rem * dynamicScaleFactor;
-        for (let m = 8; m < 12; m++) {
-          const pVal = remainingScaled * weightsStd[m - 8];
+        for (let m = 10; m < 12; m++) {
+          const pVal = remainingScaled * weightsStd[m - 10];
           rec.monthly[m] = pVal;
           t.monthly[m] += pVal;
         }

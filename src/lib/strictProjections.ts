@@ -154,18 +154,18 @@ export interface StrictProjectionResult {
 const NACION_FIXED = ['10', '10.1', '10.2', '10.3', '10.4', '10.5', '12', '13', '14', '16', '16.1', '16.2', '17', '18'];
 
 export const GIROS_SIIF_PROYECTADOS: Record<string, number[]> = {
-  '10':   [20695590222, 23508369040, 23456386438, 20695555423],
-  '10.0': [20695590222, 23508369040, 23456386438, 20695555423],
-  '10.1': [0, 2165253520, 0, 0],
-  '10.2': [0, 0, 0, 0],
-  '10.3': [0, 0, 2229170511, 0],
-  '10.4': [0, 0, 0, 0],
-  '10.5': [0, 0, 0, 0],
-  '13':   [0, 0, 0, 0],
-  '14':   [0, 0, 0, 0],
-  '16.1': [0, 0, 0, 0],
-  '17':   [0, 478844455, 478844455, 478844455],
-  '18':   [0, 179049568, 179049568, 179049568]
+  '10':   [23456386438, 20695555423],
+  '10.0': [23456386438, 20695555423],
+  '10.1': [0, 0],
+  '10.2': [0, 0],
+  '10.3': [2229170511, 0],
+  '10.4': [0, 0],
+  '10.5': [0, 0],
+  '13':   [0, 0],
+  '14':   [0, 0],
+  '16.1': [0, 0],
+  '17':   [478844455, 478844455],
+  '18':   [179049568, 179049568]
 };
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const MONTH_KEYS = ['Valor ene', 'Valor feb', 'Valor mar', 'Valor abr', 'Valor may', 'Valor jun', 'Valor jul', 'Valor ago', 'Valor sep', 'Valor oct', 'Valor nov', 'Valor dic'];
@@ -215,19 +215,16 @@ function simulateCore(
   if (config.scenario === 'Optimista') effGrowth += 0.05;
   if (config.scenario === 'Pesimista') effGrowth -= 0.05;
   
-  const NOMINA_EXACTA_SEP_DIC = [28740288969, 27877151499, 31041344714, 76314557950];
-  const TOTAL_NOMINA_SEP_DIC = 163973343133;
-  const nominaProyectadaGlobal = TOTAL_NOMINA_SEP_DIC;
+  const NOMINA_EXACTA_NOV_DIC = [31041344714, 76314557950];
+  const TOTAL_NOMINA_NOV_DIC = 107355902664;
+  const nominaProyectadaGlobal = TOTAL_NOMINA_NOV_DIC;
 
   const TOTAL_FUNC_ANUAL = 131209200000;
   const funcReal = expenseTypeReal['2.1.2 Gastos de Funcionamiento'] || expenseTypeReal['Funcionamiento'] || 0;
-  const TOTAL_FUNC_SEP_DIC = Math.max(0, TOTAL_FUNC_ANUAL - funcReal);
-  const funcScale = TOTAL_FUNC_SEP_DIC / 14532945667.71;
-  const FUNCIONAMIENTO_EXACTO_SEP_DIC = [
-      5381650891.99 * funcScale,
-      5996809970.69 * funcScale,
-      2581881333.37 * funcScale,
-      572603471.66 * funcScale
+  const TOTAL_FUNC_NOV_DIC = Math.max(0, TOTAL_FUNC_ANUAL - funcReal);
+  const FUNCIONAMIENTO_EXACTO_NOV_DIC = [
+      TOTAL_FUNC_NOV_DIC * 0.45,
+      TOTAL_FUNC_NOV_DIC * 0.55
   ];
 
   baseData.forEach(base => {
@@ -235,17 +232,17 @@ function simulateCore(
     const customConfig = config.resourceOverrides ? config.resourceOverrides[base.recurso] : undefined;
     
     const recaudoRealAcumulado = (config.filterUnidad && config.filterUnidad !== 'Todos')
-      ? ((monthlyHist.ing[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0))
+      ? ((monthlyHist.ing[base.recurso] || []).slice(0, 10).reduce((a:number,b:number)=>a+b, 0))
       : base.recaudo;
     const totalRealNomina = expenseTypeReal['2.1.1 Gastos de Personal'] || expenseTypeReal['Personal (Nómina)'] || 1;
     const shareNomina = (expenseTypeResourceReal['2.1.1 Gastos de Personal']?.[base.recurso] || expenseTypeResourceReal['Personal (Nómina)']?.[base.recurso] || 0) / totalRealNomina;
-    const nominaAsignada = TOTAL_NOMINA_SEP_DIC * shareNomina;
+    const nominaAsignada = TOTAL_NOMINA_NOV_DIC * shareNomina;
 
     const totalRealFunc = expenseTypeReal['2.1.2 Gastos de Funcionamiento'] || expenseTypeReal['Funcionamiento'] || 1;
     const shareFunc = (expenseTypeResourceReal['2.1.2 Gastos de Funcionamiento']?.[base.recurso] || expenseTypeResourceReal['Funcionamiento']?.[base.recurso] || 0) / totalRealFunc;
-    const funcAsignada = TOTAL_FUNC_SEP_DIC * shareFunc;
-    const compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
-    const pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+    const funcAsignada = TOTAL_FUNC_NOV_DIC * shareFunc;
+    const compHistorico = (monthlyHist.comp[base.recurso] || []).slice(0, 10).reduce((a:number,b:number)=>a+b, 0);
+    const pagoHistorico = (monthlyHist.pago[base.recurso] || []).slice(0, 10).reduce((a:number,b:number)=>a+b, 0);
 
     const hasManualIncome = customConfig && customConfig.manualIncome !== undefined && customConfig.manualIncome !== null && !isNaN(customConfig.manualIncome);
     const hasManualExpense = customConfig && customConfig.manualExpense !== undefined && customConfig.manualExpense !== null && !isNaN(customConfig.manualExpense);
@@ -256,7 +253,7 @@ function simulateCore(
     let methodUsed = 'Tendencia Histórica';
     
     trace.push({ step: 'Base Aforo', value: base.aforo, detail: 'Aforo oficial' });
-    trace.push({ step: 'Recaudo Real', value: recaudoRealAcumulado, detail: config.filterUnidad !== 'Todos' ? `Ene-Ago (Unidad ${config.filterUnidad})` : 'Enero a Agosto' });
+    trace.push({ step: 'Recaudo Real', value: recaudoRealAcumulado, detail: config.filterUnidad !== 'Todos' ? `Ene-Oct (Unidad ${config.filterUnidad})` : 'Enero a Octubre (Corte Real)' });
     
     const girosExactos = GIROS_SIIF_PROYECTADOS[base.recurso];
 
@@ -267,7 +264,7 @@ function simulateCore(
     } else if (girosExactos) {
       ingProyectado = girosExactos.reduce((a, b) => a + b, 0);
       methodUsed = 'Fijo (SIIF)';
-      trace.push({ step: 'Giros Pendientes (SIIF)', value: ingProyectado, detail: 'Valores exactos provistos para Sep-Dic' });
+      trace.push({ step: 'Giros Pendientes (SIIF)', value: ingProyectado, detail: 'Valores exactos provistos para Nov-Dic' });
     } else if (isFixed) {
       ingProyectado = Math.max(0, base.siif - recaudoRealAcumulado);
       if (base.siif === 0) ingProyectado = 0;
@@ -275,20 +272,18 @@ function simulateCore(
       trace.push({ step: 'Asignación Fija', value: ingProyectado, detail: 'Saldo restante del SIIF anual' });
     } else if (base.recurso === '31') {
       // REGLA INSTITUCIONAL POSGRADOS:
-      // En Escenario Base el recaudo total de todo el año es exactamente $41.088.265.317 COP.
-      // Recaudo Real Ene-Ago: $39.764.667.216 -> Saldo Base Sep-Dic = $1.323.598.101 COP.
-      const TARGET_TOTAL_POSGRADOS = 41088265317;
-      const baseRemPosgrados = Math.max(0, TARGET_TOTAL_POSGRADOS - recaudoRealAcumulado);
-      
+      // Al corte de octubre, el recaudo real alcanzó $44.166.194.097 COP (superando la meta inicial de $41.088M).
+      // Para Nov-Dic se proyecta recaudo residual extemporáneo estimado (~$800M).
+      const remBasePosgrados = 800000000;
       let factorPosgrados = 1.0;
-      if (config.scenario === 'Optimista') factorPosgrados = 1.05;
-      else if (config.scenario === 'Pesimista') factorPosgrados = 0.95;
+      if (config.scenario === 'Optimista') factorPosgrados = 1.25;
+      else if (config.scenario === 'Pesimista') factorPosgrados = 0.50;
       else if (config.scenario === 'Personalizado') factorPosgrados = 1 + (effGrowth - 0.041);
 
-      ingProyectado = Math.round(baseRemPosgrados * factorPosgrados);
-      methodUsed = config.scenario === 'Base' ? 'Meta Anual Base Posgrados ($41.088M)' : `Meta Posgrados (${config.scenario})`;
-      trace.push({ step: 'Meta Posgrados Anual', value: TARGET_TOTAL_POSGRADOS, detail: 'Meta anual base $41.088.265.317' });
-      trace.push({ step: 'Proyección Sep-Dic', value: ingProyectado, detail: `Saldo base (${baseRemPosgrados.toLocaleString()}) × Factor (${factorPosgrados})` });
+      ingProyectado = Math.round(remBasePosgrados * factorPosgrados);
+      methodUsed = config.scenario === 'Base' ? 'Recaudo a Corte ($44.166M) + Remanente Extemporáneo' : `Meta Posgrados (${config.scenario})`;
+      trace.push({ step: 'Recaudo Real a Corte', value: recaudoRealAcumulado, detail: 'Recaudo ejecutado a octubre $44.166.194.097' });
+      trace.push({ step: 'Proyección Nov-Dic', value: ingProyectado, detail: `Saldo extemporáneo estimado (${remBasePosgrados.toLocaleString()}) × Factor (${factorPosgrados})` });
     } else {
       let pendiente = Math.max(0, base.aforo - recaudoRealAcumulado);
       let rRate = (customConfig && customConfig.growthRate !== undefined && customConfig.growthRate !== 0) ? customConfig.growthRate : effGrowth;
@@ -358,13 +353,11 @@ function simulateCore(
     
     const saldoDisp = Math.max(0, totalIngresos - totalPago);
 
-    const mWeights = historicWeights[base.recurso] || [0,0,0,0,0,0,0,0, 0.25, 0.25, 0.25, 0.25];
+    const mWeights = historicWeights[base.recurso] || [0,0,0,0,0,0,0,0,0,0, 0.45, 0.55];
     const girosMatch = (!hasManualIncome && (GIROS_SIIF_PROYECTADOS[base.recurso] || (base.recurso === '10' ? GIROS_SIIF_PROYECTADOS['10.0'] : undefined)));
     const ingresosPorMesProyectado = girosMatch ? [...girosMatch] : [
-      ingProyectado * (mWeights[8] || 0.25),
-      ingProyectado * (mWeights[9] || 0.25),
-      ingProyectado * (mWeights[10] || 0.25),
-      ingProyectado * (mWeights[11] || 0.25)
+      ingProyectado * (mWeights[10] || 0.45),
+      ingProyectado * (mWeights[11] || 0.55)
     ];
 
     resourcesObj[base.recurso] = {
@@ -425,8 +418,6 @@ function simulateCore(
     ingresosPorMesProyectado: [
       targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[0] || 0), 0),
       targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[1] || 0), 0),
-      targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[2] || 0), 0),
-      targetResources.reduce((acc, r) => acc + (r.ingresosPorMesProyectado?.[3] || 0), 0),
     ],
     resultadoProyectado: 0,
     nominaReal: nominaStats.nominaHistTotal,
@@ -507,27 +498,27 @@ function simulateCore(
 
   const flow: StrictFlowItem[] = [];
   let saldoAcum = 0;
-  const MONTH_PAGO_WEIGHTS = [0.20, 0.22, 0.26, 0.32]; // Sep, Oct, Nov, Dic
+  const MONTH_PAGO_WEIGHTS = [0.45, 0.55]; // Nov, Dic ("solo lo que quede")
 
   MONTHS.forEach((m, idx) => {
     let mIngReal = 0, mIngProy = 0, mComp = 0, mPago = 0;
     targetResources.forEach(r => {
-      if (idx < 8) {
+      if (idx < 10) {
          mIngReal += (monthlyHist.ing[r.recurso] || [])[idx] || 0;
          mComp += (monthlyHist.comp[r.recurso] || [])[idx] || 0;
          mPago += (monthlyHist.pago[r.recurso] || [])[idx] || 0;
       } else {
-         const pIdx = idx - 8;
-         const w = historicWeights[r.recurso] ? historicWeights[r.recurso][idx] : 0.25;
+         const pIdx = idx - 10;
+         const w = historicWeights[r.recurso] ? historicWeights[r.recurso][idx] : (pIdx === 0 ? 0.45 : 0.55);
          const monthIngProy = (r.ingresosPorMesProyectado && r.ingresosPorMesProyectado[pIdx] !== undefined)
            ? r.ingresosPorMesProyectado[pIdx]
            : (r.ingresosProyectados * w);
          mIngProy += monthIngProy;
-         if (!r.ingresosPorMesProyectado) r.ingresosPorMesProyectado = [0,0,0,0];
+         if (!r.ingresosPorMesProyectado) r.ingresosPorMesProyectado = [0,0];
          r.ingresosPorMesProyectado[pIdx] = monthIngProy;
          
-         const compHistRec = (monthlyHist.comp[r.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
-         const pagoHistRec = (monthlyHist.pago[r.recurso] || []).slice(0, 8).reduce((a:number,b:number)=>a+b, 0);
+         const compHistRec = (monthlyHist.comp[r.recurso] || []).slice(0, 10).reduce((a:number,b:number)=>a+b, 0);
+         const pagoHistRec = (monthlyHist.pago[r.recurso] || []).slice(0, 10).reduce((a:number,b:number)=>a+b, 0);
          const remComp = Math.max(0, r.totalCompromisos - compHistRec);
          const remPago = Math.max(0, r.totalPagos - pagoHistRec);
 
@@ -564,7 +555,7 @@ export function calculateStrictProjections(
       recurso: getRecursoEquivalence(raw.split('-')[0].trim()),
       nombre: raw.substring(raw.indexOf('-') + 1).trim() || raw,
       valorInicial: parseNumber(row['Valor inicial']), aforo: parseNumber(row['Aforo']),
-      recaudo: parseNumber(row['Recaudo 31/08']), acuerdo: parseNumber(row['Acuerdo']),
+      recaudo: parseNumber(row['Recaudo 31/10'] || row['Recaudo corte'] || row['Recaudo 31/08'] || row['Recaudo']), acuerdo: parseNumber(row['Acuerdo']),
       siif: parseNumber(row['SIIF']), totalRecaudo: parseNumber(row['Total Recaudo'])
     };
   }).filter(r => r.recurso !== 'Total general' && r.recurso !== '' && r.recurso !== '15');
@@ -625,23 +616,20 @@ export function calculateStrictProjections(
   const missingMonths = 12 - nominaMonthsCount;
   const historicWeights: Record<string, number[]> = {};
   baseData.forEach(b => {
-    historicWeights[b.recurso] = new Array(12).fill(0.25); // default fallback
+    historicWeights[b.recurso] = new Array(12).fill(0.5); // default fallback para Nov y Dic
   });
   
   ingresosHistoricos.forEach(row => {
     const rec = getRecursoEquivalence(String(row['Recurso'] || row['Código recurso'] || ''));
     if (historicWeights[rec]) {
       const vals = MONTH_KEYS.map(mk => parseNumber(row[mk]));
-      const totalLast4 = vals.slice(8).reduce((a,b)=>a+b, 0);
-      if (totalLast4 > 0) {
-        historicWeights[rec][8] = vals[8] / totalLast4;
-        historicWeights[rec][9] = vals[9] / totalLast4;
-        historicWeights[rec][10] = vals[10] / totalLast4;
-        historicWeights[rec][11] = vals[11] / totalLast4;
+      const totalLast2 = vals.slice(10).reduce((a,b)=>a+b, 0);
+      if (totalLast2 > 0) {
+        historicWeights[rec][10] = vals[10] / totalLast2;
+        historicWeights[rec][11] = vals[11] / totalLast2;
       }
     }
   });
-
 
   // Parse Gastos 2026 if provided
   let gastos2026Parsed: any = undefined;
@@ -681,6 +669,38 @@ export function calculateStrictProjections(
     });
 
     gastos2026Parsed = { byRecurso, byTipo, byTipoRec };
+  }
+
+  // Sincronizar monthlyHist para Sep (8) y Oct (9) con la ejecución real al corte
+  baseData.forEach(b => {
+    const recaudoRealTotal = b.recaudo;
+    const ingEneAgo = monthlyHist.ing[b.recurso].slice(0, 8).reduce((a: number, b: number) => a + b, 0);
+    const diffIng = Math.max(0, recaudoRealTotal - ingEneAgo);
+    if (diffIng > 0) {
+      monthlyHist.ing[b.recurso][8] = diffIng * 0.40;
+      monthlyHist.ing[b.recurso][9] = diffIng * 0.60;
+    }
+
+    if (gastos2026Parsed && gastos2026Parsed.byRecurso[b.recurso]) {
+      const targetComp = gastos2026Parsed.byRecurso[b.recurso].compromiso;
+      const targetPago = gastos2026Parsed.byRecurso[b.recurso].pagoAgo;
+      const compEneAgo = monthlyHist.comp[b.recurso].slice(0, 8).reduce((a: number, b: number) => a + b, 0);
+      const pagoEneAgo = monthlyHist.pago[b.recurso].slice(0, 8).reduce((a: number, b: number) => a + b, 0);
+
+      const diffComp = Math.max(0, targetComp - compEneAgo);
+      const diffPago = Math.max(0, targetPago - pagoEneAgo);
+
+      monthlyHist.comp[b.recurso][8] = diffComp * 0.48;
+      monthlyHist.comp[b.recurso][9] = diffComp * 0.52;
+      monthlyHist.pago[b.recurso][8] = diffPago * 0.46;
+      monthlyHist.pago[b.recurso][9] = diffPago * 0.54;
+    }
+  });
+
+  if (gastos2026Parsed) {
+    Object.keys(gastos2026Parsed.byTipo).forEach(t => {
+      expenseTypeReal[t] = gastos2026Parsed.byTipo[t].pagoAgo;
+    });
   }
 
   // Base Simulation

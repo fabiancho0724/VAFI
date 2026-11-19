@@ -1,9 +1,11 @@
 {
-  "lastSync": "2026-10-19 10:51:00",
-  "cutoffDate": "30 de Septiembre de 2026",
+  "lastSync": "2026-11-19 11:45:00",
+  "cutoffDate": "31 de Octubre de 2026 (Corte a Hoy)",
   "filesSynced": [
     "Ingresos.csv",
     "Gastos.csv",
+    "gastos_2026.csv",
+    "balance.csv",
     "Nomina.csv",
     "Historico_Ingresos_10y.csv"
   ],
