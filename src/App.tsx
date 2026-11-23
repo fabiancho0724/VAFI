@@ -17,6 +17,7 @@ import { AssistantScreen } from './screens/AssistantScreen';
 import { CashFlowScreen } from './screens/CashFlowScreen';
 import { ExecutiveReportScreen } from './screens/ExecutiveReportScreen';
 import { PoaScreen } from './screens/PoaScreen';
+import { CajaHoyScreen } from './screens/CajaHoyScreen';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -79,6 +80,7 @@ export default function App() {
     <ErrorBoundary>
       <Layout currentScreen={currentScreen} onNavigate={handleNavigate}>
         {currentScreen === 'dashboard' && <DashboardScreen onNavigate={handleNavigate} />}
+        {currentScreen === 'caja-hoy' && <CajaHoyScreen onNavigate={handleNavigate} />}
         {currentScreen === 'predictive' && <PredictiveScreen onNavigate={handleNavigate} />}
         {(currentScreen === 'cashflow' || currentScreen === 'tesoreria') && (
           <CashFlowScreen

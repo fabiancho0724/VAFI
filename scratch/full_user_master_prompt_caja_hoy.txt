@@ -1,0 +1,662 @@
+<USER_REQUEST>
+necesito que crees un nuevo apartado que Diga Caja HOY; # PROMPT MAESTRO: SISTEMA INTELIGENTE DE ANÁLISIS DE CAJA, TESORERÍA Y FLUJO DE EFECTIVO INSTITUCIONAL – UPTC
+
+## 1. ROL Y OBJETIVO GENERAL
+
+Actúa como un equipo multidisciplinario de expertos integrado por:
+
+1. **Director financiero:** responsable de evaluar la liquidez, disponibilidad de recursos, sostenibilidad financiera y capacidad de pago institucional.
+2. **Analista presupuestal:** especialista en ejecución de ingresos y gastos, aforo, recaudo, apropiación, compromisos y obligaciones.
+3. **Especialista en tesorería:** encargado de analizar los saldos bancarios, movimientos de efectivo, disponibilidad de recursos y proyecciones de caja.
+4. **Científico de datos:** experto en Python, Pandas, Streamlit y visualización de información financiera.
+5. **Auditor financiero:** encargado de validar la integridad, consistencia, trazabilidad y conciliación de los datos.
+
+Tu misión es desarrollar un **aplicativo interactivo de análisis de caja institucional**, que integre los ingresos presupuestales, los gastos presupuestales y los saldos bancarios, permitiendo conocer la situación real de liquidez de la Universidad y proyectar su comportamiento hasta el cierre de la vigencia fiscal.
+
+El aplicativo debe tener un enfoque técnico, financiero, presupuestal y de tesorería. No debe limitarse a presentar indicadores de ejecución presupuestal: debe explicar la relación entre los recursos presupuestados, los efectivamente recaudados, los compromisos adquiridos, los pagos realizados y el dinero disponible en bancos.
+
+## 2. ARCHIVOS DE ENTRADA Y FUENTES DE INFORMACIÓN
+
+El sistema debe permitir cargar cuatro archivos CSV independientes:
+
+### Archivo 1. Ingresos presupuestales generales
+
+Contiene la información general de los ingresos institucionales.
+
+Identificar, entre otros, los siguientes campos:
+
+- Código del recurso.
+- Descripción del recurso.
+- Unidad responsable, cuando exista.
+- Aforo presupuestal.
+- Recaudo acumulado.
+- Fecha de corte.
+- Vigencia.
+- Otros campos disponibles que permitan segmentar los ingresos.
+
+Este archivo constituye la fuente principal para determinar el comportamiento presupuestal de los ingresos.
+
+### Archivo 2. Ingresos detallados o complementarios
+
+Contiene información desagregada de los ingresos, que permite analizar su comportamiento por recurso, unidad, concepto, fecha o cualquier otra dimensión disponible.
+
+Debe utilizarse para profundizar el análisis y verificar la composición del recaudo.
+
+**Regla fundamental:** antes de integrar los dos archivos de ingresos, verifica si contienen registros coincidentes. No sumes automáticamente sus valores. Determina si corresponden a información complementaria, un nivel de detalle o una duplicación del mismo registro.
+
+### Archivo 3. Gastos presupuestales
+
+Contiene la información de ejecución de gastos.
+
+Identificar prioritariamente:
+
+- Código del recurso.
+- Descripción del recurso.
+- Unidad ejecutora.
+- Apropiación definitiva.
+- Compromisos acumulados.
+- Obligaciones, si están disponibles.
+- Pagos acumulados.
+- Saldo por comprometer.
+- Saldo por pagar.
+- Fecha de corte.
+- Vigencia.
+
+El análisis debe diferenciar claramente los compromisos presupuestales de los pagos efectivos.
+
+### Archivo 4. Estado de bancos
+
+Contiene los saldos financieros disponibles en las cuentas bancarias institucionales.
+
+Identificar:
+
+- Entidad financiera.
+- Número o identificador de cuenta.
+- Tipo de cuenta.
+- Saldo disponible.
+- Saldo contable.
+- Fecha de corte.
+- Clasificación o destinación de los recursos, si existe.
+- Fuente de financiación.
+- Naturaleza del recurso.
+- Otros campos que permitan identificar la disponibilidad efectiva.
+
+El aplicativo debe analizar cada cuenta bancaria individualmente y consolidar los resultados por entidad financiera, tipo de recurso y destinación.
+
+Si no existe información que permita asociar directamente una cuenta bancaria con un recurso presupuestal, no realices asignaciones arbitrarias. Identifica las cuentas pendientes de clasificación.
+
+## 3. CLASIFICACIÓN FINANCIERA DE LOS RECURSOS
+
+El sistema debe incorporar una clasificación automática de los recursos en dos grandes categorías:
+
+### A. Recursos de Administración
+
+Clasificar como Recursos de Administración los siguientes códigos:
+
+- 10.0 – Aportes Nación Funcionamiento.
+- 10.1 – Aportes Nación PIC Convencional.
+- 10.2 – Aportes Nación PIC Territorial.
+- 10.3 – Aportes Nación Procesos de Fortalecimiento a la Gestión.
+- 13 – Cooperativas.
+- 14 – Matrículas FSE.
+- 15 – Regalías.
+- 17 – Devolución Descuento Electoral.
+- 18 – Artículo 87 CESU.
+- 20 – Recursos Propios.
+- 21 – Devolución IVA.
+- 31 – Posgrados.
+- 32 – Extensión.
+- 33 – Convenios con Derechos.
+- 34 – Convenios sin Derechos.
+- 35 – Educación Continuada.
+
+### B. Recursos de Inversión
+
+Todos los códigos de recursos que no estén incluidos en la clasificación anterior se deben identificar inicialmente como Recursos de Inversión.
+
+Esta clasificación debe ser parametrizable y permitir incorporar, modificar o excluir códigos sin alterar la estructura del aplicativo.
+
+**Validación obligatoria:** no clasificar únicamente por coincidencias parciales de texto. Identificar los códigos completos para evitar errores, por ejemplo, que el recurso 13 sea confundido con otro código que contenga esos mismos dígitos.
+
+La clasificación debe aplicarse consistentemente a ingresos, gastos y bancos, siempre que exista información suficiente para establecer la correspondencia.
+
+## 4. FILTROS INTERACTIVOS GENERALES
+
+Todos los módulos del aplicativo deben compartir filtros dinámicos.
+
+Implementar como mínimo:
+
+1. Vigencia fiscal.
+2. Fecha de corte.
+3. Tipo de recurso:
+   - Recursos de Administración.
+   - Recursos de Inversión.
+   - Todos.
+4. Código y nombre del recurso.
+5. Unidad académica o administrativa.
+6. Entidad financiera.
+7. Cuenta bancaria.
+8. Fuente de financiación.
+
+Los filtros deben actualizar simultáneamente los indicadores, gráficos, tablas y proyecciones.
+
+Debe existir una opción para restablecer los filtros.
+
+No presentar resultados inconsistentes cuando un archivo no contenga determinada dimensión. En ese caso, informar que el filtro no está disponible para esa fuente.
+
+## 5. MÓDULO DE ANÁLISIS DE INGRESOS
+
+Este módulo debe permitir conocer la capacidad de generación y recaudo de recursos de la Universidad.
+
+### 5.1. Indicadores principales
+
+Calcular:
+
+- Aforo presupuestal total.
+- Recaudo acumulado.
+- Saldo pendiente por recaudar.
+- Porcentaje de recaudo.
+- Porcentaje pendiente de recaudo.
+- Recaudo mensual.
+- Variación mensual del recaudo.
+- Participación de cada recurso en el recaudo total.
+
+Utilizar las siguientes fórmulas:
+
+**Saldo pendiente de recaudo:**
+
+Saldo pendiente = Aforo - Recaudo acumulado.
+
+**Porcentaje de recaudo:**
+
+% Recaudo = (Recaudo acumulado / Aforo) × 100.
+
+**Porcentaje pendiente:**
+
+% Pendiente = (Saldo pendiente / Aforo) × 100.
+
+Controlar los casos en los que el aforo sea cero o existan modificaciones presupuestales que hagan que el recaudo supere el aforo.
+
+### 5.2. Análisis por recurso
+
+Construir una tabla comparativa con:
+
+| Recurso | Aforo | Recaudo | Pendiente | % Recaudo |
+|---|---:|---:|---:|---:|
+
+Permitir ordenar de mayor a menor recaudo, identificar los recursos con mayor participación y detectar aquellos que presentan rezagos.
+
+### 5.3. Proyección de ingresos a diciembre
+
+Este es uno de los componentes más importantes del aplicativo.
+
+Construir una proyección financiera de los ingresos al cierre de diciembre, partiendo de la diferencia entre el aforo y el recaudo acumulado.
+
+No asumir que todo el saldo pendiente será recaudado.
+
+Implementar tres escenarios:
+
+**Escenario 1. Conservador**
+
+Proyectar el recaudo restante utilizando un porcentaje de cumplimiento prudente, sustentado en el comportamiento histórico o en la tendencia observada.
+
+**Escenario 2. Base**
+
+Estimar el recaudo esperado considerando:
+
+- Comportamiento mensual del recaudo.
+- Recaudo acumulado.
+- Saldo pendiente frente al aforo.
+- Comportamiento histórico, cuando esté disponible.
+- Estacionalidad de los ingresos.
+- Calendario de transferencias y recaudos.
+
+**Escenario 3. Optimista**
+
+Considerar un mayor nivel de cumplimiento del saldo pendiente, sustentado en el comportamiento de los ingresos y en la información disponible.
+
+Fórmula inicial de referencia:
+
+Recaudo proyectado a diciembre = Recaudo acumulado + Recaudo esperado restante.
+
+Donde:
+
+Recaudo esperado restante = Saldo pendiente × Porcentaje estimado de cumplimiento.
+
+El porcentaje de cumplimiento debe ser parametrizable por recurso.
+
+Cuando no exista información histórica suficiente, presentar la proyección como una estimación basada en supuestos explícitos y no como un ingreso cierto.
+
+### 5.4. Visualizaciones de ingresos
+
+Incluir:
+
+- Gráfico de barras: aforo frente a recaudo.
+- Gráfico de dona: participación de los recursos en el recaudo.
+- Gráfico de líneas: comportamiento mensual.
+- Gráfico de cascada: aforo, recaudo acumulado, recaudo proyectado y saldo pendiente.
+- Ranking de recursos con mayor y menor ejecución.
+- Comparativo Administración vs. Inversión.
+
+## 6. MÓDULO DE ANÁLISIS DE GASTOS
+
+Este módulo debe evaluar la ejecución presupuestal y su impacto en la liquidez institucional.
+
+Es indispensable diferenciar tres conceptos:
+
+1. Apropiación presupuestal.
+2. Compromisos adquiridos.
+3. Pagos efectivamente realizados.
+
+Cuando existan datos de obligaciones, incorporarlos como una cuarta dimensión.
+
+### 6.1. Indicadores principales
+
+Calcular:
+
+**Porcentaje de compromiso:**
+
+(Compromisos / Apropiación definitiva) × 100.
+
+**Porcentaje de pago:**
+
+(Pagos / Apropiación definitiva) × 100.
+
+**Porcentaje de pago sobre compromisos:**
+
+(Pagos / Compromisos) × 100.
+
+**Saldo comprometido pendiente de pago:**
+
+Compromisos - Pagos.
+
+Este último indicador debe manejarse con precaución: si existen obligaciones, reservas, anticipos o pagos que no corresponden directamente a los compromisos del mismo corte, se debe identificar la diferencia y no asumir equivalencias automáticas.
+
+### 6.2. Análisis por unidad
+
+Construir un análisis detallado por unidad académica y administrativa.
+
+Identificar:
+
+- Apropiación definitiva.
+- Compromisos acumulados.
+- Pagos acumulados.
+- Saldo sin comprometer.
+- Compromisos pendientes de pago.
+- Nivel de ejecución.
+- Participación en el gasto institucional.
+
+Permitir identificar las unidades con mayor presión financiera y aquellas que presentan compromisos elevados frente a su capacidad de pago.
+
+### 6.3. Análisis de compromisos y pagos
+
+Generar una matriz que permita identificar:
+
+- Compromisos altos con pagos bajos.
+- Compromisos altos con pagos altos.
+- Recursos con baja ejecución.
+- Unidades con saldos importantes pendientes de pago.
+- Diferencias entre compromisos, obligaciones y pagos.
+
+### 6.4. Proyección de pagos a diciembre
+
+Construir una proyección del flujo de pagos pendientes, considerando:
+
+- Compromisos existentes.
+- Obligaciones pendientes, si están disponibles.
+- Comportamiento histórico de pagos.
+- Distribución mensual de pagos.
+- Gastos recurrentes.
+- Nómina y obligaciones contractuales.
+- Pagos de cierre de vigencia.
+
+No asumir que todos los compromisos se convertirán en pagos efectivos dentro de diciembre.
+
+Presentar escenarios conservador, base y optimista.
+
+### 6.5. Visualizaciones de gastos
+
+- Barras comparativas: apropiación, compromisos y pagos.
+- Gráfico de dona: compromisos pagados frente a pendientes.
+- Ranking de unidades por compromisos.
+- Ranking de unidades por pagos.
+- Mapa de calor por unidad y tipo de recurso.
+- Evolución mensual de pagos.
+- Gráfico de cascada del presupuesto comprometido y pagado.
+
+## 7. MÓDULO DE ESTADO DE BANCOS Y DISPONIBILIDAD DE EFECTIVO
+
+Este módulo debe permitir conocer la posición de liquidez real de la Universidad.
+
+No basta con sumar los saldos de todas las cuentas bancarias. Es necesario identificar su naturaleza, destinación y restricciones.
+
+### 7.1. Indicadores principales
+
+Presentar:
+
+- Saldo bancario total.
+- Número de cuentas bancarias.
+- Saldo por entidad financiera.
+- Saldo por cuenta.
+- Saldo de recursos de Administración.
+- Saldo de recursos de Inversión.
+- Cuentas sin clasificación.
+- Participación de cada entidad en el saldo total.
+
+### 7.2. Análisis individual de cuentas
+
+Construir una tabla detallada con:
+
+| Banco | Cuenta | Destinación | Clasificación | Saldo |
+|---|---|---|---|---:|
+
+Permitir consultar cada cuenta y conocer su participación en la disponibilidad institucional.
+
+Identificar:
+
+- Cuentas con mayores saldos.
+- Cuentas con saldos reducidos.
+- Cuentas de destinación específica.
+- Recursos de Administración.
+- Recursos de Inversión.
+- Cuentas pendientes de identificación.
+
+### 7.3. Diferenciación de funcionamiento e inversión
+
+La clasificación debe permitir determinar cuánto efectivo corresponde a funcionamiento y cuánto a inversión.
+
+No considerar automáticamente todos los recursos bancarios como dinero de libre disposición.
+
+Diferenciar:
+
+1. Saldo bancario contable.
+2. Saldo bancario disponible.
+3. Recursos con destinación específica.
+4. Recursos restringidos o comprometidos.
+5. Recursos pendientes de conciliación.
+6. Disponibilidad efectiva de caja.
+
+Cuando no exista información suficiente para establecer estas categorías, indicarlo expresamente.
+
+### 7.4. Visualizaciones bancarias
+
+- Barras por entidad financiera.
+- Barras por cuenta bancaria.
+- Dona de Administración vs. Inversión.
+- Ranking de cuentas por saldo.
+- Tabla detallada con filtros.
+- Indicador de cuentas sin clasificación.
+
+## 8. MÓDULO CENTRAL: INTEGRACIÓN DEL FLUJO DE CAJA
+
+Este debe ser el componente principal del aplicativo.
+
+Su propósito es integrar los tres componentes financieros:
+
+- Ingresos recaudados y proyectados.
+- Gastos pagados y proyectados.
+- Saldos bancarios.
+
+Construir un flujo de caja institucional que permita conocer el comportamiento de la liquidez.
+
+### 8.1. Estructura del flujo de caja
+
+Presentar como mínimo:
+
+| Concepto | Valor |
+|---|---:|
+| Saldo inicial de caja | $ |
+| (+) Ingresos efectivamente recaudados | $ |
+| (+) Ingresos proyectados | $ |
+| (-) Pagos efectivamente realizados | $ |
+| (-) Pagos proyectados | $ |
+| (=) Saldo final proyectado | $ |
+
+La fórmula central será:
+
+Saldo final proyectado = Saldo inicial de caja + Ingresos proyectados y recaudados - Pagos proyectados y realizados.
+
+**Advertencia técnica:** los saldos bancarios deben utilizarse como punto de partida únicamente cuando correspondan a la misma fecha de corte y hayan sido conciliados. No sumar nuevamente ingresos o pagos históricos ya incorporados en el saldo inicial.
+
+Los compromisos presupuestales no deben restarse directamente del saldo bancario como si fueran pagos realizados. Deben utilizarse para estimar obligaciones futuras y necesidades de liquidez.
+
+### 8.2. Flujo de caja por Administración e Inversión
+
+Desarrollar dos flujos independientes:
+
+**Flujo de caja de Administración**
+
+- Saldo inicial.
+- Recaudo de recursos de Administración.
+- Proyección de ingresos.
+- Pagos realizados.
+- Pagos pendientes proyectados.
+- Saldo final.
+
+**Flujo de caja de Inversión**
+
+- Saldo inicial.
+- Recaudo de recursos de Inversión.
+- Proyección de ingresos.
+- Pagos realizados.
+- Pagos pendientes proyectados.
+- Saldo final.
+
+Incorporar una tercera visualización consolidada que presente la situación institucional.
+
+La clasificación debe respetar la destinación de cada fuente de financiación. No permitir compensar automáticamente excedentes de Administración con necesidades de Inversión, ni viceversa.
+
+### 8.3. Flujo mensual proyectado
+
+Construir una proyección desde el mes siguiente al corte de información hasta diciembre.
+
+Para cada mes presentar:
+
+- Saldo inicial.
+- Ingresos estimados.
+- Pagos estimados.
+- Flujo neto mensual.
+- Saldo final.
+
+Permitir modificar manualmente los supuestos de ingresos y pagos para evaluar diferentes escenarios.
+
+### 8.4. Indicadores de liquidez
+
+Calcular, cuando la información lo permita:
+
+- Disponibilidad de caja.
+- Cobertura de pagos.
+- Relación entre recaudo y pagos.
+- Presión de compromisos sobre la caja disponible.
+- Saldo proyectado a diciembre.
+- Necesidad de financiación de corto plazo.
+
+No utilizar indicadores financieros tradicionales si no se dispone de las variables necesarias para calcularlos correctamente.
+
+## 9. DASHBOARD EJECUTIVO
+
+Crear una página principal denominada:
+
+**CENTRO DE CONTROL FINANCIERO – ANÁLISIS DE CAJA UPTC**
+
+Debe contener tarjetas de indicadores con:
+
+1. Aforo presupuestal.
+2. Recaudo acumulado.
+3. Porcentaje de recaudo.
+4. Ingresos pendientes.
+5. Apropiación definitiva.
+6. Compromisos acumulados.
+7. Pagos acumulados.
+8. Saldo bancario total.
+9. Caja disponible estimada.
+10. Saldo de caja proyectado a diciembre.
+
+Agregar un comparativo visual de Administración e Inversión.
+
+Incluir alertas automáticas para:
+
+- Recursos con bajo recaudo.
+- Recursos con alto nivel de compromisos.
+- Compromisos que superan la capacidad de caja.
+- Unidades con elevada presión de pagos.
+- Cuentas bancarias sin clasificación.
+- Posibles inconsistencias entre fuentes.
+- Riesgo de déficit de caja proyectado.
+
+Las alertas deben estar sustentadas en cálculos verificables y parámetros configurables.
+
+## 10. DISEÑO Y EXPERIENCIA DE USUARIO
+
+Desarrollar el aplicativo preferiblemente en Python utilizando Streamlit, Pandas y Plotly.
+
+El diseño debe tener una apariencia institucional, moderna y profesional.
+
+Utilizar la identidad visual:
+
+- Amarillo institucional: #FFCC29.
+- Negro: #1A1A1A.
+- Blanco y tonos grises para fondos y elementos secundarios.
+
+Características:
+
+- Diseño responsive.
+- Menú lateral de navegación.
+- Tarjetas de indicadores.
+- Gráficos interactivos.
+- Tablas con búsqueda y ordenamiento.
+- Filtros dinámicos.
+- Información detallada al pasar el cursor sobre los gráficos.
+- Exportación de tablas a Excel y CSV.
+- Descarga de reportes financieros.
+- Actualización de datos mediante carga de nuevos archivos.
+
+El aplicativo debe ser intuitivo y permitir que un directivo financiero pueda identificar rápidamente los principales riesgos y oportunidades de liquidez.
+
+## 11. VALIDACIÓN, INTEGRIDAD Y CALIDAD DE LOS DATOS
+
+Antes de realizar cualquier análisis, ejecutar un proceso de validación.
+
+Comprobar:
+
+1. Que los archivos tengan las columnas necesarias.
+2. Que los valores monetarios sean numéricos.
+3. Que no existan registros duplicados.
+4. Que las fechas sean válidas.
+5. Que los códigos de recursos estén correctamente identificados.
+6. Que las unidades estén homologadas.
+7. Que los valores nulos no generen errores.
+8. Que los archivos correspondan a la misma vigencia y fecha de corte, o que sus diferencias estén identificadas.
+9. Que los ingresos detallados no dupliquen los ingresos generales.
+10. Que los saldos bancarios no se dupliquen por cuenta.
+
+Crear una sección de calidad de datos que presente las inconsistencias encontradas, su impacto y las recomendaciones para corregirlas.
+
+Nunca inventar datos, completar valores faltantes sin advertencia o modificar cifras originales.
+
+Mantener trazabilidad entre cada indicador y los registros que lo componen.
+
+## 12. ANÁLISIS FINANCIERO AUTOMATIZADO
+
+Incorporar un componente de inteligencia financiera que genere conclusiones automáticas.
+
+No debe limitarse a describir las cifras. Debe interpretar su significado financiero.
+
+Ejemplos de análisis esperados:
+
+- Identificar si el recaudo acumulado permite respaldar el comportamiento de los pagos.
+- Determinar si existen recursos con elevados saldos pendientes de recaudo.
+- Identificar si la concentración de pagos en diciembre podría generar presiones de liquidez.
+- Determinar qué unidades presentan mayor exposición financiera.
+- Identificar si los recursos de Administración tienen una posición de caja favorable.
+- Evaluar si los recursos de Inversión cuentan con disponibilidad suficiente para atender los pagos proyectados.
+- Identificar diferencias relevantes entre saldos bancarios y ejecución presupuestal.
+- Advertir sobre posibles déficits de caja por fuente de financiación.
+
+Generar conclusiones diferenciadas para:
+
+1. Situación general de caja.
+2. Recursos de Administración.
+3. Recursos de Inversión.
+4. Comportamiento de ingresos.
+5. Comportamiento de gastos.
+6. Estado de bancos.
+7. Proyección a diciembre.
+8. Riesgos y recomendaciones.
+
+Las conclusiones deben utilizar lenguaje financiero y técnico, con cifras, porcentajes y explicaciones verificables.
+
+## 13. REPORTES Y EXPORTACIONES
+
+Permitir generar un informe ejecutivo descargable que contenga:
+
+- Resumen financiero.
+- Análisis de ingresos.
+- Análisis de gastos.
+- Estado de bancos.
+- Flujo de caja.
+- Proyección a diciembre.
+- Comparativo Administración vs. Inversión.
+- Análisis por unidad.
+- Principales riesgos.
+- Conclusiones y recomendaciones.
+
+Permitir exportar los resultados a Excel y generar un informe en PDF.
+
+## 14. ARQUITECTURA Y DESARROLLO DEL APLICATIVO
+
+Organiza el proyecto en módulos independientes:
+
+- Carga y validación de archivos.
+- Homologación de recursos.
+- Procesamiento de ingresos.
+- Procesamiento de gastos.
+- Procesamiento de bancos.
+- Motor de proyección.
+- Motor de flujo de caja.
+- Dashboard ejecutivo.
+- Reportes y exportaciones.
+
+Utiliza funciones reutilizables, código limpio y una estructura escalable.
+
+Evita cálculos repetidos y centraliza las reglas financieras para garantizar consistencia entre los módulos.
+
+## 15. METODOLOGÍA DE TRABAJO
+
+Desarrolla el proyecto en cinco fases:
+
+**FASE 1. Diagnóstico de datos**
+
+Analiza los cuatro archivos, identifica sus estructuras, columnas, relaciones y limitaciones. Antes de programar, presenta un diagnóstico de la información disponible.
+
+**FASE 2. Modelo financiero**
+
+Define las relaciones entre ingresos, gastos y bancos. Documenta las fórmulas, criterios de clasificación, reglas de conciliación y supuestos de proyección.
+
+**FASE 3. Construcción del aplicativo**
+
+Desarrolla los módulos de análisis, filtros, indicadores, visualizaciones y proyecciones.
+
+**FASE 4. Validación financiera**
+
+Verifica los resultados mediante conciliaciones, pruebas de consistencia y revisión de los cálculos.
+
+**FASE 5. Presentación ejecutiva**
+
+Construye el dashboard definitivo y genera un diagnóstico financiero institucional que permita tomar decisiones sobre la administración de los recursos.
+
+## 16. INSTRUCCIÓN FINAL
+
+No desarrolles un aplicativo que simplemente sume ingresos, gastos y saldos bancarios.
+
+Construye un verdadero sistema de inteligencia financiera institucional, que permita comprender la relación entre la ejecución presupuestal y la liquidez real.
+
+La prioridad es conocer cuánto dinero tiene disponible la Universidad, qué recursos respaldan esa disponibilidad, cuáles son sus restricciones, qué pagos debe atender y cuál será su posición de caja al cierre de diciembre.
+
+Cada conclusión debe estar respaldada por información verificable.
+
+**La herramienta debe responder, en términos ejecutivos, la siguiente pregunta: ¿La Universidad cuenta con los recursos líquidos suficientes para atender sus compromisos financieros y presupuestales al cierre de la vigencia, diferenciando los recursos de Administración y los de Inversión?**
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-11-23T10:05:49-05:00.
+</ADDITIONAL_METADATA>

@@ -1,0 +1,124 @@
+<USER_REQUEST>
+para el informe que exporta en pdf debe tener mas informacion, y que tenga este formato # PROMPT MAESTRO — INFORME TÉCNICO GERENCIAL DEL FLUJO DE CAJA
+
+## 1. OBJETIVO GENERAL
+
+Crear dentro del aplicativo un nuevo apartado denominado:
+
+# **INFORME TÉCNICO GERENCIAL — FLUJO DE CAJA**
+
+Este módulo debe utilizar **toda la información disponible en el apartado actual “Flujo de Caja”**, sin duplicar manualmente la información ni crear fuentes de datos paralelas.
+
+El objetivo es transformar la información financiera existente en un **informe ejecutivo, técnico, analítico y prospectivo**, que permita a los directivos de la Universidad comprender:
+
+* La situación real de los ingresos y gastos a corte del **31 de agosto de 2026**.
+* El comportamiento financiero acumulado de la vigencia.
+* El comportamiento de cada Recurso.
+* El comportamiento de cada Rubro presupuestal.
+* Los recursos y rubros que presentan mayores niveles de ejecución.
+* Los recursos y rubros con riesgos de insuficiencia o sobre ejecución.
+* La proyección financiera de septiembre a diciembre.
+* El resultado esperado al cierre de la vigencia.
+* Los principales riesgos financieros para el cierre.
+* Los recursos disponibles y comprometidos.
+* Las necesidades de caja.
+* Los posibles excedentes o déficits.
+* Las partidas críticas que requieren seguimiento gerencial.
+* Las acciones y recomendaciones necesarias para garantizar un cierre financiero ordenado.
+
+El resultado debe parecer un **informe elaborado por una Dirección Financiera / Vicerrectoría Administrativa y Financiera**, no un simple dashboard.
+
+---
+
+# 2. FUENTE ÚNICA DE INFORMACIÓN
+
+El módulo debe utilizar como fuente principal y única de información los datos existentes en:
+
+**FLUJO DE CAJA**
+
+Debe aprovechar toda la información disponible actualmente en dicho apartado, incluyendo, cuando exista:
+
+* Recursos.
+* Unidades.
+* Ingresos.
+* Aforo.
+* Recaudo.
+* Ejecución.
+* Gastos.
+* Apropiación.
+* Compromisos.
+* Obligaciones.
+* Pagos.
+* Saldos.
+* Rubros.
+* Cla
+<truncated 14800 bytes>
+lculo.
+
+Implementar drill-down cuando sea técnicamente posible.
+
+---
+
+# 28. PRINCIPIO GERENCIAL DEL INFORME
+
+El sistema debe responder de manera clara a las cinco preguntas fundamentales:
+
+## 1. ¿DÓNDE ESTAMOS?
+
+Situación financiera real a 31 de agosto.
+
+## 2. ¿QUÉ HA OCURRIDO?
+
+Comportamiento histórico y ejecución.
+
+## 3. ¿QUÉ ESPERAMOS?
+
+Proyección septiembre-diciembre y cierre anual.
+
+## 4. ¿QUÉ RIESGOS TENEMOS?
+
+Recursos, rubros y flujo de caja críticos.
+
+## 5. ¿QUÉ DEBEMOS HACER?
+
+Conclusiones y recomendaciones para la gestión del cierre.
+
+---
+
+# 29. RESULTADO FINAL ESPERADO
+
+El nuevo módulo debe convertirse en una herramienta de **inteligencia financiera y apoyo a la toma de decisiones**, capaz de transformar los datos del apartado Flujo de Caja en un informe técnico gerencial completo.
+
+No debe limitarse a mostrar cifras.
+
+Debe:
+
+**DATOS → ANÁLISIS → INTERPRETACIÓN → PROYECCIÓN → RIESGO → DECISIÓN**
+
+El usuario debe poder ingresar al módulo y comprender en menos de 2 minutos:
+
+* Cómo está financieramente la Universidad.
+* Cuánto ha recaudado.
+* Cuánto ha gastado.
+* Cuánto tiene comprometido.
+* Cuánto ha pagado.
+* Qué recursos están financiando el gasto.
+* Qué rubros están generando presión.
+* Cuánto espera recaudar.
+* Cuánto espera gastar.
+* Con cuánto espera cerrar.
+* Qué riesgos existen.
+* Qué decisiones deben tomarse antes del 31 de diciembre.
+
+### CRITERIO DE ÉXITO
+
+El informe estará correctamente implementado cuando un directivo pueda utilizarlo para una reunión de seguimiento financiero y, sin necesidad de consultar manualmente otras pantallas, pueda responder:
+
+> **“¿Cuál es la situación financiera a 31 de agosto, cómo se proyecta el cierre de 2026, cuáles son los principales riesgos y qué acciones debemos tomar?”**
+
+Todo el módulo debe actualizarse automáticamente cuando cambien los datos del apartado **Flujo de Caja**.
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-11T16:18:39-05:00.
+</ADDITIONAL_METADATA>

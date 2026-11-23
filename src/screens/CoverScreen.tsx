@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { 
   BarChart3, LineChart, Wallet, Users, FileText, 
   Settings, FolderOpen, ArrowRight, GraduationCap, Bot,
-  TrendingUp, Activity, CheckCircle, Database, HelpCircle, Shield, Sparkles, Layers
+  TrendingUp, Activity, CheckCircle, Database, HelpCircle, Shield, Sparkles, Layers, Coins
 } from 'lucide-react';
 
 const MODULES = [
   { id: 'dashboard', icon: BarChart3, title: 'Consolidado', desc: 'Resumen financiero, cumplimiento de aforos y ejecución.' },
+  { id: 'caja-hoy', icon: Coins, title: 'Caja HOY', desc: 'Análisis inteligente de tesorería, 85 cuentas bancarias y flujo proyectado al 23 de noviembre.' },
   { id: 'historical', icon: LineChart, title: 'Histórico', desc: 'Evolución de ingresos y gastos en periodos anteriores.' },
   { id: 'nomina', icon: Users, title: 'Nómina', desc: 'Análisis de personal, salarios y prestaciones.' },
   { id: 'posgrados', icon: GraduationCap, title: 'Posgrados', desc: 'Matrículas, flexibilización y programas.' },
@@ -61,6 +62,7 @@ export function CoverScreen({ onNavigate }: { onNavigate: (s: string) => void })
 
           <nav className="hidden md:flex items-center gap-6">
             <button onClick={() => onNavigate('dashboard')} className="text-xs font-mono text-on-surface-variant hover:text-white transition-colors uppercase tracking-wider cursor-pointer">Tablero</button>
+            <button onClick={() => onNavigate('caja-hoy')} className="text-xs font-mono text-[#ffcc29] font-bold hover:text-white transition-colors uppercase tracking-wider cursor-pointer">Caja HOY</button>
             <button onClick={() => onNavigate('historical')} className="text-xs font-mono text-on-surface-variant hover:text-white transition-colors uppercase tracking-wider cursor-pointer">Histórico</button>
             <button onClick={() => onNavigate('predictive')} className="text-xs font-mono text-on-surface-variant hover:text-white transition-colors uppercase tracking-wider cursor-pointer">Proyecciones</button>
             <button onClick={() => onNavigate('assistant')} className="text-xs font-mono text-on-surface-variant hover:text-white transition-colors uppercase tracking-wider cursor-pointer">CENTAVO</button>

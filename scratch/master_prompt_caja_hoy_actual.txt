@@ -1,0 +1,77 @@
+<USER_REQUEST>
+necesito que crees un nuevo apartado que Diga Caja HOY; # PROMPT MAESTRO: SISTEMA INTELIGENTE DE ANÁLISIS DE CAJA, TESORERÍA Y FLUJO DE EFECTIVO INSTITUCIONAL – UPTC
+
+## 1. ROL Y OBJETIVO GENERAL
+
+Actúa como un equipo multidisciplinario de expertos integrado por:
+
+1. **Director financiero:** responsable de evaluar la liquidez, disponibilidad de recursos, sostenibilidad financiera y capacidad de pago institucional.
+2. **Analista presupuestal:** especialista en ejecución de ingresos y gastos, aforo, recaudo, apropiación, compromisos y obligaciones.
+3. **Especialista en tesorería:** encargado de analizar los saldos bancarios, movimientos de efectivo, disponibilidad de recursos y proyecciones de caja.
+4. **Científico de datos:** experto en Python, Pandas, Streamlit y visualización de información financiera.
+5. **Auditor financiero:** encargado de validar la integridad, consistencia, trazabilidad y conciliación de los datos.
+
+Tu misión es desarrollar un **aplicativo interactivo de análisis de caja institucional**, que integre los ingresos presupuestales, los gastos presupuestales y los saldos bancarios, permitiendo conocer la situación real de liquidez de la Universidad y proyectar su comportamiento hasta el cierre de la vigencia fiscal.
+
+El aplicativo debe tener un enfoque técnico, financiero, presupuestal y de tesorería. No debe limitarse a presentar indicadores de ejecución presupuestal: debe explicar la relación entre los recursos presupuestados, los efectivamente recaudados, los compromisos adquiridos, los pagos realizados y el dinero disponible en bancos.
+
+## 2. ARCHIVOS DE ENTRADA Y FUENTES DE INFORMACIÓN
+
+El sistema debe permitir cargar cuatro archivos CSV independientes:
+
+### Archivo 1. Ingresos presupuestales generales
+
+Contiene la información general de los ingresos institucionales.
+
+Identificar, entre otros, los siguientes campos:
+
+- Código del recurso.
+- Descripción del recurso.
+- Unidad responsable, cuando exista.
+- Aforo presupuestal.
+- Recaudo acumulado.
+- Fecha de
+<truncated 19562 bytes>
+able.
+
+Evita cálculos repetidos y centraliza las reglas financieras para garantizar consistencia entre los módulos.
+
+## 15. METODOLOGÍA DE TRABAJO
+
+Desarrolla el proyecto en cinco fases:
+
+**FASE 1. Diagnóstico de datos**
+
+Analiza los cuatro archivos, identifica sus estructuras, columnas, relaciones y limitaciones. Antes de programar, presenta un diagnóstico de la información disponible.
+
+**FASE 2. Modelo financiero**
+
+Define las relaciones entre ingresos, gastos y bancos. Documenta las fórmulas, criterios de clasificación, reglas de conciliación y supuestos de proyección.
+
+**FASE 3. Construcción del aplicativo**
+
+Desarrolla los módulos de análisis, filtros, indicadores, visualizaciones y proyecciones.
+
+**FASE 4. Validación financiera**
+
+Verifica los resultados mediante conciliaciones, pruebas de consistencia y revisión de los cálculos.
+
+**FASE 5. Presentación ejecutiva**
+
+Construye el dashboard definitivo y genera un diagnóstico financiero institucional que permita tomar decisiones sobre la administración de los recursos.
+
+## 16. INSTRUCCIÓN FINAL
+
+No desarrolles un aplicativo que simplemente sume ingresos, gastos y saldos bancarios.
+
+Construye un verdadero sistema de inteligencia financiera institucional, que permita comprender la relación entre la ejecución presupuestal y la liquidez real.
+
+La prioridad es conocer cuánto dinero tiene disponible la Universidad, qué recursos respaldan esa disponibilidad, cuáles son sus restricciones, qué pagos debe atender y cuál será su posición de caja al cierre de diciembre.
+
+Cada conclusión debe estar respaldada por información verificable.
+
+**La herramienta debe responder, en términos ejecutivos, la siguiente pregunta: ¿La Universidad cuenta con los recursos líquidos suficientes para atender sus compromisos financieros y presupuestales al cierre de la vigencia, diferenciando los recursos de Administración y los de Inversión?**
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-11-23T10:05:49-05:00.
+</ADDITIONAL_METADATA>

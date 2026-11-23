@@ -13,6 +13,7 @@ import {
   GraduationCap,
   Bot,
   Coins,
+  Banknote,
   Award,
   Layers,
   Clock
@@ -48,6 +49,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
       <Icon size={isThin ? 24 : 20} strokeWidth={currentScreen === screen ? 2.5 : 2} />
       {!isThin && <span className="text-sm">
         {screen === 'dashboard' ? 'Tablero' :
+         screen === 'caja-hoy' ? 'Caja HOY' :
          screen === 'historical' ? 'Histórico' :
          screen === 'nomina' ? 'Nómina' :
          screen === 'posgrados' ? 'Posgrados' :
@@ -91,6 +93,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
 
       <nav className={cn('flex flex-col', isThin ? 'gap-8 flex-1' : 'gap-1 px-2 flex-1')}>
         <IconWrapper icon={LayoutDashboard} screen="dashboard" />
+        <IconWrapper icon={Banknote} screen="caja-hoy" />
         <IconWrapper icon={LineChart} screen="historical" />
         <IconWrapper icon={Users} screen="nomina" />
         <IconWrapper icon={GraduationCap} screen="posgrados" />
