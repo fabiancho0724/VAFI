@@ -1,9 +1,4 @@
-import React, { useState, useEffect, useMemo } from 're
-
-  // Conciliación Presupuesto vs Tesorería Engine Data
-  const conciliacionData: ConciliacionPresupuestoTesoralResult = useMemo(() => {
-    return calculateConciliacionPresupuestoTesoral(incomes, expenses, banks, filters.useStrictRule3A);
-  }, [incomes, expenses, banks, filters.useStrictRule3A]);act';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -290,6 +285,11 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
   const diagnosis = useMemo(() => {
     return generateAutomatedFinancialDiagnosis(generalMetrics, adminMetrics, invMetrics);
   }, [generalMetrics, adminMetrics, invMetrics]);
+
+  // Conciliación Presupuesto vs Tesorería Engine Data
+  const conciliacionData: ConciliacionPresupuestoTesoralResult = useMemo(() => {
+    return calculateConciliacionPresupuestoTesoral(incomes, expenses, banks, filters.useStrictRule3A);
+  }, [incomes, expenses, banks, filters.useStrictRule3A]);
 
   // Preset Scenario Handlers for Simulator
   const applyScenarioPreset = (sc: ScenarioType) => {
