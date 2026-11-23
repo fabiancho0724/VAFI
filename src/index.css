@@ -86,6 +86,33 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-white/10;
   }
+
+  /* Barra de desplazamiento horizontal visible y estilizada para navegación */
+  .horizontal-scrollbar {
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #FFCC29 rgba(255, 255, 255, 0.08);
+    -webkit-overflow-scrolling: touch;
+  }
+  .horizontal-scrollbar::-webkit-scrollbar {
+    height: 8px !important;
+    display: block !important;
+  }
+  .horizontal-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 9999px;
+    margin: 0 4px;
+  }
+  .horizontal-scrollbar::-webkit-scrollbar-thumb {
+    background: #FFCC29;
+    border-radius: 9999px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 8px rgba(255, 204, 41, 0.4);
+  }
+  .horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #ffe066;
+  }
 }
 
 @media print {

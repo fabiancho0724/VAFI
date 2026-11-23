@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -47,7 +47,9 @@ import {
   Activity,
   Award,
   ArrowRight,
-  Info
+  Info,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   loadCajaHoyDatasets,
@@ -106,6 +108,60 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
   const [activeTab, setActiveTab] = useState<
     'ejecutivo' | 'conciliacion' | 'mensual' | 'gastos' | 'bancos' | 'diciembre' | 'equilibrio' | 'auditoria' | 'reportes'
   >('ejecutivo');
+
+  // Tabs horizontal scroll navigation
+  const tabsNavRef = useRef<HTMLDivElement>(null);
+  const [tabsScrollProgress, setTabsScrollProgress] = useState<number>(0);
+  const [canScrollLeft, setCanScrollLeft] = useState<boolean>(false);
+  const [canScrollRight, setCanScrollRight] = useState<boolean>(true);
+
+  const updateTabsScrollState = () => {
+    if (!tabsNavRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = tabsNavRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft < maxScroll - 4);
+    if (maxScroll > 0) {
+      setTabsScrollProgress(Math.min(100, Math.max(0, (scrollLeft / maxScroll) * 100)));
+    } else {
+      setTabsScrollProgress(0);
+    }
+  };
+
+  const handleScrollTabs = (direction: 'left' | 'right') => {
+    if (!tabsNavRef.current) return;
+    const scrollAmount = 280;
+    tabsNavRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  };
+
+  const handleSliderScroll = (percentage: number) => {
+    if (!tabsNavRef.current) return;
+    const { scrollWidth, clientWidth } = tabsNavRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    tabsNavRef.current.scrollLeft = (percentage / 100) * maxScroll;
+    setTabsScrollProgress(percentage);
+  };
+
+  const selectTab = (tabId: typeof activeTab) => {
+    setActiveTab(tabId);
+    setTimeout(() => {
+      const activeEl = document.getElementById(`tab-btn-${tabId}`);
+      if (activeEl && tabsNavRef.current) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+      updateTabsScrollState();
+    }, 60);
+  };
+
+  useEffect(() => {
+    updateTabsScrollState();
+    const handleResize = () => updateTabsScrollState();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Conciliación filters state
   const [searchConcilRecurso, setSearchConcilRecurso] = useState('');
@@ -696,36 +752,106 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
         </div>
       </div>
 
-      {/* 8 SUBTABS NAVIGATION */}
-      <div className="flex overflow-x-auto gap-2 border-b border-white/10 pb-2 scrollbar-none">
-        {[
-          { id: 'ejecutivo', label: '1. Control Ejecutivo', icon: Award },
-          { id: 'conciliacion', label: '2. Conciliación Presupuesto vs Tesorería', icon: Scale },
-          { id: 'mensual', label: '3. Ingresos Mensuales', icon: TrendingUp },
-          { id: 'gastos', label: '4. Gastos & Compromisos', icon: TrendingDown },
-          { id: 'bancos', label: '5. Estado de Bancos', icon: Landmark },
-          { id: 'diciembre', label: '6. Diciembre – Simulador', icon: Sliders },
-          { id: 'equilibrio', label: '7. Equilibrio Presupuestal', icon: DollarSign },
-          { id: 'auditoria', label: '8. Validación de Cifras', icon: ShieldCheck },
-          { id: 'reportes', label: '9. Reporte y Exportación', icon: FileText },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-mono font-bold whitespace-nowrap transition-all cursor-pointer ${
-                isActive
-                  ? 'bg-[#FFCC29] text-black shadow-[0_0_20px_rgba(255,204,41,0.25)] scale-102'
-                  : 'bg-surface-container-low/40 hover:bg-white/5 text-on-surface-variant hover:text-white border border-white/5'
-              }`}
-            >
-              <Icon size={16} />
-              {tab.label}
-            </button>
-          );
-        })}
+      {/* 9 SUBTABS NAVIGATION BAR CON BARRA DE DESPLAZAMIENTO HORIZONTAL Y CONTROLES */}
+      <div className="space-y-2 border-b border-white/10 pb-3">
+        {/* Fila principal de navegación con botones laterales */}
+        <div className="flex items-center gap-2">
+          {/* Botón Scroll Izquierda */}
+          <button
+            type="button"
+            onClick={() => handleScrollTabs('left')}
+            disabled={!canScrollLeft}
+            className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex-shrink-0 ${
+              canScrollLeft
+                ? 'bg-white/10 hover:bg-[#FFCC29] hover:text-black text-white border-white/20 shadow-md active:scale-95'
+                : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-30'
+            }`}
+            title="Desplazar pestañas hacia la izquierda"
+            aria-label="Desplazar pestañas a la izquierda"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {/* Contenedor desplazable de pestañas con barra de desplazamiento visible estilizada */}
+          <div
+            ref={tabsNavRef}
+            onScroll={updateTabsScrollState}
+            className="flex-1 flex overflow-x-auto gap-2 py-1.5 horizontal-scrollbar"
+          >
+            {[
+              { id: 'ejecutivo', label: '1. Control Ejecutivo', icon: Award },
+              { id: 'conciliacion', label: '2. Conciliación Presupuesto vs Tesorería', icon: Scale },
+              { id: 'mensual', label: '3. Ingresos Mensuales', icon: TrendingUp },
+              { id: 'gastos', label: '4. Gastos & Compromisos', icon: TrendingDown },
+              { id: 'bancos', label: '5. Estado de Bancos', icon: Landmark },
+              { id: 'diciembre', label: '6. Diciembre – Simulador', icon: Sliders },
+              { id: 'equilibrio', label: '7. Equilibrio Presupuestal', icon: DollarSign },
+              { id: 'auditoria', label: '8. Validación de Cifras', icon: ShieldCheck },
+              { id: 'reportes', label: '9. Reporte y Exportación', icon: FileText },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  id={`tab-btn-${tab.id}`}
+                  key={tab.id}
+                  onClick={() => selectTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-mono font-bold whitespace-nowrap transition-all cursor-pointer flex-shrink-0 ${
+                    isActive
+                      ? 'bg-[#FFCC29] text-black shadow-[0_0_20px_rgba(255,204,41,0.25)] scale-102'
+                      : 'bg-surface-container-low/40 hover:bg-white/5 text-on-surface-variant hover:text-white border border-white/5'
+                  }`}
+                >
+                  <Icon size={16} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Botón Scroll Derecha */}
+          <button
+            type="button"
+            onClick={() => handleScrollTabs('right')}
+            disabled={!canScrollRight}
+            className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex-shrink-0 ${
+              canScrollRight
+                ? 'bg-white/10 hover:bg-[#FFCC29] hover:text-black text-white border-white/20 shadow-md active:scale-95'
+                : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-30'
+            }`}
+            title="Desplazar pestañas hacia la derecha"
+            aria-label="Desplazar pestañas a la derecha"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+
+        {/* Barra interactiva inferior de desplazamiento horizontal */}
+        <div className="flex items-center justify-between gap-3 px-3 py-1.5 bg-black/40 rounded-xl border border-white/5">
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-gray-400">
+            <span className="w-2 h-2 rounded-full bg-[#FFCC29] inline-block animate-pulse"></span>
+            <span className="text-gray-300 font-semibold">Barra de desplazamiento horizontal:</span>
+            <span className="text-gray-500 hidden sm:inline">(desliza para navegar las 9 pestañas)</span>
+          </div>
+
+          <div className="flex-1 max-w-md mx-2 flex items-center">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={tabsScrollProgress}
+              onChange={(e) => handleSliderScroll(Number(e.target.value))}
+              aria-label="Barra de desplazamiento horizontal de pestañas"
+              className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-ew-resize accent-[#FFCC29] hover:bg-white/20 transition-all focus:outline-none"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[11px] font-mono">
+            <span className="text-[#FFCC29] font-bold">{Math.round(tabsScrollProgress)}%</span>
+            <span className="text-gray-500 text-[10px]">avance</span>
+          </div>
+        </div>
       </div>
 
       {/* SUBTAB 1: CONTROL EJECUTIVO */}
