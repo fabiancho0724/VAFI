@@ -132,6 +132,9 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
   // December Simulation editable parameters
   const [simIncomeComplianceRate, setSimIncomeComplianceRate] = useState<number>(0.65);
   const [simExpensePaymentRate, setSimExpensePaymentRate] = useState<number>(0.75);
+  const [simExtraIncome, setSimExtraIncome] = useState<number>(0);
+  const [simExtraExpense, setSimExtraExpense] = useState<number>(0);
+  const [simCustomBankBalance, setSimCustomBankBalance] = useState<number>(144563470673.35);
   const [simResourceScope, setSimResourceScope] = useState<'Todos' | 'Administración' | 'Inversión'>('Todos');
 
   // Requerimiento 1: Nómina de Diciembre en Rubro 2.1.1 (Gastos de Personal)
@@ -285,8 +288,17 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
     const effectiveBankBalance =
       simResourceScope === 'Todos' ? simCustomBankBalance : baseBankBalance;
 
-    const recaudoEsperadoDic = pendiente * simIncomeComplianceRate + simExtraIncome;
-    const pagosEsperadosDic = xPagar * simExpensePaymentRate + simExtraExpense;
+    const totalIngresosAdicionales = simIngresosAdicionales
+      .filter((i) => {
+        if (simResourceScope === 'Todos') return true;
+        return i.tipo === simResourceScope;
+      })
+      .reduce((s, i) => s + i.valor, 0);
+
+    const nominaAfectada = simResourceScope === 'Inversión' ? 0 : simNominaDiciembre211;
+
+    const recaudoEsperadoDic = pendiente * simIncomeComplianceRate + totalIngresosAdicionales + simExtraIncome;
+    const pagosEsperadosDic = xPagar * simExpensePaymentRate + nominaAfectada + simExtraExpense;
 
     const saldoCierre = effectiveBankBalance + recaudoEsperadoDic - pagosEsperadosDic;
 
@@ -312,6 +324,8 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
     simExpensePaymentRate,
     simExtraExpense,
     simCustomBankBalance,
+    simIngresosAdicionales,
+    simNominaDiciembre211,
   ]);
 
   // Financial equilibrium
