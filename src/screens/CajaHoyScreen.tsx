@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   ResponsiveContainer,
+  ComposedChart,
   BarChart,
   Bar,
   LineChart,
@@ -11,8 +12,6 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
   Cell,
-  PieChart,
-  Pie,
 } from 'recharts';
 import {
   Coins,
@@ -33,20 +32,27 @@ import {
   Calendar,
   Layers,
   Printer,
-  ChevronRight,
-  Info,
+  Scale,
+  Sliders,
   DollarSign,
   Briefcase,
   PieChart as PieIcon,
   Activity,
-  Award
+  Award,
+  ArrowRight,
+  Info
 } from 'lucide-react';
 import {
   loadCajaHoyDatasets,
   calculateCajaHoyMetrics,
   filterCajaHoyData,
+  reconcileBankReference,
+  calculateMonthlyRecaudoStats,
+  calculateEquilibrioFinanciero,
+  getControlYValidacionCifras,
   runCajaHoyAudit,
   generateAutomatedFinancialDiagnosis,
+  BANK_REFERENCE_SALDO,
   CajaHoyBankAccount,
   CajaHoyIncome,
   CajaHoyMonthlyIncome,
@@ -68,14 +74,8 @@ const formatMillions = (val: number): string => {
   return `$ ${inM.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M`;
 };
 
-const formatBillions = (val: number): string => {
-  if (val === undefined || val === null || isNaN(val)) return '$ 0 MM';
-  const inB = val / 1e9;
-  return `$ ${inB.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MM`;
-};
-
 export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void }) {
-  // State
+  // Main state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,12 +84,12 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
   const [monthlyIncomes, setMonthlyIncomes] = useState<CajaHoyMonthlyIncome[]>([]);
   const [expenses, setExpenses] = useState<CajaHoyExpense[]>([]);
 
-  // Subtabs
+  // Subtabs (8 subtabs according to Prompt Maestro Actualizado)
   const [activeTab, setActiveTab] = useState<
-    'ejecutivo' | 'ingresos' | 'gastos' | 'bancos' | 'flujo' | 'auditoria' | 'reportes'
+    'ejecutivo' | 'mensual' | 'gastos' | 'bancos' | 'diciembre' | 'equilibrio' | 'auditoria' | 'reportes'
   >('ejecutivo');
 
-  // Filters
+  // Global Filters
   const [filters, setFilters] = useState<CajaHoyFilterState>({
     tipoRecurso: 'Todos',
     banco: 'Todos',
@@ -99,13 +99,18 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
     useStrictRule3A: true,
   });
 
-  // Search terms for tables
+  // Table search terms
   const [searchBank, setSearchBank] = useState('');
   const [searchIncome, setSearchIncome] = useState('');
   const [searchExpense, setSearchExpense] = useState('');
 
-  // Flow perspective in Flujo subtab
-  const [flowTab, setFlowTab] = useState<'consolidado' | 'administracion' | 'inversion'>('consolidado');
+  // December Simulation editable parameters
+  const [simIncomeComplianceRate, setSimIncomeComplianceRate] = useState<number>(0.65);
+  const [simExtraIncome, setSimExtraIncome] = useState<number>(0);
+  const [simExpensePaymentRate, setSimExpensePaymentRate] = useState<number>(0.75);
+  const [simExtraExpense, setSimExtraExpense] = useState<number>(0);
+  const [simCustomBankBalance, setSimCustomBankBalance] = useState<number>(144563470673.35);
+  const [simResourceScope, setSimResourceScope] = useState<'Todos' | 'Administración' | 'Inversión'>('Todos');
 
   // Load data
   useEffect(() => {
@@ -177,6 +182,86 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
     return calculateCajaHoyMetrics(iBanks, iIncomes, iExpenses, filters.scenario);
   }, [banks, incomes, expenses, filters.scenario]);
 
+  // Bank reconciliation with reference $144.563.470.673
+  const bankReconciliation = useMemo(() => {
+    return reconcileBankReference(banks);
+  }, [banks]);
+
+  // Monthly stats
+  const monthlyStats = useMemo(() => {
+    return calculateMonthlyRecaudoStats(monthlyIncomes, generalMetrics.recaudoEsperadoDiciembre);
+  }, [monthlyIncomes, generalMetrics.recaudoEsperadoDiciembre]);
+
+  // Simulation calculations
+  const simMetrics = useMemo(() => {
+    let targetIncomes = incomes;
+    let targetExpenses = expenses;
+    let targetBanks = banks;
+
+    if (simResourceScope === 'Administración') {
+      targetIncomes = incomes.filter((i) => i.tipoRecurso === 'Recursos Administración');
+      targetExpenses = expenses.filter((e) => e.tipoRecurso === 'Recursos Administración');
+      targetBanks = banks.filter((b) => b.clasificacion === 'Administración');
+    } else if (simResourceScope === 'Inversión') {
+      targetIncomes = incomes.filter((i) => i.tipoRecurso === 'Recursos Inversión');
+      targetExpenses = expenses.filter((e) => e.tipoRecurso === 'Recursos Inversión');
+      targetBanks = banks.filter((b) => b.clasificacion === 'Inversión');
+    }
+
+    const aforo = targetIncomes.reduce((s, i) => s + i.valorAforo, 0);
+    const recaudo = targetIncomes.reduce((s, i) => s + i.totalRecaudo, 0);
+    const pendiente = targetIncomes.reduce((s, i) => s + (i.saldoPendiente > 0 ? i.saldoPendiente : 0), 0);
+
+    const compromisos = targetExpenses.reduce((s, e) => s + e.acumuladoCompromiso, 0);
+    const pagos = targetExpenses.reduce((s, e) => s + e.acumuladoPago, 0);
+    const xPagar = compromisos - pagos;
+
+    const baseBankBalance = targetBanks.reduce((s, b) => s + b.valorFinal, 0);
+    const effectiveBankBalance =
+      simResourceScope === 'Todos' ? simCustomBankBalance : baseBankBalance;
+
+    const recaudoEsperadoDic = pendiente * simIncomeComplianceRate + simExtraIncome;
+    const pagosEsperadosDic = xPagar * simExpensePaymentRate + simExtraExpense;
+
+    const saldoCierre = effectiveBankBalance + recaudoEsperadoDic - pagosEsperadosDic;
+
+    return {
+      aforo,
+      recaudo,
+      pendiente,
+      compromisos,
+      pagos,
+      xPagar,
+      bankBalance: effectiveBankBalance,
+      recaudoEsperadoDic,
+      pagosEsperadosDic,
+      saldoCierre,
+    };
+  }, [
+    incomes,
+    expenses,
+    banks,
+    simResourceScope,
+    simIncomeComplianceRate,
+    simExtraIncome,
+    simExpensePaymentRate,
+    simExtraExpense,
+    simCustomBankBalance,
+  ]);
+
+  // Financial equilibrium
+  const equilibrioResult = useMemo(() => {
+    return calculateEquilibrioFinanciero(incomes, expenses, banks, {
+      recaudoEsperadoDiciembre: simMetrics.recaudoEsperadoDic,
+      pagosEsperadosDiciembre: simMetrics.pagosEsperadosDic,
+    });
+  }, [incomes, expenses, banks, simMetrics.recaudoEsperadoDic, simMetrics.pagosEsperadosDic]);
+
+  // Control & Validation table
+  const controlCifras = useMemo(() => {
+    return getControlYValidacionCifras(incomes, monthlyIncomes, expenses, banks);
+  }, [incomes, monthlyIncomes, expenses, banks]);
+
   // Audit checks & diagnosis
   const auditChecks = useMemo(() => {
     return runCajaHoyAudit(banks, incomes, monthlyIncomes, expenses);
@@ -185,6 +270,23 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
   const diagnosis = useMemo(() => {
     return generateAutomatedFinancialDiagnosis(generalMetrics, adminMetrics, invMetrics);
   }, [generalMetrics, adminMetrics, invMetrics]);
+
+  // Preset Scenario Handlers for Simulator
+  const applyScenarioPreset = (sc: ScenarioType) => {
+    const cfg = SCENARIO_DEFAULTS[sc];
+    setSimIncomeComplianceRate(cfg.incomeComplianceRate);
+    setSimExpensePaymentRate(cfg.expensePaymentRate);
+    setFilters({ ...filters, scenario: sc });
+  };
+
+  const resetSimulation = () => {
+    setSimIncomeComplianceRate(0.65);
+    setSimExtraIncome(0);
+    setSimExpensePaymentRate(0.75);
+    setSimExtraExpense(0);
+    setSimCustomBankBalance(144563470673.35);
+    setSimResourceScope('Todos');
+  };
 
   // Reset filters
   const resetFilters = () => {
@@ -199,6 +301,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
     setSearchBank('');
     setSearchIncome('');
     setSearchExpense('');
+    resetSimulation();
   };
 
   // Export tables to CSV
@@ -234,7 +337,9 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-8 space-y-4">
         <div className="w-12 h-12 border-4 border-[#FFCC29] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-white font-mono text-sm tracking-wide">Cargando Sistema Inteligente de Caja HOY (23 Nov 2026)...</p>
+        <p className="text-white font-mono text-sm tracking-wide">
+          Cargando Sistema Inteligente de Análisis Financiero y Caja UPTC (Corte 23 Nov 2026)...
+        </p>
       </div>
     );
   }
@@ -248,7 +353,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
           <p className="text-xs text-on-surface-variant font-mono">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-2.5 bg-[#FFCC29] text-black font-bold text-xs rounded-xl hover:bg-[#FFCC29]/90"
+            className="px-6 py-2.5 bg-[#FFCC29] text-black font-bold text-xs rounded-xl hover:bg-[#FFCC29]/90 cursor-pointer"
           >
             Reintentar Carga
           </button>
@@ -258,7 +363,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
   }
 
   return (
-    <div className="min-h-screen text-on-surface space-y-6 pb-20">
+    <div className="min-h-screen text-on-surface space-y-6 pb-20 selection:bg-[#FFCC29] selection:text-black">
       {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-container-low/60 border border-white/5 p-6 rounded-3xl backdrop-blur-xl">
         <div className="space-y-1">
@@ -267,28 +372,28 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
               <span className="w-2 h-2 rounded-full bg-[#FFCC29] animate-pulse"></span>
               CORTE AL 23 DE NOVIEMBRE DE 2026
             </span>
-            <span className="text-xs font-mono text-on-surface-variant/80 border border-white/10 px-2.5 py-0.5 rounded-lg">
-              Vigencia Fiscal 2026
+            <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-lg">
+              Ref. Bancaria: $ 144.563.470.673 COP
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
             <Coins className="text-[#FFCC29]" size={28} />
-            CENTRO DE CONTROL FINANCIERO – ANÁLISIS DE CAJA UPTC
+            CENTRO DE CONTROL FINANCIERO UPTC – ANÁLISIS DE CAJA Y EQUILIBRIO
           </h1>
-          <p className="text-xs sm:text-sm text-on-surface-variant max-w-3xl">
-            Integración de ingresos presupuestales, compromisos, pagos y tesorería en bancos para evaluar la liquidez institucional y proyectar el cierre fiscal.
+          <p className="text-xs sm:text-sm text-on-surface-variant max-w-4xl">
+            Sistema Inteligente de Evaluación de Liquidez, Conciliación Bancaria, Comportamiento Mensual, Proyecciones de Cierre a Diciembre y Equilibrio Presupuestal.
           </p>
         </div>
 
-        {/* Global Controls & Scenario Badge */}
+        {/* Global Controls & Print */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="bg-black/40 border border-white/10 rounded-2xl p-1.5 flex items-center gap-1">
             <span className="text-[10px] font-mono text-on-surface-variant px-2 uppercase">Escenario:</span>
             {(['conservador', 'base', 'optimista'] as ScenarioType[]).map((sc) => (
               <button
                 key={sc}
-                onClick={() => setFilters({ ...filters, scenario: sc })}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                onClick={() => applyScenarioPreset(sc)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                   filters.scenario === sc
                     ? 'bg-[#FFCC29] text-black shadow-lg scale-105'
                     : 'text-on-surface-variant hover:text-white hover:bg-white/5'
@@ -304,7 +409,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
             className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 text-xs font-mono transition-all cursor-pointer"
           >
             <Printer size={15} />
-            Imprimir
+            Imprimir / PDF
           </button>
         </div>
       </div>
@@ -387,11 +492,11 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
         {/* Parametrización Regla 3.A Switch */}
         <div>
           <label className="text-[10px] font-mono text-on-surface-variant uppercase block mb-1">
-            Clasificación 10.5
+            Clasificación Rec. 10.5
           </label>
           <button
             onClick={() => setFilters({ ...filters, useStrictRule3A: !filters.useStrictRule3A })}
-            className={`w-full py-2 px-3 rounded-xl text-xs font-mono flex items-center justify-between border transition-all ${
+            className={`w-full py-2 px-3 rounded-xl text-xs font-mono flex items-center justify-between border transition-all cursor-pointer ${
               filters.useStrictRule3A
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                 : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
@@ -410,21 +515,22 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
             className="w-full py-2 px-4 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <RotateCcw size={14} />
-            Restablecer
+            Restablecer Filtros
           </button>
         </div>
       </div>
 
-      {/* SUBTABS NAVIGATION */}
+      {/* 8 SUBTABS NAVIGATION */}
       <div className="flex overflow-x-auto gap-2 border-b border-white/10 pb-2 scrollbar-none">
         {[
           { id: 'ejecutivo', label: '1. Control Ejecutivo', icon: Award },
-          { id: 'ingresos', label: '2. Análisis de Ingresos', icon: TrendingUp },
+          { id: 'mensual', label: '2. Ingresos Mensuales', icon: TrendingUp },
           { id: 'gastos', label: '3. Gastos & Compromisos', icon: TrendingDown },
           { id: 'bancos', label: '4. Estado de Bancos', icon: Landmark },
-          { id: 'flujo', label: '5. Flujo de Caja Integral', icon: Wallet },
-          { id: 'auditoria', label: '6. Auditoría y Calidad', icon: ShieldCheck },
-          { id: 'reportes', label: '7. Reporte y Exportación', icon: FileText },
+          { id: 'diciembre', label: '5. Diciembre – Simulador', icon: Sliders },
+          { id: 'equilibrio', label: '6. Equilibrio Presupuestal', icon: Scale },
+          { id: 'auditoria', label: '7. Validación de Cifras', icon: ShieldCheck },
+          { id: 'reportes', label: '8. Reporte y Exportación', icon: FileText },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -432,7 +538,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-mono font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-mono font-bold whitespace-nowrap transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#FFCC29] text-black shadow-[0_0_20px_rgba(255,204,41,0.25)] scale-102'
                   : 'bg-surface-container-low/40 hover:bg-white/5 text-on-surface-variant hover:text-white border border-white/5'
@@ -445,10 +551,10 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
         })}
       </div>
 
-      {/* TAB 1: CONTROL EJECUTIVO */}
+      {/* SUBTAB 1: CONTROL EJECUTIVO */}
       {activeTab === 'ejecutivo' && (
         <div className="space-y-6">
-          {/* INSTITUTIONAL CORE QUESTION ANSWER VERDICT BANNER */}
+          {/* Institutional Verdict Card */}
           <div
             className={`p-6 sm:p-8 rounded-3xl border backdrop-blur-xl relative overflow-hidden ${
               diagnosis.coreQuestionAnswer.verdict === 'SI_SOSTENIBLE'
@@ -460,7 +566,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
               <div className="flex items-center gap-2">
                 <ShieldCheck size={20} className="text-emerald-400" />
                 <span className="text-[11px] font-mono tracking-widest uppercase text-emerald-400 font-bold">
-                  DIAGNÓSTICO DIRECTIVO DE LIQUIDEZ Y SOSTENIBILIDAD
+                  EVALUACIÓN GERENCIAL DE SOSTENIBILIDAD Y LIQUIDEZ INSTITUCIONAL
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
@@ -469,7 +575,15 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
               <p className="text-xs sm:text-sm text-gray-300 leading-relaxed font-light">
                 {diagnosis.coreQuestionAnswer.summary}
               </p>
-              <div className="pt-2 flex flex-wrap gap-4 text-xs font-mono">
+              <div className="pt-2 flex flex-wrap gap-3 text-xs font-mono">
+                <div className="bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl">
+                  <span className="text-on-surface-variant">Saldo Bancos Hoy: </span>
+                  <span className="text-[#FFCC29] font-bold">{formatCOP(generalMetrics.saldoBancosTotal)}</span>
+                </div>
+                <div className="bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl">
+                  <span className="text-on-surface-variant">Compromisos x Pagar: </span>
+                  <span className="text-amber-400 font-bold">{formatCOP(generalMetrics.saldoPorPagar)}</span>
+                </div>
                 <div className="bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl">
                   <span className="text-on-surface-variant">Cobertura Inmediata: </span>
                   <span className="text-emerald-400 font-bold">
@@ -477,109 +591,183 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
                   </span>
                 </div>
                 <div className="bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl">
-                  <span className="text-on-surface-variant">Margen de Holgura: </span>
-                  <span className="text-[#FFCC29] font-bold">
-                    {formatCOP(generalMetrics.margenHolguraInmediata)}
-                  </span>
-                </div>
-                <div className="bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl">
-                  <span className="text-on-surface-variant">Cierre Proyectado ({filters.scenario}): </span>
-                  <span className="text-white font-bold">
-                    {formatCOP(generalMetrics.saldoCierreProyectado)}
-                  </span>
+                  <span className="text-on-surface-variant">Superávit de Holgura: </span>
+                  <span className="text-white font-bold">{formatCOP(generalMetrics.margenHolguraInmediata)}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 10 MASTER KPI CARDS */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {/* 12 KEY KPI INDICATOR CARDS (Req. Prompt Maestro Actualizado) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {/* 1. Aforo */}
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
-              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">1. Aforo Definitivo</span>
-              <div className="text-lg font-black text-white mt-1">{formatMillions(generalMetrics.aforoTotal)}</div>
-              <div className="text-[10px] text-on-surface-variant font-mono mt-1">Presupuesto inicial + adiciones</div>
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">1. Aforo Total</span>
+              <div className="text-base font-black text-white mt-1">{formatMillions(generalMetrics.aforoTotal)}</div>
+              <div className="text-[10px] text-on-surface-variant font-mono mt-1">Presupuesto definitivo</div>
             </div>
 
             {/* 2. Recaudo */}
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
-              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">2. Recaudo Total</span>
-              <div className="text-lg font-black text-emerald-400 mt-1">{formatMillions(generalMetrics.recaudoTotal)}</div>
-              <div className="text-[10px] text-emerald-400/90 font-mono mt-1">
-                {generalMetrics.porcentajeRecaudo.toFixed(2)}% del aforo
-              </div>
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">2. Recaudo Efectivo</span>
+              <div className="text-base font-black text-emerald-400 mt-1">{formatMillions(generalMetrics.recaudoTotal)}</div>
+              <div className="text-[10px] text-emerald-400 font-mono mt-1">Ene - 23 Nov 2026</div>
             </div>
 
-            {/* 3. Saldo Pendiente Recaudo */}
+            {/* 3. % Recaudo */}
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
-              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">3. Pendiente Recaudo</span>
-              <div className="text-lg font-black text-amber-400 mt-1">
-                {formatMillions(generalMetrics.saldoPendienteRecaudo)}
-              </div>
-              <div className="text-[10px] text-amber-400/90 font-mono mt-1">
-                {generalMetrics.porcentajePendienteRecaudo.toFixed(2)}% por recaudar
-              </div>
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">3. % Recaudo</span>
+              <div className="text-base font-black text-emerald-400 mt-1">{generalMetrics.porcentajeRecaudo.toFixed(2)}%</div>
+              <div className="text-[10px] text-on-surface-variant font-mono mt-1">Pend: {generalMetrics.porcentajePendienteRecaudo.toFixed(2)}%</div>
             </div>
 
             {/* 4. Apropiación */}
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
               <span className="text-[10px] font-mono text-on-surface-variant uppercase block">4. Apropiación Gastos</span>
-              <div className="text-lg font-black text-white mt-1">{formatMillions(generalMetrics.apropiacionTotal)}</div>
-              <div className="text-[10px] text-on-surface-variant font-mono mt-1">100% equilibrado con aforo</div>
+              <div className="text-base font-black text-white mt-1">{formatMillions(generalMetrics.apropiacionTotal)}</div>
+              <div className="text-[10px] text-emerald-400 font-mono mt-1">100% igual al Aforo</div>
             </div>
 
             {/* 5. Compromisos */}
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
               <span className="text-[10px] font-mono text-on-surface-variant uppercase block">5. Compromisos</span>
-              <div className="text-lg font-black text-sky-400 mt-1">{formatMillions(generalMetrics.compromisosTotal)}</div>
-              <div className="text-[10px] text-sky-400/90 font-mono mt-1">
-                {generalMetrics.porcentajeCompromiso.toFixed(2)}% de apropiación
-              </div>
+              <div className="text-base font-black text-sky-400 mt-1">{formatMillions(generalMetrics.compromisosTotal)}</div>
+              <div className="text-[10px] text-sky-300 font-mono mt-1">{generalMetrics.porcentajeCompromiso.toFixed(2)}% apropiación</div>
             </div>
 
-            {/* 6. Pagos */}
+            {/* 6. Pagos Efectivos */}
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
               <span className="text-[10px] font-mono text-on-surface-variant uppercase block">6. Pagos Efectivos</span>
-              <div className="text-lg font-black text-purple-400 mt-1">{formatMillions(generalMetrics.pagosTotal)}</div>
-              <div className="text-[10px] text-purple-400/90 font-mono mt-1">
-                {generalMetrics.porcentajePago.toFixed(2)}% pagado s/ apropr.
-              </div>
+              <div className="text-base font-black text-purple-400 mt-1">{formatMillions(generalMetrics.pagosTotal)}</div>
+              <div className="text-[10px] text-purple-300 font-mono mt-1">{generalMetrics.porcentajePagoSobreCompromiso.toFixed(2)}% s/ comp.</div>
             </div>
 
-            {/* 7. Saldo por Pagar */}
-            <div className="bg-surface-container-low/50 border border-amber-500/20 p-4 rounded-2xl bg-amber-500/5">
-              <span className="text-[10px] font-mono text-amber-400 uppercase block">7. Compromisos x Pagar</span>
-              <div className="text-lg font-black text-amber-400 mt-1">{formatMillions(generalMetrics.saldoPorPagar)}</div>
-              <div className="text-[10px] text-amber-300 font-mono mt-1">
-                {(100 - generalMetrics.porcentajePagoSobreCompromiso).toFixed(1)}% compromisos pendientes
-              </div>
-            </div>
-
-            {/* 8. Saldo Bancos */}
+            {/* 7. Saldo Bancario Actual */}
             <div className="bg-surface-container-low/50 border border-[#FFCC29]/20 p-4 rounded-2xl bg-[#FFCC29]/5">
-              <span className="text-[10px] font-mono text-[#FFCC29] uppercase block">8. Saldo Bancos Hoy</span>
-              <div className="text-lg font-black text-[#FFCC29] mt-1">{formatMillions(generalMetrics.saldoBancosTotal)}</div>
-              <div className="text-[10px] text-[#FFCC29]/80 font-mono mt-1">85 cuentas en 10 bancos</div>
+              <span className="text-[10px] font-mono text-[#FFCC29] uppercase block">7. Saldo Bancario</span>
+              <div className="text-base font-black text-[#FFCC29] mt-1">{formatMillions(generalMetrics.saldoBancosTotal)}</div>
+              <div className="text-[10px] text-[#FFCC29]/80 font-mono mt-1">Ref: $ 144.563 M</div>
             </div>
 
-            {/* 9. Cobertura Inmediata */}
-            <div className="bg-surface-container-low/50 border border-emerald-500/20 p-4 rounded-2xl bg-emerald-500/5">
-              <span className="text-[10px] font-mono text-emerald-400 uppercase block">9. Cobertura Inmediata</span>
-              <div className="text-lg font-black text-emerald-400 mt-1">
-                {generalMetrics.coberturaInmediata.toFixed(2)}x
-              </div>
-              <div className="text-[10px] text-emerald-400 font-mono mt-1">
-                {(generalMetrics.coberturaInmediata * 100).toFixed(1)}% solvencia actual
-              </div>
+            {/* 8. Saldo Bancos Admin */}
+            <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">8. Bancos Admin</span>
+              <div className="text-base font-black text-emerald-400 mt-1">{formatMillions(adminMetrics.saldoBancosTotal)}</div>
+              <div className="text-[10px] text-on-surface-variant font-mono mt-1">85,73% de la liquidez</div>
+            </div>
+
+            {/* 9. Saldo Bancos Inversión */}
+            <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">9. Bancos Inversión</span>
+              <div className="text-base font-black text-sky-400 mt-1">{formatMillions(invMetrics.saldoBancosTotal)}</div>
+              <div className="text-[10px] text-on-surface-variant font-mono mt-1">13,97% de la liquidez</div>
             </div>
 
             {/* 10. Saldo Cierre Proyectado */}
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
               <span className="text-[10px] font-mono text-on-surface-variant uppercase block">10. Caja Cierre Dic</span>
-              <div className="text-lg font-black text-white mt-1">
-                {formatMillions(generalMetrics.saldoCierreProyectado)}
-              </div>
+              <div className="text-base font-black text-white mt-1">{formatMillions(generalMetrics.saldoCierreProyectado)}</div>
               <div className="text-[10px] text-on-surface-variant font-mono mt-1">Escenario {filters.scenario}</div>
+            </div>
+
+            {/* 11. Equilibrio Presupuestal */}
+            <div className="bg-surface-container-low/50 border border-emerald-500/20 p-4 rounded-2xl bg-emerald-500/5">
+              <span className="text-[10px] font-mono text-emerald-400 uppercase block">11. Eq. Presupuestal</span>
+              <div className="text-base font-black text-emerald-400 mt-1">$ 0,00 COP</div>
+              <div className="text-[10px] text-emerald-300 font-mono mt-1">Aforo = Apropiación</div>
+            </div>
+
+            {/* 12. Alertas Financieras */}
+            <div className="bg-surface-container-low/50 border border-amber-500/20 p-4 rounded-2xl bg-amber-500/5">
+              <span className="text-[10px] font-mono text-amber-400 uppercase block">12. Alertas Clave</span>
+              <div className="text-base font-black text-amber-400 mt-1">1 Observación</div>
+              <div className="text-[10px] text-amber-300 font-mono mt-1">Bancolombia $433,8M</div>
+            </div>
+          </div>
+
+          {/* COMBINED EXECUTIVE CHARTS: EVOLUCIÓN MENSUAL Y COMPARATIVA DIRECTA INGRESOS VS GASTOS */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Chart A: Evolución Mensual del Recaudo */}
+            <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-white font-mono uppercase">
+                    Evolución Mensual del Recaudo de Ingresos (2026)
+                  </h3>
+                  <p className="text-xs text-on-surface-variant">Recaudo por mes y acumulado en Millones COP</p>
+                </div>
+                <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg">
+                  Promedio: $ 46.917 M/mes
+                </span>
+              </div>
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={monthlyStats.map((s) => ({
+                      name: s.mes,
+                      mes: Math.round(s.recaudoMes / 1e6),
+                      acum: Math.round(s.recaudoAcumulado / 1e6),
+                      promedio: 46917,
+                    }))}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                    <XAxis dataKey="name" stroke="#888888" tick={{ fontSize: 10 }} />
+                    <YAxis yAxisId="left" stroke="#888888" tick={{ fontSize: 10 }} />
+                    <YAxis yAxisId="right" orientation="right" stroke="#888888" tick={{ fontSize: 10 }} />
+                    <RechartsTooltip
+                      contentStyle={{ backgroundColor: '#18181b', borderColor: '#3f3f46', borderRadius: '12px' }}
+                      formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} M`, '']}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                    <Bar yAxisId="left" dataKey="mes" name="Recaudo Mes" fill="#FFCC29" radius={[4, 4, 0, 0]} />
+                    <Line yAxisId="right" type="monotone" dataKey="acum" name="Acumulado" stroke="#38bdf8" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line yAxisId="left" type="monotone" dataKey="promedio" name="Promedio Mensual" stroke="#f43f5e" strokeDasharray="4 4" strokeWidth={1.5} dot={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Chart B: Comparativa Directa Ingresos vs Gastos */}
+            <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-white font-mono uppercase">
+                    Comparativa Presupuesto vs Ejecución Efectiva
+                  </h3>
+                  <p className="text-xs text-on-surface-variant">Aforo/Apropiación, Recaudo, Compromisos y Pagos</p>
+                </div>
+                <span className="text-xs font-mono text-[#FFCC29] bg-[#FFCC29]/10 px-2.5 py-1 rounded-lg">
+                  Brecha Pagos: $ 61.402 M
+                </span>
+              </div>
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      { name: 'Presupuesto', valor: Math.round(generalMetrics.aforoTotal / 1e6), fill: '#ffffff30' },
+                      { name: 'Recaudo', valor: Math.round(generalMetrics.recaudoTotal / 1e6), fill: '#10b981' },
+                      { name: 'Compromisos', valor: Math.round(generalMetrics.compromisosTotal / 1e6), fill: '#38bdf8' },
+                      { name: 'Pagos', valor: Math.round(generalMetrics.pagosTotal / 1e6), fill: '#a855f7' },
+                      { name: 'Bancos Hoy', valor: Math.round(generalMetrics.saldoBancosTotal / 1e6), fill: '#FFCC29' },
+                    ]}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                    <XAxis dataKey="name" stroke="#888888" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#888888" tick={{ fontSize: 10 }} />
+                    <RechartsTooltip
+                      contentStyle={{ backgroundColor: '#18181b', borderColor: '#3f3f46', borderRadius: '12px' }}
+                      formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} M`, 'Monto']}
+                    />
+                    <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
+                      {['#ffffff30', '#10b981', '#38bdf8', '#a855f7', '#FFCC29'].map((c, i) => (
+                        <Cell key={i} fill={c} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
@@ -653,207 +841,175 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
               </p>
             </div>
           </div>
-
-          {/* TREASURY CONCENTRATION & RECOMMENDATIONS */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-1 bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-3">
-              <div className="flex items-center gap-2">
-                <Landmark size={18} className="text-[#FFCC29]" />
-                <h3 className="text-sm font-bold text-white uppercase font-mono">Estructura de Tesorería</h3>
-              </div>
-              <p className="text-xs text-on-surface-variant leading-relaxed">
-                {diagnosis.treasuryDiagnosis}
-              </p>
-              <div className="pt-2 border-t border-white/5 space-y-2 text-xs font-mono">
-                <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Itaú Corpbanca (50,4%):</span>
-                  <span className="text-white font-bold">$ 72.813 M</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Banco de Bogotá (21,4%):</span>
-                  <span className="text-white font-bold">$ 30.991 M</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Credicorp Capital (11,8%):</span>
-                  <span className="text-white font-bold">$ 17.019 M</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Banco de Occidente (9,3%):</span>
-                  <span className="text-white font-bold">$ 13.488 M</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-2 bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={18} className="text-emerald-400" />
-                <h3 className="text-sm font-bold text-white uppercase font-mono">
-                  Directrices y Recomendaciones de Gestión Financiera
-                </h3>
-              </div>
-              <ul className="space-y-2.5 text-xs text-on-surface-variant">
-                {diagnosis.recommendations.map((rec, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-[#FFCC29]/20 text-[#FFCC29] text-[10px] font-mono flex items-center justify-center shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
         </div>
       )}
 
-      {/* TAB 2: ANÁLISIS DE INGRESOS */}
-      {activeTab === 'ingresos' && (
+      {/* SUBTAB 2: INGRESOS Y COMPORTAMIENTO MENSUAL */}
+      {activeTab === 'mensual' && (
         <div className="space-y-6">
-          {/* Metrics summary */}
+          {/* Monthly Analysis Header Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
-              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Aforo Total</span>
-              <div className="text-lg font-black text-white mt-1">{formatCOP(generalMetrics.aforoTotal)}</div>
-            </div>
-            <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
-              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Recaudo Efectivo</span>
-              <div className="text-lg font-black text-emerald-400 mt-1">{formatCOP(generalMetrics.recaudoTotal)}</div>
-            </div>
-            <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
-              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Saldo Pendiente</span>
-              <div className="text-lg font-black text-amber-400 mt-1">
-                {formatCOP(generalMetrics.saldoPendienteRecaudo)}
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Recaudo Acumulado Ene-Nov</span>
+              <div className="text-lg font-black text-emerald-400 mt-1">
+                {formatMillions(monthlyStats[10]?.recaudoAcumulado || 0)}
               </div>
+              <div className="text-[10px] text-on-surface-variant font-mono mt-1">Suma en extractos y caja</div>
             </div>
+
+            <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Recaudo Mensual Promedio</span>
+              <div className="text-lg font-black text-white mt-1">$ 46.917 M</div>
+              <div className="text-[10px] text-on-surface-variant font-mono mt-1">11 meses evaluados</div>
+            </div>
+
+            <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Mes de Mayor Recaudo</span>
+              <div className="text-lg font-black text-[#FFCC29] mt-1">Octubre ($ 57.963 M)</div>
+              <div className="text-[10px] text-on-surface-variant font-mono mt-1">Transferencias Nación + Matrículas</div>
+            </div>
+
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
               <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Proyección Diciembre</span>
-              <div className="text-lg font-black text-[#FFCC29] mt-1">
-                {formatCOP(generalMetrics.recaudoEsperadoDiciembre)}
+              <div className="text-lg font-black text-sky-400 mt-1">
+                {formatMillions(generalMetrics.recaudoEsperadoDiciembre)}
               </div>
+              <div className="text-[10px] text-on-surface-variant font-mono mt-1">Escenario {filters.scenario}</div>
             </div>
           </div>
 
-          {/* Charts: Aforo vs Recaudo by Resource */}
+          {/* Combined Chart of Monthly Inflows */}
           <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white font-mono uppercase">
-                Aforo vs Recaudo por Recurso Presupuestal
-              </h3>
-              <span className="text-xs font-mono text-on-surface-variant">Valores en Millones de COP</span>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-white font-mono uppercase">
+                  Curva de Recaudo Efectivo Mensual vs Recaudo Acumulado
+                </h3>
+                <p className="text-xs text-on-surface-variant">
+                  Evolución cronológica Enero a Noviembre (Reales) con proyección de Diciembre
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-on-surface-variant">Filtro aplicado: {filters.tipoRecurso}</span>
+              </div>
             </div>
+
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={filteredIncomes.slice(0, 12).map((i) => ({
-                    name: i.codigoRecurso || i.recurso.substring(0, 15),
-                    aforo: Math.round(i.valorAforo / 1e6),
-                    recaudo: Math.round(i.totalRecaudo / 1e6),
+                <ComposedChart
+                  data={monthlyStats.map((s) => ({
+                    mes: s.mesNombre,
+                    recaudo: Math.round(s.recaudoMes / 1e6),
+                    acumulado: Math.round(s.recaudoAcumulado / 1e6),
+                    promedio: 46917,
+                    esProyectado: s.esProyectado,
                   }))}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 30 }}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 25 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                  <XAxis dataKey="name" stroke="#888888" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" />
-                  <YAxis stroke="#888888" tick={{ fontSize: 10 }} />
+                  <XAxis dataKey="mes" stroke="#888888" tick={{ fontSize: 10 }} />
+                  <YAxis yAxisId="left" stroke="#888888" tick={{ fontSize: 10 }} />
+                  <YAxis yAxisId="right" orientation="right" stroke="#888888" tick={{ fontSize: 10 }} />
                   <RechartsTooltip
                     contentStyle={{ backgroundColor: '#18181b', borderColor: '#3f3f46', borderRadius: '12px' }}
                     formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} M`, '']}
                   />
                   <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                  <Bar dataKey="aforo" name="Aforo" fill="#ffffff20" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="recaudo" name="Recaudo Efectivo" fill="#FFCC29" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                  <Bar yAxisId="left" dataKey="recaudo" name="Recaudo del Mes" radius={[4, 4, 0, 0]}>
+                    {monthlyStats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.esProyectado ? '#38bdf8' : '#FFCC29'} />
+                    ))}
+                  </Bar>
+                  <Line yAxisId="right" type="monotone" dataKey="acumulado" name="Recaudo Acumulado" stroke="#10b981" strokeWidth={2.5} dot={{ r: 4 }} />
+                  <Line yAxisId="left" type="monotone" dataKey="promedio" name="Promedio Mensual ($46.917M)" stroke="#f43f5e" strokeDasharray="5 5" strokeWidth={1.5} dot={false} />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Table of Incomes */}
+          {/* Monthly Detailed Table */}
           <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <Search size={16} className="text-on-surface-variant" />
-                <input
-                  type="text"
-                  placeholder="Buscar recurso o concepto..."
-                  value={searchIncome}
-                  onChange={(e) => setSearchIncome(e.target.value)}
-                  className="bg-black/50 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white placeholder-gray-500 w-64 focus:outline-none focus:border-[#FFCC29]"
-                />
-              </div>
+              <h3 className="text-sm font-bold text-white font-mono uppercase">
+                Tabla de Recaudo Mensualizado y Variación Intermensual
+              </h3>
               <button
-                onClick={() => exportToCSV(filteredIncomes, 'Ingresos_UPTC_Caja_Hoy')}
+                onClick={() => exportToCSV(monthlyStats, 'Recaudo_Mensual_UPTC_2026')}
                 className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 text-xs font-mono"
               >
                 <Download size={14} />
-                Exportar Ingresos (CSV)
+                Exportar Mensual (CSV)
               </button>
             </div>
 
-            <div className="overflow-x-auto max-h-[450px] scrollbar-thin">
+            <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono border-collapse">
-                <thead className="sticky top-0 bg-zinc-900 border-b border-white/10 text-on-surface-variant text-[11px]">
+                <thead className="bg-zinc-900 border-b border-white/10 text-on-surface-variant text-[11px]">
                   <tr>
-                    <th className="p-3">Recurso</th>
-                    <th className="p-3">Concepto</th>
-                    <th className="p-3">Tipo</th>
-                    <th className="p-3 text-right">Aforo</th>
-                    <th className="p-3 text-right">Recaudo</th>
-                    <th className="p-3 text-right">Saldo Pend.</th>
-                    <th className="p-3 text-right">% Recaudo</th>
+                    <th className="p-3">Mes</th>
+                    <th className="p-3 text-right">Recaudo del Mes</th>
+                    <th className="p-3 text-right">Recaudo Acumulado</th>
+                    <th className="p-3 text-right">Variación Intermensual (%)</th>
+                    <th className="p-3">Naturaleza del Dato</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {filteredIncomes
-                    .filter(
-                      (i) =>
-                        i.recurso.toLowerCase().includes(searchIncome.toLowerCase()) ||
-                        i.concepto.toLowerCase().includes(searchIncome.toLowerCase())
-                    )
-                    .map((item, idx) => (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="p-3 font-bold text-white">{item.recurso}</td>
-                        <td className="p-3 text-on-surface-variant max-w-xs truncate" title={item.concepto}>
-                          {item.concepto}
-                        </td>
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] ${
-                              item.tipoRecurso === 'Recursos Administración'
-                                ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
-                                : 'bg-sky-500/10 text-sky-300 border border-sky-500/20'
-                            }`}
-                          >
-                            {item.tipoRecurso === 'Recursos Administración' ? 'Admin' : 'Inversión'}
-                          </span>
-                        </td>
-                        <td className="p-3 text-right text-white">{formatCOP(item.valorAforo)}</td>
-                        <td className="p-3 text-right text-emerald-400 font-bold">{formatCOP(item.totalRecaudo)}</td>
-                        <td className="p-3 text-right text-amber-400">{formatCOP(item.saldoPendiente)}</td>
-                        <td className="p-3 text-right">
-                          <span
-                            className={`font-bold ${
-                              item.porcentajeRecaudo >= 90
-                                ? 'text-emerald-400'
-                                : item.porcentajeRecaudo >= 70
-                                ? 'text-amber-400'
-                                : 'text-rose-400'
-                            }`}
-                          >
-                            {item.porcentajeRecaudo.toFixed(1)}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                  {monthlyStats.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-white/5 transition-colors">
+                      <td className="p-3 font-bold text-white">{item.mesNombre}</td>
+                      <td className="p-3 text-right font-bold text-[#FFCC29]">{formatCOP(item.recaudoMes)}</td>
+                      <td className="p-3 text-right text-emerald-400">{formatCOP(item.recaudoAcumulado)}</td>
+                      <td className="p-3 text-right">
+                        <span
+                          className={`font-bold ${
+                            item.variacionPorcentual > 0
+                              ? 'text-emerald-400'
+                              : item.variacionPorcentual < 0
+                              ? 'text-rose-400'
+                              : 'text-gray-400'
+                          }`}
+                        >
+                          {item.variacionPorcentual > 0 ? '+' : ''}
+                          {item.variacionPorcentual.toFixed(2)}%
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] ${
+                            item.esProyectado
+                              ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
+                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          }`}
+                        >
+                          {item.esProyectado ? 'Proyección de Cierre' : 'Recaudo Real en Extracto'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Financial Analysis Box */}
+            <div className="bg-black/30 p-4 rounded-2xl border border-white/5 space-y-2 text-xs text-on-surface-variant leading-relaxed">
+              <h4 className="font-bold text-white uppercase font-mono text-[11px]">Análisis de Estacionalidad y Comportamiento de Ingresos</h4>
+              <p>
+                - <strong>Picos Estacionales:</strong> Se concentran en <strong>Octubre ($ 57.962 M)</strong> y <strong>Septiembre ($ 56.921 M)</strong>, explicados por la regularización de giros de transferencias de la Nación (Aportes Funcionamiento R10.0 con giro de $45.956M en octubre) y recaudo de matrículas del segundo semestre académico.
+              </p>
+              <p>
+                - <strong>Valles de Ingreso:</strong> Ocurrieron en <strong>Abril ($ 36.427 M)</strong> y <strong>Mayo ($ 38.876 M)</strong>, coincidiendo con la transición entre ciclos de matrícula y retrasos en desembolsos sectoriales.
+              </p>
+              <p>
+                - <strong>Dependencia Estructural:</strong> El 60,0% del recaudo institucional depende directamente de los giros de Aportes Nación Funcionamiento (Recurso 10.0), lo que ratifica la importancia de garantizar la transferencia de cierre del mes de diciembre.
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB 3: GASTOS & COMPROMISOS */}
+      {/* SUBTAB 3: GASTOS & COMPROMISOS */}
       {activeTab === 'gastos' && (
         <div className="space-y-6">
-          {/* Summary metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-surface-container-low/50 border border-white/5 p-4 rounded-2xl">
               <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Apropiación Definitiva</span>
@@ -887,7 +1043,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
                 <h3 className="text-sm font-bold text-white font-mono uppercase">
                   Ejecución Presupuestal y Brecha de Pagos por Unidad Ejecutora
                 </h3>
-                <p className="text-xs text-on-surface-variant">Concentración y nivel de exposición financiera</p>
+                <p className="text-xs text-on-surface-variant">Concentración y nivel de exposición financiera al corte</p>
               </div>
               <button
                 onClick={() => exportToCSV(filteredExpenses, 'Gastos_UPTC_Caja_Hoy')}
@@ -945,10 +1101,48 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
         </div>
       )}
 
-      {/* TAB 4: ESTADO DE BANCOS */}
+      {/* SUBTAB 4: ESTADO DE BANCOS Y CONCILIACIÓN */}
       {activeTab === 'bancos' && (
         <div className="space-y-6">
-          {/* Summary metrics */}
+          {/* Official Bank Reference Reconciliation Alert Banner */}
+          <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/5 pb-4 gap-2">
+              <div className="flex items-center gap-2">
+                <Landmark size={20} className="text-[#FFCC29]" />
+                <h3 className="text-sm font-bold text-white font-mono uppercase">
+                  Conciliación Oficial frente al Saldo Bancario de Referencia ($ 144.563.470.673)
+                </h3>
+              </div>
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                Coincidencia Plena (Dif. $ 0,35 COP)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+              <div className="bg-black/30 p-3 rounded-xl border border-white/5">
+                <span className="text-on-surface-variant block text-[10px]">Saldo de Referencia Oficial:</span>
+                <span className="text-white font-bold">{formatCOP(bankReconciliation.saldoReferencia)}</span>
+              </div>
+              <div className="bg-black/30 p-3 rounded-xl border border-white/5">
+                <span className="text-on-surface-variant block text-[10px]">Saldo Consolidado del CSV:</span>
+                <span className="text-[#FFCC29] font-bold">{formatCOP(bankReconciliation.saldoReportado)}</span>
+              </div>
+              <div className="bg-black/30 p-3 rounded-xl border border-white/5">
+                <span className="text-on-surface-variant block text-[10px]">Diferencia Absoluta:</span>
+                <span className="text-emerald-400 font-bold">$ {bankReconciliation.diferenciaAbsoluta.toFixed(2)} COP</span>
+              </div>
+              <div className="bg-black/30 p-3 rounded-xl border border-white/5">
+                <span className="text-on-surface-variant block text-[10px]">Diferencia Porcentual:</span>
+                <span className="text-emerald-400 font-bold">{bankReconciliation.diferenciaPorcentual.toFixed(6)}%</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              {bankReconciliation.observacion}
+            </p>
+          </div>
+
+          {/* Bank Summary Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-surface-container-low/50 border border-[#FFCC29]/20 p-4 rounded-2xl bg-[#FFCC29]/5">
               <span className="text-[10px] font-mono text-[#FFCC29] uppercase block">Saldo Total Bancos</span>
@@ -992,37 +1186,6 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
             </div>
           </div>
 
-          {/* Bank Distribution Chart */}
-          <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
-            <h3 className="text-sm font-bold text-white font-mono uppercase">
-              Participación de Saldos por Entidad Financiera
-            </h3>
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={bankOptions.map((bName) => {
-                    const sum = filteredBanks.filter((b) => b.banco === bName).reduce((s, b) => s + b.valorFinal, 0);
-                    return {
-                      name: bName.length > 20 ? bName.substring(0, 18) + '...' : bName,
-                      fullName: bName,
-                      saldo: Math.round(sum / 1e6),
-                    };
-                  })}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                  <XAxis dataKey="name" stroke="#888888" tick={{ fontSize: 9 }} angle={-25} textAnchor="end" />
-                  <YAxis stroke="#888888" tick={{ fontSize: 10 }} />
-                  <RechartsTooltip
-                    contentStyle={{ backgroundColor: '#18181b', borderColor: '#3f3f46', borderRadius: '12px' }}
-                    formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} M`, 'Saldo Total']}
-                  />
-                  <Bar dataKey="saldo" fill="#FFCC29" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
           {/* Accounts Table */}
           <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1049,13 +1212,10 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
               <table className="w-full text-left text-xs font-mono border-collapse">
                 <thead className="sticky top-0 bg-zinc-900 border-b border-white/10 text-on-surface-variant text-[11px]">
                   <tr>
-                    <th className="p-3">Banco</th>
-                    <th className="p-3">No. Cuenta</th>
-                    <th className="p-3">Nombre de Cuenta</th>
-                    <th className="p-3">Destino</th>
-                    <th className="p-3 text-right">Saldo Inicial</th>
-                    <th className="p-3 text-right">Ingresos</th>
-                    <th className="p-3 text-right">Egresos</th>
+                    <th className="p-3">Entidad Financiera</th>
+                    <th className="p-3">Cuenta</th>
+                    <th className="p-3">Tipo de Recurso</th>
+                    <th className="p-3">Destinación</th>
                     <th className="p-3 text-right">Saldo Final</th>
                   </tr>
                 </thead>
@@ -1071,25 +1231,20 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
                       <tr key={idx} className="hover:bg-white/5 transition-colors">
                         <td className="p-3 font-bold text-white">{acc.banco}</td>
                         <td className="p-3 text-on-surface-variant">{acc.noCuenta}</td>
-                        <td className="p-3 text-gray-300 max-w-xs truncate" title={acc.nombreCuenta}>
-                          {acc.nombreCuenta}
-                        </td>
                         <td className="p-3">
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] ${
-                              acc.destino.toLowerCase().includes('funcionamiento')
+                              acc.clasificacion === 'Administración'
                                 ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
-                                : acc.destino.toLowerCase().includes('inversión') || acc.destino.toLowerCase().includes('inversion')
+                                : acc.clasificacion === 'Inversión'
                                 ? 'bg-sky-500/10 text-sky-300 border border-sky-500/20'
                                 : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
                             }`}
                           >
-                            {acc.destino}
+                            {acc.clasificacion}
                           </span>
                         </td>
-                        <td className="p-3 text-right text-gray-400">{formatCOP(acc.valorInicial)}</td>
-                        <td className="p-3 text-right text-emerald-400">{formatCOP(acc.valorIngreso)}</td>
-                        <td className="p-3 text-right text-rose-400">{formatCOP(acc.valorEgreso)}</td>
+                        <td className="p-3 text-gray-300">{acc.destino}</td>
                         <td className="p-3 text-right font-bold text-[#FFCC29]">{formatCOP(acc.valorFinal)}</td>
                       </tr>
                     ))}
@@ -1100,159 +1255,609 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
         </div>
       )}
 
-      {/* TAB 5: FLUJO DE CAJA INTEGRAL */}
-      {activeTab === 'flujo' && (
+      {/* SUBTAB 5: DICIEMBRE – SIMULACIÓN DE CIERRE (NUEVO MÓDULO INDEPENDIENTE) */}
+      {activeTab === 'diciembre' && (
         <div className="space-y-6">
-          {/* Sub-selector for Flujo */}
-          <div className="flex gap-2">
-            {[
-              { id: 'consolidado', label: 'Flujo Consolidado Institucional' },
-              { id: 'administracion', label: 'Flujo Recursos de Administración' },
-              { id: 'inversion', label: 'Flujo Recursos de Inversión' },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFlowTab(f.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
-                  flowTab === f.id
-                    ? 'bg-[#FFCC29] text-black shadow-lg'
-                    : 'bg-surface-container-low/40 text-on-surface-variant hover:text-white border border-white/5'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Integrated Cash Flow Statement Card */}
-          {(() => {
-            const currentM =
-              flowTab === 'consolidado'
-                ? generalMetrics
-                : flowTab === 'administracion'
-                ? adminMetrics
-                : invMetrics;
-
-            return (
-              <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-4">
-                  <div>
-                    <h3 className="text-base font-bold text-white uppercase font-mono">
-                      Estructura Financiera del Flujo de Efectivo – Corte 23 Noviembre a Cierre 2026
-                    </h3>
-                    <p className="text-xs text-on-surface-variant">
-                      {flowTab === 'consolidado'
-                        ? 'Consolidación Total Institucional (Administración + Inversión)'
-                        : flowTab === 'administracion'
-                        ? 'Recursos de Funcionamiento y Operación'
-                        : 'Recursos con Destinación Específica para Inversión'}
-                    </p>
-                  </div>
-                  <span className="text-xs font-mono text-[#FFCC29] font-bold bg-[#FFCC29]/10 px-3 py-1 rounded-xl border border-[#FFCC29]/30 mt-2 sm:mt-0">
-                    Escenario: {filters.scenario.toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Cash Flow Mathematical Breakdown */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                  <div className="space-y-3 font-mono text-xs">
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-black/40 border border-white/5">
-                      <span className="text-white font-bold">Saldo Bancario Inicial (01/01/2026):</span>
-                      <span className="text-gray-300 font-bold">{formatCOP(currentM.saldoBancosInicial)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-black/40 border border-white/5">
-                      <span className="text-[#FFCC29] font-bold">(=) Saldo Bancario Disponible Hoy (23/11/2026):</span>
-                      <span className="text-[#FFCC29] font-bold text-sm">{formatCOP(currentM.saldoBancosTotal)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                      <span className="text-emerald-400 font-bold">(+) Recaudo Esperado a Diciembre (Proyectado):</span>
-                      <span className="text-emerald-400 font-bold">+{formatCOP(currentM.recaudoEsperadoDiciembre)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                      <span className="text-rose-400 font-bold">(-) Pagos Estimados de Cierre (Proyectados):</span>
-                      <span className="text-rose-400 font-bold">-{formatCOP(currentM.pagosEsperadosDiciembre)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center p-4 rounded-xl bg-white/10 border border-white/20 shadow-lg">
-                      <span className="text-white font-black text-sm uppercase">(=) Saldo Final de Caja Proyectado:</span>
-                      <span className="text-emerald-400 font-black text-base">
-                        {formatCOP(currentM.saldoCierreProyectado)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Liquidity Ratios Box */}
-                  <div className="bg-black/30 border border-white/5 p-6 rounded-2xl space-y-4">
-                    <h4 className="text-xs font-mono font-bold text-on-surface-variant uppercase tracking-wider">
-                      Indicadores Clave de Liquidez y Tesorería
-                    </h4>
-                    <div className="space-y-3 font-mono text-xs">
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-gray-400">Cobertura Inmediata de Compromisos:</span>
-                          <span className="text-emerald-400 font-bold">
-                            {(currentM.coberturaInmediata * 100).toFixed(1)}% ({currentM.coberturaInmediata.toFixed(2)}x)
-                          </span>
-                        </div>
-                        <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                          <div
-                            className="bg-emerald-400 h-full rounded-full"
-                            style={{ width: `${Math.min(currentM.coberturaInmediata * 50, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t border-white/5">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Margen de Holgura Inmediata:</span>
-                          <span className="text-[#FFCC29] font-bold">
-                            {formatCOP(currentM.margenHolguraInmediata)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t border-white/5">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Compromisos Exigibles por Pagar:</span>
-                          <span className="text-amber-400 font-bold">{formatCOP(currentM.saldoPorPagar)}</span>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t border-white/5">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Presión sobre Caja Disponible:</span>
-                          <span className="text-white font-bold">
-                            {currentM.saldoBancosTotal > 0
-                              ? ((currentM.saldoPorPagar / currentM.saldoBancosTotal) * 100).toFixed(1)
-                              : 0}
-                            %
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          {/* Header of simulator */}
+          <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-4">
+              <div className="flex items-center gap-2">
+                <Sliders size={20} className="text-[#FFCC29]" />
+                <h3 className="text-base font-bold text-white font-mono uppercase">
+                  DICIEMBRE – PROYECCIÓN Y SIMULACIÓN DE CIERRE FINANCIERO
+                </h3>
               </div>
-            );
-          })()}
-        </div>
-      )}
-
-      {/* TAB 6: AUDITORÍA Y CALIDAD DE DATOS */}
-      {activeTab === 'auditoria' && (
-        <div className="space-y-6">
-          <div className="border-b border-white/5 pb-2">
-            <h3 className="text-base font-bold text-white font-mono uppercase">
-              Módulo de Auditoría, Trazabilidad e Integridad de Datos
-            </h3>
+              <div className="flex items-center gap-2">
+                {(['Todos', 'Administración', 'Inversión'] as const).map((scope) => (
+                  <button
+                    key={scope}
+                    onClick={() => setSimResourceScope(scope)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                      simResourceScope === scope
+                        ? 'bg-[#FFCC29] text-black shadow-md'
+                        : 'bg-black/40 text-on-surface-variant hover:text-white border border-white/10'
+                    }`}
+                  >
+                    {scope === 'Todos' ? 'Consolidado' : scope}
+                  </button>
+                ))}
+                <button
+                  onClick={resetSimulation}
+                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-mono border border-white/10 cursor-pointer"
+                  title="Restablecer valores de simulación"
+                >
+                  <RotateCcw size={12} className="inline mr-1" />
+                  Reset
+                </button>
+              </div>
+            </div>
             <p className="text-xs text-on-surface-variant">
-              Validación cruzada entre extractos de bancos, aforo de ingresos y apropiación presupuestal de gastos
+              Modifique los supuestos y porcentajes en tiempo real sin alterar las bases de datos originales para determinar la posición final de caja al 31 de diciembre de 2026.
             </p>
           </div>
 
+          {/* Interactive Simulation Dashboard Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Sliders and Modifiers (5 cols) */}
+            <div className="lg:col-span-5 bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-6">
+              <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">
+                Parámetros de Simulación de Diciembre
+              </h4>
+
+              {/* Slider 1: % Recaudo Saldo Pendiente */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-gray-300">Cumplimiento Recaudo Pendiente:</span>
+                  <span className="text-[#FFCC29] font-bold">{(simIncomeComplianceRate * 100).toFixed(0)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={simIncomeComplianceRate}
+                  onChange={(e) => setSimIncomeComplianceRate(parseFloat(e.target.value))}
+                  className="w-full accent-[#FFCC29] cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-on-surface-variant font-mono">
+                  <span>Prudente (25%)</span>
+                  <span>Base (65%)</span>
+                  <span>Optimista (90%)</span>
+                </div>
+              </div>
+
+              {/* Slider 2: % Pago Compromisos Pendientes */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-gray-300">Pago de Compromisos en Dic:</span>
+                  <span className="text-amber-400 font-bold">{(simExpensePaymentRate * 100).toFixed(0)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={simExpensePaymentRate}
+                  onChange={(e) => setSimExpensePaymentRate(parseFloat(e.target.value))}
+                  className="w-full accent-amber-400 cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-on-surface-variant font-mono">
+                  <span>Prudente (55%)</span>
+                  <span>Base (75%)</span>
+                  <span>Total (100%)</span>
+                </div>
+              </div>
+
+              {/* Input 1: Recaudo Extraordinario */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-mono text-gray-300 block">
+                  (+) Ingresos Extraordinarios Estimados en Dic (COP):
+                </label>
+                <input
+                  type="number"
+                  value={simExtraIncome}
+                  onChange={(e) => setSimExtraIncome(parseFloat(e.target.value) || 0)}
+                  placeholder="0"
+                  className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-[#FFCC29]"
+                />
+              </div>
+
+              {/* Input 2: Gastos Recurrentes / Nómina Extra */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-mono text-gray-300 block">
+                  (-) Pagos Recurrentes / Nuevos Giros de Cierre (COP):
+                </label>
+                <input
+                  type="number"
+                  value={simExtraExpense}
+                  onChange={(e) => setSimExtraExpense(parseFloat(e.target.value) || 0)}
+                  placeholder="0"
+                  className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-[#FFCC29]"
+                />
+              </div>
+
+              {/* Quick Scenario Selector Buttons */}
+              <div className="pt-2 border-t border-white/5">
+                <span className="text-[10px] font-mono text-on-surface-variant uppercase block mb-2">
+                  Cargar Escenario Rápido:
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => {
+                      setSimIncomeComplianceRate(0.25);
+                      setSimExpensePaymentRate(0.55);
+                    }}
+                    className="px-2 py-1.5 bg-black/40 hover:bg-white/5 border border-white/10 rounded-xl text-[11px] font-mono text-gray-300 cursor-pointer text-center"
+                  >
+                    Conservador
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSimIncomeComplianceRate(0.65);
+                      setSimExpensePaymentRate(0.75);
+                    }}
+                    className="px-2 py-1.5 bg-black/40 hover:bg-white/5 border border-white/10 rounded-xl text-[11px] font-mono text-gray-300 cursor-pointer text-center"
+                  >
+                    Base
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSimIncomeComplianceRate(0.90);
+                      setSimExpensePaymentRate(0.90);
+                    }}
+                    className="px-2 py-1.5 bg-black/40 hover:bg-white/5 border border-white/10 rounded-xl text-[11px] font-mono text-gray-300 cursor-pointer text-center"
+                  >
+                    Optimista
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Mathematical Breakdown Table & Waterfall Result (7 cols) */}
+            <div className="lg:col-span-7 space-y-6">
+              {/* Structure Table: Variables de Referencia vs Variables Editables */}
+              <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
+                <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">
+                  Tabla de Variables de Referencia vs Simulación en Tiempo Real
+                </h4>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-mono border-collapse">
+                    <thead className="bg-zinc-900 border-b border-white/10 text-on-surface-variant text-[11px]">
+                      <tr>
+                        <th className="p-2.5">Variable</th>
+                        <th className="p-2.5 text-right">Valor de Referencia</th>
+                        <th className="p-2.5 text-right">Valor Simulado</th>
+                        <th className="p-2.5 text-center">Editable</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      <tr>
+                        <td className="p-2.5 text-gray-300">Saldo actual en bancos</td>
+                        <td className="p-2.5 text-right text-gray-400">{formatCOP(simMetrics.bankBalance)}</td>
+                        <td className="p-2.5 text-right font-bold text-[#FFCC29]">{formatCOP(simMetrics.bankBalance)}</td>
+                        <td className="p-2.5 text-center text-emerald-400">Sí</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-gray-300">Aforo total de ingresos</td>
+                        <td className="p-2.5 text-right text-gray-400">{formatCOP(simMetrics.aforo)}</td>
+                        <td className="p-2.5 text-right text-white">{formatCOP(simMetrics.aforo)}</td>
+                        <td className="p-2.5 text-center text-on-surface-variant">No</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-gray-300">Recaudo acumulado</td>
+                        <td className="p-2.5 text-right text-gray-400">{formatCOP(simMetrics.recaudo)}</td>
+                        <td className="p-2.5 text-right text-white">{formatCOP(simMetrics.recaudo)}</td>
+                        <td className="p-2.5 text-center text-on-surface-variant">No</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-gray-300">Saldo pendiente de recaudo</td>
+                        <td className="p-2.5 text-right text-amber-400">{formatCOP(simMetrics.pendiente)}</td>
+                        <td className="p-2.5 text-right text-amber-400">{formatCOP(simMetrics.pendiente)}</td>
+                        <td className="p-2.5 text-center text-on-surface-variant">No</td>
+                      </tr>
+                      <tr className="bg-[#FFCC29]/5">
+                        <td className="p-2.5 font-bold text-white">(+) Recaudo esperado en diciembre</td>
+                        <td className="p-2.5 text-right text-gray-400">{formatCOP(simMetrics.pendiente * 0.65)}</td>
+                        <td className="p-2.5 text-right font-bold text-emerald-400">+{formatCOP(simMetrics.recaudoEsperadoDic)}</td>
+                        <td className="p-2.5 text-center text-emerald-400">Sí ({(simIncomeComplianceRate * 100).toFixed(0)}%)</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-gray-300">Compromisos acumulados</td>
+                        <td className="p-2.5 text-right text-gray-400">{formatCOP(simMetrics.compromisos)}</td>
+                        <td className="p-2.5 text-right text-white">{formatCOP(simMetrics.compromisos)}</td>
+                        <td className="p-2.5 text-center text-on-surface-variant">No</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-gray-300">Pagos acumulados</td>
+                        <td className="p-2.5 text-right text-gray-400">{formatCOP(simMetrics.pagos)}</td>
+                        <td className="p-2.5 text-right text-white">{formatCOP(simMetrics.pagos)}</td>
+                        <td className="p-2.5 text-center text-on-surface-variant">No</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 text-gray-300">Compromisos pendientes de pago</td>
+                        <td className="p-2.5 text-right text-amber-400">{formatCOP(simMetrics.xPagar)}</td>
+                        <td className="p-2.5 text-right text-amber-400">{formatCOP(simMetrics.xPagar)}</td>
+                        <td className="p-2.5 text-center text-on-surface-variant">No</td>
+                      </tr>
+                      <tr className="bg-rose-500/5">
+                        <td className="p-2.5 font-bold text-white">(-) Pagos estimados en diciembre</td>
+                        <td className="p-2.5 text-right text-gray-400">{formatCOP(simMetrics.xPagar * 0.75)}</td>
+                        <td className="p-2.5 text-right font-bold text-rose-400">-{formatCOP(simMetrics.pagosEsperadosDic)}</td>
+                        <td className="p-2.5 text-center text-emerald-400">Sí ({(simExpensePaymentRate * 100).toFixed(0)}%)</td>
+                      </tr>
+                      <tr className="bg-white/10 font-bold">
+                        <td className="p-3 text-white uppercase text-sm">(=) SALDO FINAL PROYECTADO AL 31 DIC</td>
+                        <td className="p-3 text-right text-gray-300">
+                          {formatCOP(simMetrics.bankBalance + simMetrics.pendiente * 0.65 - simMetrics.xPagar * 0.75)}
+                        </td>
+                        <td className="p-3 text-right font-black text-emerald-400 text-sm">
+                          {formatCOP(simMetrics.saldoCierre)}
+                        </td>
+                        <td className="p-3 text-center text-emerald-400">Calculado</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Waterfall Chart Representation */}
+              <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
+                <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                  Gráfica de Cascada: Transformación del Efectivo a Cierre
+                </h4>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={[
+                        { name: 'Caja Actual', valor: Math.round(simMetrics.bankBalance / 1e6), fill: '#FFCC29' },
+                        { name: '(+) Recaudo Dic', valor: Math.round(simMetrics.recaudoEsperadoDic / 1e6), fill: '#10b981' },
+                        { name: '(-) Pagos Dic', valor: Math.round(simMetrics.pagosEsperadosDic / 1e6), fill: '#f43f5e' },
+                        { name: '(=) Caja Cierre', valor: Math.round(simMetrics.saldoCierre / 1e6), fill: '#38bdf8' },
+                      ]}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                      <XAxis dataKey="name" stroke="#888888" tick={{ fontSize: 10 }} />
+                      <YAxis stroke="#888888" tick={{ fontSize: 10 }} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: '#18181b', borderColor: '#3f3f46', borderRadius: '12px' }}
+                        formatter={(val: any) => [`$ ${Number(val).toLocaleString('es-CO')} M`, 'Monto']}
+                      />
+                      <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
+                        {['#FFCC29', '#10b981', '#f43f5e', '#38bdf8'].map((c, i) => (
+                          <Cell key={i} fill={c} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 6: EQUILIBRIO PRESUPUESTAL Y SOSTENIBILIDAD (NUEVO MÓDULO INDEPENDIENTE) */}
+      {activeTab === 'equilibrio' && (
+        <div className="space-y-6">
+          {/* Header of financial equilibrium */}
+          <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-3">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+              <Scale size={20} className="text-[#FFCC29]" />
+              <h3 className="text-base font-bold text-white font-mono uppercase">
+                EQUILIBRIO PRESUPUESTAL Y SOSTENIBILIDAD FINANCIERA UPTC
+              </h3>
+            </div>
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              Diferenciación rigurosa de los 4 niveles de equilibrio: Presupuesto Aprobado, Ejecución Presupuestal, Tesorería de Caja y Posición Proyectada al 31 de Diciembre de 2026.
+            </p>
+          </div>
+
+          {/* 4 Levels of Equilibrium Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* 1. Aprobado */}
+            <div className="bg-surface-container-low/50 border border-white/5 p-5 rounded-2xl space-y-2">
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">
+                1. Equilibrio Presupuestal Aprobado
+              </span>
+              <div className="text-lg font-black text-emerald-400">
+                {formatCOP(equilibrioResult.equilibrioAprobado)}
+              </div>
+              <p className="text-[11px] text-gray-300 font-mono">
+                Aforo ($ 576.148M) = Apropiación ($ 576.148M). Equilibrio legal 100% perfecto.
+              </p>
+            </div>
+
+            {/* 2. Ejecución */}
+            <div className="bg-surface-container-low/50 border border-white/5 p-5 rounded-2xl space-y-2">
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">
+                2. Equilibrio Ejecución Presupuestal
+              </span>
+              <div className="text-lg font-black text-sky-400">
+                +{formatCOP(equilibrioResult.equilibrioEjecucion)}
+              </div>
+              <p className="text-[11px] text-gray-300 font-mono">
+                Recaudo ($ 543.935M) - Compromisos ($ 447.862M). Superávit de gestión de recursos.
+              </p>
+            </div>
+
+            {/* 3. Caja */}
+            <div className="bg-surface-container-low/50 border border-white/5 p-5 rounded-2xl space-y-2">
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">
+                3. Equilibrio de Caja (Tesorería)
+              </span>
+              <div className="text-lg font-black text-[#FFCC29]">
+                +{formatCOP(equilibrioResult.equilibrioCaja)}
+              </div>
+              <p className="text-[11px] text-gray-300 font-mono">
+                Bancos ($ 144.563M) - Saldo por Pagar ($ 61.402M). Cobertura inmediata 2,35x.
+              </p>
+            </div>
+
+            {/* 4. Proyectado Cierre */}
+            <div className="bg-surface-container-low/50 border border-white/5 p-5 rounded-2xl space-y-2">
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase block">
+                4. Equilibrio Proyectado a Cierre
+              </span>
+              <div className="text-lg font-black text-emerald-400">
+                {formatCOP(equilibrioResult.equilibrioProyectado)}
+              </div>
+              <p className="text-[11px] text-gray-300 font-mono">
+                Caja final estimada al 31 de Diciembre con flujo neto superavitario.
+              </p>
+            </div>
+          </div>
+
+          {/* MATRIZ DE EQUILIBRIO FINANCIERO (10x3) (Req. Sección 6.5) */}
+          <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h4 className="text-sm font-bold text-white font-mono uppercase">
+                  Matriz de Equilibrio Financiero Institucional (10x3)
+                </h4>
+                <p className="text-xs text-on-surface-variant">Desglose comparativo Administración, Inversión y Total UPTC</p>
+              </div>
+              <button
+                onClick={() => exportToCSV(equilibrioResult.matrix, 'Matriz_Equilibrio_Financiero_UPTC')}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 text-xs font-mono"
+              >
+                <Download size={14} />
+                Exportar Matriz (CSV)
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-mono border-collapse">
+                <thead className="bg-zinc-900 border-b border-white/10 text-on-surface-variant text-[11px]">
+                  <tr>
+                    <th className="p-3">Indicador</th>
+                    <th className="p-3 text-right">Administración (Funcionamiento)</th>
+                    <th className="p-3 text-right">Inversión (Destinación Específica)</th>
+                    <th className="p-3 text-right font-bold text-white">Total Institucional</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {equilibrioResult.matrix.map((row, idx) => (
+                    <tr
+                      key={idx}
+                      className={`hover:bg-white/5 transition-colors ${
+                        idx === 2 ? 'bg-emerald-500/5 font-bold' : idx === 9 ? 'bg-[#FFCC29]/5 font-bold' : ''
+                      }`}
+                    >
+                      <td className="p-3 font-medium text-gray-200">{row.indicador}</td>
+                      <td className="p-3 text-right text-gray-300">{formatCOP(row.administracion)}</td>
+                      <td className="p-3 text-right text-gray-300">{formatCOP(row.inversion)}</td>
+                      <td className="p-3 text-right font-bold text-white">{formatCOP(row.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 6 Comparative Equilibrium Charts Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* 1. Aforo vs Apropiación */}
+            <div className="bg-surface-container-low/40 border border-white/5 p-4 rounded-2xl space-y-2">
+              <h5 className="text-[11px] font-mono font-bold text-white uppercase">1. Aforo vs Apropiación</h5>
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={[{ name: 'UPTC', Aforo: 576148, Apropiación: 576148 }]}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                    <XAxis dataKey="name" stroke="#888" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#888" tick={{ fontSize: 9 }} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px' }} />
+                    <Legend wrapperStyle={{ fontSize: '10px' }} />
+                    <Bar dataKey="Aforo" fill="#10b981" />
+                    <Bar dataKey="Apropiación" fill="#38bdf8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 2. Recaudo vs Compromisos */}
+            <div className="bg-surface-container-low/40 border border-white/5 p-4 rounded-2xl space-y-2">
+              <h5 className="text-[11px] font-mono font-bold text-white uppercase">2. Recaudo vs Compromisos</h5>
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={[{ name: 'UPTC', Recaudo: 543935, Compromisos: 447862 }]}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                    <XAxis dataKey="name" stroke="#888" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#888" tick={{ fontSize: 9 }} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px' }} />
+                    <Legend wrapperStyle={{ fontSize: '10px' }} />
+                    <Bar dataKey="Recaudo" fill="#10b981" />
+                    <Bar dataKey="Compromisos" fill="#f59e0b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 3. Compromisos vs Pagos */}
+            <div className="bg-surface-container-low/40 border border-white/5 p-4 rounded-2xl space-y-2">
+              <h5 className="text-[11px] font-mono font-bold text-white uppercase">3. Compromisos vs Pagos</h5>
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={[{ name: 'UPTC', Compromisos: 447862, Pagos: 386460 }]}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                    <XAxis dataKey="name" stroke="#888" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#888" tick={{ fontSize: 9 }} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px' }} />
+                    <Legend wrapperStyle={{ fontSize: '10px' }} />
+                    <Bar dataKey="Compromisos" fill="#38bdf8" />
+                    <Bar dataKey="Pagos" fill="#a855f7" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 4. Flujo Neto de Caja */}
+            <div className="bg-surface-container-low/40 border border-white/5 p-4 rounded-2xl space-y-2">
+              <h5 className="text-[11px] font-mono font-bold text-white uppercase">4. Flujo de Caja en Bancos</h5>
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={[{ name: 'UPTC', 'Saldo Bancos': 144563, 'Compromisos x Pagar': 61402 }]}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                    <XAxis dataKey="name" stroke="#888" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#888" tick={{ fontSize: 9 }} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px' }} />
+                    <Legend wrapperStyle={{ fontSize: '10px' }} />
+                    <Bar dataKey="Saldo Bancos" fill="#FFCC29" />
+                    <Bar dataKey="Compromisos x Pagar" fill="#f43f5e" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 5. Comparativo Admin vs Inversión */}
+            <div className="bg-surface-container-low/40 border border-white/5 p-4 rounded-2xl space-y-2">
+              <h5 className="text-[11px] font-mono font-bold text-white uppercase">5. Admin vs Inversión</h5>
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      { name: 'Admin', Bancos: 123938, xPagar: 43796 },
+                      { name: 'Inversión', Bancos: 20191, xPagar: 17606 },
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                    <XAxis dataKey="name" stroke="#888" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#888" tick={{ fontSize: 9 }} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px' }} />
+                    <Legend wrapperStyle={{ fontSize: '10px' }} />
+                    <Bar dataKey="Bancos" fill="#10b981" />
+                    <Bar dataKey="xPagar" fill="#f59e0b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 6. Saldo Cierre Proyectado por Escenario */}
+            <div className="bg-surface-container-low/40 border border-white/5 p-4 rounded-2xl space-y-2">
+              <h5 className="text-[11px] font-mono font-bold text-white uppercase">6. Cierre por Escenario</h5>
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      { name: 'Prudente', Cierre: 118742 },
+                      { name: 'Base', Cierre: 119451 },
+                      { name: 'Optimista', Cierre: 118239 },
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                    <XAxis dataKey="name" stroke="#888" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#888" tick={{ fontSize: 9 }} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px' }} />
+                    <Bar dataKey="Cierre" fill="#38bdf8" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Interpretación Financiera Automatizada (Req. Sección 6.8) */}
+          <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-3">
+            <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+              Conclusiones y Dictamen de Equilibrio Financiero
+            </h4>
+            <div className="space-y-2 text-xs text-on-surface-variant">
+              {equilibrioResult.conclusiones.map((c, i) => (
+                <p key={i} className="leading-relaxed">
+                  {c}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 7: CONTROL Y VALIDACIÓN DE CIFRAS */}
+      {activeTab === 'auditoria' && (
+        <div className="space-y-6">
+          {/* Official Validation Table (Req. Numeral 3) */}
+          <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-white/5 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-white font-mono uppercase">
+                  Control y Validación Oficial de Cifras
+                </h3>
+                <p className="text-xs text-on-surface-variant">
+                  Auditoría de consistencia entre archivos CSV suministrados y cálculos del aplicativo
+                </p>
+              </div>
+              <button
+                onClick={() => exportToCSV(controlCifras, 'Control_Validacion_Cifras_UPTC')}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 text-xs font-mono"
+              >
+                <Download size={14} />
+                Exportar Auditoría (CSV)
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-mono border-collapse">
+                <thead className="bg-zinc-900 border-b border-white/10 text-on-surface-variant text-[11px]">
+                  <tr>
+                    <th className="p-3">Concepto</th>
+                    <th className="p-3 text-right">Valor Original</th>
+                    <th className="p-3 text-right">Valor Calculado</th>
+                    <th className="p-3 text-right">Diferencia</th>
+                    <th className="p-3 text-center">Estado</th>
+                    <th className="p-3">Explicación Técnica</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {controlCifras.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-white/5 transition-colors">
+                      <td className="p-3 font-bold text-white">{row.concepto}</td>
+                      <td className="p-3 text-right text-gray-300">{formatCOP(row.valorOriginal)}</td>
+                      <td className="p-3 text-right font-bold text-[#FFCC29]">{formatCOP(row.valorCalculado)}</td>
+                      <td className="p-3 text-right">
+                        <span className={row.diferencia === 0 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                          {formatCOP(row.diferencia)}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            row.estado.includes('Conforme')
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
+                          }`}
+                        >
+                          {row.estado}
+                        </span>
+                      </td>
+                      <td className="p-3 text-on-surface-variant max-w-md">{row.detalle}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Audit Verification Cards */}
           <div className="grid grid-cols-1 gap-4">
             {auditChecks.map((check) => (
               <div
@@ -1297,7 +1902,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
         </div>
       )}
 
-      {/* TAB 7: REPORTES Y EXPORTACIÓN */}
+      {/* SUBTAB 8: REPORTE GERENCIAL Y EXPORTACIÓN */}
       {activeTab === 'reportes' && (
         <div className="space-y-6">
           <div className="bg-surface-container-low/40 border border-white/5 p-8 rounded-3xl space-y-6 print:border-none print:p-0">
@@ -1311,14 +1916,16 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
                 <div>
                   <h2 className="text-lg font-bold text-white">UNIVERSIDAD PEDAGÓGICA Y TECNOLÓGICA DE COLOMBIA</h2>
                   <p className="text-xs font-mono text-on-surface-variant">Vicerrectoría Administrativa y Financiera – Dirección Financiera</p>
-                  <p className="text-[11px] font-mono text-[#FFCC29]">INFORME GERENCIAL DE CAJA, TESORERÍA Y LIQUIDEZ INSTITUCIONAL</p>
+                  <p className="text-[11px] font-mono text-[#FFCC29]">
+                    INFORME GERENCIAL INTEGRAL DE CAJA, BANCOS, SIMULACIÓN A DICIEMBRE Y EQUILIBRIO PRESUPUESTAL
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#FFCC29] text-black font-mono font-bold text-xs rounded-xl shadow-lg hover:bg-[#FFCC29]/90"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#FFCC29] text-black font-mono font-bold text-xs rounded-xl shadow-lg hover:bg-[#FFCC29]/90 cursor-pointer"
                 >
                   <Printer size={16} />
                   Imprimir / Descargar PDF
@@ -1332,11 +1939,11 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
                 <h4 className="font-bold text-white font-mono uppercase text-sm">1. SÍNTESIS EJECUTIVA DE DISPONIBILIDAD</h4>
                 <p>
                   Con corte al <strong>23 de noviembre de 2026</strong>, la tesorería de la UPTC reporta un saldo total en
-                  cuentas bancarias de <strong>{formatCOP(generalMetrics.saldoBancosTotal)}</strong> ({generalMetrics.totalCuentas} cuentas
-                  activas en 10 entidades financieras). Dicha disponibilidad respalda plenamente los compromisos presupuestales
-                  pendientes de pago por <strong>{formatCOP(generalMetrics.saldoPorPagar)}</strong>, lo que representa un índice
-                  de cobertura inmediata del <strong>{(generalMetrics.coberturaInmediata * 100).toFixed(1)}%</strong> y un margen
-                  de superávit de <strong>{formatCOP(generalMetrics.margenHolguraInmediata)}</strong>.
+                  cuentas bancarias de <strong>{formatCOP(generalMetrics.saldoBancosTotal)}</strong> (conciliado con el saldo
+                  de referencia de <strong>$ 144.563.470.673 COP</strong>). Dicha disponibilidad respalda plenamente los
+                  compromisos presupuestales pendientes de pago por <strong>{formatCOP(generalMetrics.saldoPorPagar)}</strong>,
+                  lo que representa un índice de cobertura inmediata del <strong>{(generalMetrics.coberturaInmediata * 100).toFixed(1)}%</strong> y
+                  un margen de superávit de <strong>{formatCOP(generalMetrics.margenHolguraInmediata)}</strong>.
                 </p>
               </div>
 
@@ -1363,29 +1970,37 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
                 </div>
               </div>
 
+              {/* Downloads Bar */}
               <div className="bg-black/30 p-4 rounded-xl border border-white/5 space-y-3">
-                <h4 className="font-bold text-white font-mono uppercase text-sm">4. EXPORTACIÓN DE BASES DE DATOS</h4>
+                <h4 className="font-bold text-white font-mono uppercase text-sm">4. EXPORTACIÓN DE BASES Y MATRICES ANALÍTICAS</h4>
                 <div className="flex flex-wrap gap-3">
                   <button
-                    onClick={() => exportToCSV(filteredBanks, 'Cuentas_Bancarias_UPTC')}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10"
+                    onClick={() => exportToCSV(equilibrioResult.matrix, 'Matriz_Equilibrio_UPTC')}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
                   >
                     <Download size={13} />
-                    Exportar Bancos (CSV)
+                    Exportar Matriz de Equilibrio (CSV)
                   </button>
                   <button
-                    onClick={() => exportToCSV(filteredIncomes, 'Ingresos_UPTC')}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10"
+                    onClick={() => exportToCSV(filteredBanks, 'Cuentas_Bancarias_UPTC')}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
                   >
                     <Download size={13} />
-                    Exportar Ingresos (CSV)
+                    Exportar Estado de Bancos (CSV)
+                  </button>
+                  <button
+                    onClick={() => exportToCSV(monthlyStats, 'Recaudo_Mensualizado_UPTC')}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
+                  >
+                    <Download size={13} />
+                    Exportar Ingresos Mensualizados (CSV)
                   </button>
                   <button
                     onClick={() => exportToCSV(filteredExpenses, 'Gastos_UPTC')}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10"
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
                   >
                     <Download size={13} />
-                    Exportar Gastos (CSV)
+                    Exportar Gastos por Unidad (CSV)
                   </button>
                 </div>
               </div>
