@@ -745,11 +745,20 @@ export function calculateCajaHoyMetrics(
 /**
  * Genera la Matriz de Equilibrio Financiero 10x3 y el análisis de los 4 equilibrios
  */
+export interface EquilibrioSimulationOptions {
+  recaudoEsperadoDiciembre?: number;
+  pagosEsperadosDiciembre?: number;
+  recaudoEsperadoAdmin?: number;
+  recaudoEsperadoInv?: number;
+  pagosEsperadosAdmin?: number;
+  pagosEsperadosInv?: number;
+}
+
 export function calculateEquilibrioFinanciero(
   incomes: CajaHoyIncome[],
   expenses: CajaHoyExpense[],
   banks: CajaHoyBankAccount[],
-  simulation?: { recaudoEsperadoDiciembre: number; pagosEsperadosDiciembre: number }
+  simulation?: EquilibrioSimulationOptions
 ): EquilibrioPresupuestalResult {
   const adminIncomes = incomes.filter((i) => i.tipoRecurso === 'Recursos Administración');
   const invIncomes = incomes.filter((i) => i.tipoRecurso === 'Recursos Inversión');
@@ -785,18 +794,18 @@ export function calculateEquilibrioFinanciero(
   const bncInv = invBanks.reduce((s, b) => s + b.valorFinal, 0);
   const bncTot = banks.reduce((s, b) => s + b.valorFinal, 0);
 
-  // Proyecciones a Diciembre (Base default o simulación)
+  // Proyecciones a Diciembre (Base default o simulación con desglose)
   const pendAdm = afoAdm - recAdm;
   const pendInv = afoInv - recInv;
-  const recProjAdm = pendAdm * 0.65;
-  const recProjInv = pendInv * 0.65;
-  const recProjTot = simulation ? simulation.recaudoEsperadoDiciembre : recProjAdm + recProjInv;
+  const recProjAdm = simulation?.recaudoEsperadoAdmin !== undefined ? simulation.recaudoEsperadoAdmin : pendAdm * 0.65;
+  const recProjInv = simulation?.recaudoEsperadoInv !== undefined ? simulation.recaudoEsperadoInv : pendInv * 0.65;
+  const recProjTot = simulation?.recaudoEsperadoDiciembre !== undefined ? simulation.recaudoEsperadoDiciembre : recProjAdm + recProjInv;
 
   const xPagAdm = comAdm - pagAdm;
   const xPagInv = comInv - pagInv;
-  const pagProjAdm = xPagAdm * 0.75;
-  const pagProjInv = xPagInv * 0.75;
-  const pagProjTot = simulation ? simulation.pagosEsperadosDiciembre : pagProjAdm + pagProjInv;
+  const pagProjAdm = simulation?.pagosEsperadosAdmin !== undefined ? simulation.pagosEsperadosAdmin : xPagAdm * 0.75;
+  const pagProjInv = simulation?.pagosEsperadosInv !== undefined ? simulation.pagosEsperadosInv : xPagInv * 0.75;
+  const pagProjTot = simulation?.pagosEsperadosDiciembre !== undefined ? simulation.pagosEsperadosDiciembre : pagProjAdm + pagProjInv;
 
   const salFinAdm = bncAdm + recProjAdm - pagProjAdm;
   const salFinInv = bncInv + recProjInv - pagProjInv;

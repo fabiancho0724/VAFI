@@ -386,11 +386,36 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
 
   // Financial equilibrium
   const equilibrioResult = useMemo(() => {
+    const pendAdm = incomes.filter((i) => i.tipoRecurso === 'Recursos Administración').reduce((s, i) => s + (i.saldoPendiente > 0 ? i.saldoPendiente : 0), 0);
+    const pendInv = incomes.filter((i) => i.tipoRecurso === 'Recursos Inversión').reduce((s, i) => s + (i.saldoPendiente > 0 ? i.saldoPendiente : 0), 0);
+    const extraAdm = simIngresosAdicionales.filter((i) => i.tipo === 'Administración').reduce((s, i) => s + i.valor, 0);
+    const extraInv = simIngresosAdicionales.filter((i) => i.tipo === 'Inversión').reduce((s, i) => s + i.valor, 0);
+
+    const xPagAdm = expenses.filter((e) => e.tipoRecurso === 'Recursos Administración').reduce((s, e) => s + (e.acumuladoCompromiso - e.acumuladoPago), 0);
+    const xPagInv = expenses.filter((e) => e.tipoRecurso === 'Recursos Inversión').reduce((s, e) => s + (e.acumuladoCompromiso - e.acumuladoPago), 0);
+
+    const recProjAdm = pendAdm * simIncomeComplianceRate + extraAdm;
+    const recProjInv = pendInv * simIncomeComplianceRate + extraInv;
+    const pagProjAdm = xPagAdm * simExpensePaymentRate + simNominaDiciembre211;
+    const pagProjInv = xPagInv * simExpensePaymentRate;
+
     return calculateEquilibrioFinanciero(incomes, expenses, banks, {
-      recaudoEsperadoDiciembre: simMetrics.recaudoEsperadoDic,
-      pagosEsperadosDiciembre: simMetrics.pagosEsperadosDic,
+      recaudoEsperadoDiciembre: recProjAdm + recProjInv,
+      pagosEsperadosDiciembre: pagProjAdm + pagProjInv,
+      recaudoEsperadoAdmin: recProjAdm,
+      recaudoEsperadoInv: recProjInv,
+      pagosEsperadosAdmin: pagProjAdm,
+      pagosEsperadosInv: pagProjInv,
     });
-  }, [incomes, expenses, banks, simMetrics.recaudoEsperadoDic, simMetrics.pagosEsperadosDic]);
+  }, [
+    incomes,
+    expenses,
+    banks,
+    simIncomeComplianceRate,
+    simExpensePaymentRate,
+    simIngresosAdicionales,
+    simNominaDiciembre211,
+  ]);
 
   // Control & Validation table
   const controlCifras = useMemo(() => {
@@ -784,7 +809,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
               { id: 'mensual', label: '3. Ingresos Mensuales', icon: TrendingUp },
               { id: 'gastos', label: '4. Gastos & Compromisos', icon: TrendingDown },
               { id: 'bancos', label: '5. Estado de Bancos', icon: Landmark },
-              { id: 'diciembre', label: '6. Diciembre – Simulador', icon: Sliders },
+              { id: 'diciembre', label: '6. Proyecciones de Diciembre', icon: Sliders },
               { id: 'equilibrio', label: '7. Equilibrio Presupuestal', icon: DollarSign },
               { id: 'auditoria', label: '8. Validación de Cifras', icon: ShieldCheck },
               { id: 'reportes', label: '9. Reporte y Exportación', icon: FileText },
@@ -2973,13 +2998,21 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="text-right">
+              <div className="flex items-center gap-2">
+                <div className="text-right mr-1">
                   <span className="text-[10px] font-mono text-on-surface-variant uppercase block">Total Adicionales:</span>
                   <span className="text-sm font-black text-emerald-400 font-mono">
                     +{formatMillions(proyeccionDiciembre.totalIngresosAdicionalesManuales)}
                   </span>
                 </div>
+                <button
+                  onClick={() => exportToCSV(simIngresosAdicionales, 'Ingresos_Adicionales_Proyectados_UPTC')}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-mono border border-white/10 transition-all cursor-pointer"
+                  title="Exportar listado de ingresos adicionales a CSV"
+                >
+                  <Download size={14} className="text-emerald-400" />
+                  Exportar CSV
+                </button>
                 <button
                   onClick={() => {
                     setEditingIncomeId(null);
@@ -3289,9 +3322,30 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
             {/* Right Column: Comparative Reference Table (7 cols) */}
             <div className="lg:col-span-7 space-y-6">
               <div className="bg-surface-container-low/40 border border-white/5 p-6 rounded-3xl space-y-4">
-                <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">
-                  Tabla de Variables: Ejecutado Real (23 Nov) vs Ajustes Dic vs Cierre Proyectado
-                </h4>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-2 gap-2">
+                  <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                    Tabla de Variables: Ejecutado Real (23 Nov) vs Ajustes Dic vs Cierre Proyectado
+                  </h4>
+                  <button
+                    onClick={() => {
+                      const exportData = [
+                        { Variable: 'Saldo en cuentas bancarias', Real_23Nov: proyeccionDiciembre.bancosActuales, Ajuste_Dic: proyeccionDiciembre.flujoNetoDiciembre, Proyectado_Cierre: proyeccionDiciembre.saldoBancosProyectadoCierre },
+                        { Variable: 'Aforo de ingresos', Real_23Nov: proyeccionDiciembre.aforoTotal, Ajuste_Dic: 0, Proyectado_Cierre: proyeccionDiciembre.aforoTotal },
+                        { Variable: 'Recaudo de ingresos', Real_23Nov: proyeccionDiciembre.recaudoHistoricoEneNov, Ajuste_Dic: proyeccionDiciembre.recaudoEsperadoDiciembreTotal, Proyectado_Cierre: proyeccionDiciembre.recaudoTotalProyectadoCierre },
+                        { Variable: 'Apropiación presupuestal total', Real_23Nov: proyeccionDiciembre.apropiacionTotal, Ajuste_Dic: 0, Proyectado_Cierre: proyeccionDiciembre.apropiacionTotal },
+                        { Variable: 'Compromisos presupuestales', Real_23Nov: proyeccionDiciembre.compromisosHistoricosEneNov, Ajuste_Dic: proyeccionDiciembre.nominaDiciembreAfectada, Proyectado_Cierre: proyeccionDiciembre.compromisosTotalesProyectadosCierre },
+                        { Variable: 'Saldo de apropiación disponible', Real_23Nov: proyeccionDiciembre.apropiacionTotal - proyeccionDiciembre.compromisosHistoricosEneNov, Ajuste_Dic: -proyeccionDiciembre.nominaDiciembreAfectada, Proyectado_Cierre: proyeccionDiciembre.saldoPresupuestalDisponibleCierre },
+                        { Variable: 'Pagos acumulados efectivos', Real_23Nov: proyeccionDiciembre.pagosHistoricosEneNov, Ajuste_Dic: proyeccionDiciembre.pagosEsperadosDiciembreTotal, Proyectado_Cierre: proyeccionDiciembre.pagosTotalesProyectadosCierre },
+                        { Variable: 'Balance Presupuestal de Cierre', Real_23Nov: proyeccionDiciembre.recaudoHistoricoEneNov - proyeccionDiciembre.compromisosHistoricosEneNov, Ajuste_Dic: proyeccionDiciembre.recaudoEsperadoDiciembreTotal - proyeccionDiciembre.nominaDiciembreAfectada, Proyectado_Cierre: proyeccionDiciembre.balancePresupuestalCierre },
+                      ];
+                      exportToCSV(exportData, 'Proyecciones_Cierre_Diciembre_UPTC');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-mono text-[11px] border border-white/10 transition-colors cursor-pointer self-start sm:self-auto"
+                  >
+                    <Download size={13} className="text-[#FFCC29]" />
+                    Exportar Tabla (CSV)
+                  </button>
+                </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs font-mono border-collapse">
@@ -3831,10 +3885,44 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
                 </div>
               </div>
 
+              {/* Seccion 4: Proyecciones de Cierre a Diciembre */}
+              <div className="bg-black/30 p-4 rounded-xl border border-white/5 space-y-2">
+                <h4 className="font-bold text-white font-mono uppercase text-sm">4. ESCENARIO PROYECTADO DE CIERRE A DICIEMBRE</h4>
+                <p>
+                  Con la incorporación de la nómina de diciembre estimada en <strong>{formatCOP(proyeccionDiciembre.rubro211.nominaDiciembreEstimada)}</strong> (clasificada como el único gasto pendiente de apropiación en el <strong>Rubro 2.1.1 Gastos de Personal</strong>, el cual conserva una holgura libre de <strong>+{formatCOP(proyeccionDiciembre.rubro211.holguraApropiacion211)}</strong>) e ingresos adicionales proyectados por <strong>+{formatCOP(proyeccionDiciembre.totalIngresosAdicionalesManuales)}</strong>, la UPTC proyecta cerrar la vigencia 2026 con un <strong>Recaudo Total de {formatCOP(proyeccionDiciembre.recaudoTotalProyectadoCierre)}</strong> ({proyeccionDiciembre.porcentajeRecaudoProyectadoCierre.toFixed(1)}% de aforo), <strong>Compromisos Totales de {formatCOP(proyeccionDiciembre.compromisosTotalesProyectadosCierre)}</strong> ({proyeccionDiciembre.porcentajeCompromisoProyectadoCierre.toFixed(1)}% de apropiación), un <strong>Superávit Presupuestal Proyectado de {formatCOP(proyeccionDiciembre.balancePresupuestalCierre)}</strong> y un <strong>Saldo Final en Bancos de {formatCOP(proyeccionDiciembre.saldoBancosProyectadoCierre)}</strong>.
+                </p>
+              </div>
+
               {/* Downloads Bar */}
               <div className="bg-black/30 p-4 rounded-xl border border-white/5 space-y-3">
-                <h4 className="font-bold text-white font-mono uppercase text-sm">4. EXPORTACIÓN DE BASES Y MATRICES ANALÍTICAS</h4>
+                <h4 className="font-bold text-white font-mono uppercase text-sm">5. EXPORTACIÓN DE BASES Y MATRICES ANALÍTICAS</h4>
                 <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => {
+                      const exportData = [
+                        { Variable: 'Saldo en cuentas bancarias', Real_23Nov: proyeccionDiciembre.bancosActuales, Ajuste_Dic: proyeccionDiciembre.flujoNetoDiciembre, Proyectado_Cierre: proyeccionDiciembre.saldoBancosProyectadoCierre },
+                        { Variable: 'Aforo de ingresos', Real_23Nov: proyeccionDiciembre.aforoTotal, Ajuste_Dic: 0, Proyectado_Cierre: proyeccionDiciembre.aforoTotal },
+                        { Variable: 'Recaudo de ingresos', Real_23Nov: proyeccionDiciembre.recaudoHistoricoEneNov, Ajuste_Dic: proyeccionDiciembre.recaudoEsperadoDiciembreTotal, Proyectado_Cierre: proyeccionDiciembre.recaudoTotalProyectadoCierre },
+                        { Variable: 'Apropiación presupuestal total', Real_23Nov: proyeccionDiciembre.apropiacionTotal, Ajuste_Dic: 0, Proyectado_Cierre: proyeccionDiciembre.apropiacionTotal },
+                        { Variable: 'Compromisos presupuestales', Real_23Nov: proyeccionDiciembre.compromisosHistoricosEneNov, Ajuste_Dic: proyeccionDiciembre.nominaDiciembreAfectada, Proyectado_Cierre: proyeccionDiciembre.compromisosTotalesProyectadosCierre },
+                        { Variable: 'Saldo de apropiación disponible', Real_23Nov: proyeccionDiciembre.apropiacionTotal - proyeccionDiciembre.compromisosHistoricosEneNov, Ajuste_Dic: -proyeccionDiciembre.nominaDiciembreAfectada, Proyectado_Cierre: proyeccionDiciembre.saldoPresupuestalDisponibleCierre },
+                        { Variable: 'Pagos acumulados efectivos', Real_23Nov: proyeccionDiciembre.pagosHistoricosEneNov, Ajuste_Dic: proyeccionDiciembre.pagosEsperadosDiciembreTotal, Proyectado_Cierre: proyeccionDiciembre.pagosTotalesProyectadosCierre },
+                        { Variable: 'Balance Presupuestal de Cierre', Real_23Nov: proyeccionDiciembre.recaudoHistoricoEneNov - proyeccionDiciembre.compromisosHistoricosEneNov, Ajuste_Dic: proyeccionDiciembre.recaudoEsperadoDiciembreTotal - proyeccionDiciembre.nominaDiciembreAfectada, Proyectado_Cierre: proyeccionDiciembre.balancePresupuestalCierre },
+                      ];
+                      exportToCSV(exportData, 'Proyecciones_Diciembre_UPTC');
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
+                  >
+                    <Download size={13} className="text-[#FFCC29]" />
+                    Exportar Proyecciones Cierre (CSV)
+                  </button>
+                  <button
+                    onClick={() => exportToCSV(simIngresosAdicionales, 'Ingresos_Adicionales_Proyectados_UPTC')}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
+                  >
+                    <Download size={13} className="text-emerald-400" />
+                    Exportar Ingresos Adicionales (CSV)
+                  </button>
                   <button
                     onClick={() => exportToCSV(equilibrioResult.matrix, 'Matriz_Equilibrio_UPTC')}
                     className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
