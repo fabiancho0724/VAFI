@@ -7,7 +7,7 @@ import {
 
 const MODULES = [
   { id: 'dashboard', icon: BarChart3, title: 'Consolidado', desc: 'Resumen financiero, cumplimiento de aforos y ejecución.' },
-  { id: 'caja-hoy', icon: Coins, title: 'Caja HOY', desc: 'Análisis inteligente de tesorería, 85 cuentas bancarias y flujo proyectado al 23 de noviembre.' },
+  { id: 'caja-hoy', icon: Coins, title: 'Caja HOY', desc: 'Conciliación presupuestal y tesoral, 85 cuentas bancarias, cobertura de obligaciones y equilibrio UPTC.' },
   { id: 'historical', icon: LineChart, title: 'Histórico', desc: 'Evolución de ingresos y gastos en periodos anteriores.' },
   { id: 'nomina', icon: Users, title: 'Nómina', desc: 'Análisis de personal, salarios y prestaciones.' },
   { id: 'posgrados', icon: GraduationCap, title: 'Posgrados', desc: 'Matrículas, flexibilización y programas.' },
