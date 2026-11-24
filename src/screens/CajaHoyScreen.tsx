@@ -1,3 +1,10 @@
+import { InformeCajaResumenEjecutivo } from '../components/caja_hoy/InformeCajaResumenEjecutivo';
+import { InformeCajaFuentesFinanciacion } from '../components/caja_hoy/InformeCajaFuentesFinanciacion';
+import { InformeCajaEvolucionMensual } from '../components/caja_hoy/InformeCajaEvolucionMensual';
+import { InformeCajaNivelesDisponibilidad } from '../components/caja_hoy/InformeCajaNivelesDisponibilidad';
+import { InformeCajaIndicadoresSostenibilidad } from '../components/caja_hoy/InformeCajaIndicadoresSostenibilidad';
+import { InformeCajaMatrizRiesgos } from '../components/caja_hoy/InformeCajaMatrizRiesgos';
+import { InformeCajaConclusionDirectiva } from '../components/caja_hoy/InformeCajaConclusionDirectiva';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ResponsiveContainer,
@@ -52,6 +59,14 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import {
+  calculateInformeCajaMaster,
+  InformeCajaResult,
+  InformeCajaFuenteRow,
+  InformeCajaIndicadorItem,
+  InformeCajaMensualRow,
+  InformeCajaRiesgoItem,
+  InformeCajaConclusionVAFI,
+  InformeCajaNivelLiquidez,
   loadCajaHoyDatasets,
   calculateConciliacionPresupuestoTesoral,
   calculateProyeccionesDiciembreAvanzadas,
@@ -104,10 +119,37 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
   const [monthlyIncomes, setMonthlyIncomes] = useState<CajaHoyMonthlyIncome[]>([]);
   const [expenses, setExpenses] = useState<CajaHoyExpense[]>([]);
 
-  // Subtabs (8 subtabs according to Prompt Maestro Actualizado)
+  // Subtabs (10 subtabs according to Prompt Maestro INFORME DE CAJA)
   const [activeTab, setActiveTab] = useState<
-    'ejecutivo' | 'conciliacion' | 'mensual' | 'gastos' | 'bancos' | 'diciembre' | 'equilibrio' | 'auditoria' | 'reportes'
-  >('ejecutivo');
+    | 'resumen'
+    | 'fuentes'
+    | 'mensual'
+    | 'disponibilidad'
+    | 'conciliacion'
+    | 'indicadores'
+    | 'riesgos'
+    | 'conclusion'
+    | 'diciembre'
+    | 'reportes'
+    | 'ejecutivo'
+    | 'gastos'
+    | 'bancos'
+    | 'equilibrio'
+    | 'auditoria'
+  >('resumen');
+
+  // Informe de Caja Master Engine calculation
+  const informeCajaData = useMemo(() => {
+    return calculateInformeCajaMaster(incomes, monthlyIncomes, expenses, banks);
+  }, [incomes, monthlyIncomes, expenses, banks]);
+
+  // Tab B Filters (Fuentes)
+  const [fuentesSearch, setFuentesSearch] = useState('');
+  const [fuentesNaturalezaFilter, setFuentesNaturalezaFilter] = useState<'Todas' | 'Libre Destinación' | 'Destinación Específica'>('Todas');
+  const [fuentesTipoFilter, setFuentesTipoFilter] = useState<'Todos' | 'Administración' | 'Inversión'>('Todos');
+
+  // Tab F Filters (Indicadores)
+  const [indicadoresSearch, setIndicadoresSearch] = useState('');
 
   // Tabs horizontal scroll navigation
   const tabsNavRef = useRef<HTMLDivElement>(null);
@@ -562,6 +604,61 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
   };
 
   // Export tables to CSV
+  // Export functions for Informe de Caja
+  const exportarFuentesCajaCSV = () => {
+    const rows = informeCajaData.fuentes.map((f) => ({
+      'Código': f.codigo,
+      'Nombre de la Fuente': f.nombre,
+      'Tipo': f.tipo,
+      'Naturaleza': f.naturaleza,
+      'Aforo Inicial': f.aforoInicial,
+      'Total Recaudo': f.totalRecaudo,
+      'Rendimientos Financieros': f.rendimientosFinancieros,
+      'Apropiación': f.apropiacion,
+      'Compromisos': f.compromisos,
+      'Pagos': f.pagos,
+      'Saldo Bancos': f.saldoBancos,
+      'Saldo por Pagar': f.saldoPorPagar,
+      'Disponibilidad Presupuestal': f.disponibilidadPresupuestal,
+      'Disponibilidad Efectiva': f.disponibilidadEfectiva,
+      'Cobertura %': f.coberturaBancosCompromisos.toFixed(2),
+      'Estado': f.estado,
+      'Observación': f.observacion,
+    }));
+    exportToCSV(rows, `informe_caja_fuentes_uptc_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const exportarMensualCajaCSV = () => {
+    const rows = informeCajaData.evolucionMensual.map((m) => ({
+      'Mes': m.mesNombre,
+      'Ingresos del Mes': m.ingresosMes,
+      'Egresos del Mes': m.egresosMes,
+      'Flujo Neto Mensual': m.flujoNetoMes,
+      'Saldo Acumulado Caja': m.saldoAcumuladoCaja,
+      'Variación Ingresos %': m.variacionIngresosPorc.toFixed(2),
+      'Diagnóstico': m.diagnostico,
+      'Presión Liquidez': m.esPresionLiquidez ? 'SÍ' : 'NO',
+    }));
+    exportToCSV(rows, `informe_caja_mensual_flujo_uptc_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const exportarIndicadoresCSV = () => {
+    const rows = informeCajaData.indicadores.map((ind) => ({
+      'No.': ind.numero,
+      'Indicador': ind.nombre,
+      'Fórmula': ind.formula,
+      'Numerador Concepto': ind.numeradorDesc,
+      'Numerador Valor': ind.numeradorValor,
+      'Denominador Concepto': ind.denominadorDesc,
+      'Denominador Valor': ind.denominadorValor,
+      'Resultado': ind.resultadoFormateado,
+      'Semáforo': ind.semaforo,
+      'Interpretación': ind.interpretacion,
+      'Relevancia Financiera': ind.relevancia,
+    }));
+    exportToCSV(rows, `informe_caja_indicadores_sostenibilidad_uptc_${new Date().toISOString().slice(0, 10)}`);
+  };
+
   const exportToCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return;
     const headers = Object.keys(data[0]);
@@ -635,10 +732,10 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
             <Coins className="text-[#FFCC29]" size={28} />
-            CENTRO DE CONTROL FINANCIERO UPTC – ANÁLISIS DE CAJA Y EQUILIBRIO
+            INFORME DE CAJA – ANÁLISIS DE LIQUIDEZ, DISPONIBILIDAD Y EQUILIBRIO DE CAJA
           </h1>
           <p className="text-xs sm:text-sm text-on-surface-variant max-w-4xl">
-            Sistema Inteligente de Evaluación de Liquidez, Conciliación Bancaria, Comportamiento Mensual, Proyecciones de Cierre a Diciembre y Equilibrio Presupuestal.
+            Centro de Control Financiero UPTC – Vicerrectoría Administrativa y Financiera (VAFI). Evaluación Integral de Liquidez Institucional, Conciliación Presupuestal-Tesoral y Sostenibilidad Financiera.
           </p>
         </div>
 
@@ -804,15 +901,16 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
             className="flex-1 flex overflow-x-auto gap-2 py-1.5 horizontal-scrollbar"
           >
             {[
-              { id: 'ejecutivo', label: '1. Control Ejecutivo', icon: Award },
-              { id: 'conciliacion', label: '2. Conciliación Presupuesto vs Tesorería', icon: Scale },
-              { id: 'mensual', label: '3. Ingresos Mensuales', icon: TrendingUp },
-              { id: 'gastos', label: '4. Gastos & Compromisos', icon: TrendingDown },
-              { id: 'bancos', label: '5. Estado de Bancos', icon: Landmark },
-              { id: 'diciembre', label: '6. Proyecciones de Diciembre', icon: Sliders },
-              { id: 'equilibrio', label: '7. Equilibrio Presupuestal', icon: DollarSign },
-              { id: 'auditoria', label: '8. Validación de Cifras', icon: ShieldCheck },
-              { id: 'reportes', label: '9. Reporte y Exportación', icon: FileText },
+              { id: 'resumen', label: 'A. Resumen Ejecutivo', icon: Award },
+              { id: 'fuentes', label: 'B. Composición por Fuentes (R10-R40)', icon: Layers },
+              { id: 'mensual', label: 'C. Comportamiento Mensual & Flujo', icon: TrendingUp },
+              { id: 'disponibilidad', label: 'D. Disponibilidad & Compromisos', icon: Wallet },
+              { id: 'conciliacion', label: 'E. Conciliación Presupuesto vs Tesorería', icon: Scale },
+              { id: 'indicadores', label: 'F. Indicadores de Liquidez & Sostenibilidad', icon: Activity },
+              { id: 'riesgos', label: 'G. Riesgos & Alertas Financieras', icon: AlertTriangle },
+              { id: 'conclusion', label: 'H. Conclusión Directiva VAFI', icon: FileCheck },
+              { id: 'diciembre', label: 'I. Proyecciones de Cierre a Diciembre', icon: Sliders },
+              { id: 'reportes', label: 'J. Reporte Formal & Exportación', icon: FileText },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -879,8 +977,38 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
         </div>
       </div>
 
-      {/* SUBTAB 1: CONTROL EJECUTIVO */}
-      {activeTab === 'ejecutivo' && (
+      {/* MÓDULO A: RESUMEN EJECUTIVO DE CAJA */}
+      {(activeTab === 'resumen' || activeTab === 'ejecutivo') && (
+        <InformeCajaResumenEjecutivo data={informeCajaData} onNavigateTab={selectTab as any} />
+      )}
+
+      {/* MÓDULO B: COMPOSICIÓN POR FUENTES DE FINANCIACIÓN (R10 A R40) */}
+      {activeTab === 'fuentes' && (
+        <InformeCajaFuentesFinanciacion data={informeCajaData} onExportCSV={exportarFuentesCajaCSV} />
+      )}
+
+      {/* MÓDULO D: ANÁLISIS DE DISPONIBILIDAD Y COMPROMISOS (6 NIVELES) */}
+      {activeTab === 'disponibilidad' && (
+        <InformeCajaNivelesDisponibilidad data={informeCajaData} onNavigateTab={selectTab as any} />
+      )}
+
+      {/* MÓDULO F: INDICADORES DE LIQUIDEZ Y SOSTENIBILIDAD */}
+      {activeTab === 'indicadores' && (
+        <InformeCajaIndicadoresSostenibilidad data={informeCajaData} onExportCSV={exportarIndicadoresCSV} />
+      )}
+
+      {/* MÓDULO G: ANÁLISIS DE RIESGOS Y ALERTAS FINANCIERAS */}
+      {activeTab === 'riesgos' && (
+        <InformeCajaMatrizRiesgos data={informeCajaData} onNavigateTab={selectTab as any} />
+      )}
+
+      {/* MÓDULO H: CONCLUSIÓN FINANCIERA DIRECTIVA VAFI */}
+      {activeTab === 'conclusion' && (
+        <InformeCajaConclusionDirectiva data={informeCajaData} onNavigateTab={selectTab as any} />
+      )}
+
+      {/* SUBTAB 1 DETALLE ADICIONAL: CONTROL EJECUTIVO */}
+      {activeTab === 'ejecutivo_detalle' && (
         <div className="space-y-6">
           {/* Institutional Verdict Card */}
           <div
@@ -2290,8 +2418,13 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
       )}
 
 
-      {/* SUBTAB 2: INGRESOS Y COMPORTAMIENTO MENSUAL */}
+      {/* MÓDULO C: COMPORTAMIENTO MENSUAL Y FLUJO NETO */}
       {activeTab === 'mensual' && (
+        <InformeCajaEvolucionMensual data={informeCajaData} onExportCSV={exportarMensualCajaCSV} />
+      )}
+
+      {/* SUBTAB DETALLE: INGRESOS MENSUALES HISTORICOS */}
+      {activeTab === 'mensual_detalle' && (
         <div className="space-y-6">
           {/* Monthly Analysis Header Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

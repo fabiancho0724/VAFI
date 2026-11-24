@@ -49,7 +49,7 @@ export function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
       <Icon size={isThin ? 24 : 20} strokeWidth={currentScreen === screen ? 2.5 : 2} />
       {!isThin && <span className="text-sm">
         {screen === 'dashboard' ? 'Tablero' :
-         screen === 'caja-hoy' ? 'Caja HOY' :
+         screen === 'caja-hoy' ? 'Informe de Caja' :
          screen === 'historical' ? 'Histórico' :
          screen === 'nomina' ? 'Nómina' :
          screen === 'posgrados' ? 'Posgrados' :
