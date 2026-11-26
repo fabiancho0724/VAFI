@@ -10,12 +10,12 @@ interface LayoutProps {
 
 export function Layout({ children, currentScreen, onNavigate }: LayoutProps) {
   return (
-    <div className="flex bg-background min-h-screen">
+    <div className="flex bg-background min-h-screen print:block print:bg-white print:min-h-0 print:w-full print:m-0 print:p-0">
       <Sidebar currentScreen={currentScreen} onNavigate={onNavigate} />
-      <div className={`flex-1 flex flex-col transition-all duration-300 pl-20`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 pl-20 print:pl-0 print:m-0 print:p-0 print:block print:w-full`}>
         <Topnav isThin={true} currentScreen={currentScreen} onNavigate={onNavigate} />
-        <main className="flex-1 mt-16 p-6 md:p-8 flex flex-col">
-          <div className="flex-1">
+        <main className="flex-1 mt-16 p-6 md:p-8 flex flex-col print:m-0 print:mt-0 print:p-0 print:block print:w-full">
+          <div className="flex-1 print:w-full print:m-0 print:p-0">
             {children}
           </div>
           <footer className="mt-8 text-center text-[#94a3b8] font-mono text-sm py-4 border-t border-white/10 print:hidden">

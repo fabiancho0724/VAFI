@@ -242,7 +242,12 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
   };
 
   const handlePrint = () => {
+    const prevTitle = document.title;
+    document.title = 'Informe_Caja_Liquidez_UPTC_2026';
     window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1000);
   };
 
   // Exportar matriz completa de parámetros
@@ -345,7 +350,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
   return (
     <div className="space-y-6">
       {/* BARRA SUPERIOR DE ACCIONES Y MODALIDADES */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container-low/80 border border-white/5 shadow-md">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container-low/80 border border-white/5 shadow-md print:hidden">
         <div className="flex items-center gap-3">
           <span className="p-2.5 rounded-xl bg-[#FFCC29]/20 text-[#FFCC29]">
             <Award size={22} />
@@ -420,7 +425,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
       {/* CONTENEDOR PRINCIPAL DEL INFORME (FONDO BLANCO / MODO EJECUTIVO) */}
       <div
         id="printable-executive-caja-report"
-        className={`transition-all duration-300 max-w-5xl mx-auto rounded-3xl p-8 md:p-14 space-y-10 shadow-2xl print:p-0 print:border-none print:shadow-none print:max-w-none ${
+        className={`transition-all duration-300 max-w-5xl mx-auto rounded-3xl p-8 md:p-14 space-y-10 shadow-2xl print:p-0 print:border-none print:shadow-none print:max-w-none print:w-full print:m-0 print:rounded-none ${
           isLight
             ? 'bg-white text-slate-900 border border-slate-200 ring-1 ring-slate-900/5'
             : 'bg-zinc-950 text-slate-200 border border-white/10'
@@ -476,7 +481,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
         </div>
 
         {/* TARJETAS EJECUTIVAS RESUMEN (SCORECARD OFICIAL) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 print:grid-cols-3 gap-3 print:gap-2">
           <div className={`p-3.5 rounded-2xl border space-y-1 text-center shadow-sm ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Saldo en Bancos</span>
             <div className={`text-sm md:text-base font-black font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -529,7 +534,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
         {/* ==================================================================== */}
         {/* CAPÍTULO 1: PARÁMETROS TÉCNICOS Y MARCO DE CONCILIACIÓN */}
         {/* ==================================================================== */}
-        <div className="space-y-4">
+        <div className="space-y-4 report-section">
           <h3 className={`text-base font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2 ${isLight ? 'text-slate-900 border-slate-200' : 'text-white border-white/10'}`}>
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             1. Parámetros Técnicos y Marco de Conciliación Presupuesto–Tesorería
@@ -626,7 +631,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
         {/* ==================================================================== */}
         {/* CAPÍTULO 2: PARÁMETROS FINANCIEROS Y ANÁLISIS DE SOSTENIBILIDAD */}
         {/* ==================================================================== */}
-        <div className="space-y-6">
+        <div className="space-y-6 report-section">
           <h3 className={`text-base font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2 ${isLight ? 'text-slate-900 border-slate-200' : 'text-white border-white/10'}`}>
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             2. Parámetros Financieros, Niveles de Disponibilidad y Ratios de Sostenibilidad
@@ -804,7 +809,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
         {/* ==================================================================== */}
         {/* CAPÍTULO 3: PARÁMETROS ECONÓMICOS, MACROECONÓMICOS Y RIESGO */}
         {/* ==================================================================== */}
-        <div className="space-y-6">
+        <div className="space-y-6 report-section">
           <h3 className={`text-base font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2 ${isLight ? 'text-slate-900 border-slate-200' : 'text-white border-white/10'}`}>
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             3. Parámetros Económicos, Macroeconómicos y Gestión del Riesgo Tesoral
@@ -991,7 +996,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
         {/* ==================================================================== */}
         {/* CAPÍTULO 4: PLAN DE CIERRE DE DICIEMBRE Y NÓMINA 2.1.1 */}
         {/* ==================================================================== */}
-        <div className="space-y-4">
+        <div className="space-y-4 report-section">
           <h3 className={`text-base font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2 ${isLight ? 'text-slate-900 border-slate-200' : 'text-white border-white/10'}`}>
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             4. Plan de Cierre Financiero a Diciembre, Nómina en Rubro 2.1.1 y Recursos Adicionales
@@ -1092,7 +1097,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
         {/* ==================================================================== */}
         {/* CAPÍTULO 5: DICTAMEN DIRECTIVO VAFI Y RECOMENDACIONES */}
         {/* ==================================================================== */}
-        <div className="space-y-5">
+        <div className="space-y-5 report-section">
           <h3 className={`text-base font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2 ${isLight ? 'text-slate-900 border-slate-200' : 'text-white border-white/10'}`}>
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             5. Dictamen Directivo VAFI y Recomendaciones Estratégicas

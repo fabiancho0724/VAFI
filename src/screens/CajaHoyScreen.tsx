@@ -718,9 +718,9 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
   }
 
   return (
-    <div className="min-h-screen text-on-surface space-y-6 pb-20 selection:bg-[#FFCC29] selection:text-black">
+    <div className="min-h-screen text-on-surface space-y-6 pb-20 selection:bg-[#FFCC29] selection:text-black print:min-h-0 print:space-y-0 print:pb-0 print:p-0 print:block print:w-full">
       {/* HEADER SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-container-low/60 border border-white/5 p-6 rounded-3xl backdrop-blur-xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-container-low/60 border border-white/5 p-6 rounded-3xl backdrop-blur-xl print:hidden">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <span className="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#FFCC29]/20 text-[#FFCC29] border border-[#FFCC29]/30 flex items-center gap-1.5 shadow-[0_0_12px_rgba(255,204,41,0.2)]">
@@ -779,7 +779,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
       </div>
 
       {/* GLOBAL FILTER BAR */}
-      <div className="bg-surface-container-low/40 border border-white/5 p-4 rounded-2xl backdrop-blur-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-center">
+      <div className="bg-surface-container-low/40 border border-white/5 p-4 rounded-2xl backdrop-blur-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-center print:hidden">
         {/* Tipo de Recurso */}
         <div>
           <label className="text-[10px] font-mono text-on-surface-variant uppercase block mb-1">
@@ -885,7 +885,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
       </div>
 
       {/* 9 SUBTABS NAVIGATION BAR CON BARRA DE DESPLAZAMIENTO HORIZONTAL Y CONTROLES */}
-      <div className="space-y-2 border-b border-white/10 pb-3">
+      <div className="space-y-2 border-b border-white/10 pb-3 print:hidden">
         {/* Fila principal de navegación con botones laterales */}
         <div className="flex items-center gap-2">
           {/* Botón Scroll Izquierda */}

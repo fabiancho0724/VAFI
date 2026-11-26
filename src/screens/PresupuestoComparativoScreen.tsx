@@ -161,7 +161,12 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
   };
 
   const handlePrint = () => {
+    const prevTitle = document.title;
+    document.title = 'Informe_Comparativo_Presupuestos_UPTC_2025_2026';
     window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1000);
   };
 
   const filteredRubrosList = useMemo(() => {
@@ -297,9 +302,9 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
   }, [result]);
 
   return (
-    <div className="space-y-6 pb-16 text-slate-100">
+    <div className="space-y-6 pb-16 text-slate-100 print:space-y-0 print:pb-0 print:p-0 print:block print:w-full">
       {/* HEADER INSTITUCIONAL */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-zinc-900 to-black p-6 md:p-8 border border-white/10 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-zinc-900 to-black p-6 md:p-8 border border-white/10 shadow-2xl print:hidden">
         <div className="absolute -right-16 -top-16 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-16 -bottom-16 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -423,7 +428,7 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
       </div>
 
       {/* NAVEGACIÓN POR SUBPESTAÑAS */}
-      <div className="flex items-center gap-1.5 p-1.5 bg-surface-container-low/80 backdrop-blur-md rounded-2xl border border-white/5 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1.5 p-1.5 bg-surface-container-low/80 backdrop-blur-md rounded-2xl border border-white/5 overflow-x-auto scrollbar-none print:hidden">
         <button
           onClick={() => setActiveTab('informe')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
@@ -513,7 +518,7 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
       {activeTab === 'informe' && (
         <div className="space-y-6">
           {/* BARRA SUPERIOR DE ACCIONES DEL INFORME */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container-low/80 border border-white/5 shadow-md">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container-low/80 border border-white/5 shadow-md print:hidden">
             <div className="flex items-center gap-3">
               <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
                 <Award size={20} />
@@ -572,7 +577,7 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
           {/* CONTENEDOR PRINCIPAL DEL INFORME (FONDO BLANCO / MODO EJECUTIVO) */}
           <div
             id="printable-executive-report"
-            className={`transition-all duration-300 max-w-5xl mx-auto rounded-3xl p-8 md:p-14 space-y-10 shadow-2xl print:p-0 print:border-none print:shadow-none print:max-w-none ${
+            className={`transition-all duration-300 max-w-5xl mx-auto rounded-3xl p-8 md:p-14 space-y-10 shadow-2xl print:p-0 print:border-none print:shadow-none print:max-w-none print:w-full print:m-0 print:rounded-none ${
               reportTheme === 'blanco'
                 ? 'bg-white text-slate-900 border border-slate-200 ring-1 ring-slate-900/5'
                 : 'bg-zinc-950 text-slate-200 border border-white/10'
@@ -654,7 +659,7 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
             </div>
 
             {/* SECCIÓN 1: OBJETIVO DEL ANÁLISIS */}
-            <div className="space-y-3">
+            <div className="space-y-3 report-section">
               <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                 1. Objetivo del Dictamen y Marco de Homologación
@@ -668,7 +673,7 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
             </div>
 
             {/* SECCIÓN 2: CUADRO SÍNTESIS MACROPRESUPUESTAL Y GRÁFICAS */}
-            <div className="space-y-4">
+            <div className="space-y-4 report-section">
               <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                 2. Síntesis Macropresupuestal y Estructura del Gasto
@@ -807,7 +812,7 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
             </div>
 
             {/* SECCIÓN 3: RECOMPOSICIÓN DE FUENTES DE FINANCIACIÓN Y CONTRIBUCIÓN */}
-            <div className="space-y-4">
+            <div className="space-y-4 report-section">
               <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                 3. Evolución de Macrofuentes y Contribución al Crecimiento
@@ -857,7 +862,7 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
             </div>
 
             {/* SECCIÓN 4: CONCLUSIONES ESTRATÉGICAS Y DICTAMEN FINANCIERO */}
-            <div className="space-y-4">
+            <div className="space-y-4 report-section">
               <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                 4. Conclusiones Estratégicas y Dictamen Financiero (VAFI)
@@ -927,7 +932,7 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
             </div>
 
             {/* SECCIÓN 5: RECOMENDACIONES ESTRATÉGICAS PARA RECTORÍA Y CONSEJO SUPERIOR */}
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4 pt-2 report-section">
               <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                 5. Recomendaciones Estratégicas y Hoja de Ruta Directiva
@@ -977,7 +982,7 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
             </div>
 
             {/* SECCIÓN 6: CIERRE FORMAL Y FIRMAS INSTITUCIONALES */}
-            <div className="pt-8 border-t-2 border-slate-300 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-700">
+            <div className="pt-8 border-t-2 border-slate-300 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-700 report-section break-inside-avoid">
               <div className="space-y-1 text-center md:text-left">
                 <p className="font-black text-slate-900 uppercase text-sm">Vicerrectoría Administrativa y Financiera</p>
                 <p className="text-slate-600 font-medium">Dirección de Planeación y Presupuesto Institucional</p>

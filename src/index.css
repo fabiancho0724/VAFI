@@ -118,88 +118,65 @@
 @media print {
   @page {
     size: letter portrait;
-    margin: 8mm 10mm;
+    margin: 8mm 8mm 8mm 8mm;
   }
 
-  /* 1. Reset Root, HTML and Body */
+  /* 1. Global Reset for Root, HTML and Body */
   html,
-  body {
+  body,
+  #root {
     background: #ffffff !important;
     background-color: #ffffff !important;
     color: #0f172a !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* 2. Hide all non-printable UI: headers, navigation, sidebars, buttons, dashboard */
+  /* 2. Hide all non-printable UI: headers, navigation, sidebars, buttons, alerts */
   header,
   nav,
   aside,
   button,
   .no-print,
+  .print\:hidden,
   [role="navigation"],
   [class*="sticky"] {
     display: none !important;
     visibility: hidden !important;
   }
 
-  /* 3. Neutralize all fixed, blur, or dark background wrappers */
-  .fixed,
-  [class*="fixed"],
-  [class*="backdrop-blur"],
-  [class*="bg-black"],
-  [class*="bg-\[\#0f172a\]"],
-  [class*="bg-\[\#030712\]"],
-  [class*="bg-background"],
-  [class*="bg-surface"] {
-    position: static !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
-    border: none !important;
+  /* 3. Neutralize layout wrappers that constrain width, height, or apply shifts */
+  main,
+  [class*="min-h-screen"] {
+    min-height: 0 !important;
+    height: auto !important;
     padding: 0 !important;
     margin: 0 !important;
+    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    opacity: 1 !important;
   }
 
-  #report-printable-wrapper {
-    position: static !important;
-    left: 0 !important;
-    top: 0 !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    z-index: auto !important;
-    width: 100% !important;
-    display: block !important;
-  }
-
-  /* 4. Ensure printable report and all descendants are visible */
+  /* 4. Ensure all printable report containers take full printable width */
   #printable-executive-report,
-  #printable-executive-report *,
-  .printable-content,
-  .printable-content * {
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-
-  #printable-executive-report {
+  #printable-executive-caja-report,
+  #printable-horas-catedra-report,
+  #printable-consolidated-projection,
+  #report-printable-wrapper,
+  [id^="printable-"],
+  .printable-content {
     position: static !important;
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
@@ -211,36 +188,95 @@
     height: auto !important;
     border: none !important;
     box-shadow: none !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
-  /* 5. Page Breaks and Flow Control */
-  .page-break-before {
-    page-break-before: always !important;
-    break-before: page !important;
+  #printable-executive-report *,
+  #printable-executive-caja-report *,
+  #printable-horas-catedra-report *,
+  #printable-consolidated-projection *,
+  #report-printable-wrapper *,
+  [id^="printable-"] *,
+  .printable-content * {
+    visibility: visible !important;
+    opacity: 1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  .page-break-inside-avoid,
-  tr,
-  td,
-  th,
-  .report-section {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+  /* 5. Overflow & Table Formatting - Prevent horizontal cutoff */
+  .overflow-x-auto,
+  .overflow-y-auto,
+  .overflow-hidden,
+  [class*="overflow-"] {
+    overflow: visible !important;
+    max-width: 100% !important;
   }
 
   table {
     page-break-inside: auto !important;
     break-inside: auto !important;
     width: 100% !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
     border-collapse: collapse !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 
   thead {
     display: table-header-group !important;
   }
 
-  #printable-executive-report * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  th,
+  td {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    font-size: 9.5px !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+
+  /* 6. Recharts SVG Scaling in Print */
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  svg.recharts-surface {
+    overflow: visible !important;
+    max-width: 100% !important;
+  }
+
+  /* 7. Page Breaks & Section Flow */
+  .page-break-before {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .report-section,
+  .page-break-inside-avoid,
+  .break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 }
