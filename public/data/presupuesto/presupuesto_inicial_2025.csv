@@ -1,0 +1,451 @@
+Unidad;Código concepto;Concepto;Recurso;Valor inicial
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.01;Aportes para Funcionamiento;10.0-Aportes Nacion - Funcionamiento;$ 263.539.315.581,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.001;Recursos del balance - Aportes funcionamiento;10.0-Aportes Nacion - Funcionamiento;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.06;Aportes PIC Convencional;10.1-Aportes Nación - PIC Convencional;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.07;Aportes PIC Territorial;10.2-Aportes Nación - PIC Territorial;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.08;Aportes Procesos de  fortalecimiento a la gestión;10.3-Aportes Nación - Procesos de  fortalecimiento a la gestión;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.09;Aportes Saldos PIC Territorial;10.4-Aportes Nación - Saldos PIC Territorial;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.01;Aportes para Funcionamiento;10.5-Aportes Nación - Política de gratuidad;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.07.01;Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia;12-Estampillas Otras Universidades;$ 4.782.165.645,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.003;Rendimientos Financieros - Estampilla Pro UNAL y demas universidades;12-Estampillas Otras Universidades;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.007;Recursos del balance - Estampilla Prounal;12-Estampillas Otras Universidades;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.06.00;Excedentes Cooperativas Art.142, Ley 1819 del 2016;13-Cooperativas;$ 2.078.952.993,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.03;Matrículas Pregrado FSE;14-Matriculas FSE;$ 36.210.311.946,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.016;Recursos del balance - Matrículas FSE;14-Matriculas FSE;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.002.01.03.00;Asignaciones del Sistema General de Regalías;15-Regalias;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.010;Rendimientos Financieros - SGR;15-Regalias;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.02;Aportes para Inversion;16.0-Aportes inversion;$ 7.403.276.058,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.004;Rendimientos Financieros - CREE;16.0-Aportes inversion;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.014;Recursos del balance - Aportes inversion;16.0-Aportes inversion;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.04;Devolucion de descuento por votacion;17-Devolucion descuento electoral;$ 5.148.899.820,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.05;Articulo 87 CESU;18-Articulo 87 CESU;$ 1.987.309.285,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.015;Certificaciones y constancias;20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;$ 3.039.120.918,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.02;Pregrado - Derechos de grado;20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 1.655.415.334,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;$ 1.493.530.058,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.03.001.05;Sanciones administrativas;20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.06;"Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua";20-Propios;$ 3.400.677.990,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.07;"Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing";20-Propios;$ 473.314.185,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.01;"Minerales; electricidad, gas y agua";20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.04;Productos metálicos, maquinaria y equipo;20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.002;Rendimientos Financieros - Propios;20-Propios;$ 1.671.094.633,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.08.01.003.01;No condicionadas a la adquisición de un activo ;20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.002;Recursos del balance - Propios;20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.003;Ingresos de Vigencias Anteriores - Servicios Públicos;20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.007;Ingresos de Vigencias Anteriores - Propios;20-Propios;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 0,00
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+05 - CIENCIAS BASICAS;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 0,00
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;$ 0,00
+09 - INGENIERIA;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+09 - INGENIERIA;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 0,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 0,00
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;$ 0,00
+14 - SECCIONAL CHIQUINQUIRA;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 0,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;$ 0,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;$ 0,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;$ 0,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.1.02.03.001.05;Sanciones administrativas;20-Propios;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.002.01;"Minerales; electricidad, gas y agua";20-Propios;$ 0,00
+03 - UNISALUD;1.1.02.05.002.01;"Minerales; electricidad, gas y agua";20-Propios;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.02;Devolución IVA - Instituciones de Educación Superior;21-Devolucion IVA;$ 4.026.511.789,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.003;Recursos del balance - Posgrados;31-Posgrados;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.004;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 178.316.272,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 290.247.590,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 9.830.829.840,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 10.997.656,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.003;Recursos del balance - Posgrados;31-Posgrados;$ 0,00
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 18.889.000,00
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 41.067.000,00
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 1.229.301.000,00
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 547.000,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 380.225.000,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 247.288.000,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 5.442.587.600,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 0,00
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 35.317.620,00
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 52.018.200,00
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 2.515.764.420,00
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 50.379.000,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 110.200.000,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 1.629.336.000,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 2.682.000,00
+09 - INGENIERIA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 0,00
+09 - INGENIERIA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 0,00
+09 - INGENIERIA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 7.275.019.050,00
+09 - INGENIERIA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 0,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 7.800.000,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 11.700.000,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 627.709.095,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 101.680.908,00
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 216.704.758,00
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 3.986.114.496,00
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 9.060.000,00
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 99.929.700,00
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 225.184.050,00
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 5.492.916.585,00
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 0,00
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 8.010.000,00
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 10.266.750,00
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 291.575.700,00
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 0,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;$ 123.000.000,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;$ 183.000.000,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;$ 4.702.000.000,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.00;Agricultura, silvicultura y productos de la pesca;32-Extension;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.004;Recursos del balance - Extension;32-Extension;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 10.000.000,00
+05 - CIENCIAS BASICAS;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 5.000.000,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0,00
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 725.000.000,00
+09 - INGENIERIA;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 1.862.500.000,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 51.000.000,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 440.000.000,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.00;Agricultura, silvicultura y productos de la pesca;32-Extension;$ 600.000.000,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.002.00;Agricultura, silvicultura y productos de la pesca;32-Extension;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0,00
+03 - UNISALUD;1.1.02.05.001.09.01.01;Extension;32-Extension;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 12.860.765.000,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+05 - CIENCIAS BASICAS;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+05 - CIENCIAS BASICAS;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+05 - CIENCIAS BASICAS;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+05 - CIENCIAS BASICAS;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 170.000.000,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+07 - CIENCIAS DE LA SALUD;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+07 - CIENCIAS DE LA SALUD;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 16.250.000,00
+08 - CIENCIAS AGROPECUARIAS;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+08 - CIENCIAS AGROPECUARIAS;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 5.053.088.095,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 300.000.000,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 1.200.000.000,00
+12 - SECCIONAL DUITAMA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 5.040.000.000,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 10.000.000.000,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.09.01.04;Investigacion;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.06.01;Instituto Colombiano de Crédito Educativo y Estudios Técnicos en el Exterior - ICETEX - Acuerdo 001 de 2019;34-Convenios sin derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 705.780.000,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 5.000.000.000,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;$ 0,00
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 590.000.000,00
+05 - CIENCIAS BASICAS;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 64.000.000,00
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 20.000.000,00
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 100.000.000,00
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 4.000.000,00
+09 - INGENIERIA;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 34.200.000,00
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 20.000.000,00
+12 - SECCIONAL DUITAMA;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 250.000.000,00
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 155.610.000,00
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 68.800.000,00
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 885.000.000,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 0,00
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;$ 14.400.000,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.01.02.300.32;Estampilla pro Universidad Pedagógica y Tecnológica de Colombia;40-Estampilla UPTC;$ 4.036.026.173,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.006;Recursos del balance - Estampilla UPTC;40-Estampilla UPTC;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.01.001.01.06.01;Cotizaciones al SGSS;50-UniSalud;$ 0,00
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.009.01.03;Compensación prestaciones económicas (licencias e incapacidades);50-UniSalud;$ 0,00
+13 - SECCIONAL SOGAMOSO;1.1.02.06.009.01.03;Compensación prestaciones económicas (licencias e incapacidades);50-UniSalud;$ 0,00
+02 - INVESTIGACION Y EXTENSION;1.1.02.06.009.01.03;Compensación prestaciones económicas (licencias e incapacidades);50-UniSalud;$ 0,00
+;;;;$432,628,979,793.00

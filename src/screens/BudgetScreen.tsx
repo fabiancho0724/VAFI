@@ -299,6 +299,17 @@ export function BudgetScreen({ onNavigate }: { onNavigate: (s: string) => void }
             7 Fuentes Institucionales
           </span>
         </button>
+
+        <button
+          onClick={() => onNavigate('presupuesto-comparativo')}
+          className="flex items-center gap-2.5 px-5 py-3 rounded-2xl font-medium text-xs sm:text-sm transition-all bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 hover:text-amber-200 cursor-pointer"
+        >
+          <Scale size={18} />
+          <span>Comparativo Inicial 2025–2026</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-amber-500/20 text-amber-400">
+            Nuevo Módulo
+          </span>
+        </button>
       </div>
 
       {activeBudgetTab === 'r20-proyeccion' ? (

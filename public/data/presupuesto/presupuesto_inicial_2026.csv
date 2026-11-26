@@ -1,0 +1,205 @@
+Unidad;Código concepto;Concepto;Recurso;Valor inicial
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.01;Aportes para Funcionamiento;10.0-Aportes Nacion - Funcionamiento;314781873726
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.001;Recursos del balance - Aportes funcionamiento;10.0-Aportes Nacion - Funcionamiento;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.002;Ingresos de Vigencias Anteriores - Aportes;10.0-Aportes Nacion - Funcionamiento;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.06;Aportes PIC Convencional;10.1-Aportes Nación - PIC Convencional;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.021;Recursos del balance - PIC Convencional;10.1-Aportes Nación - PIC Convencional;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.07;Aportes PIC Territorial;10.2-Aportes Nación - PIC Territorial;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.020;Recursos del balance - PIC Territorial;10.2-Aportes Nación - PIC Territorial;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.10;Matrículas Pregrado-Política de Gratuidad;10.5-Aportes Nación - Política de gratuidad;20708427143
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.07.01;Estampilla Pro- Universidad Nacional y Demás Entidades Estatales de Colombia;12-Estampillas Otras Universidades;5706455422
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.003;Rendimientos Financieros - Estampilla Pro UNAL y demas universidades;12-Estampillas Otras Universidades;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.007;Recursos del balance - Estampilla Prounal;12-Estampillas Otras Universidades;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.06.00;Excedentes Cooperativas Art.142, Ley 1819 del 2016;13-Cooperativas;2126284735
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.022;Recursos del Balance - Cooperativas;13-Cooperativas;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.03;Matrículas Pregrado FSE;14-Matriculas FSE;18737327483
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.06.02;Politica Gratuidad;14-Matriculas FSE;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.023;Recursos del balance - Matrículas FSE;14-Matriculas FSE;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.002.01.03.00;Asignaciones del Sistema General de Regalías;15-Regalias;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.02;Aportes para Inversion;16.0-Aportes inversion;7728720060
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.004;Rendimientos Financieros - CREE;16.0-Aportes inversion;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.012;Rendimientos Financieros - Aportes Inversion;16.0-Aportes inversion;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.014;Recursos del balance - Aportes inversion;16.0-Aportes inversion;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.11;Inversion PFB Plan de Fomento al Bienestar;16.1-Inversion PFB;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.013;Rendimientos Financieros - Inversion PFB;16.1-Inversion PFB;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.12;Inversion PFC Plan de Fomento a la Calidad;16.2-Inversion PFC;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.014;Rendimientos Financieros - Inversion PFC;16.2-Inversion PFC;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.04;Devolucion de descuento por votacion;17-Devolucion descuento electoral;5447536009
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.01.05;Articulo 87 CESU;18-Articulo 87 CESU;427778274
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.015;Certificaciones y constancias;20-Propios;54390954
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;316506993
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.02;Pregrado - Derechos de grado;20-Propios;451761696
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;5525977978
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;4231617827
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.03.001.05;Sanciones administrativas;20-Propios;22586143
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.06;"Comercio y distribución; alojamiento; servicios de suministro de comidas y bebidas; servicios de transporte; y servicios de distribución de electricidad, gas y agua";20-Propios;4173694824
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.07;"Servicios financieros y servicios conexos; servicios inmobiliarios; y servicios de arrendamiento y leasing";20-Propios;235081376
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.01;"Minerales; electricidad, gas y agua";20-Propios;129404752
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.002.04;Productos metálicos, maquinaria y equipo;20-Propios;5025174
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.002;Rendimientos Financieros - Propios;20-Propios;1822006660
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.002;Recursos del balance - Propios;20-Propios;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.001;Ingresos de Vigencias Anteriores - Licencias e Incapacidades;20-Propios;331465375
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.003;Ingresos de Vigencias Anteriores - Servicios Públicos;20-Propios;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.13.01.007;Ingresos de Vigencias Anteriores - Propios;20-Propios;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;0
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+09 - INGENIERIA;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;0
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;0
+15 - SEDE REGIONAL AGUAZUL;1.1.02.02.116.01.01.01;Pregrado - Inscripciones ;20-Propios;0
+15 - SEDE REGIONAL AGUAZUL;1.1.02.02.116.01.01.03;Pregrado - Matrículas;20-Propios;0
+15 - SEDE REGIONAL AGUAZUL;1.1.02.02.116.01.01.04;Pregrado - Certificaciones, constancias académicas y derechos complementarios;20-Propios;0
+15 - SEDE REGIONAL AGUAZUL;1.1.02.03.001.05;Sanciones administrativas;20-Propios;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.02;Devolución IVA - Instituciones de Educación Superior;21-Devolucion IVA;4587997825
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.015;Recursos del balance - Devolucion IVA;21-Devolucion IVA;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;212479362
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;372975795
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;10485147378
+04 - CIENCIAS DE LA EDUCACION;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;14917592
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.003;Recursos del balance - Posgrados;31-Posgrados;0
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;30612465
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;41215292
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;1408521574
+05 - CIENCIAS BASICAS;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;1273178
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;111276000
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;218394000
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;5018300000
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;0
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;21238620
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;33309900
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;2205929622
+07 - CIENCIAS DE LA SALUD;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;0
+07 - CIENCIAS DE LA SALUD;1.2.13.01.004;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;0
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;44900440
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;129301900
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;2008442150
+08 - CIENCIAS AGROPECUARIAS;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;2342000
+08 - CIENCIAS AGROPECUARIAS;1.2.13.01.004;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;0
+09 - INGENIERIA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;0
+09 - INGENIERIA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;0
+09 - INGENIERIA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;7974390060
+09 - INGENIERIA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;0
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;4612000
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;7686900
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;364581200
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;1000000
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;90602928
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;205081160
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;3406788528
+12 - SECCIONAL DUITAMA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;9540000
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;105525765
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;208353425
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;4945268530
+13 - SECCIONAL SOGAMOSO;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;0
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;4441320
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;11103300
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;194307750
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;0
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.01;Posgrado - Inscripciones ;31-Posgrados;138200000
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.02;Posgrado - Derechos de grado;31-Posgrados;238000000
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;5202000000
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.02.116.01.02.04;Posgrado - Certificaciones, constancias académicas y derechos complementarios;31-Posgrados;0
+02 - INVESTIGACION Y EXTENSION;1.2.13.01.004;Ingresos de Vigencias Anteriores - Extension;31-Posgrados;0
+03 - UNISALUD;1.1.02.02.116.01.02.03;Posgrado - Matrículas;31-Posgrados;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.09.01.01;Extension;32-Extension;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.09.01.01;Extension;32-Extension;0
+05 - CIENCIAS BASICAS;1.1.02.05.001.09.01.01;Extension;32-Extension;10000000
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.09.01.01;Extension;32-Extension;0
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.09.01.01;Extension;32-Extension;0
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.09.01.01;Extension;32-Extension;810500000
+09 - INGENIERIA;1.1.02.05.001.09.01.01;Extension;32-Extension;1575000000
+12 - SECCIONAL DUITAMA;1.1.02.05.001.09.01.01;Extension;32-Extension;21050000
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.09.01.01;Extension;32-Extension;460000000
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.05.001.09.01.01;Extension;32-Extension;0
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.00;Agricultura, silvicultura y productos de la pesca;32-Extension;650000000
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.09.01.01;Extension;32-Extension;15000000
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.002.00;Agricultura, silvicultura y productos de la pesca;32-Extension;0
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.09.01.01;Extension;32-Extension;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;4301415000
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;0
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;220000000
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;0
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;100000000
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;1000000000
+08 - CIENCIAS AGROPECUARIAS;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;0
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;4800000000
+09 - INGENIERIA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+09 - INGENIERIA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;0
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;250000000
+10 - DERECHO Y CIENCIAS SOCIALES;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;0
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;825000000
+12 - SECCIONAL DUITAMA;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;0
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;3000000000
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+13 - SECCIONAL SOGAMOSO;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;0
+13 - SECCIONAL SOGAMOSO;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;0
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;16000000000
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.09.01.04;Investigacion;33-Convenios con derechos;0
+02 - INVESTIGACION Y EXTENSION;1.2.05.02.008;Rendimientos Financieros - Convenios con derechos;33-Convenios con derechos;0
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.005;Recursos del balance - Convenios con derechos;33-Convenios con derechos;0
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.08.01;Convenios con derechos económicos;33-Convenios con derechos;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.02.06.006.06.01;Instituto Colombiano de Crédito Educativo y Estudios Técnicos en el Exterior - ICETEX - Acuerdo 001 de 2019;34-Convenios sin derechos;0
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;628035382
+04 - CIENCIAS DE LA EDUCACION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;0
+09 - INGENIERIA;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;0
+12 - SECCIONAL DUITAMA;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;0
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;4984000000
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.08.02;Convenios sin derechos económicos;34-Convenios sin derechos;0
+02 - INVESTIGACION Y EXTENSION;1.2.10.02.008;Recursos del balance - Convenios sin derechos;34-Convenios sin derechos;0
+04 - CIENCIAS DE LA EDUCACION;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;150000000
+05 - CIENCIAS BASICAS;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;61000000
+06 - CIENCIAS ECONOMICAS, ADMINISTRATIVAS Y CONTABLES;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;69000000
+07 - CIENCIAS DE LA SALUD;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;100000000
+08 - CIENCIAS AGROPECUARIAS;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;4000000
+09 - INGENIERIA;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;117000000
+10 - DERECHO Y CIENCIAS SOCIALES;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;20000000
+12 - SECCIONAL DUITAMA;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;255500000
+13 - SECCIONAL SOGAMOSO;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;142000000
+14 - SECCIONAL CHIQUINQUIRA;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;43000000
+11 - ESTUDIOS TECNOLOGICOS Y A DISTANCIA;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;860000000
+02 - INVESTIGACION Y EXTENSION;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;535000000
+15 - SEDE REGIONAL AGUAZUL;1.1.02.05.001.09.01.05;Educación continuada;35-Educacion continuada;30000000
+01 - ADMINISTRATIVA Y FINANCIERA;1.1.01.02.300.32;Estampilla pro Universidad Pedagógica y Tecnológica de Colombia;40-Estampilla UPTC;4206444980
+01 - ADMINISTRATIVA Y FINANCIERA;1.2.10.02.006;Recursos del balance - Estampilla UPTC;40-Estampilla UPTC;0

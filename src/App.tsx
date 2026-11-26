@@ -18,6 +18,7 @@ import { CashFlowScreen } from './screens/CashFlowScreen';
 import { ExecutiveReportScreen } from './screens/ExecutiveReportScreen';
 import { PoaScreen } from './screens/PoaScreen';
 import { CajaHoyScreen } from './screens/CajaHoyScreen';
+import { PresupuestoComparativoScreen } from './screens/PresupuestoComparativoScreen';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -91,6 +92,7 @@ export default function App() {
         {currentScreen === 'informe-gerencial' && <ExecutiveReportScreen onNavigate={handleNavigate} />}
         {currentScreen === 'poa' && <PoaScreen onNavigate={handleNavigate} />}
         {currentScreen === 'presupuesto' && <BudgetScreen onNavigate={handleNavigate} />}
+        {currentScreen === 'presupuesto-comparativo' && <PresupuestoComparativoScreen onNavigate={handleNavigate} />}
         {currentScreen === 'historical' && <HistoricalScreen onNavigate={handleNavigate} />}
         {currentScreen === 'budget' && <ProgramCostingScreen onNavigate={handleNavigate} />}
         {currentScreen === 'calendar' && <CalendarScreen onNavigate={handleNavigate} />}
