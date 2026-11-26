@@ -5,6 +5,7 @@ import { InformeCajaNivelesDisponibilidad } from '../components/caja_hoy/Informe
 import { InformeCajaIndicadoresSostenibilidad } from '../components/caja_hoy/InformeCajaIndicadoresSostenibilidad';
 import { InformeCajaMatrizRiesgos } from '../components/caja_hoy/InformeCajaMatrizRiesgos';
 import { InformeCajaConclusionDirectiva } from '../components/caja_hoy/InformeCajaConclusionDirectiva';
+import { InformeCajaDetalladoEjecutivo } from '../components/caja_hoy/InformeCajaDetalladoEjecutivo';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ResponsiveContainer,
@@ -759,6 +760,15 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
           </div>
 
           <button
+            onClick={() => selectTab('reportes')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#FFCC29] hover:bg-[#FFCC29]/90 text-black rounded-2xl text-xs font-mono font-bold shadow-lg shadow-[#FFCC29]/20 transition-all cursor-pointer"
+            title="Ver Informe Técnico, Financiero y Económico en Modo Ejecutivo (Fondo Blanco)"
+          >
+            <FileText size={15} />
+            <span>Informe Ejecutivo Oficial</span>
+          </button>
+
+          <button
             onClick={() => window.print()}
             className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 text-xs font-mono transition-all cursor-pointer"
           >
@@ -910,7 +920,7 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
               { id: 'riesgos', label: 'G. Riesgos & Alertas Financieras', icon: AlertTriangle },
               { id: 'conclusion', label: 'H. Conclusión Directiva VAFI', icon: FileCheck },
               { id: 'diciembre', label: 'I. Proyecciones de Cierre a Diciembre', icon: Sliders },
-              { id: 'reportes', label: 'J. Reporte Formal & Exportación', icon: FileText },
+              { id: 'reportes', label: 'J. Informe Técnico, Financiero & Económico (Oficial)', icon: FileText },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -3950,145 +3960,17 @@ export function CajaHoyScreen({ onNavigate }: { onNavigate?: (s: string) => void
         </div>
       )}
 
-      {/* SUBTAB 8: REPORTE GERENCIAL Y EXPORTACIÓN */}
+      {/* SUBTAB J: INFORME TÉCNICO, FINANCIERO Y ECONÓMICO DETALLADO (MODO EJECUTIVO / FONDO BLANCO) */}
       {activeTab === 'reportes' && (
-        <div className="space-y-6">
-          <div className="bg-surface-container-low/40 border border-white/5 p-8 rounded-3xl space-y-6 print:border-none print:p-0">
-            <div className="flex flex-col sm:flex-row items-center justify-between border-b border-white/10 pb-6 gap-4">
-              <div className="flex items-center gap-4">
-                <img
-                  src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png"
-                  alt="UPTC Logo"
-                  className="w-14 h-14 object-contain"
-                />
-                <div>
-                  <h2 className="text-lg font-bold text-white">UNIVERSIDAD PEDAGÓGICA Y TECNOLÓGICA DE COLOMBIA</h2>
-                  <p className="text-xs font-mono text-on-surface-variant">Vicerrectoría Administrativa y Financiera – Dirección Financiera</p>
-                  <p className="text-[11px] font-mono text-[#FFCC29]">
-                    INFORME GERENCIAL INTEGRAL DE CAJA, BANCOS, SIMULACIÓN A DICIEMBRE Y EQUILIBRIO PRESUPUESTAL
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => window.print()}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#FFCC29] text-black font-mono font-bold text-xs rounded-xl shadow-lg hover:bg-[#FFCC29]/90 cursor-pointer"
-                >
-                  <Printer size={16} />
-                  Imprimir / Descargar PDF
-                </button>
-              </div>
-            </div>
-
-            {/* Document Content */}
-            <div className="space-y-6 text-xs text-gray-300 leading-relaxed">
-              <div className="bg-black/30 p-4 rounded-xl border border-white/5 space-y-2">
-                <h4 className="font-bold text-white font-mono uppercase text-sm">1. SÍNTESIS EJECUTIVA DE DISPONIBILIDAD</h4>
-                <p>
-                  Con corte al <strong>23 de noviembre de 2026</strong>, la tesorería de la UPTC reporta un saldo total en
-                  cuentas bancarias de <strong>{formatCOP(generalMetrics.saldoBancosTotal)}</strong> (conciliado con el saldo
-                  de referencia de <strong>$ 144.563.470.673 COP</strong>). Dicha disponibilidad respalda plenamente los
-                  compromisos presupuestales pendientes de pago por <strong>{formatCOP(generalMetrics.saldoPorPagar)}</strong>,
-                  lo que representa un índice de cobertura inmediata del <strong>{(generalMetrics.coberturaInmediata * 100).toFixed(1)}%</strong> y
-                  un margen de superávit de <strong>{formatCOP(generalMetrics.margenHolguraInmediata)}</strong>.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-black/30 p-4 rounded-xl border border-white/5 space-y-2">
-                  <h4 className="font-bold text-white font-mono uppercase">2. RECURSOS DE ADMINISTRACIÓN</h4>
-                  <p>
-                    Presentan una liquidez de <strong>{formatCOP(adminMetrics.saldoBancosTotal)}</strong> frente a obligaciones
-                    por pagar de <strong>{formatCOP(adminMetrics.saldoPorPagar)}</strong> (cobertura:{' '}
-                    {(adminMetrics.coberturaInmediata * 100).toFixed(1)}%). Se garantiza la total suficiencia para las nóminas de
-                    noviembre y diciembre, prestaciones sociales, primas y servicios básicos.
-                  </p>
-                </div>
-
-                <div className="bg-black/30 p-4 rounded-xl border border-white/5 space-y-2">
-                  <h4 className="font-bold text-white font-mono uppercase">3. RECURSOS DE INVERSIÓN</h4>
-                  <p>
-                    Presentan un saldo disponible de <strong>{formatCOP(invMetrics.saldoBancosTotal)}</strong> frente a
-                    compromisos por pagar de <strong>{formatCOP(invMetrics.saldoPorPagar)}</strong> (cobertura:{' '}
-                    {(invMetrics.coberturaInmediata * 100).toFixed(1)}%). Existe suficiencia, pero con un margen de holgura
-                    ajustado de <strong>{formatCOP(invMetrics.margenHolguraInmediata)}</strong>. Se requiere blindar los recursos
-                    con destinación específica y acelerar giros contractuales.
-                  </p>
-                </div>
-              </div>
-
-              {/* Seccion 4: Proyecciones de Cierre a Diciembre */}
-              <div className="bg-black/30 p-4 rounded-xl border border-white/5 space-y-2">
-                <h4 className="font-bold text-white font-mono uppercase text-sm">4. ESCENARIO PROYECTADO DE CIERRE A DICIEMBRE</h4>
-                <p>
-                  Con la incorporación de la nómina de diciembre estimada en <strong>{formatCOP(proyeccionDiciembre.rubro211.nominaDiciembreEstimada)}</strong> (clasificada como el único gasto pendiente de apropiación en el <strong>Rubro 2.1.1 Gastos de Personal</strong>, el cual conserva una holgura libre de <strong>+{formatCOP(proyeccionDiciembre.rubro211.holguraApropiacion211)}</strong>) e ingresos adicionales proyectados por <strong>+{formatCOP(proyeccionDiciembre.totalIngresosAdicionalesManuales)}</strong>, la UPTC proyecta cerrar la vigencia 2026 con un <strong>Recaudo Total de {formatCOP(proyeccionDiciembre.recaudoTotalProyectadoCierre)}</strong> ({proyeccionDiciembre.porcentajeRecaudoProyectadoCierre.toFixed(1)}% de aforo), <strong>Compromisos Totales de {formatCOP(proyeccionDiciembre.compromisosTotalesProyectadosCierre)}</strong> ({proyeccionDiciembre.porcentajeCompromisoProyectadoCierre.toFixed(1)}% de apropiación), un <strong>Superávit Presupuestal Proyectado de {formatCOP(proyeccionDiciembre.balancePresupuestalCierre)}</strong> y un <strong>Saldo Final en Bancos de {formatCOP(proyeccionDiciembre.saldoBancosProyectadoCierre)}</strong>.
-                </p>
-              </div>
-
-              {/* Downloads Bar */}
-              <div className="bg-black/30 p-4 rounded-xl border border-white/5 space-y-3">
-                <h4 className="font-bold text-white font-mono uppercase text-sm">5. EXPORTACIÓN DE BASES Y MATRICES ANALÍTICAS</h4>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => {
-                      const exportData = [
-                        { Variable: 'Saldo en cuentas bancarias', Real_23Nov: proyeccionDiciembre.bancosActuales, Ajuste_Dic: proyeccionDiciembre.flujoNetoDiciembre, Proyectado_Cierre: proyeccionDiciembre.saldoBancosProyectadoCierre },
-                        { Variable: 'Aforo de ingresos', Real_23Nov: proyeccionDiciembre.aforoTotal, Ajuste_Dic: 0, Proyectado_Cierre: proyeccionDiciembre.aforoTotal },
-                        { Variable: 'Recaudo de ingresos', Real_23Nov: proyeccionDiciembre.recaudoHistoricoEneNov, Ajuste_Dic: proyeccionDiciembre.recaudoEsperadoDiciembreTotal, Proyectado_Cierre: proyeccionDiciembre.recaudoTotalProyectadoCierre },
-                        { Variable: 'Apropiación presupuestal total', Real_23Nov: proyeccionDiciembre.apropiacionTotal, Ajuste_Dic: 0, Proyectado_Cierre: proyeccionDiciembre.apropiacionTotal },
-                        { Variable: 'Compromisos presupuestales', Real_23Nov: proyeccionDiciembre.compromisosHistoricosEneNov, Ajuste_Dic: proyeccionDiciembre.nominaDiciembreAfectada, Proyectado_Cierre: proyeccionDiciembre.compromisosTotalesProyectadosCierre },
-                        { Variable: 'Saldo de apropiación disponible', Real_23Nov: proyeccionDiciembre.apropiacionTotal - proyeccionDiciembre.compromisosHistoricosEneNov, Ajuste_Dic: -proyeccionDiciembre.nominaDiciembreAfectada, Proyectado_Cierre: proyeccionDiciembre.saldoPresupuestalDisponibleCierre },
-                        { Variable: 'Pagos acumulados efectivos', Real_23Nov: proyeccionDiciembre.pagosHistoricosEneNov, Ajuste_Dic: proyeccionDiciembre.pagosEsperadosDiciembreTotal, Proyectado_Cierre: proyeccionDiciembre.pagosTotalesProyectadosCierre },
-                        { Variable: 'Balance Presupuestal de Cierre', Real_23Nov: proyeccionDiciembre.recaudoHistoricoEneNov - proyeccionDiciembre.compromisosHistoricosEneNov, Ajuste_Dic: proyeccionDiciembre.recaudoEsperadoDiciembreTotal - proyeccionDiciembre.nominaDiciembreAfectada, Proyectado_Cierre: proyeccionDiciembre.balancePresupuestalCierre },
-                      ];
-                      exportToCSV(exportData, 'Proyecciones_Diciembre_UPTC');
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
-                  >
-                    <Download size={13} className="text-[#FFCC29]" />
-                    Exportar Proyecciones Cierre (CSV)
-                  </button>
-                  <button
-                    onClick={() => exportToCSV(simIngresosAdicionales, 'Ingresos_Adicionales_Proyectados_UPTC')}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
-                  >
-                    <Download size={13} className="text-emerald-400" />
-                    Exportar Ingresos Adicionales (CSV)
-                  </button>
-                  <button
-                    onClick={() => exportToCSV(equilibrioResult.matrix, 'Matriz_Equilibrio_UPTC')}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
-                  >
-                    <Download size={13} />
-                    Exportar Matriz de Equilibrio (CSV)
-                  </button>
-                  <button
-                    onClick={() => exportToCSV(filteredBanks, 'Cuentas_Bancarias_UPTC')}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
-                  >
-                    <Download size={13} />
-                    Exportar Estado de Bancos (CSV)
-                  </button>
-                  <button
-                    onClick={() => exportToCSV(monthlyStats, 'Recaudo_Mensualizado_UPTC')}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
-                  >
-                    <Download size={13} />
-                    Exportar Ingresos Mensualizados (CSV)
-                  </button>
-                  <button
-                    onClick={() => exportToCSV(filteredExpenses, 'Gastos_UPTC')}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white font-mono text-[11px] border border-white/10 cursor-pointer"
-                  >
-                    <Download size={13} />
-                    Exportar Gastos por Unidad (CSV)
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <InformeCajaDetalladoEjecutivo
+          data={informeCajaData}
+          proyeccionesDiciembre={proyeccionDiciembre}
+          banks={banks}
+          incomes={incomes}
+          expenses={expenses}
+          simIngresosAdicionales={simIngresosAdicionales}
+          onNavigateTab={selectTab as any}
+        />
       )}
     </div>
   );
