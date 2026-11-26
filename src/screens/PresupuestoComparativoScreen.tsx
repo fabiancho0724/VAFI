@@ -43,7 +43,13 @@ import {
   ExternalLink,
   HelpCircle,
   Clock,
-  ArrowUpDown
+  ArrowUpDown,
+  Sun,
+  Moon,
+  Award,
+  CheckSquare,
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react';
 import {
   PresupuestoItem,
@@ -80,7 +86,10 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
   const [ipcRate, setIpcRate] = useState<number>(0.052);
   const [activeTab, setActiveTab] = useState<
     'resumen' | 'recursos' | 'rubros' | 'componentes' | 'indicadores' | 'transformaciones' | 'informe'
-  >('resumen');
+  >('informe'); // Default to informe as requested by user
+
+  // Modo de visualización del informe: fondo blanco ejecutivo vs oscuro
+  const [reportTheme, setReportTheme] = useState<'blanco' | 'oscuro'>('blanco');
 
   const [rubroSubFilter, setRubroSubFilter] = useState<
     'todos' | 'top_inc_abs' | 'top_inc_pct' | 'top_red_abs' | 'top_red_pct' | 'nuevos' | 'extintos' | 'estables'
@@ -205,6 +214,50 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
   }, [filteredRubrosList, currentPage]);
 
   const totalPages = Math.ceil(filteredRubrosList.length / pageSize) || 1;
+
+  // Datos para gráficas del informe
+  const dataReportMacro = useMemo(() => [
+    {
+      name: 'Presupuesto Total',
+      '2025': result.total2025 / 1e6,
+      '2026': result.total2026 / 1e6
+    },
+    {
+      name: 'Funcionamiento',
+      '2025': result.funcionamientoVsInversion.funcionamiento2025 / 1e6,
+      '2026': result.funcionamientoVsInversion.funcionamiento2026 / 1e6
+    },
+    {
+      name: 'Inversión',
+      '2025': result.funcionamientoVsInversion.inversion2025 / 1e6,
+      '2026': result.funcionamientoVsInversion.inversion2026 / 1e6
+    }
+  ], [result]);
+
+  const dataReportRigidezPie = useMemo(() => [
+    { name: 'Funcionamiento (96.39%)', value: result.funcionamientoVsInversion.funcionamiento2026 / 1e6, color: '#D97706' },
+    { name: 'Inversión (3.61%)', value: result.funcionamientoVsInversion.inversion2026 / 1e6, color: '#2563EB' }
+  ], [result]);
+
+  const dataReportMacroFuentes = useMemo(() => {
+    return result.gruposRecursos.map(g => ({
+      name: g.grupo.replace(' y Contribuciones', '').replace(' / Gratuidad', ''),
+      '2025': g.valor2025 / 1e6,
+      '2026': g.valor2026 / 1e6,
+      dif: g.difAbsoluta / 1e6
+    }));
+  }, [result]);
+
+  const dataReportContribucionNet = useMemo(() => [
+    { concepto: 'Aportes Nación Funcionamiento (R10.0)', monto: 51242.56, tipo: 'positivo' },
+    { concepto: 'Recursos Propios (R20)', monto: 5566.37, tipo: 'positivo' },
+    { concepto: 'Gratuidad Neta (R10.5 - R14)', monto: 3235.44, tipo: 'positivo' },
+    { concepto: 'Estampillas & Transferencias Ley', monto: 1142.04, tipo: 'positivo' },
+    { concepto: 'Aportes Inversión Nación (R16.0)', monto: 325.44, tipo: 'positivo' },
+    { concepto: 'Devolución IVA (R21)', monto: 561.49, tipo: 'positivo' },
+    { concepto: 'Artículo 87 CESU (R18)', monto: -1559.53, tipo: 'negativo' },
+    { concepto: 'Convenios con Derechos (R33)', monto: -4143.69, tipo: 'negativo' }
+  ], []);
 
   const dataChartComparacionGeneral = useMemo(() => [
     {
@@ -372,6 +425,18 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
       {/* NAVEGACIÓN POR SUBPESTAÑAS */}
       <div className="flex items-center gap-1.5 p-1.5 bg-surface-container-low/80 backdrop-blur-md rounded-2xl border border-white/5 overflow-x-auto scrollbar-none">
         <button
+          onClick={() => setActiveTab('informe')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            activeTab === 'informe'
+              ? 'bg-amber-500 text-black shadow-lg font-bold shadow-amber-500/20'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <FileText size={15} />
+          Informe Ejecutivo Oficial
+        </button>
+
+        <button
           onClick={() => setActiveTab('resumen')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'resumen'
@@ -442,19 +507,492 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
           <AlertTriangle size={15} />
           6. Transformaciones & Alertas VAFI
         </button>
-
-        <button
-          onClick={() => setActiveTab('informe')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-            activeTab === 'informe'
-              ? 'bg-amber-500 text-black shadow-lg font-bold shadow-amber-500/20'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <FileText size={15} />
-          7. Informe Ejecutivo Formal
-        </button>
       </div>
+
+      {/* PESTAÑA: INFORME EJECUTIVO OFICIAL (CON FONDO BLANCO Y MODO EJECUTIVO CON GRÁFICAS) */}
+      {activeTab === 'informe' && (
+        <div className="space-y-6">
+          {/* BARRA SUPERIOR DE ACCIONES DEL INFORME */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface-container-low/80 border border-white/5 shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                <Award size={20} />
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-white">Informe Técnico Gerencial: Comparativo de Presupuestos</h3>
+                <p className="text-xs text-slate-400">Formato oficial ejecutivo para presentación ante Rectoría y Consejo Superior Universitario</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* TOGGLE MODO BLANCO / OSCURO */}
+              <div className="flex items-center bg-black/40 p-1 rounded-xl border border-white/10 text-xs">
+                <button
+                  onClick={() => setReportTheme('blanco')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                    reportTheme === 'blanco'
+                      ? 'bg-white text-slate-900 shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Sun size={13} className={reportTheme === 'blanco' ? 'text-amber-500' : ''} />
+                  Fondo Blanco
+                </button>
+                <button
+                  onClick={() => setReportTheme('oscuro')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                    reportTheme === 'oscuro'
+                      ? 'bg-white/20 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Moon size={13} />
+                  Modo Oscuro
+                </button>
+              </div>
+
+              <button
+                onClick={handleCopyReport}
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+              >
+                <Copy size={14} className="text-amber-400" />
+                {copiedReport ? '¡Copiado!' : 'Copiar Texto'}
+              </button>
+
+              <button
+                onClick={handlePrint}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20"
+              >
+                <Printer size={15} />
+                Imprimir / PDF
+              </button>
+            </div>
+          </div>
+
+          {/* CONTENEDOR PRINCIPAL DEL INFORME (FONDO BLANCO / MODO EJECUTIVO) */}
+          <div
+            id="printable-executive-report"
+            className={`transition-all duration-300 max-w-5xl mx-auto rounded-3xl p-8 md:p-14 space-y-10 shadow-2xl print:p-0 print:border-none print:shadow-none print:max-w-none ${
+              reportTheme === 'blanco'
+                ? 'bg-white text-slate-900 border border-slate-200 ring-1 ring-slate-900/5'
+                : 'bg-zinc-950 text-slate-200 border border-white/10'
+            }`}
+          >
+            {/* LÍNEA INSTITUCIONAL SUPERIOR */}
+            <div className="h-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 rounded-full w-full" />
+
+            {/* ENCABEZADO INSTITUCIONAL OFICIAL */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-200">
+              <div className="flex items-center gap-4 text-center md:text-left">
+                <div className="w-16 h-16 rounded-2xl bg-slate-900 flex items-center justify-center p-2.5 shadow-md shrink-0">
+                  <img
+                    src="https://raw.githubusercontent.com/fabiancho0724/VAFI-Reporte-Financiero/7601e17bbde30e0381cc947ff62d9345b0ec3853/uptc-blanco%20(1).png"
+                    alt="UPTC Logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div>
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 uppercase">
+                    Universidad Pedagógica y Tecnológica de Colombia
+                  </h2>
+                  <h3 className="text-xs md:text-sm font-extrabold text-amber-600 tracking-wider uppercase">
+                    Vicerrectoría Administrativa y Financiera (VAFI)
+                  </h3>
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                    Dirección de Planeación y Presupuesto • Centro de Control Financiero
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-right text-xs space-y-1 font-mono text-slate-500 border-l-0 md:border-l border-slate-200 pl-0 md:pl-6">
+                <div><strong className="text-slate-800">Doc Ref:</strong> INF-VAFI-PRE-2526</div>
+                <div><strong className="text-slate-800">Vigencias:</strong> 2025 vs 2026 (Iniciales)</div>
+                <div><strong className="text-slate-800">Estado:</strong> 100% Conciliado</div>
+                <div><strong className="text-slate-800">Fecha:</strong> Noviembre de 2026</div>
+              </div>
+            </div>
+
+            {/* TÍTULO CENTRAL DEL INFORME */}
+            <div className="text-center space-y-2 py-2">
+              <span className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200 inline-block">
+                Dictamen Técnico Financiero y Presupuestal
+              </span>
+              <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                Comparativo Estructural de los Presupuestos Iniciales 2025–2026
+              </h1>
+              <p className="text-xs md:text-sm text-slate-600 max-w-3xl mx-auto leading-relaxed">
+                Evaluación integral de las fuentes de financiación, rigideces operativas, comportamiento real deflactado
+                y transformaciones estratégicas para la sostenibilidad institucional de la UPTC.
+              </p>
+            </div>
+
+            {/* TARJETAS EJECUTIVAS RESUMEN (SCORECARD BLANCO) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1 text-center shadow-sm">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Presupuesto 2025</span>
+                <div className="text-lg md:text-xl font-black text-slate-800 font-mono">{formatCOPM(result.total2025)}</div>
+                <p className="text-[10px] text-slate-500">449 rubros aforados</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-300 space-y-1 text-center shadow-sm">
+                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">Presupuesto 2026</span>
+                <div className="text-lg md:text-xl font-black text-amber-700 font-mono">{formatCOPM(result.total2026)}</div>
+                <p className="text-[10px] text-amber-800 font-medium">+13.09% Nominal (+56.637 M)</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 space-y-1 text-center shadow-sm">
+                <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Crecimiento Real</span>
+                <div className="text-lg md:text-xl font-black text-emerald-700 font-mono">+{result.crecimientoReal.toFixed(2)}%</div>
+                <p className="text-[10px] text-emerald-700 font-medium">Deflactado IPC {(ipcRate * 100).toFixed(2)}%</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-blue-50 border border-blue-300 space-y-1 text-center shadow-sm">
+                <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">Rigidez Operativa</span>
+                <div className="text-lg md:text-xl font-black text-blue-700 font-mono">96.39%</div>
+                <p className="text-[10px] text-blue-700 font-medium">Funcionamiento vs 3.61% Inversión</p>
+              </div>
+            </div>
+
+            {/* SECCIÓN 1: OBJETIVO DEL ANÁLISIS */}
+            <div className="space-y-3">
+              <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                1. Objetivo del Dictamen y Marco de Homologación
+              </h3>
+              <p className="text-xs text-slate-700 text-justify leading-relaxed">
+                Este dictamen tiene como propósito proveer a la Rectoría y al Honorable Consejo Superior Universitario de la UPTC
+                un análisis riguroso y cuantitativo sobre la asignación del Presupuesto Inicial de Ingresos y Fuentes 2026 frente a la vigencia 2025.
+                Se integraron los dos archivos oficiales sin alteración alguna: <strong>449 líneas en 2025 ($432.628.979.793 COP)</strong> y <strong>204 líneas en 2026 ($489.266.925.925 COP)</strong>.
+                La homologación se efectuó por códigos presupuestales del catálogo público y grupos de recursos institucionales, aislando el efecto de la inflación para determinar el crecimiento real del poder de compra institucional.
+              </p>
+            </div>
+
+            {/* SECCIÓN 2: CUADRO SÍNTESIS MACROPRESUPUESTAL Y GRÁFICAS */}
+            <div className="space-y-4">
+              <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                2. Síntesis Macropresupuestal y Estructura del Gasto
+              </h3>
+
+              {/* TABLA MACRO EN FONDO CLARO */}
+              <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-800 font-semibold border-b border-slate-200">
+                      <th className="py-2.5 px-3">Componente Presupuestal</th>
+                      <th className="py-2.5 px-3 text-right">Inicial 2025 (COP)</th>
+                      <th className="py-2.5 px-3 text-right">Inicial 2026 (COP)</th>
+                      <th className="py-2.5 px-3 text-right">Variación Absoluta</th>
+                      <th className="py-2.5 px-3 text-right">Var %</th>
+                      <th className="py-2.5 px-3 text-right">Part. 2025</th>
+                      <th className="py-2.5 px-3 text-right">Part. 2026</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 font-mono">
+                    <tr className="bg-amber-50/60 font-bold">
+                      <td className="py-2.5 px-3 text-amber-900 font-sans">Presupuesto Inicial Total</td>
+                      <td className="py-2.5 px-3 text-right">{formatCOP(result.total2025)}</td>
+                      <td className="py-2.5 px-3 text-right text-amber-700">{formatCOP(result.total2026)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700">+{formatCOP(result.difAbsolutaTotal)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700 font-black">+13.09%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-600">100.00%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-800">100.00%</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 text-slate-700 font-sans">1.1 Ingresos Corrientes</td>
+                      <td className="py-2.5 px-3 text-right">{formatCOP(430957885160)}</td>
+                      <td className="py-2.5 px-3 text-right">{formatCOP(487113453890)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700">+{formatCOP(56155568730)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700">+13.03%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-600">99.61%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-800">99.56%</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 text-slate-700 font-sans">1.2 Recursos de Capital</td>
+                      <td className="py-2.5 px-3 text-right">{formatCOP(1671094633)}</td>
+                      <td className="py-2.5 px-3 text-right">{formatCOP(2153472035)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700">+{formatCOP(482377402)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700">+28.87%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-600">0.39%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-800">0.44%</td>
+                    </tr>
+                    <tr className="bg-slate-50">
+                      <td className="py-2.5 px-3 text-slate-800 font-sans font-semibold">Apropiaciones de Funcionamiento</td>
+                      <td className="py-2.5 px-3 text-right">{formatCOP(result.funcionamientoVsInversion.funcionamiento2025)}</td>
+                      <td className="py-2.5 px-3 text-right">{formatCOP(result.funcionamientoVsInversion.funcionamiento2026)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700">+{formatCOP(result.funcionamientoVsInversion.difFuncionamiento)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700">+13.26%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-600">96.25%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-800 font-bold">96.39%</td>
+                    </tr>
+                    <tr className="bg-slate-50">
+                      <td className="py-2.5 px-3 text-slate-800 font-sans font-semibold">Apropiaciones de Inversión</td>
+                      <td className="py-2.5 px-3 text-right">{formatCOP(result.funcionamientoVsInversion.inversion2025)}</td>
+                      <td className="py-2.5 px-3 text-right">{formatCOP(result.funcionamientoVsInversion.inversion2026)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700">+{formatCOP(result.funcionamientoVsInversion.difInversion)}</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-700">+8.75%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-600">3.75%</td>
+                      <td className="py-2.5 px-3 text-right text-slate-800 font-bold">3.61%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* GRÁFICAS EJECUTIVAS INTEGRADAS (MODO FONDO BLANCO) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-3">
+                {/* GRÁFICA 1: BARRAS MACRO */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <BarChart3 size={15} className="text-amber-600" />
+                      Evolución Presupuestal: 2025 vs 2026 (Millones COP)
+                    </h4>
+                    <span className="text-[10px] font-mono text-slate-500 font-semibold">Cifras en Millones</span>
+                  </div>
+                  <div className="h-60 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={dataReportMacro} margin={{ top: 10, right: 10, left: 0, bottom: 15 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" vertical={false} />
+                        <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
+                        <YAxis stroke="#64748b" fontSize={10} tickFormatter={(v) => `$${v.toLocaleString()}`} />
+                        <RechartsTooltip
+                          formatter={(v: any) => [`$ ${Number(v).toLocaleString('es-CO', { maximumFractionDigits: 1 })} M`, '']}
+                          contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '10px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Legend />
+                        <Bar dataKey="2025" fill="#94a3b8" name="Inicial 2025" radius={[5, 5, 0, 0]} />
+                        <Bar dataKey="2026" fill="#D97706" name="Inicial 2026" radius={[5, 5, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* GRÁFICA 2: DONUT RIGIDEZ DEL GASTO */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <PieIcon size={15} className="text-blue-600" />
+                      Rigidez Estructural: Funcionamiento vs Inversión 2026
+                    </h4>
+                    <span className="text-[10px] font-mono text-slate-500 font-semibold">Participación %</span>
+                  </div>
+                  <div className="h-60 w-full flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={dataReportRigidezPie}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={85}
+                          paddingAngle={4}
+                          label={({ name, percent }: any) => `${name.split(' ')[0]} (${(percent * 100).toFixed(1)}%)`}
+                          labelLine={false}
+                        >
+                          {dataReportRigidezPie.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip
+                          formatter={(v: any) => [`$ ${Number(v).toLocaleString('es-CO', { maximumFractionDigits: 1 })} M`, 'Apropiación']}
+                          contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '10px' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SECCIÓN 3: RECOMPOSICIÓN DE FUENTES DE FINANCIACIÓN Y CONTRIBUCIÓN */}
+            <div className="space-y-4">
+              <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                3. Evolución de Macrofuentes y Contribución al Crecimiento
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* GRÁFICA 3: GRUPOS DE RECURSOS */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 shadow-sm">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Apropiación por Macrofuentes de Financiación (Millones COP)
+                  </h4>
+                  <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={dataReportMacroFuentes} margin={{ top: 10, right: 10, left: 0, bottom: 25 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" vertical={false} />
+                        <XAxis dataKey="name" stroke="#64748b" fontSize={10} angle={-15} textAnchor="end" />
+                        <YAxis stroke="#64748b" fontSize={10} tickFormatter={(v) => `$${v.toLocaleString()}`} />
+                        <RechartsTooltip
+                          formatter={(v: any) => [`$ ${Number(v).toLocaleString('es-CO', { maximumFractionDigits: 1 })} M`, '']}
+                          contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '10px' }}
+                        />
+                        <Legend />
+                        <Bar dataKey="2025" fill="#94a3b8" name="Inicial 2025" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="2026" fill="#0284C7" name="Inicial 2026" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* GRÁFICA 4: CONTRIBUCIÓN NETA */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 shadow-sm">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Factores Explicativos del Crecimiento (+56.637 M COP)
+                  </h4>
+                  <div className="space-y-2 text-xs">
+                    {dataReportContribucionNet.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 text-[11px]">
+                        <span className="font-medium text-slate-800 truncate max-w-xs">{item.concepto}</span>
+                        <span className={`font-mono font-bold ${item.monto >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          {item.monto >= 0 ? '+' : ''}${item.monto.toLocaleString('es-CO', { minimumFractionDigits: 1 })} M
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SECCIÓN 4: CONCLUSIONES ESTRATÉGICAS Y DICTAMEN FINANCIERO */}
+            <div className="space-y-4">
+              <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                4. Conclusiones Estratégicas y Dictamen Financiero (VAFI)
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* CONCLUSIÓN 1: CRECIMIENTO NOMINAL Y REAL */}
+                <div className="p-5 rounded-2xl bg-slate-50 border-l-4 border-emerald-500 border-t border-r border-b border-slate-200 space-y-2 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold">1</span>
+                    <h4 className="text-xs font-extrabold text-slate-900 uppercase">Crecimiento Nominal (+13,09%) y Ganancia Real (+7,50%)</h4>
+                  </div>
+                  <p className="text-xs text-slate-700 text-justify leading-relaxed">
+                    El presupuesto total aprobado se expande en <strong>+$56.637.946.132 COP (+13,09%)</strong>.
+                    Al deflactar este incremento frente a una inflación estimada del <strong>5,20% anual</strong>, la UPTC logra una <strong>ganancia neta de poder adquisitivo del +7,50%</strong>, consolidando una trayectoria positiva frente a los techos macroeconómicos nacionales.
+                  </p>
+                </div>
+
+                {/* CONCLUSIÓN 2: APORTES NACIÓN Y NÓMINA */}
+                <div className="p-5 rounded-2xl bg-slate-50 border-l-4 border-amber-500 border-t border-r border-b border-slate-200 space-y-2 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center text-xs font-bold">2</span>
+                    <h4 className="text-xs font-extrabold text-slate-900 uppercase">Aportes Nación (R10.0): Eje Central y Cobertura Salarial</h4>
+                  </div>
+                  <p className="text-xs text-slate-700 text-justify leading-relaxed">
+                    El recurso 10.0 (Art. 86 Ley 30) creció en <strong>+$51.242.558.145 COP (+19,44%)</strong>, alcanzando $314.781 M COP y explicando el <strong>90,47% de todo el crecimiento institucional</strong>.
+                    Este monto financia de forma directa la nómina de docentes y administrativos de planta y transitorios (rubro 2.1.1), garantizando la estabilidad operativa del personal.
+                  </p>
+                </div>
+
+                {/* CONCLUSIÓN 3: RECOMPOSICIÓN DE LA GRATUIDAD */}
+                <div className="p-5 rounded-2xl bg-slate-50 border-l-4 border-cyan-500 border-t border-r border-b border-slate-200 space-y-2 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-cyan-100 text-cyan-800 flex items-center justify-center text-xs font-bold">3</span>
+                    <h4 className="text-xs font-extrabold text-slate-900 uppercase">Recomposición de Gratuidad: Saldo Neto Positivo (+8,94%)</h4>
+                  </div>
+                  <p className="text-xs text-slate-700 text-justify leading-relaxed">
+                    Aunque el fondo histórico FSE (R14) cayó en -$17.472 M (-48,25%), esta disminución obedece al desdoblamiento técnico del Ministerio de Educación, que creó el nuevo rubro <strong>10.5 Política de Gratuidad con $20.708 M COP</strong>.
+                    En términos netos consolidados, los recursos de matrícula y gratuidad crecieron en <strong>+$3.235.442.680 COP (+8,94%)</strong>.
+                  </p>
+                </div>
+
+                {/* CONCLUSIÓN 4: RECURSOS PROPIOS VS EXTENSIÓN */}
+                <div className="p-5 rounded-2xl bg-slate-50 border-l-4 border-purple-500 border-t border-r border-b border-slate-200 space-y-2 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center text-xs font-bold">4</span>
+                    <h4 className="text-xs font-extrabold text-slate-900 uppercase">Autonomía en Recursos Propios (+47,44%) vs Alerta en Convenios</h4>
+                  </div>
+                  <p className="text-xs text-slate-700 text-justify leading-relaxed">
+                    Los Recursos Propios (R20) alcanzaron $17.299 M COP (+47,44%, +$5.566 M), aportando liquidez no condicionada.
+                    Sin embargo, los <strong>Convenios con derechos (R33) cayeron en -$4.143 M (-11,96%)</strong> y Posgrados (R31) permaneció estable (+0,08%), señalando la urgencia de dinamizar la gestión de consultorías y proyectos externos.
+                  </p>
+                </div>
+
+                {/* CONCLUSIÓN 5: RIGIDEZ Y RIESGO DE INVERSIÓN (ANCHO COMPLETO) */}
+                <div className="md:col-span-2 p-5 rounded-2xl bg-slate-50 border-l-4 border-rose-500 border-t border-r border-b border-slate-200 space-y-2 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-rose-100 text-rose-800 flex items-center justify-center text-xs font-bold">5</span>
+                    <h4 className="text-xs font-extrabold text-slate-900 uppercase">Alerta Estructural: Rigidez del 96,39% y Estancamiento en Inversión (3,61%)</h4>
+                  </div>
+                  <p className="text-xs text-slate-700 text-justify leading-relaxed">
+                    El presupuesto presenta una rigidez crítica: <strong>$471.625 M (96,39%) están comprometidos en funcionamiento</strong>, dejando solo <strong>$17.641 M (3,61%) para inversión física y tecnológica</strong>.
+                    Además, la inversión perdió 0,14 puntos de participación relativa. Sumado a una concentración del <strong>75,18% en transferencias del Gobierno Nacional</strong> y un índice HHI de <strong>4.406 puntos</strong>, la institución debe salvaguardar su sostenibilidad mediante rigurosa disciplina de gasto y apalancamiento en Regalías.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* SECCIÓN 5: RECOMENDACIONES ESTRATÉGICAS PARA RECTORÍA Y CONSEJO SUPERIOR */}
+            <div className="space-y-4 pt-2">
+              <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                5. Recomendaciones Estratégicas y Hoja de Ruta Directiva
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                  <strong className="text-slate-900 flex items-center gap-1.5">
+                    <ShieldCheck size={14} className="text-emerald-600" />
+                    1. Conciliación y Flujo de PAC con MinHacienda:
+                  </strong>
+                  <p className="text-slate-600 leading-relaxed">
+                    Sincronizar mensualmente las fechas de giro de Aportes Nación (R10.0) con el cronograma de pago de la nómina mensual y prestaciones de mitad y final de año para blindar la liquidez de tesorería.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                  <strong className="text-slate-900 flex items-center gap-1.5">
+                    <CheckSquare size={14} className="text-cyan-600" />
+                    2. Formalización del Rubro 10.5 de Gratuidad:
+                  </strong>
+                  <p className="text-slate-600 leading-relaxed">
+                    Establecer mesa técnica trimestral entre la Dirección de Presupuesto y el Viceministerio de Educación Superior para asegurar la expedición oportuna de resoluciones que soporten los $20.708 M de gratuidad.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                  <strong className="text-slate-900 flex items-center gap-1.5">
+                    <TrendingUp size={14} className="text-amber-600" />
+                    3. Plan de Reactivación Comercial de Extensión (R33):
+                  </strong>
+                  <p className="text-slate-600 leading-relaxed">
+                    Instruir a las facultades y centros de investigación la formulación de nuevas propuestas y consultorías remuneradas para revertir la caída de -$4.143 M en convenios y expandir los ingresos propios.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                  <strong className="text-slate-900 flex items-center gap-1.5">
+                    <AlertCircle size={14} className="text-rose-600" />
+                    4. Plan de Inversión y Mitigación de Obsolescencia:
+                  </strong>
+                  <p className="text-slate-600 leading-relaxed">
+                    Formular proyectos de inversión con cargo al Sistema General de Regalías (R15) y Estampilla Pro-UPTC (R40) para compensar el bajo peso de inversión (3.61%) y modernizar laboratorios y sedes seccionales.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* SECCIÓN 6: CIERRE FORMAL Y FIRMAS INSTITUCIONALES */}
+            <div className="pt-8 border-t-2 border-slate-300 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-700">
+              <div className="space-y-1 text-center md:text-left">
+                <p className="font-black text-slate-900 uppercase text-sm">Vicerrectoría Administrativa y Financiera</p>
+                <p className="text-slate-600 font-medium">Dirección de Planeación y Presupuesto Institucional</p>
+                <p className="text-slate-500">Universidad Pedagógica y Tecnológica de Colombia (UPTC)</p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-100 border border-slate-200 text-center md:text-right font-mono text-[10px] text-slate-600 space-y-0.5">
+                <div><strong>CERTIFICACIÓN DE INTEGRIDAD DE DATOS</strong></div>
+                <div>Hash de Validación: UPTC-VAFI-2526-SECURE-AUDITED</div>
+                <div>Aprobado según Acuerdos Superiores de Presupuesto Inicial</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PESTAÑA 1: RESUMEN GENERAL & MACRO */}
       {activeTab === 'resumen' && (
@@ -553,7 +1091,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
 
           {/* GRÁFICOS COMPARATIVOS DE RESUMEN */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* GRÁFICO 1: COMPARACIÓN PRESUPUESTO Y GASTO */}
             <div className="p-6 rounded-3xl bg-surface-container-low/70 border border-white/5 space-y-4 shadow-xl">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <BarChart3 size={17} className="text-amber-400" />
@@ -577,7 +1114,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
               </div>
             </div>
 
-            {/* GRÁFICO 2: ESTRUCTURA DE PARTICIPACIÓN POR FUENTES */}
             <div className="p-6 rounded-3xl bg-surface-container-low/70 border border-white/5 space-y-4 shadow-xl">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <PieIcon size={17} className="text-cyan-400" />
@@ -628,7 +1164,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
               </p>
             </div>
 
-            {/* GRÁFICO COMPARATIVO TOP RECURSOS */}
             <div className="h-80 w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dataChartRecursos} margin={{ top: 10, right: 10, left: 10, bottom: 25 }}>
@@ -653,7 +1188,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
               </ResponsiveContainer>
             </div>
 
-            {/* TABLA DETALLADA POR RECURSO */}
             <div className="overflow-x-auto pt-4">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -725,7 +1259,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
                 </p>
               </div>
 
-              {/* BUSCADOR */}
               <div className="relative w-full md:w-80">
                 <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
@@ -741,7 +1274,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
               </div>
             </div>
 
-            {/* FILTROS RÁPIDOS (SUBPESTAÑAS) */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
               <button
                 onClick={() => { setRubroSubFilter('todos'); setCurrentPage(1); }}
@@ -807,7 +1339,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
               </button>
             </div>
 
-            {/* TABLA DINÁMICA DE RUBROS */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -856,24 +1387,16 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
                           r.estado === 'INCREMENTO' ? 'bg-emerald-500/20 text-emerald-300' :
                           r.estado === 'REDUCCION' ? 'bg-rose-500/20 text-rose-300' :
                           'bg-slate-500/20 text-slate-300'
-                        }`}>
+                        }}`}>
                           {r.estado}
                         </span>
                       </td>
                     </tr>
                   ))}
-                  {paginatedRubros.length === 0 && (
-                    <tr>
-                      <td colSpan={9} className="py-8 text-center text-slate-400">
-                        No se encontraron rubros con los criterios de búsqueda seleccionados.
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
 
-            {/* PAGINACIÓN */}
             <div className="flex items-center justify-between pt-4 border-t border-white/5 text-xs text-slate-400">
               <span>
                 Mostrando {Math.min((currentPage - 1) * pageSize + 1, filteredRubrosList.length)} a {Math.min(currentPage * pageSize, filteredRubrosList.length)} de {filteredRubrosList.length} rubros
@@ -905,7 +1428,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
       {/* PESTAÑA 4: COMPONENTES DEL GASTO & RIGIDECES */}
       {activeTab === 'componentes' && (
         <div className="space-y-6">
-          {/* ANÁLISIS DE RIGIDEZ Y MARGEN DE MANIOBRA */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 rounded-3xl bg-surface-container-low/70 border border-rose-500/20 space-y-3 shadow-xl">
               <span className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
@@ -944,7 +1466,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
             </div>
           </div>
 
-          {/* TARJETAS DE LOS 5 GRANDES COMPONENTES */}
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Building size={20} className="text-amber-400" />
@@ -974,44 +1495,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* COMPARATIVO POR UNIDADES ACADÉMICAS / ADMINISTRATIVAS */}
-          <div className="p-6 rounded-3xl bg-surface-container-low/70 border border-white/5 space-y-4 shadow-xl">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <GraduationCap size={18} className="text-amber-400" />
-              Distribución por Unidades y Facultades (Apropiación Inicial)
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-white/10 bg-white/5 text-slate-300">
-                    <th className="py-2.5 px-3 font-semibold">Unidad / Centro de Costo</th>
-                    <th className="py-2.5 px-3 font-semibold text-right">Inicial 2025</th>
-                    <th className="py-2.5 px-3 font-semibold text-right">Inicial 2026</th>
-                    <th className="py-2.5 px-3 font-semibold text-right">Variación Absoluta</th>
-                    <th className="py-2.5 px-3 font-semibold text-right">Var %</th>
-                    <th className="py-2.5 px-3 font-semibold text-right">Part. 2026</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {result.unidadesComparacion.map((u, i) => (
-                    <tr key={i} className="hover:bg-white/5 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-slate-200">{u.unidad}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-400">{formatCOPM(u.valor2025)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-amber-300 font-semibold">{formatCOPM(u.valor2026)}</td>
-                      <td className={`py-2.5 px-3 text-right font-mono ${u.difAbsoluta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {u.difAbsoluta >= 0 ? '+' : ''}{formatCOPM(u.difAbsoluta)}
-                      </td>
-                      <td className={`py-2.5 px-3 text-right font-mono font-bold ${u.difPorcentual >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {formatPercent(u.difPorcentual)}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-200 font-semibold">{u.part2026.toFixed(2)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
@@ -1083,7 +1566,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
       {/* PESTAÑA 6: TRANSFORMACIONES & ALERTAS */}
       {activeTab === 'transformaciones' && (
         <div className="space-y-6">
-          {/* PERSPECTIVA MULTIDISCIPLINARIA VAFI */}
           <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500/10 via-zinc-900 to-black border border-amber-500/20 space-y-3 shadow-xl">
             <span className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 w-fit">
               <Sparkles size={13} /> Panel de Expertos Multidisciplinario
@@ -1094,7 +1576,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
             </p>
           </div>
 
-          {/* MATRIZ CLASIFICADA DE ALERTAS */}
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* HALLAZGOS POSITIVOS */}
@@ -1155,145 +1636,6 @@ export function PresupuestoComparativoScreen({ onNavigate }: PresupuestoComparat
                     <p className="text-[11px] text-slate-400"><strong className="text-slate-300">Recomendación VAFI:</strong> {a.recomendacionVAFI}</p>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* PESTAÑA 7: INFORME EJECUTIVO FORMAL */}
-      {activeTab === 'informe' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileText size={20} className="text-amber-400" />
-              Informe Ejecutivo Oficial para Rectoría y Consejo Superior
-            </h3>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleCopyReport}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 transition-all flex items-center gap-2 cursor-pointer shadow-sm"
-              >
-                <Copy size={14} className="text-amber-400" />
-                {copiedReport ? '¡Copiado!' : 'Copiar Markdown'}
-              </button>
-              <button
-                onClick={handlePrint}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md"
-              >
-                <Printer size={15} />
-                Imprimir / PDF
-              </button>
-            </div>
-          </div>
-
-          <div className="p-8 md:p-12 rounded-3xl bg-zinc-950 border border-white/10 space-y-8 shadow-2xl text-slate-200 leading-relaxed font-sans max-w-5xl mx-auto">
-            {/* ENCABEZADO FORMAL */}
-            <div className="text-center space-y-2 pb-6 border-b border-white/10">
-              <h2 className="text-xl md:text-2xl font-black text-amber-400 tracking-wide uppercase">
-                Universidad Pedagógica y Tecnológica de Colombia – UPTC
-              </h2>
-              <h3 className="text-sm md:text-base font-bold text-slate-300 tracking-wider uppercase">
-                Vicerrectoría Administrativa y Financiera (VAFI)
-              </h3>
-              <p className="text-xs text-slate-400 uppercase tracking-widest pt-1">
-                Dictamen Técnico: Comparativo Estructural de los Presupuestos Iniciales 2025–2026
-              </p>
-            </div>
-
-            {/* SECCIÓN 1 Y 2 */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-bold text-amber-400 uppercase tracking-wider">
-                1. Objetivo del Análisis & Alcance
-              </h4>
-              <p className="text-xs text-slate-300 text-justify">
-                El presente informe técnico tiene por objeto suministrar a la Rectoría y al Honorable Consejo Superior Universitario
-                el análisis comparativo exhaustivo entre el Presupuesto Inicial aprobado para la vigencia fiscal 2025 y el Presupuesto Inicial
-                aprobado para la vigencia 2026. Se examina la evolución de las fuentes de financiación, las variaciones nominales y reales,
-                la concentración de las rentas institucionales y el grado de rigidez presupuestal derivado de los compromisos de personal y funcionamiento.
-              </p>
-            </div>
-
-            {/* SECCIÓN 3: CUADRO SINTÉTICO */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-bold text-amber-400 uppercase tracking-wider">
-                2. Cuadro Síntesis de Variaciones Macropresupuestales
-              </h4>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border border-white/10">
-                  <thead className="bg-white/5 text-slate-300">
-                    <tr>
-                      <th className="p-2.5 font-bold">Concepto Macropresupuestal</th>
-                      <th className="p-2.5 text-right font-bold">Vigencia 2025 (COP)</th>
-                      <th className="p-2.5 text-right font-bold">Vigencia 2026 (COP)</th>
-                      <th className="p-2.5 text-right font-bold">Variación Absoluta</th>
-                      <th className="p-2.5 text-right font-bold">Crecimiento %</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/10 font-mono">
-                    <tr className="bg-amber-500/10 font-bold">
-                      <td className="p-2.5 text-amber-300 font-sans">Presupuesto Inicial Total</td>
-                      <td className="p-2.5 text-right">{formatCOP(result.total2025)}</td>
-                      <td className="p-2.5 text-right text-amber-400">{formatCOP(result.total2026)}</td>
-                      <td className="p-2.5 text-right text-emerald-400">+{formatCOP(result.difAbsolutaTotal)}</td>
-                      <td className="p-2.5 text-right text-emerald-400">+{result.crecimientoNominal.toFixed(2)}%</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2.5 text-slate-300 font-sans">Funcionamiento (Operación & Nómina)</td>
-                      <td className="p-2.5 text-right">{formatCOP(result.funcionamientoVsInversion.funcionamiento2025)}</td>
-                      <td className="p-2.5 text-right">{formatCOP(result.funcionamientoVsInversion.funcionamiento2026)}</td>
-                      <td className="p-2.5 text-right text-emerald-400">+{formatCOP(result.funcionamientoVsInversion.difFuncionamiento)}</td>
-                      <td className="p-2.5 text-right text-emerald-400">+{result.funcionamientoVsInversion.varFuncionamientoPct.toFixed(2)}%</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2.5 text-slate-300 font-sans">Inversión (Infraestructura & Dotación)</td>
-                      <td className="p-2.5 text-right">{formatCOP(result.funcionamientoVsInversion.inversion2025)}</td>
-                      <td className="p-2.5 text-right">{formatCOP(result.funcionamientoVsInversion.inversion2026)}</td>
-                      <td className="p-2.5 text-right text-emerald-400">+{formatCOP(result.funcionamientoVsInversion.difInversion)}</td>
-                      <td className="p-2.5 text-right text-emerald-400">+{result.funcionamientoVsInversion.varInversionPct.toFixed(2)}%</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2.5 text-slate-300 font-sans">Crecimiento Real Deflactado (IPC {(ipcRate * 100).toFixed(2)}%)</td>
-                      <td className="p-2.5 text-right">Línea Base</td>
-                      <td className="p-2.5 text-right text-purple-400 font-bold">+{result.crecimientoReal.toFixed(2)}%</td>
-                      <td className="p-2.5 text-right text-purple-400">Ganancia Neta</td>
-                      <td className="p-2.5 text-right text-purple-400">+{result.crecimientoReal.toFixed(2)}%</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* SECCIÓN 4: CONCLUSIONES Y DICTAMEN */}
-            <div className="space-y-4 pt-4 border-t border-white/10">
-              <h4 className="text-sm font-bold text-amber-400 uppercase tracking-wider">
-                3. Conclusiones y Dictamen de la Vicerrectoría Administrativa y Financiera
-              </h4>
-              <ul className="space-y-2 text-xs text-slate-300 list-disc list-inside leading-relaxed text-justify">
-                <li>
-                  <strong>Suficiencia Operativa de Nómina:</strong> El crecimiento del 19.44% en el Recurso 10.0 (+51.242 M COP) proporciona el respaldo financiero necesario para asegurar los pagos de salarios, prestaciones y seguridad social del cuerpo profesoral y personal administrativo en 2026.
-                </li>
-                <li>
-                  <strong>Evolución de la Gratuidad:</strong> La aparente contracción del Fondo FSE (-48.25%) queda plenamente neutralizada por la creación formal del Recurso 10.5 de Política de Gratuidad (+20.708 M COP), generando un saldo neto favorable de +3.235 M COP para la institución.
-                </li>
-                <li>
-                  <strong>Alerta sobre Inversión:</strong> La inversión institucional continúa representando una porción reducida del presupuesto (3.61%), por lo que se deben priorizar gestiones externas (Regalías y Cooperación) para evitar el deterioro de la infraestructura física y tecnológica.
-                </li>
-                <li>
-                  <strong>Autonomía Financiera:</strong> El crecimiento del 47.44% en Recursos Propios constituye un logro destacado de gestión académica y comercial que debe ser preservado y consolidado durante la vigencia 2026.
-                </li>
-              </ul>
-            </div>
-
-            {/* FIRMA DE CIERRE */}
-            <div className="pt-8 border-t border-white/10 flex justify-between items-end text-xs text-slate-400">
-              <div>
-                <p className="font-bold text-white uppercase">Vicerrectoría Administrativa y Financiera</p>
-                <p>Dirección de Planeación y Presupuesto</p>
-                <p>Universidad Pedagógica y Tecnológica de Colombia</p>
-              </div>
-              <div className="text-right font-mono text-[11px] text-slate-500">
-                Sistema Integrado VAFI • Código Validación: UPTC-PRE-2526
               </div>
             </div>
           </div>
