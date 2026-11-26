@@ -84,9 +84,9 @@ const formatCOPB = (val: number): string => {
 export const InformeCajaDetalladoEjecutivo: React.FC<Props> = ({
   data,
   proyeccionesDiciembre,
-  banks,
-  incomes,
-  expenses,
+  banks = [],
+  incomes = [],
+  expenses = [],
   simIngresosAdicionales = [],
   onNavigateTab,
 }) => {
@@ -97,23 +97,23 @@ export const InformeCajaDetalladoEjecutivo: React.FC<Props> = ({
   const {
     totalesFuentes,
     resumenRecursos,
-    nivelesLiquidez,
-    indicadores,
-    evolucionMensual,
+    nivelesLiquidez = [],
+    indicadores = [],
+    evolucionMensual = [],
     totalesMensuales,
-    riesgos,
+    riesgos = [],
     conclusionVAFI,
-    fuentes,
-  } = data;
+    fuentes = [],
+  } = data || {};
 
   // Concentración bancaria por entidad (Parámetro Económico HHI)
   const bankStats = useMemo(() => {
     const map = new Map<string, number>();
     let total = 0;
-    banks.forEach((b) => {
+    (banks || []).forEach((b) => {
       const ent = (b.entidad || '').trim();
       if (!ent || ent.toUpperCase().includes('TOTAL')) return;
-      const vf = b.valorFinal;
+      const vf = b.valorFinal || 0;
       map.set(ent, (map.get(ent) || 0) + vf);
       total += vf;
     });
@@ -134,23 +134,26 @@ export const InformeCajaDetalladoEjecutivo: React.FC<Props> = ({
 
   // Datos para gráficas
   const chartNivelesData = useMemo(() => {
-    return nivelesLiquidez.map((n) => ({
+    return (nivelesLiquidez || []).map((n) => ({
       name: `N${n.nivel}`,
-      label: n.nombre.split(':')[1]?.trim() || n.nombre,
-      valorM: Math.round(n.valor / 1e6),
-      valorCOP: n.valor,
+      label: n.nombre?.split(':')[1]?.trim() || n.nombre || '',
+      valorM: Math.round((n.valor || 0) / 1e6),
+      valorCOP: n.valor || 0,
       color: n.color || '#3b82f6',
     }));
   }, [nivelesLiquidez]);
 
   const chartMensualData = useMemo(() => {
-    return evolucionMensual.map((m) => ({
-      mes: m.nombreMes.slice(0, 3),
-      recaudoM: Math.round(m.recaudoMes / 1e6),
-      pagosM: Math.round(m.pagosMes / 1e6),
-      netoM: Math.round(m.saldoNetoMes / 1e6),
-      acumM: Math.round(m.saldoAcumulado / 1e6),
-    }));
+    return (evolucionMensual || []).map((m) => {
+      const mesName = m.mesNombre || m.mesClave || '';
+      return {
+        mes: mesName.length > 3 ? mesName.slice(0, 3) : mesName,
+        recaudoM: Math.round((m.ingresosMes || 0) / 1e6),
+        pagosM: Math.round((m.egresosMes || 0) / 1e6),
+        netoM: Math.round((m.flujoNetoMes || 0) / 1e6),
+        acumM: Math.round((m.saldoAcumuladoCaja || 0) / 1e6),
+      };
+    });
   }, [evolucionMensual]);
 
   const chartBancosData = useMemo(() => {
@@ -164,18 +167,19 @@ export const InformeCajaDetalladoEjecutivo: React.FC<Props> = ({
   }, [bankStats]);
 
   const chartEscenariosData = useMemo(() => {
-    const baseCierreM = Math.round(proyeccionesDiciembre.saldoBancosProyectadoCierre / 1e6);
+    if (!proyeccionesDiciembre) return [];
+    const baseCierreM = Math.round((proyeccionesDiciembre.saldoBancosProyectadoCierre || 0) / 1e6);
     const conservadorM = Math.round(
-      (proyeccionesDiciembre.bancosActuales -
-        proyeccionesDiciembre.saldoPorPagarActual * 0.95 -
-        proyeccionesDiciembre.nominaDiciembreAfectada +
+      ((proyeccionesDiciembre.bancosActuales || 0) -
+        (proyeccionesDiciembre.saldoPorPagarActual || 0) * 0.95 -
+        (proyeccionesDiciembre.nominaDiciembreAfectada || 0) +
         6500000000) /
         1e6
     );
     const optimistaM = Math.round(
-      (proyeccionesDiciembre.bancosActuales -
-        proyeccionesDiciembre.saldoPorPagarActual * 0.8 -
-        proyeccionesDiciembre.nominaDiciembreAfectada +
+      ((proyeccionesDiciembre.bancosActuales || 0) -
+        (proyeccionesDiciembre.saldoPorPagarActual || 0) * 0.8 -
+        (proyeccionesDiciembre.nominaDiciembreAfectada || 0) +
         19500000000) /
         1e6
     );
@@ -189,6 +193,7 @@ export const InformeCajaDetalladoEjecutivo: React.FC<Props> = ({
 
   // Copiar informe estructurado en Markdown
   const handleCopyReport = () => {
+    if (!totalesFuentes || !resumenRecursos || !proyeccionesDiciembre) return;
     const text = `
 # UNIVERSIDAD PEDAGÓGICA Y TECNOLÓGICA DE COLOMBIA - UPTC
 ## VICERRECTORÍA ADMINISTRATIVA Y FINANCIERA (VAFI) - DIRECCIÓN FINANCIERA
@@ -201,30 +206,30 @@ export const InformeCajaDetalladoEjecutivo: React.FC<Props> = ({
 - Saldo Consolidado en Bancos: ${formatCOP(totalesFuentes.saldoBancos)}
 - Cuentas por Pagar (Compromisos Exigibles): ${formatCOP(totalesFuentes.saldoPorPagar)}
 - Disponibilidad Efectiva Libre: ${formatCOP(totalesFuentes.disponibilidadEfectiva)}
-- Ratio de Cobertura Global Inmediata: ${totalesFuentes.coberturaGlobal.toFixed(2)}% (${(totalesFuentes.coberturaGlobal / 100).toFixed(2)}x)
+- Ratio de Cobertura Global Inmediata: ${totalesFuentes.coberturaGlobal?.toFixed(2)}% (${(totalesFuentes.coberturaGlobal / 100)?.toFixed(2)}x)
 - Flujo Operativo Neto Acumulado (Ene-Nov): +${formatCOP(totalesFuentes.totalRecaudo - totalesFuentes.pagos)}
-- Nómina de Diciembre Proyectada (Rubro 2.1.1): ${formatCOP(proyeccionesDiciembre.rubro211.nominaDiciembreEstimada)} (Suficiencia Plena)
+- Nómina de Diciembre Proyectada (Rubro 2.1.1): ${formatCOP(proyeccionesDiciembre.rubro211?.nominaDiciembreEstimada || 0)} (Suficiencia Plena)
 - Saldo en Bancos Proyectado al 31 de Diciembre: ${formatCOP(proyeccionesDiciembre.saldoBancosProyectadoCierre)}
 
 ---
 ### 2. PARÁMETROS TÉCNICOS Y CONCILIACIÓN PRESUPUESTAL-TESORAL (REGLA 3.A)
-- Recursos de Administración: Bancos ${formatCOP(resumenRecursos.bancosLibreDestinacion)} (${resumenRecursos.porcentajeLibre.toFixed(1)}%)
-- Recursos de Inversión y Destinación Específica: Bancos ${formatCOP(resumenRecursos.bancosDestinacionEspecifica)} (${resumenRecursos.porcentajeEspecifica.toFixed(1)}%)
+- Recursos de Administración: Bancos ${formatCOP(resumenRecursos.bancosLibreDestinacion)} (${resumenRecursos.porcentajeLibre?.toFixed(1)}%)
+- Recursos de Inversión y Destinación Específica: Bancos ${formatCOP(resumenRecursos.bancosDestinacionEspecifica)} (${resumenRecursos.porcentajeEspecifica?.toFixed(1)}%)
 - Total Aforo Presupuestal: ${formatCOP(totalesFuentes.aforoInicial)}
-- Recaudo Total Ene-Nov: ${formatCOP(totalesFuentes.totalRecaudo)} (${totalesFuentes.porcentajeRecaudoGlobal.toFixed(1)}%)
+- Recaudo Total Ene-Nov: ${formatCOP(totalesFuentes.totalRecaudo)} (${totalesFuentes.porcentajeRecaudoGlobal?.toFixed(1)}%)
 - Apropiación Total de Gastos: ${formatCOP(totalesFuentes.apropiacion)}
-- Compromisos Adquiridos: ${formatCOP(totalesFuentes.compromisos)} (${totalesFuentes.porcentajeCompromisoGlobal.toFixed(1)}%)
-- Pagos Efectivos Desembolsados: ${formatCOP(totalesFuentes.pagos)} (${totalesFuentes.porcentajeGiroGlobal.toFixed(1)}%)
+- Compromisos Adquiridos: ${formatCOP(totalesFuentes.compromisos)} (${totalesFuentes.porcentajeCompromisoGlobal?.toFixed(1)}%)
+- Pagos Efectivos Desembolsados: ${formatCOP(totalesFuentes.pagos)} (${totalesFuentes.porcentajeGiroGlobal?.toFixed(1)}%)
 
 ---
 ### 3. INDICADORES FINANCIEROS CLAVE
-${indicadores.map((ind) => `- ${ind.numero}. ${ind.nombre} (${ind.formula}): ${ind.resultadoFormateado} [${ind.semaforo}] - ${ind.interpretacion}`).join('\n')}
+${(indicadores || []).map((ind) => `- ${ind.numero}. ${ind.nombre} (${ind.formula}): ${ind.resultadoFormateado} [${ind.semaforo}] - ${ind.interpretacion}`).join('\n')}
 
 ---
 ### 4. PARÁMETROS ECONÓMICOS Y MACROECONÓMICOS
-- Índice de Concentración Bancaria HHI: ${bankStats.hhi.toFixed(0)} puntos (Concentrado principalmente en Itaú Corpbanca y Banco de Bogotá).
+- Índice de Concentración Bancaria HHI: ${bankStats.hhi?.toFixed(0)} puntos (Concentrado principalmente en Itaú Corpbanca y Banco de Bogotá).
 - Inflación Acumulada Proyectada: 5,48% IPC (Rendimientos Financieros Acumulados generados: ${formatCOP(totalesFuentes.rendimientosFinancieros)}).
-- Días de Cobertura Operativa de Caja (Days Cash on Hand): ${(totalesFuentes.saldoBancos / (totalesFuentes.pagos / 328)).toFixed(1)} días de reserva operativa.
+- Días de Cobertura Operativa de Caja (Days Cash on Hand): ${(totalesFuentes.saldoBancos / ((totalesFuentes.pagos || 1) / 328))?.toFixed(1)} días de reserva operativa.
 
 ---
 ### 5. CONCLUSIÓN DIRECTIVA Y DICTAMEN DE TESORERÍA
@@ -242,27 +247,28 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
 
   // Exportar matriz completa de parámetros
   const handleExportParametrosCSV = () => {
+    if (!totalesFuentes || !resumenRecursos || !proyeccionesDiciembre) return;
     const rows = [
       ['CATEGORIA', 'PARAMETRO', 'VALOR_COP', 'VALOR_MILLONES', 'DETALLE_PORCENTUAL'],
       ['Técnico', 'Saldo Bancario Consolidado Total', totalesFuentes.saldoBancos, totalesFuentes.saldoBancos / 1e6, '100.00%'],
-      ['Técnico', 'Bancos Recursos Administración (Regla 3.A)', resumenRecursos.bancosLibreDestinacion, resumenRecursos.bancosLibreDestinacion / 1e6, `${resumenRecursos.porcentajeLibre.toFixed(2)}%`],
-      ['Técnico', 'Bancos Recursos Inversión (Destinación Específica)', resumenRecursos.bancosDestinacionEspecifica, resumenRecursos.bancosDestinacionEspecifica / 1e6, `${resumenRecursos.porcentajeEspecifica.toFixed(2)}%`],
+      ['Técnico', 'Bancos Recursos Administración (Regla 3.A)', resumenRecursos.bancosLibreDestinacion, resumenRecursos.bancosLibreDestinacion / 1e6, `${resumenRecursos.porcentajeLibre?.toFixed(2)}%`],
+      ['Técnico', 'Bancos Recursos Inversión (Destinación Específica)', resumenRecursos.bancosDestinacionEspecifica, resumenRecursos.bancosDestinacionEspecifica / 1e6, `${resumenRecursos.porcentajeEspecifica?.toFixed(2)}%`],
       ['Técnico', 'Aforo Total Presupuestal', totalesFuentes.aforoInicial, totalesFuentes.aforoInicial / 1e6, '100.00%'],
-      ['Técnico', 'Recaudo Acumulado Ene-Nov', totalesFuentes.totalRecaudo, totalesFuentes.totalRecaudo / 1e6, `${totalesFuentes.porcentajeRecaudoGlobal.toFixed(2)}%`],
+      ['Técnico', 'Recaudo Acumulado Ene-Nov', totalesFuentes.totalRecaudo, totalesFuentes.totalRecaudo / 1e6, `${totalesFuentes.porcentajeRecaudoGlobal?.toFixed(2)}%`],
       ['Técnico', 'Apropiación Vigente Total', totalesFuentes.apropiacion, totalesFuentes.apropiacion / 1e6, '100.00%'],
-      ['Técnico', 'Compromisos Presupuestales Ene-Nov', totalesFuentes.compromisos, totalesFuentes.compromisos / 1e6, `${totalesFuentes.porcentajeCompromisoGlobal.toFixed(2)}%`],
-      ['Técnico', 'Pagos Efectivos Ene-Nov', totalesFuentes.pagos, totalesFuentes.pagos / 1e6, `${totalesFuentes.porcentajeGiroGlobal.toFixed(2)}%`],
-      ['Financiero', 'Cuentas por Pagar (Compromisos Exigibles)', totalesFuentes.saldoPorPagar, totalesFuentes.saldoPorPagar / 1e6, `${(totalesFuentes.saldoPorPagar / totalesFuentes.saldoBancos * 100).toFixed(2)}% de Bancos`],
-      ['Financiero', 'Disponibilidad Efectiva Neta Libre', totalesFuentes.disponibilidadEfectiva, totalesFuentes.disponibilidadEfectiva / 1e6, `${(totalesFuentes.disponibilidadEfectiva / totalesFuentes.saldoBancos * 100).toFixed(2)}% de Bancos`],
-      ['Financiero', 'Ratio de Cobertura Global Inmediata', totalesFuentes.saldoBancos / totalesFuentes.saldoPorPagar, '', `${totalesFuentes.coberturaGlobal.toFixed(2)}%`],
+      ['Técnico', 'Compromisos Presupuestales Ene-Nov', totalesFuentes.compromisos, totalesFuentes.compromisos / 1e6, `${totalesFuentes.porcentajeCompromisoGlobal?.toFixed(2)}%`],
+      ['Técnico', 'Pagos Efectivos Ene-Nov', totalesFuentes.pagos, totalesFuentes.pagos / 1e6, `${totalesFuentes.porcentajeGiroGlobal?.toFixed(2)}%`],
+      ['Financiero', 'Cuentas por Pagar (Compromisos Exigibles)', totalesFuentes.saldoPorPagar, totalesFuentes.saldoPorPagar / 1e6, `${((totalesFuentes.saldoPorPagar / (totalesFuentes.saldoBancos || 1)) * 100)?.toFixed(2)}% de Bancos`],
+      ['Financiero', 'Disponibilidad Efectiva Neta Libre', totalesFuentes.disponibilidadEfectiva, totalesFuentes.disponibilidadEfectiva / 1e6, `${((totalesFuentes.disponibilidadEfectiva / (totalesFuentes.saldoBancos || 1)) * 100)?.toFixed(2)}% de Bancos`],
+      ['Financiero', 'Ratio de Cobertura Global Inmediata', totalesFuentes.saldoBancos / (totalesFuentes.saldoPorPagar || 1), '', `${totalesFuentes.coberturaGlobal?.toFixed(2)}%`],
       ['Financiero', 'Flujo Operativo Neto Acumulado Ene-Nov', totalesFuentes.totalRecaudo - totalesFuentes.pagos, (totalesFuentes.totalRecaudo - totalesFuentes.pagos) / 1e6, 'Superávit Acumulado'],
-      ['Proyección Dic', 'Nómina Diciembre 2.1.1', proyeccionesDiciembre.rubro211.nominaDiciembreEstimada, proyeccionesDiciembre.rubro211.nominaDiciembreEstimada / 1e6, 'Imputada Rubro 2.1.1'],
-      ['Proyección Dic', 'Holgura Presupuestal Rubro 2.1.1', proyeccionesDiciembre.rubro211.holguraApropiacion211, proyeccionesDiciembre.rubro211.holguraApropiacion211 / 1e6, 'Apropiación Libre'],
-      ['Proyección Dic', 'Ingresos Adicionales Proyectados', proyeccionesDiciembre.totalIngresosAdicionalesManuales, proyeccionesDiciembre.totalIngresosAdicionalesManuales / 1e6, 'Adición Proyectada'],
-      ['Proyección Dic', 'Saldo Bancos Proyectado al Cierre 31-Dic', proyeccionesDiciembre.saldoBancosProyectadoCierre, proyeccionesDiciembre.saldoBancosProyectadoCierre / 1e6, 'Escenario Base'],
-      ['Económico', 'Índice Concentración Bancaria HHI', bankStats.hhi, '', `${bankStats.hhi.toFixed(0)} puntos`],
+      ['Proyección Dic', 'Nómina Diciembre 2.1.1', proyeccionesDiciembre.rubro211?.nominaDiciembreEstimada || 0, (proyeccionesDiciembre.rubro211?.nominaDiciembreEstimada || 0) / 1e6, 'Imputada Rubro 2.1.1'],
+      ['Proyección Dic', 'Holgura Presupuestal Rubro 2.1.1', proyeccionesDiciembre.rubro211?.holguraApropiacion211 || 0, (proyeccionesDiciembre.rubro211?.holguraApropiacion211 || 0) / 1e6, 'Apropiación Libre'],
+      ['Proyección Dic', 'Ingresos Adicionales Proyectados', proyeccionesDiciembre.totalIngresosAdicionalesManuales || 0, (proyeccionesDiciembre.totalIngresosAdicionalesManuales || 0) / 1e6, 'Adición Proyectada'],
+      ['Proyección Dic', 'Saldo Bancos Proyectado al Cierre 31-Dic', proyeccionesDiciembre.saldoBancosProyectadoCierre || 0, (proyeccionesDiciembre.saldoBancosProyectadoCierre || 0) / 1e6, 'Escenario Base'],
+      ['Económico', 'Índice Concentración Bancaria HHI', bankStats.hhi, '', `${bankStats.hhi?.toFixed(0)} puntos`],
       ['Económico', 'Rendimientos Financieros Generados', totalesFuentes.rendimientosFinancieros, totalesFuentes.rendimientosFinancieros / 1e6, 'Mitigación Inflación IPC'],
-      ['Económico', 'Días de Cobertura de Caja (Days Cash)', totalesFuentes.saldoBancos / (totalesFuentes.pagos / 328), '', '132.6 días de reserva'],
+      ['Económico', 'Días de Cobertura de Caja (Days Cash)', totalesFuentes.saldoBancos / ((totalesFuentes.pagos || 1) / 328), '', '132.6 días de reserva'],
     ];
 
     const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(';')).join('\n');
@@ -278,7 +284,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
   const handleExportFuentesCSV = () => {
     const rows = [
       ['CODIGO', 'NOMBRE_FUENTE', 'TIPO', 'NATURALEZA', 'AFORO_INICIAL', 'TOTAL_RECAUDO', 'APROPIACION', 'COMPROMISOS', 'PAGOS', 'SALDO_BANCOS', 'SALDO_POR_PAGAR', 'DISPONIBILIDAD_LIBRE', 'COBERTURA_PCT'],
-      ...fuentes.map((f) => [
+      ...(fuentes || []).map((f) => [
         f.codigo,
         `"${f.nombre}"`,
         f.tipo,
@@ -291,7 +297,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
         f.saldoBancos,
         f.saldoPorPagar,
         f.disponibilidadEfectiva,
-        f.coberturaBancosCompromisos.toFixed(2),
+        f.coberturaBancosCompromisos?.toFixed(2),
       ]),
     ];
     const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(';')).join('\n');
@@ -307,13 +313,13 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
   const handleExportMensualCSV = () => {
     const rows = [
       ['MES', 'NOMBRE_MES', 'RECAUDO_MES', 'PAGOS_MES', 'SALDO_NETO_MES', 'SALDO_ACUMULADO'],
-      ...evolucionMensual.map((m) => [
-        m.mes,
-        m.nombreMes,
-        m.recaudoMes,
-        m.pagosMes,
-        m.saldoNetoMes,
-        m.saldoAcumulado,
+      ...(evolucionMensual || []).map((m) => [
+        m.mesNum,
+        `"${m.mesNombre || m.mesClave || ''}"`,
+        m.ingresosMes,
+        m.egresosMes,
+        m.flujoNetoMes,
+        m.saldoAcumuladoCaja,
       ]),
     ];
     const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(';')).join('\n');
@@ -327,6 +333,14 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
   };
 
   const isLight = reportTheme === 'blanco';
+
+  if (!totalesFuentes) {
+    return (
+      <div className="p-8 text-center text-slate-400 font-mono text-xs">
+        Cargando parámetros del Informe de Caja...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -490,15 +504,15 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
           <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 space-y-1 text-center shadow-sm">
             <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Cobertura Caja</span>
             <div className="text-sm md:text-base font-black text-amber-700 font-mono">
-              {(totalesFuentes.coberturaGlobal / 100).toFixed(2)}x
+              {((totalesFuentes.coberturaGlobal || 0) / 100)?.toFixed(2)}x
             </div>
-            <p className="text-[10px] text-amber-800 font-medium">{totalesFuentes.coberturaGlobal.toFixed(1)}% cobertura</p>
+            <p className="text-[10px] text-amber-800 font-medium">{totalesFuentes.coberturaGlobal?.toFixed(1)}% cobertura</p>
           </div>
 
           <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 space-y-1 text-center shadow-sm">
             <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Nómina Dic (2.1.1)</span>
             <div className="text-sm md:text-base font-black text-blue-700 font-mono">
-              {formatCOPM(proyeccionesDiciembre.rubro211.nominaDiciembreEstimada)}
+              {formatCOPM(proyeccionesDiciembre?.rubro211?.nominaDiciembreEstimada || 0)}
             </div>
             <p className="text-[10px] text-blue-700 font-medium">Suficiencia 100%</p>
           </div>
@@ -506,7 +520,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
           <div className="p-3.5 rounded-2xl bg-purple-50 border border-purple-200 space-y-1 text-center shadow-sm">
             <span className="text-[10px] font-bold text-purple-800 uppercase tracking-wider">Saldo Cierre Proy.</span>
             <div className="text-sm md:text-base font-black text-purple-700 font-mono">
-              {formatCOPM(proyeccionesDiciembre.saldoBancosProyectadoCierre)}
+              {formatCOPM(proyeccionesDiciembre?.saldoBancosProyectadoCierre || 0)}
             </div>
             <p className="text-[10px] text-purple-700 font-medium">Escenario Base 31-Dic</p>
           </div>
@@ -559,36 +573,36 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                 </tr>
                 <tr>
                   <td className={`py-2 px-3 font-sans ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>Recursos de Administración (Regla 3.A)</td>
-                  <td className="py-2 px-3 text-right">{formatCOP(resumenRecursos.bancosLibreDestinacion)}</td>
-                  <td className="py-2 px-3 text-right">{formatCOPM(resumenRecursos.bancosLibreDestinacion)}</td>
-                  <td className="py-2 px-3 text-right text-emerald-600 font-bold">{resumenRecursos.porcentajeLibre.toFixed(2)}%</td>
+                  <td className="py-2 px-3 text-right">{formatCOP(resumenRecursos?.bancosLibreDestinacion || 0)}</td>
+                  <td className="py-2 px-3 text-right">{formatCOPM(resumenRecursos?.bancosLibreDestinacion || 0)}</td>
+                  <td className="py-2 px-3 text-right text-emerald-600 font-bold">{resumenRecursos?.porcentajeLibre?.toFixed(2)}%</td>
                   <td className={`py-2 px-3 font-sans ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Recursos de funcionamiento, gastos generales y libre asignación</td>
                 </tr>
                 <tr>
                   <td className={`py-2 px-3 font-sans ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>Recursos de Inversión / Destinación Específica</td>
-                  <td className="py-2 px-3 text-right">{formatCOP(resumenRecursos.bancosDestinacionEspecifica)}</td>
-                  <td className="py-2 px-3 text-right">{formatCOPM(resumenRecursos.bancosDestinacionEspecifica)}</td>
-                  <td className="py-2 px-3 text-right text-amber-600 font-bold">{resumenRecursos.porcentajeEspecifica.toFixed(2)}%</td>
+                  <td className="py-2 px-3 text-right">{formatCOP(resumenRecursos?.bancosDestinacionEspecifica || 0)}</td>
+                  <td className="py-2 px-3 text-right">{formatCOPM(resumenRecursos?.bancosDestinacionEspecifica || 0)}</td>
+                  <td className="py-2 px-3 text-right text-amber-600 font-bold">{resumenRecursos?.porcentajeEspecifica?.toFixed(2)}%</td>
                   <td className={`py-2 px-3 font-sans ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Saldos blindados: Estampillas, convenios y proyectos especiales</td>
                 </tr>
                 <tr className={isLight ? 'bg-rose-50/50' : 'bg-rose-950/20'}>
                   <td className="py-2 px-3 text-rose-600 font-sans font-semibold">Cuentas por Pagar (Compromisos Exigibles)</td>
                   <td className="py-2 px-3 text-right text-rose-600 font-bold">{formatCOP(totalesFuentes.saldoPorPagar)}</td>
                   <td className="py-2 px-3 text-right text-rose-600">{formatCOPM(totalesFuentes.saldoPorPagar)}</td>
-                  <td className="py-2 px-3 text-right text-rose-600 font-bold">{(totalesFuentes.saldoPorPagar / totalesFuentes.saldoBancos * 100).toFixed(2)}%</td>
+                  <td className="py-2 px-3 text-right text-rose-600 font-bold">{((totalesFuentes.saldoPorPagar / (totalesFuentes.saldoBancos || 1)) * 100)?.toFixed(2)}%</td>
                   <td className="py-2 px-3 text-rose-600 font-sans">Obligaciones devengadas pendientes de giro en tesorería</td>
                 </tr>
                 <tr className={isLight ? 'bg-emerald-50/50 font-bold' : 'bg-emerald-950/20 font-bold'}>
                   <td className={`py-2 px-3 font-sans ${isLight ? 'text-emerald-950' : 'text-emerald-300'}`}>Disponibilidad Efectiva Libre de Compromisos</td>
                   <td className="py-2 px-3 text-right text-emerald-600">{formatCOP(totalesFuentes.disponibilidadEfectiva)}</td>
                   <td className="py-2 px-3 text-right text-emerald-600">{formatCOPM(totalesFuentes.disponibilidadEfectiva)}</td>
-                  <td className="py-2 px-3 text-right text-emerald-600">{((totalesFuentes.saldoBancos - totalesFuentes.saldoPorPagar) / totalesFuentes.saldoBancos * 100).toFixed(2)}%</td>
+                  <td className="py-2 px-3 text-right text-emerald-600">{(((totalesFuentes.saldoBancos - totalesFuentes.saldoPorPagar) / (totalesFuentes.saldoBancos || 1)) * 100)?.toFixed(2)}%</td>
                   <td className={`py-2 px-3 font-sans font-normal ${isLight ? 'text-emerald-800' : 'text-emerald-300'}`}>Superávit libre neto de tesorería para amparar el cierre anual</td>
                 </tr>
                 <tr>
                   <td className={`py-2 px-3 font-sans ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>Espejismo Presupuestal Identificado</td>
-                  <td className="py-2 px-3 text-right">{formatCOP(totalesFuentes.disponibilidadPresupuestal - totalesFuentes.disponibilidadEfectiva)}</td>
-                  <td className="py-2 px-3 text-right">{formatCOPM(totalesFuentes.disponibilidadPresupuestal - totalesFuentes.disponibilidadEfectiva)}</td>
+                  <td className="py-2 px-3 text-right">{formatCOP((totalesFuentes.disponibilidadPresupuestal || 0) - (totalesFuentes.disponibilidadEfectiva || 0))}</td>
+                  <td className="py-2 px-3 text-right">{formatCOPM((totalesFuentes.disponibilidadPresupuestal || 0) - (totalesFuentes.disponibilidadEfectiva || 0))}</td>
                   <td className="py-2 px-3 text-right">—</td>
                   <td className={`py-2 px-3 font-sans ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Apropiación sin comprometer que carece de efectivo líquido inmediato</td>
                 </tr>
@@ -601,9 +615,9 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
             <div>
               <strong>Regla 3.A de Clasificación de Fondos:</strong> Los recursos clasificados bajo Administración{' '}
               (10.0, 10.1, 10.2, 10.3, 13, 14, 15, 17, 18, 20, 21, 31, 32, 33, 34, 35) concentran el{' '}
-              <strong>{resumenRecursos.porcentajeLibre.toFixed(1)}%</strong> de la caja ({formatCOPM(resumenRecursos.bancosLibreDestinacion)}),
+              <strong>{resumenRecursos?.porcentajeLibre?.toFixed(1)}%</strong> de la caja ({formatCOPM(resumenRecursos?.bancosLibreDestinacion || 0)}),
               lo que garantiza holgura y autonomía operativa para cumplir con los gastos de personal y funcionamiento ordinario.
-              Los recursos de Inversión representan el <strong>{resumenRecursos.porcentajeEspecifica.toFixed(1)}%</strong> ({formatCOPM(resumenRecursos.bancosDestinacionEspecifica)})
+              Los recursos de Inversión representan el <strong>{resumenRecursos?.porcentajeEspecifica?.toFixed(1)}%</strong> ({formatCOPM(resumenRecursos?.bancosDestinacionEspecifica || 0)})
               y se encuentran rigurosamente aislados para salvaguardar su destinación específica.
             </div>
           </div>
@@ -629,7 +643,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-              {nivelesLiquidez.map((n) => (
+              {(nivelesLiquidez || []).map((n) => (
                 <div
                   key={n.nivel}
                   className={`p-3.5 rounded-2xl border space-y-1.5 shadow-sm ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}
@@ -644,7 +658,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                     <span className="text-[10px] font-mono text-slate-500 font-semibold">{n.naturaleza}</span>
                   </div>
                   <h5 className={`text-xs font-bold leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    {n.nombre.split(':')[1]?.trim() || n.nombre}
+                    {n.nombre?.split(':')[1]?.trim() || n.nombre}
                   </h5>
                   <div className={`text-sm font-black font-mono ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                     {formatCOP(n.valor)}
@@ -733,7 +747,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                 </ResponsiveContainer>
               </div>
               <p className="text-[10px] text-slate-500 text-center font-mono">
-                Flujo neto mensual promedio: +{formatCOPM(totalesMensuales.ingresoPromedioMensual - totalesMensuales.egresoPromedioMensual)} / mes
+                Flujo neto mensual promedio: +{formatCOPM((totalesMensuales?.ingresoPromedioMensual || 0) - (totalesMensuales?.egresoPromedioMensual || 0))} / mes
               </p>
             </div>
           </div>
@@ -757,7 +771,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                   </tr>
                 </thead>
                 <tbody className={`divide-y text-[11px] ${isLight ? 'divide-slate-200' : 'divide-white/10'}`}>
-                  {indicadores.map((ind) => (
+                  {(indicadores || []).map((ind) => (
                     <tr key={ind.id} className={isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}>
                       <td className="py-2 px-2 text-center font-mono font-bold text-slate-500">{ind.numero}</td>
                       <td className={`py-2 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{ind.nombre}</td>
@@ -813,15 +827,15 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                 A. Concentración Bancaria e Índice Herfindahl-Hirschman (HHI)
               </h4>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                HHI = {bankStats.hhi.toFixed(0)} Puntos (Concentración Moderada-Alta)
+                HHI = {bankStats.hhi?.toFixed(0)} Puntos (Concentración Moderada-Alta)
               </span>
             </div>
 
             <p className={`text-xs leading-relaxed text-justify ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
               El saldo bancario institucional de <strong>{formatCOP(totalesFuentes.saldoBancos)}</strong> se encuentra distribuido principalmente
               en entidades vigiladas por la Superintendencia Financiera de Colombia con calificación crediticia de corto plazo <strong>BRC 1+ / AAA</strong>.
-              Sin embargo, el <strong>71,81%</strong> de la liquidez total se concentra en dos entidades: <strong>Itaú Corpbanca ({bankStats.items[0]?.porcentaje.toFixed(1)}%)</strong> y{' '}
-              <strong>Banco de Bogotá ({bankStats.items[1]?.porcentaje.toFixed(1)}%)</strong>.
+              Sin embargo, el <strong>71,81%</strong> de la liquidez total se concentra en dos entidades: <strong>Itaú Corpbanca ({bankStats.items[0]?.porcentaje?.toFixed(1)}%)</strong> y{' '}
+              <strong>Banco de Bogotá ({bankStats.items[1]?.porcentaje?.toFixed(1)}%)</strong>.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
@@ -841,7 +855,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                       <tr key={b.entidad} className={i === 0 ? (isLight ? 'bg-amber-50/40 font-bold' : 'bg-amber-950/20 font-bold') : ''}>
                         <td className={`py-2 px-3 font-sans ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{b.entidad}</td>
                         <td className={`py-2 px-3 text-right ${isLight ? 'text-slate-900' : 'text-white'}`}>{formatCOPM(b.valor)}</td>
-                        <td className={`py-2 px-3 text-right ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{b.porcentaje.toFixed(2)}%</td>
+                        <td className={`py-2 px-3 text-right ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{b.porcentaje?.toFixed(2)}%</td>
                         <td className="py-2 px-2 text-center">
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${isLight ? 'bg-slate-100 text-slate-700' : 'bg-white/10 text-slate-300'}`}>
                             AAA / BRC 1+
@@ -870,7 +884,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                       <YAxis dataKey="name" type="category" tick={{ fill: isLight ? '#334155' : '#cbd5e1', fontSize: 10 }} width={80} />
                       <RechartsTooltip
                         formatter={(val: any, name: any, item: any) => [
-                          `$ ${Number(val).toLocaleString('es-CO')} M (${item.payload.porcentaje.toFixed(1)}%)`,
+                          `$ ${Number(val).toLocaleString('es-CO')} M (${item.payload.porcentaje?.toFixed(1)}%)`,
                           item.payload.fullName,
                         ]}
                         contentStyle={{
@@ -940,30 +954,32 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                 <thead>
                   <tr className={`${isLight ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-white/10 text-white border-white/10'} font-semibold border-b`}>
                     <th className="py-2.5 px-3">Factor de Riesgo</th>
-                    <th className="py-2.5 px-2 text-center">Nivel</th>
-                    <th className="py-2.5 px-3">Impacto Potencial</th>
+                    <th className="py-2.5 px-2 text-center">Materialidad</th>
+                    <th className="py-2.5 px-3">Impacto Potencial en Liquidez</th>
                     <th className="py-2.5 px-3">Mecanismo Institucional de Mitigación</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y text-[11px] ${isLight ? 'divide-slate-200' : 'divide-white/10'}`}>
-                  {riesgos.map((r) => (
+                  {(riesgos || []).map((r) => (
                     <tr key={r.id} className={isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}>
                       <td className={`py-2 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{r.titulo}</td>
                       <td className="py-2 px-2 text-center">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[9px] font-bold font-mono uppercase ${
-                            r.nivel === 'BAJO'
+                            r.materialidad === 'BAJA'
                               ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                              : r.nivel === 'MEDIO'
+                              : r.materialidad === 'MEDIA'
+                              ? 'bg-sky-100 text-sky-800 border border-sky-300'
+                              : r.materialidad === 'ALTA'
                               ? 'bg-amber-100 text-amber-800 border border-amber-300'
                               : 'bg-rose-100 text-rose-800 border border-rose-300'
                           }`}
                         >
-                          {r.nivel}
+                          {r.materialidad}
                         </span>
                       </td>
-                      <td className={`py-2 px-3 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{r.descripcion}</td>
-                      <td className={`py-2 px-3 font-sans italic ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{r.mitigacion}</td>
+                      <td className={`py-2 px-3 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{r.efectoSobreLiquidez}</td>
+                      <td className={`py-2 px-3 font-sans italic ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{r.estrategiaMitigacion}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1002,46 +1018,46 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                 </h4>
               </div>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 w-fit">
-                Suficiencia Presupuestal Plena (Holgura: +{formatCOPM(proyeccionesDiciembre.rubro211.holguraApropiacion211)})
+                Suficiencia Presupuestal Plena (Holgura: +{formatCOPM(proyeccionesDiciembre?.rubro211?.holguraApropiacion211 || 0)})
               </span>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center font-mono">
               <div className={`p-2.5 rounded-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-black/40 border-white/10'}`}>
                 <div className={`text-[10px] font-sans ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Apropiación Vigente 2.1.1</div>
-                <div className={`text-xs md:text-sm font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>{formatCOPM(proyeccionesDiciembre.rubro211.apropiacionActual)}</div>
+                <div className={`text-xs md:text-sm font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>{formatCOPM(proyeccionesDiciembre?.rubro211?.apropiacionActual || 0)}</div>
               </div>
               <div className={`p-2.5 rounded-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-black/40 border-white/10'}`}>
                 <div className={`text-[10px] font-sans ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Compromisos Causados Ene-Nov</div>
-                <div className={`text-xs md:text-sm font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>{formatCOPM(proyeccionesDiciembre.rubro211.compromisosActuales)}</div>
+                <div className={`text-xs md:text-sm font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>{formatCOPM(proyeccionesDiciembre?.rubro211?.compromisosActuales || 0)}</div>
               </div>
               <div className={`p-2.5 rounded-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-black/40 border-white/10'}`}>
                 <div className={`text-[10px] font-sans ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Nómina Dic a Comprometer</div>
-                <div className="text-xs md:text-sm font-bold text-blue-600">{formatCOPM(proyeccionesDiciembre.rubro211.nominaDiciembreEstimada)}</div>
+                <div className="text-xs md:text-sm font-bold text-blue-600">{formatCOPM(proyeccionesDiciembre?.rubro211?.nominaDiciembreEstimada || 0)}</div>
               </div>
               <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
                 <div className="text-[10px] text-emerald-700 font-sans font-bold">Holgura Presupuestal Libre</div>
-                <div className="text-xs md:text-sm font-bold text-emerald-700">+{formatCOPM(proyeccionesDiciembre.rubro211.holguraApropiacion211)}</div>
+                <div className="text-xs md:text-sm font-bold text-emerald-700">+{formatCOPM(proyeccionesDiciembre?.rubro211?.holguraApropiacion211 || 0)}</div>
               </div>
             </div>
 
             <p className={`text-[11px] leading-relaxed font-sans text-justify ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
               <strong>Dictamen Presupuestal 2.1.1:</strong> La apropiación del rubro Gastos de Personal cuenta con un saldo disponible de{' '}
-              <strong>{formatCOP(proyeccionesDiciembre.rubro211.disponibleActual)}</strong>, valor que absorbe holgadamente el compromiso estimado
-              de nómina por <strong>{formatCOP(proyeccionesDiciembre.rubro211.nominaDiciembreEstimada)}</strong>. Por consiguiente,
+              <strong>{formatCOP(proyeccionesDiciembre?.rubro211?.disponibleActual || 0)}</strong>, valor que absorbe holgadamente el compromiso estimado
+              de nómina por <strong>{formatCOP(proyeccionesDiciembre?.rubro211?.nominaDiciembreEstimada || 0)}</strong>. Por consiguiente,
               <strong> NO se requiere trámite de adición ni traslado presupuestal ante el Consejo Superior</strong>, preservando la disciplina fiscal.
             </p>
           </div>
 
           {/* TABLA DE INGRESOS ADICIONALES PROYECTADOS */}
-          {simIngresosAdicionales.length > 0 && (
+          {(simIngresosAdicionales || []).length > 0 && (
             <div className="space-y-2 pt-2">
               <div className="flex items-center justify-between">
                 <h4 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                   Ingresos Adicionales Proyectados a Recaudar en Diciembre
                 </h4>
                 <span className="text-[11px] font-mono font-bold text-emerald-600">
-                  Total Adicional: +{formatCOPM(proyeccionesDiciembre.totalIngresosAdicionalesManuales)}
+                  Total Adicional: +{formatCOPM(proyeccionesDiciembre?.totalIngresosAdicionalesManuales || 0)}
                 </span>
               </div>
 
@@ -1057,7 +1073,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                     </tr>
                   </thead>
                   <tbody className={`divide-y text-[11px] ${isLight ? 'divide-slate-200' : 'divide-white/10'}`}>
-                    {simIngresosAdicionales.map((ing) => (
+                    {(simIngresosAdicionales || []).map((ing) => (
                       <tr key={ing.id}>
                         <td className={`py-2 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{ing.concepto}</td>
                         <td className="py-2 px-2 font-mono text-slate-500">{ing.recurso}</td>
@@ -1104,7 +1120,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                   2. ¿Qué parte del saldo en bancos está verdaderamente disponible?
                 </strong>
                 <p className={`text-[11px] leading-relaxed text-justify ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  El <strong>{((totalesFuentes.saldoBancos - totalesFuentes.saldoPorPagar) / totalesFuentes.saldoBancos * 100).toFixed(1)}% ({formatCOPM(totalesFuentes.disponibilidadEfectiva)})</strong> es
+                  El <strong>{(((totalesFuentes.saldoBancos - totalesFuentes.saldoPorPagar) / (totalesFuentes.saldoBancos || 1)) * 100)?.toFixed(1)}% ({formatCOPM(totalesFuentes.disponibilidadEfectiva)})</strong> es
                   disponibilidad líquida neta real, una vez deducidas todas las obligaciones exigibles.
                 </p>
               </div>
@@ -1114,7 +1130,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                   3. ¿Están blindados los recursos de inversión y destinación específica?
                 </strong>
                 <p className={`text-[11px] leading-relaxed text-justify ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  <strong>SÍ.</strong> Los {formatCOPM(resumenRecursos.bancosDestinacionEspecifica)} ({resumenRecursos.porcentajeEspecifica.toFixed(1)}%)
+                  <strong>SÍ.</strong> Los {formatCOPM(resumenRecursos?.bancosDestinacionEspecifica || 0)} ({resumenRecursos?.porcentajeEspecifica?.toFixed(1)}%)
                   están depositados en cuentas bancarias separadas, garantizando el cumplimiento del principio de especialización fiscal.
                 </p>
               </div>
@@ -1124,7 +1140,7 @@ Dictamen VAFI: CONFORMIDAD TOTAL Y SOSTENIBILIDAD GARANTIZADA. La Universidad no
                   4. ¿Cuál es la capacidad real de pago frente a terceros?
                 </strong>
                 <p className={`text-[11px] leading-relaxed text-justify ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  La cobertura es de <strong>{(totalesFuentes.coberturaGlobal / 100).toFixed(2)} veces (235,4%)</strong>,
+                  La cobertura es de <strong>{((totalesFuentes.coberturaGlobal || 0) / 100)?.toFixed(2)} veces (235,4%)</strong>,
                   lo que permite cancelar la totalidad de cuentas radicadas sin comprometer la operatividad.
                 </p>
               </div>
